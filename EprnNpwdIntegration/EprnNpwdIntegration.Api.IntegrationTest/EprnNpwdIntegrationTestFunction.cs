@@ -7,18 +7,18 @@ namespace EprnNpwdIntegration.Api.IntegrationTest
 {
     public class EprnNpwdIntegrationTestFunction
     {
-        private readonly ILogger<Function1> _logger;
+        private readonly ILogger<EprnNpwdIntegrationTestFunction> _logger;
 
-        public Function1(ILogger<Function1> logger)
+        public EprnNpwdIntegrationTestFunction(ILogger<EprnNpwdIntegrationTestFunction> logger)
         {
             _logger = logger;
         }
 
-        [Function("Function1")]
+        [Function("EprnNpwdIntegrationTestFunction")]
         public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
         {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
-            return new OkObjectResult("Welcome to Azure Functions!");
+            _logger.LogInformation("Invoking NPWD Test Function");
+            return new OkObjectResult("NPWD Test");
         }
     }
 }
