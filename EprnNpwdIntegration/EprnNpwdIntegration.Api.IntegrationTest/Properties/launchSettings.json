@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "EprnNpwdIntegration.Api.IntegrationTest": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7151",
+      "launchBrowser": false
+    }
+  }
+}
