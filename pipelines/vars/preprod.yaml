@@ -1,0 +1,6 @@
+variables:
+  azureSubscription: 'AZR-RWD-PRE1'
+  docker.imageName: 'eprintegrationfunction'
+  acr.azureContainerRegistryName: 'prerwdinfac1401'
+  acr.repositoryName: 'eprintegrationfunctionrepository'
+  serviceName: 'PRERWDWEBFA1412'
