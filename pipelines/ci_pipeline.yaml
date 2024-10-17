@@ -30,9 +30,9 @@ variables:
   - name: solutionFolder
     value: src
   - name: projectFolder
-    value: EPR.Payment.Mopup
+    value: EprPrnIntegration.Api
   - name: testProjectFolder
-    value: 'EPR.Payment.Mopup.Common.UnitTests'
+    value: 'Tests/EprPrnIntegration.Test.Common'
   - name: sonarQubeProjectKey
     value: epr-prn-integration-function
   - name: sonarQubeProjectName
