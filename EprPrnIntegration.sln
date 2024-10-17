@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EprPrnIntegration.Api", "Ep
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EprPrnIntegration.Common", "EprPrnIntegration.Common\EprPrnIntegration.Common.csproj", "{F71A1D0D-8922-4F98-9087-FD38A8E7AD49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EprPrnIntegration.Test.Common", "EprPrnIntegration.Test.Common\EprPrnIntegration.Test.Common.csproj", "{9E5814FE-1C01-4214-A613-AF8973E0C103}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EprPrnIntegration.Test.Common", "Tests\EprPrnIntegration.Test.Common\EprPrnIntegration.Test.Common.csproj", "{9E5814FE-1C01-4214-A613-AF8973E0C103}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
