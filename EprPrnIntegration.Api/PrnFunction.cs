@@ -5,20 +5,27 @@ using Microsoft.Extensions.Logging;
 
 namespace FunctionApp1
 {
-    public class Function1
+    public class PrnFunction
     {
-        private readonly ILogger<Function1> _logger;
+        private readonly ILogger<PrnFunction> _logger;
 
-        public Function1(ILogger<Function1> logger)
+        public PrnFunction(ILogger<PrnFunction> logger)
         {
             _logger = logger;
         }
 
-        [Function("Function1")]
-        public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+        [Function("PrnFunction")]
+        public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
         {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
-            return new OkObjectResult("Welcome to Azure Functions!");
+            try
+            {
+                return new StatusCodeResult(StatusCodes.Status200OK);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(message: ex.Message, exception: ex);
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }
