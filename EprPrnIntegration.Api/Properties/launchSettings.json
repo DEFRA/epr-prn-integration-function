@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "FunctionApp1": {
+    "EprPrnIntegration.Api": {
       "commandName": "Project",
       "commandLineArgs": "--port 7234",
       "launchBrowser": false
