@@ -26,7 +26,7 @@ var host = new HostBuilder()
             .AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential())
             .Build();
 
-        services.AddSingleton<IConfiguration>(config);
+        //services.AddSingleton<IConfiguration>(config);
     })
     .Build();
 
