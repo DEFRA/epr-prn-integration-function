@@ -20,10 +20,9 @@ namespace EprPrnIntegration.Api
         {
             try
             {
-
                 var res = new[]
                 {
-                    new Prn
+                    new PrnDetails
                     {
                         AccreditationNo = "ER212020210",
                         AccreditationYear = 2021,

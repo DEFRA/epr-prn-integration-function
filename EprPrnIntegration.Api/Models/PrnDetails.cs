@@ -1,6 +1,6 @@
 ﻿namespace EprPrnIntegration.Api.Models
 {  
-    public class Prn
+    public class PrnDetails
     {
         public string AccreditationNo { get; set; }
         public int AccreditationYear { get; set; }
