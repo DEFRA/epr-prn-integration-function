@@ -1,0 +1,69 @@
+trigger:
+  branches:
+    include:
+      - '*'
+  paths:
+    include:
+      - 'src/*'
+
+parameters:
+- name: runTests
+  displayName: Run tests
+  type: boolean
+  default: true
+- name: runOWASPScan
+  displayName: Run OWASP Scan
+  type: boolean
+  default: false
+- name: sonarqubeInstance
+  displayName: 'Select SonarQube for v9.9 or SonarQubeLatest for 10.4'
+  type: string
+  default: 'SonarQubeLatest'
+  values:
+  - 'SonarQube'
+  - 'SonarQubeLatest'
+
+pool: DEFRA-COMMON-ubuntu2004-SSV3
+
+variables:
+  - template: vars/DEV4-development.yaml
+  - name: solutionFolder
+    value: src
+  - name: projectFolder
+    value: EprPrnIntegration.Api
+  - name: testProjectFolder
+    value: 'Tests/EprPrnIntegration.Test.Common'
+  - name: sonarQubeProjectKey
+    value: epr-prn-integration-function
+  - name: sonarQubeProjectName
+    value: epr-prn-integration-function
+  - name: runNugetTasks
+    value: false
+  - name: dotnetVersion
+    value: dotnetVersion8
+
+resources:
+  repositories:
+    - repository: CommonTemplates
+      name: RWD-CPR-EPR4P-ADO/epr-webapps-code-deploy-templates
+      type: git
+      ref: main
+
+extends:
+  template: epr-build-pipeline.yaml@CommonTemplates
+  parameters:
+    solutionFolder: ${{ variables.solutionFolder }}
+    projectFolder: ${{ variables.projectFolder }}
+    testProjectFolder: ${{ variables.testProjectFolder }}
+    sonarQubeProjectKey: ${{ variables.sonarQubeProjectKey }}
+    sonarQubeProjectName: ${{ variables.sonarQubeProjectName }}
+    runTests: ${{ parameters.runTests }}
+    runOWASPScan: ${{ parameters.runOWASPScan }}
+    azureSubscription: $(azureSubscription)
+    acrAzureContainerRegistryName: $(acr.azureContainerRegistryName)
+    acrRepositoryName: $(acr.repositoryName)
+    branchName: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/heads/', ''), '/', '_') }}
+    runNugetTasks: ${{ variables.runNugetTasks }}
+    serviceName: $(serviceName)
+    sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
+    dotnetVersion: ${{ variables.dotnetVersion }}
