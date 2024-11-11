@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
+using Azure.Identity;
 
 namespace EprPrnIntegration.Common.Middleware
 {
@@ -21,15 +22,16 @@ namespace EprPrnIntegration.Common.Middleware
             _logger = logger;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             var keyVaultUrl = _configuration["AzureKeyVaultUrl"];
+            var kvClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
 
             try
             {
-                var clientId = _configuration["NPWDIntegrationClientID"];
-                var clientSecret = _configuration["NPWDIntegrationClientSecret"];
-                var authority = _configuration["NPWDAuthority"];
-                _scope = _configuration["NPWDScope"];
-                _accessTokenUrl = _configuration["NPWDAccessTokenURL"];
-                _tokenName = _configuration["NPWDTokenName"];
+                var clientId = kvClient.GetSecret("NPWDIntegrationClientID")?.Value?.Value;
+                var clientSecret = kvClient.GetSecret("NPWDIntegrationClientSecret")?.Value?.Value;
+                var authority = kvClient.GetSecret("NPWDAuthority")?.Value?.Value;
+                _scope = kvClient.GetSecret("NPWDScope")?.Value?.Value;
+                _accessTokenUrl = kvClient.GetSecret("NPWDAccessTokenURL")?.Value?.Value;
+                _tokenName = kvClient.GetSecret("NPWDTokenName")?.Value?.Value;
 
                 _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(clientId)
                     .WithClientSecret(clientSecret)
