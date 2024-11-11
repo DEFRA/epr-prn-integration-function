@@ -1,4 +1,5 @@
 using Azure.Identity;
+using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using Microsoft.Azure.Functions.Worker;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using EprPrnIntegration.Common.Configuration;
 
 var host = new HostBuilder()
+    //.ConfigureFunctionsWebApplication()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
@@ -18,6 +20,10 @@ var host = new HostBuilder()
         services.AddHttpClient();
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+        services.AddTransient<NpwdOAuthMiddleware>();
+        services.AddHttpClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd)
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
         var keyVaultUrl = Environment.GetEnvironmentVariable("AzureKeyVaultUrl") ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(keyVaultUrl))

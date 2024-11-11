@@ -24,6 +24,9 @@
     <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
