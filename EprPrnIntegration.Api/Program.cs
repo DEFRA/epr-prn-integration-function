@@ -1,4 +1,5 @@
 using Azure.Identity;
+using EprPrnIntegration.Common.Middleware;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,9 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
+
+        services.AddHttpClient("NPWDClient")
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
         var keyVaultUrl = Environment.GetEnvironmentVariable("AzureKeyVaultUrl") ?? string.Empty;
 

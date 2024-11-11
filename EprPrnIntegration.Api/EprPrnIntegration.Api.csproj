@@ -20,6 +20,9 @@
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.18" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
