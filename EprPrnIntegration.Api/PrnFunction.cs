@@ -22,6 +22,7 @@ namespace EprPrnIntegration.Api
         {
             try
             {
+                _httpClient.BaseAddress = new Uri("https://fat.npwd.org.uk/");
                 var response = await _httpClient.GetAsync("oData/PRNs");
                 response.EnsureSuccessStatusCode();
                 return new OkObjectResult(response.Content.ToString());
