@@ -50,6 +50,10 @@ namespace EprPrnIntegration.Common.Middleware
                 if (string.IsNullOrEmpty(_accessToken))
                 {
                     var result = await _confidentialClientApplication.AcquireTokenForClient([_scope])
+                        .WithExtraQueryParameters(new Dictionary<string, string>()
+                        {
+                            {"resource", _accessTokenUrl },
+                        })
                         .ExecuteAsync(cancellationToken);
 
                     _accessToken = result.AccessToken;
