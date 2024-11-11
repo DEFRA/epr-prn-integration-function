@@ -14,6 +14,7 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
+        services.AddTransient<NpwdOAuthMiddleware>();
         services.AddHttpClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
