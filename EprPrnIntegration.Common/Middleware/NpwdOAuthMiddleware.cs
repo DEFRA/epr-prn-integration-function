@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
-using Azure.Identity;
 
 namespace EprPrnIntegration.Common.Middleware
 {
@@ -25,19 +24,16 @@ namespace EprPrnIntegration.Common.Middleware
 
             try
             {
-                var kvClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
-                var kvClientId = kvClient.GetSecret("NPWDIntegrationClientID");
-
-                var clientId = kvClient.GetSecret("NPWDIntegrationClientID")?.Value?.Value;
-                var clientSecret = kvClient.GetSecret("NPWDIntegrationClientSecret")?.Value?.Value;
-                var authority = kvClient.GetSecret("NPWDAuthority")?.Value?.Value;
-                _scope = kvClient.GetSecret("NPWDScope")?.Value?.Value;
-                _accessTokenUrl = kvClient.GetSecret("NPWDAccessTokenURL")?.Value?.Value;
-                _tokenName = kvClient.GetSecret("NPWDTokenName")?.Value?.Value;
+                var clientId = _configuration["NPWDIntegrationClientID"];
+                var clientSecret = _configuration["NPWDIntegrationClientSecret"];
+                var authority = _configuration["NPWDAuthority"];
+                _scope = _configuration["NPWDScope"];
+                _accessTokenUrl = _configuration["NPWDAccessTokenURL"];
+                _tokenName = _configuration["NPWDTokenName"];
 
                 _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(clientId)
                     .WithClientSecret(clientSecret)
-                    .WithAuthority(new Uri("https://npwdorguk.ciamlogin.com/638f082d-9a35-45fd-b98c-1d27072d70e"))
+                    .WithAuthority(new Uri(authority))
                     .Build();
             }
             catch (Exception ex)
