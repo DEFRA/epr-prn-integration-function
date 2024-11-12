@@ -3,7 +3,7 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
 
-namespace EprPrnIntegration.Common
+namespace EprPrnIntegration.Common.Service
 {
     public class ConfigurationService : IConfigurationService
     {

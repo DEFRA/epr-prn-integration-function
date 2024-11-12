@@ -1,6 +1,7 @@
 using Azure.Identity;
 using EprPrnIntegration.Common;
 using EprPrnIntegration.Common.Middleware;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using Microsoft.Identity.Client;
 using Microsoft.Extensions.Logging;
+using EprPrnIntegration.Common.Service;
 
 namespace EprPrnIntegration.Common.Middleware
 {

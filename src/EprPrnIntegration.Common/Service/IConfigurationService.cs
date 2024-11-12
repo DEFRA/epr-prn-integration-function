@@ -1,4 +1,4 @@
-﻿namespace EprPrnIntegration.Common
+﻿namespace EprPrnIntegration.Common.Service
 {
     public interface IConfigurationService
     {
