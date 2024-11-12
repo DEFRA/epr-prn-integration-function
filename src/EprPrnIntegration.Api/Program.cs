@@ -19,14 +19,14 @@ var host = new HostBuilder()
         services.AddTransient<NpwdOAuthMiddleware>();
         services.AddHttpClient(Constants.HttpClientNames.Npwd).AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
-        var keyVaultUrl = Environment.GetEnvironmentVariable("AzureKeyVaultUrl") ?? string.Empty;
+        var keyVaultUrl = Environment.GetEnvironmentVariable(Constants.ConfigSettingKeys.KeyVaultUrl) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(keyVaultUrl))
-            throw new ConfigurationErrorsException("AzureKeyVaultUrl");
+            throw new ConfigurationErrorsException(Constants.ConfigSettingKeys.KeyVaultUrl);
 
         var appDirectory = AppContext.BaseDirectory;
 
-        var config = new ConfigurationBuilder()
+        _ = new ConfigurationBuilder()
             .SetBasePath(appDirectory)
             .AddJsonFile(Path.Combine(appDirectory, "settings.json"), optional: true, reloadOnChange: true)
             .AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential())

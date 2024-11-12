@@ -40,7 +40,7 @@ namespace EprPrnIntegration.Common.Middleware
                     var result = await _confidentialClientApplication.AcquireTokenForClient([_configurationService.NpwdScope])
                         .WithExtraQueryParameters(new Dictionary<string, string>()
                         {
-                            {"resource", _configurationService.NpwdAccessTokenUrl },
+                            {"resource", _configurationService.NpwdAccessTokenUrl! },
                         })
                         .ExecuteAsync(cancellationToken);
 
