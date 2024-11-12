@@ -17,7 +17,7 @@ namespace EprPrnIntegration.Api
         public PrnFunction(IHttpClientFactory httpClientFactory, IConfigurationService configurationService, ILogger<PrnFunction> logger)
         {
             _logger = logger;
-            _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.Npwd);
+            _httpClient = httpClientFactory.CreateClient(Common.Constants.HttpClientNames.Npwd);
             _configurationService = configurationService;
         }
 
