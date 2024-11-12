@@ -33,7 +33,7 @@ namespace EprPrnIntegration.Test.Common
             // Create a mock HttpClient
             var httpClient = new HttpClient(new FakeHttpMessageHandler(new List<PersonEmail>
                                 {
-                                    new PersonEmail { Email = "test@example.com" }
+                                    new PersonEmail { FirstName="Test", LastName="User", Email = "test@example.com" }
                                 }));
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
