@@ -1,46 +1,31 @@
 ﻿using System.Net.Http.Headers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
-using Azure.Identity;
 
 namespace EprPrnIntegration.Common.Middleware
 {
     public class NpwdOAuthMiddleware : DelegatingHandler
     {
-        private readonly IConfiguration _configuration;
+        private readonly IConfigurationService _configurationService;
         private readonly IConfidentialClientApplication _confidentialClientApplication;
-        ILogger<NpwdOAuthMiddleware> _logger;
+        private readonly ILogger<NpwdOAuthMiddleware> _logger;
         private string? _accessToken;
-        private string? _scope = null;
-        private string? _accessTokenUrl = null;
-        private string? _tokenName = null;
 
-        public NpwdOAuthMiddleware(IConfiguration configuration, ILogger<NpwdOAuthMiddleware> logger)
+        public NpwdOAuthMiddleware(IConfigurationService configurationService, ILogger<NpwdOAuthMiddleware> logger)
         {
             _logger = logger;
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            var keyVaultUrl = _configuration["AzureKeyVaultUrl"];
-            var kvClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
 
             try
             {
-                var clientId = kvClient.GetSecret("NPWDIntegrationClientID")?.Value?.Value;
-                var clientSecret = kvClient.GetSecret("NPWDIntegrationClientSecret")?.Value?.Value;
-                var authority = kvClient.GetSecret("NPWDAuthority")?.Value?.Value;
-                _scope = kvClient.GetSecret("NPWDScope")?.Value?.Value;
-                _accessTokenUrl = kvClient.GetSecret("NPWDAccessTokenURL")?.Value?.Value;
-                _tokenName = kvClient.GetSecret("NPWDTokenName")?.Value?.Value;
-
-                _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(clientId)
-                    .WithClientSecret(clientSecret)
-                    .WithAuthority(new Uri(authority))
+                _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(_configurationService.NpwdClientId)
+                    .WithClientSecret(_configurationService.NpwdClientSecret)
+                    .WithAuthority(_configurationService.NpwdAuthority)
                     .Build();
             }
             catch (Exception ex)
             {
-                _logger.LogError(message: $"Failed to get one or more secrets from KeyVault : {keyVaultUrl}", exception: ex);
+                _logger.LogError(exception: ex, message: ex.Message);
                 throw new TypeInitializationException(fullTypeName: $"Failed to initialize {nameof(NpwdOAuthMiddleware)}", innerException: ex);
             }
         }
@@ -51,17 +36,17 @@ namespace EprPrnIntegration.Common.Middleware
             {
                 if (string.IsNullOrEmpty(_accessToken))
                 {
-                    var result = await _confidentialClientApplication.AcquireTokenForClient([_scope])
+                    var result = await _confidentialClientApplication.AcquireTokenForClient([_configurationService.NpwdScope])
                         .WithExtraQueryParameters(new Dictionary<string, string>()
                         {
-                            {"resource", _accessTokenUrl },
+                            {"resource", _configurationService.NpwdAccessTokenUrl },
                         })
                         .ExecuteAsync(cancellationToken);
 
                     _accessToken = result.AccessToken;
                 }
 
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, _accessToken);
 
                 return await base.SendAsync(request, cancellationToken);
             }
