@@ -49,16 +49,15 @@ namespace EprPrnIntegration.Test.Common
         [Fact]
         public void Constructor_ShouldThrowArgumentNullException_WhenLoggerIsNull()
         {
-            // Arrange
-            ILogger<OrganisationService> logger = null;
-
             // Act & Assert
+#pragma warning disable CS8625 //Test for null check
             var exception = Assert.Throws<ArgumentNullException>(() =>
                 new OrganisationService(
                     _httpContextAccessorMock.Object,
                     new HttpClientFactoryMock(new HttpClient()),
-                    logger,
+                    null,
                     _configMock.Object));
+#pragma warning restore CS8625
 
             Assert.Equal("logger", exception.ParamName);
         }

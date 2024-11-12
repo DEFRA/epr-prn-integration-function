@@ -23,7 +23,7 @@ namespace EprPrnIntegration.Api
         {
             _logger.LogInformation("HTTP trigger function Get Person Emails processed a request.");
 
-            string organisationId = req.Query["organisationId"];
+            var organisationId = req.Query["organisationId"];
             if (string.IsNullOrWhiteSpace(organisationId))
             {
                 _logger.LogWarning("Organisation ID is missing from the request.");
@@ -32,8 +32,7 @@ namespace EprPrnIntegration.Api
 
             try
             {
-                
-                var responseBody = await _organisationService.GetPersonEmailsAsync(organisationId, CancellationToken.None);
+                var responseBody = await _organisationService.GetPersonEmailsAsync(organisationId!, CancellationToken.None);
                 return new OkObjectResult(responseBody);
             }
             catch (HttpRequestException)
