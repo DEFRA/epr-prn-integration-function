@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "HOST": "localhost",
+    "Functions:Worker:HostEndpoint": "http://localhost:7071",
+    "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
+    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/"
+  }
+}
