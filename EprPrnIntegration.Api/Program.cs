@@ -1,4 +1,5 @@
 using Azure.Identity;
+using EprPrnIntegration.Common;
 using EprPrnIntegration.Common.Middleware;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
@@ -7,16 +8,15 @@ using Microsoft.Extensions.Hosting;
 using System.Configuration;
 
 var host = new HostBuilder()
-    //.ConfigureFunctionsWebApplication()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
+        services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddTransient<NpwdOAuthMiddleware>();
-        services.AddHttpClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
+        services.AddHttpClient(Constants.HttpClientNames.Npwd).AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
         var keyVaultUrl = Environment.GetEnvironmentVariable("AzureKeyVaultUrl") ?? string.Empty;
 
@@ -31,7 +31,6 @@ var host = new HostBuilder()
             .AddAzureKeyVault(new Uri(keyVaultUrl), new DefaultAzureCredential())
             .Build();
 
-        //services.AddSingleton<IConfiguration>(config);
     })
     .Build();
 
