@@ -23,7 +23,7 @@ namespace EprPrnIntegration.Common.RESTServices.BackendAccountService
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<List<PersonEmail>> GetPersonEmailsAsync(string organisationId, CancellationToken cancellationToken = default)
+        public async Task<List<PersonEmail>> GetPersonEmailsAsync(string organisationId, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Calling the Get Person Emails Api.");
             return await Get<List<PersonEmail>>($"person-emails?organisationId={organisationId}", cancellationToken, false);
