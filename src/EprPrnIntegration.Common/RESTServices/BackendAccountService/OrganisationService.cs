@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,15 @@ namespace EprPrnIntegration.Common.RESTServices.BackendAccountService
         {
             _logger.LogInformation("Calling the Get Person Emails Api.");
             return await Get<List<PersonEmail>>($"person-emails?organisationId={organisationId}", cancellationToken, false);
+        }
+
+
+        public async Task<List<UpdatedProducersResponseModel>> GetUpdatedProducers(DateTime from, DateTime to,
+            CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Getting updated producers list.");
+            return await Get<List<UpdatedProducersResponseModel>>($"organisations/organisation?From={from}&To={to}",
+                cancellationToken, false);
         }
     }
 }
