@@ -16,7 +16,7 @@ public class UpdateProducersFunction(IOrganisationService organisationService, T
     
     [FunctionName("UpdateProducersList")]
     public async Task Run(
-        [TimerTrigger("0 0 18 * * 1-5")] TimerInfo myTimer, // Runs at 6:00 PM every weekday (Mon-Fri)
+        [TimerTrigger("0 0 18 * * 1-5")] TimerInfo myTimer,
         ILogger log)
     {
         log.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
@@ -25,8 +25,8 @@ public class UpdateProducersFunction(IOrganisationService organisationService, T
         {
             // Retrieve data from the accounts backend
             var updatedProducers = new List<UpdatedProducersResponseModel>();
-            var fromDate = DateTime.Today.AddDays(-1).AddHours(18); // Previous day at 6 PM
-            var toDate = DateTime.Today.AddHours(18);               // Current day at 6 PM
+            var fromDate = DateTime.Today.AddDays(-1).AddHours(18); 
+            var toDate = DateTime.Today.AddHours(18);               
 
             try
             {
