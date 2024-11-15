@@ -1,13 +1,10 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
-
-# Copy everything
-COPY NuGet.Config ./
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
 
 COPY EprPrnIntegration.Common/. ./EprPrnIntegration.Common/.
 COPY EprPrnIntegration.Api/. ./EprPrnIntegration.Api/.
 
 # Publish 
-RUN dotnet publish EEprPrnIntegration.Api/*.csproj --output /home/site/wwwroot
+RUN dotnet publish EprPrnIntegration.Api/*.csproj --output /home/site/wwwroot
 
 # Use the Azure Functions image as the final image
 FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet8

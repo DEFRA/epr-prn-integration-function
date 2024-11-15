@@ -5,13 +5,9 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DockerFastModeProjectMountDirectory>/home/site/wwwroot</DockerFastModeProjectMountDirectory>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Dockerfile" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Dockerfile" />
-  </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <None Include="local.settings.json" />
@@ -25,6 +21,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.18" />
 	<PackageReference Include="Microsoft.Extensions.Features" Version="8.0.10" />
+	<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
