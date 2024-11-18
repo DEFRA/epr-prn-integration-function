@@ -1,8 +1,9 @@
 using Azure.Identity;
-using EprPrnIntegration.Common;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Middleware;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.NpwdService;
 using EprPrnIntegration.Common.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
@@ -10,7 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Configuration;
-using EprPrnIntegration.Common.Configuration;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -20,6 +20,7 @@ var host = new HostBuilder()
         services.ConfigureFunctionsApplicationInsights();
         services.AddHttpClient();
         services.AddScoped<IOrganisationService, OrganisationService>();
+        services.AddScoped<IProducerService, ProducerService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         services.AddSingleton<IConfigurationService, ConfigurationService>();

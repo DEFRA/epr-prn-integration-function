@@ -4,7 +4,6 @@ public class UpdatedProducersResponseModel
 {
     public string ProducerName { get; set; }
     public string CompaniesHouseNumber { get; set; }
-    public string Name { get; set; }
     public string TradingName { get; set; }
     public string ReferenceNumber { get; set; }
     public string SubBuildingName { get; set; }
@@ -20,6 +19,10 @@ public class UpdatedProducersResponseModel
     public bool ValidatedWithCompaniesHouse { get; set; }
     public bool IsComplianceScheme { get; set; }
     public int OrganisationId { get; set; }
+    public int OrganisationTypeId { get; set; }
     public bool IsDeleted { get; set; }
     public int? ProducerTypeId { get; set; }
+    public string StatusCode { get; set; }
+    public string StatusDesc { get; set; }
+    public string StatusDate { get; set; }
 }
