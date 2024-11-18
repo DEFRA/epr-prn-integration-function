@@ -17,6 +17,11 @@ public class ProducerService(
         var requestContent = new StringContent(producersData, Encoding.UTF8, "application/json");
 
         var baseAddress = configurationService.GetNpwdApiBaseUrl();
+        if (string.IsNullOrEmpty(baseAddress))
+        {
+            throw new UriFormatException("Base address for NPWD API is null or empty.");
+        }
+
         _httpClient.BaseAddress = new Uri(baseAddress!);
 
         var response = await _httpClient.PostAsync("odata/Producers", requestContent);
