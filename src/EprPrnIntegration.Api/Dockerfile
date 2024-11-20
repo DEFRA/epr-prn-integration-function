@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
+USER root
 
 COPY EprPrnIntegration.Common/. ./EprPrnIntegration.Common/.
 COPY EprPrnIntegration.Api/. ./EprPrnIntegration.Api/.
