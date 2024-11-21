@@ -2,8 +2,14 @@
   "profiles": {
     "EprPrnIntegration.Api": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7234",
-      "launchBrowser": false
+      "commandLineArgs": "--port 7234"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "DockerfileRunArguments": "--init",
+      "httpPort": 32933,
+      "useSSL": false
     }
   }
 }
