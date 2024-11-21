@@ -8,7 +8,7 @@ COPY EprPrnIntegration.Api/. ./EprPrnIntegration.Api/.
 RUN dotnet publish EprPrnIntegration.Api/*.csproj --output /home/site/wwwroot
 
 # Use the Azure Functions image as the final image
-FROM mcr.microsoft.com/azure-functions/dotnet:4-dotnet8
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0
 
 # Create a non-root user and set permissions
 RUN groupadd -r dotnet && \
