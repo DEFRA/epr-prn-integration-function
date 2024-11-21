@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Api
 {
+    [ExcludeFromCodeCoverage]
     public class TestFunction
     {
         private readonly ILogger<TestFunction> _logger;
