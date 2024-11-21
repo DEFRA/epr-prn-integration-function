@@ -6,7 +6,10 @@
     "HOST": "localhost",
     "Functions:Worker:HostEndpoint": "http://localhost:7071",
     "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
-    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/"
+    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
+    "UpdateProducersTrigger": "0 0 18 * * 1-5",
+    "UpdateProducersStartHour": "18" // Start time in 24-hour format
+
   },
   "Service": {
     "Url": "https://devrwdwebwa7407.azurewebsites.net/", //"http://localhost:5000/",

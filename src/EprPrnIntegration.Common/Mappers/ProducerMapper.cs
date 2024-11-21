@@ -14,7 +14,8 @@ public static class ProducerMapper
 
         return updatedEprProducers.Select(eprProducer => new Producer
         {
-            AddressLine1 = $"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}".Trim(),
+            AddressLine1 =
+                $"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}".Trim(),
             AddressLine2 = eprProducer.Street,
             AddressLine3 = eprProducer.Locality,
             AddressLine4 = eprProducer.DependentLocality,
@@ -24,10 +25,11 @@ public static class ProducerMapper
             ProducerName = eprProducer.ProducerName,
             CompanyRegNo = eprProducer.CompaniesHouseNumber,
             Postcode = eprProducer.Postcode,
-            EntityTypeCode = eprProducer.ProducerTypeId?.ToString(),
+            EntityTypeCode = eprProducer.IsComplianceScheme ? "CS" : "DR",
+            EntityTypeName = eprProducer.IsComplianceScheme ? "Compliance Scheme" : "Direct Registrant",
             NPWDCode = eprProducer.ReferenceNumber,
-            EPRId = eprProducer.OrganisationId.ToString(),
-            EPRCode = eprProducer.OrganisationTypeId.ToString(),
+            EPRId = eprProducer.ExternalId,
+            EPRCode = eprProducer.ReferenceNumber,
             StatusCode = eprProducer.StatusCode,
             StatusDesc = eprProducer.StatusDesc,
             StatusDate = eprProducer.StatusDate

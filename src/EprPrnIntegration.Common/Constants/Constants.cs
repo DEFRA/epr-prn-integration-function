@@ -1,4 +1,6 @@
-﻿namespace EprPrnIntegration.Common.Constants
+﻿using System.IO;
+
+namespace EprPrnIntegration.Common.Constants
 {
     public static class HttpClientNames
     {
@@ -24,5 +26,10 @@
             public const string TokenName = "NPWDTokenName";
             public const string ApiBaseUrl = "NpwdApiBaseUrl";
         }
+    }
+
+    public static class NpwdApiPath
+    {
+        public const string UpdateProducers = "odata/producers";
     }
 }

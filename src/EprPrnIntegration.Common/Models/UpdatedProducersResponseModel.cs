@@ -1,5 +1,8 @@
-﻿namespace EprPrnIntegration.Common.Models;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace EprPrnIntegration.Common.Models;
+
+[ExcludeFromCodeCoverage]
 public class UpdatedProducersResponseModel
 {
     public string ProducerName { get; set; }
@@ -25,4 +28,5 @@ public class UpdatedProducersResponseModel
     public string StatusCode { get; set; }
     public string StatusDesc { get; set; }
     public string StatusDate { get; set; }
+    public string ExternalId { get; set; }
 }

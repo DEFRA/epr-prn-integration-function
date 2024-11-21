@@ -1,20 +1,21 @@
-﻿using EprPrnIntegration.Common.Models.Npwd;
-using EprPrnIntegration.Common.RESTServices.NpwdService;
+﻿using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Service;
-using Moq.Protected;
 using Moq;
+using Moq.Protected;
 using System.Net;
 
-namespace EprPrnIntegration.Test.Common.RESTServices.NpwdService
+namespace EprPrnIntegration.Test.Common.Client
 {
-    public class ProducerServiceTests
+    public class NpwdClientTests
     {
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
         private readonly Mock<IConfigurationService> _configurationServiceMock;
         private readonly HttpClient _httpClient;
-        private ProducerService _producerService;
+        private NpwdClient _npwdClient;
 
-        public ProducerServiceTests()
+        public NpwdClientTests()
         {
             _httpClientFactoryMock = new Mock<IHttpClientFactory>();
             _configurationServiceMock = new Mock<IConfigurationService>();
@@ -37,10 +38,10 @@ namespace EprPrnIntegration.Test.Common.RESTServices.NpwdService
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(_httpClient);
 
-            _producerService = new ProducerService(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
         }
 
         [Fact]
@@ -63,7 +64,7 @@ namespace EprPrnIntegration.Test.Common.RESTServices.NpwdService
                 .Returns("http://localhost");
 
             // Act
-            var response = await _producerService.UpdateProducerList(updatedProducers);
+            var response = await _npwdClient.Patch(updatedProducers, NpwdApiPath.UpdateProducers);
 
             // Assert
             Assert.NotNull(response);
@@ -99,9 +100,9 @@ namespace EprPrnIntegration.Test.Common.RESTServices.NpwdService
             _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
                 .Returns("http://localhost");
 
-            _producerService = new ProducerService(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
             // Act
-            var response = await _producerService.UpdateProducerList(new List<Producer>());
+            var response = await _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers);
 
             // Assert
             Assert.NotNull(response);
@@ -118,7 +119,7 @@ namespace EprPrnIntegration.Test.Common.RESTServices.NpwdService
                 .Returns((string)null); // Simulate null base address
 
             // Act & Assert
-            await Assert.ThrowsAsync<UriFormatException>(() => _producerService.UpdateProducerList(new List<Producer>()));
+            await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers));
         }
     }
 }

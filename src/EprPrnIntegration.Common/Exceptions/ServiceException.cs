@@ -1,13 +1,15 @@
-﻿namespace EprPrnIntegration.Common.Exceptions
-{
-    public class ServiceException : Exception
-    {
-        public ServiceException(string message) : base(message)
-        {
-        }
+﻿using System.Diagnostics.CodeAnalysis;
 
-        public ServiceException(string message, Exception _exception) : base(message, _exception)
-        {
-        }
+namespace EprPrnIntegration.Common.Exceptions;
+
+[ExcludeFromCodeCoverage]
+public class ServiceException : Exception
+{
+    public ServiceException(string message) : base(message)
+    {
+    }
+
+    public ServiceException(string message, Exception _exception) : base(message, _exception)
+    {
     }
 }

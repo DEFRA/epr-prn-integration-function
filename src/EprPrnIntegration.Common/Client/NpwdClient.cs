@@ -1,19 +1,18 @@
-﻿using EprPrnIntegration.Common.Models.Npwd;
+﻿using System.Text;
 using EprPrnIntegration.Common.Service;
 using Newtonsoft.Json;
-using System.Text;
 
-namespace EprPrnIntegration.Common.RESTServices.NpwdService;
+namespace EprPrnIntegration.Common.Client;
 
-public class ProducerService(
+public class NpwdClient(
     IHttpClientFactory httpClientFactory,
-    IConfigurationService configurationService) : IProducerService
+    IConfigurationService configurationService) : INpwdClient
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Common.Constants.HttpClientNames.Npwd);
 
-    public async Task<HttpResponseMessage> UpdateProducerList(List<Producer> updatedProducers)
+    public async Task<HttpResponseMessage> Patch<T>(T dataModel, string path)
     {
-        var producersData = JsonConvert.SerializeObject(updatedProducers);
+        var producersData = JsonConvert.SerializeObject(dataModel);
         var requestContent = new StringContent(producersData, Encoding.UTF8, "application/json");
 
         var baseAddress = configurationService.GetNpwdApiBaseUrl();
@@ -24,7 +23,7 @@ public class ProducerService(
 
         _httpClient.BaseAddress = new Uri(baseAddress!);
 
-        var response = await _httpClient.PostAsync("odata/Producers", requestContent);
+        var response = await _httpClient.PatchAsync(path, requestContent);
         return response;
     }
 }
