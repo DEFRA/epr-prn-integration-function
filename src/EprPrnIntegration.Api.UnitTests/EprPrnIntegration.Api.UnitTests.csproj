@@ -27,8 +27,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\EprPrnIntegration.Api\EprPrnIntegration.Api.csproj" />
-	  <ProjectReference Include="..\EprPrnIntegration.Common.Tests\EprPrnIntegration.Common.Tests.csproj" />
+	  <ProjectReference Include="..\EprPrnIntegration.Api\EprPrnIntegration.Api.csproj" />
+	  <ProjectReference Include="..\EprPrnIntegration.Common.UnitTests\EprPrnIntegration.Common.UnitTests.csproj" />
+	  <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
 	</ItemGroup>
-
 </Project>

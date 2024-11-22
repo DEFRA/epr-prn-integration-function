@@ -6,7 +6,7 @@ using Moq;
 using Moq.Protected;
 using System.Net;
 
-namespace EprPrnIntegration.Common.Tests.Client
+namespace EprPrnIntegration.Common.UnitTests.Client
 {
     public class NpwdClientTests
     {

@@ -1,5 +1,4 @@
 ﻿using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Api;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace EprPrnIntegration.Api.Tests;
+namespace EprPrnIntegration.Api.UnitTests;
 
 public class GetPersonsEmailsFunctionTests
 {

@@ -1,5 +1,5 @@
 ﻿using EprPrnIntegration.Common.Service;
-using EprPrnIntegration.Common.Tests.Helpers;
+using EprPrnIntegration.Common.UnitTests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using System.Net;
 using Xunit;
 using Constants = EprPrnIntegration.Common.Constants;
 
-namespace EprPrnIntegration.Api.Tests;
+namespace EprPrnIntegration.Api.UnitTests;
 
 public class PrnFunctionTests
 {

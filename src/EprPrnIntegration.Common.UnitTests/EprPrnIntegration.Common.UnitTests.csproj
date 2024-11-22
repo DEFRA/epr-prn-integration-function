@@ -27,8 +27,9 @@
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
+    <ProjectReference Include="..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

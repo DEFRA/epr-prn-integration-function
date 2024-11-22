@@ -1,4 +1,4 @@
-﻿namespace EprPrnIntegration.Common.Tests.Helpers;
+﻿namespace EprPrnIntegration.Common.UnitTests.Helpers;
 
 public class HttpClientFactoryMock : IHttpClientFactory
 {

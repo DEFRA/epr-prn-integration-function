@@ -2,7 +2,7 @@
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
-using EprPrnIntegration.Common.Tests.Helpers;
+using EprPrnIntegration.Common.UnitTests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,7 +10,7 @@ using Moq;
 using Newtonsoft.Json;
 using System.Net;
 
-namespace EprPrnIntegration.Common.Tests.RESTServices.BackendAccountService
+namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
 {
     public class OrganisationServiceTests
     {

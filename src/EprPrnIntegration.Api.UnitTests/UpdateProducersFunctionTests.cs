@@ -1,4 +1,3 @@
-using EprPrnIntegration.Api;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
@@ -9,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace EprPrnIntegration.Api.Tests;
+namespace EprPrnIntegration.Api.UnitTests;
 
 public class UpdateProducersFunctionTests
 {
