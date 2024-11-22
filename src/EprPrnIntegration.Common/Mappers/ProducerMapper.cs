@@ -27,10 +27,7 @@ public static class ProducerMapper
                 EPRId = eprProducer.ExternalId,
                 EPRCode = eprProducer.ReferenceNumber,
                 Postcode = eprProducer.Postcode,
-                ProducerName = eprProducer.ProducerName,
-                StatusCode = eprProducer.StatusCode,
-                StatusDesc = eprProducer.StatusDesc,
-                StatusDate = eprProducer.StatusDate
+                ProducerName = eprProducer.ProducerName
             }).ToList()
         };
     }
