@@ -7,6 +7,7 @@
     "Functions:Worker:HostEndpoint": "http://localhost:7071",
     "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
-    "UpdateProducersStartHour": "18" // Start time in 24-hour format
+    "UpdateProducersStartHour": "18", // Start time in 24-hour format
+    "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta"
   }
 }

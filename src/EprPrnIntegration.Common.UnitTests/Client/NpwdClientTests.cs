@@ -55,7 +55,6 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                     ProducerName = "Test Producer",
                     CompanyRegNo = "12345678",
                     Postcode = "12345",
-                    NPWDCode = "NPWD001",
                     StatusCode = "Active"
                 }
             };

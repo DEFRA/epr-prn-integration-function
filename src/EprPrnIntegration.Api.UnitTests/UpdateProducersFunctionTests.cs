@@ -49,7 +49,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
@@ -59,7 +59,7 @@ public class UpdateProducersFunctionTests
 
         // Assert
         _organisationServiceMock.Verify(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.UpdateProducers), Times.Once);
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers), Times.Once);
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
@@ -131,7 +131,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.BadRequest });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);

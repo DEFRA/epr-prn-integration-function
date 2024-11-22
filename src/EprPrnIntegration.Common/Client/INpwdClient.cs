@@ -1,6 +1,4 @@
-﻿using EprPrnIntegration.Common.Models.Npwd;
-
-namespace EprPrnIntegration.Common.Client;
+﻿namespace EprPrnIntegration.Common.Client;
 
 public interface INpwdClient
 {

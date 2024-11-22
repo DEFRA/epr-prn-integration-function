@@ -1,38 +1,37 @@
 ﻿using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
+using Microsoft.Extensions.Configuration;
 
 namespace EprPrnIntegration.Common.Mappers;
 
 public static class ProducerMapper
 {
-    public static List<Producer> Map(List<UpdatedProducersResponseModel> updatedEprProducers)
+    public static ProducerDelta Map(
+        List<UpdatedProducersResponseModel> updatedEprProducers, IConfiguration configuration)
     {
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
-            return new List<Producer>();
+            return new ProducerDelta { Context = configuration["ProducersContext"], Value = [] };
         }
 
-        return updatedEprProducers.Select(eprProducer => new Producer
+        return new ProducerDelta
         {
-            AddressLine1 =
-                $"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}".Trim(),
-            AddressLine2 = eprProducer.Street,
-            AddressLine3 = eprProducer.Locality,
-            AddressLine4 = eprProducer.DependentLocality,
-            Town = eprProducer.Town,
-            County = eprProducer.County,
-            Country = eprProducer.Country,
-            ProducerName = eprProducer.ProducerName,
-            CompanyRegNo = eprProducer.CompaniesHouseNumber,
-            Postcode = eprProducer.Postcode,
-            EntityTypeCode = eprProducer.IsComplianceScheme ? "CS" : "DR",
-            EntityTypeName = eprProducer.IsComplianceScheme ? "Compliance Scheme" : "Direct Registrant",
-            NPWDCode = eprProducer.ReferenceNumber,
-            EPRId = eprProducer.ExternalId,
-            EPRCode = eprProducer.ReferenceNumber,
-            StatusCode = eprProducer.StatusCode,
-            StatusDesc = eprProducer.StatusDesc,
-            StatusDate = eprProducer.StatusDate
-        }).ToList();
+            Context = configuration["ProducersContext"], 
+            Value = updatedEprProducers.Select(eprProducer => new Producer
+            {
+                AddressLine1 = $"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}",
+                AddressLine2 = eprProducer.Street,
+                CompanyRegNo = eprProducer.CompaniesHouseNumber,
+                EntityTypeCode = eprProducer.IsComplianceScheme ? "CS" : "DR",
+                EntityTypeName = eprProducer.IsComplianceScheme ? "Compliance Scheme" : "Direct Registrant",
+                EPRId = eprProducer.ExternalId,
+                EPRCode = eprProducer.ReferenceNumber,
+                Postcode = eprProducer.Postcode,
+                ProducerName = eprProducer.ProducerName,
+                StatusCode = eprProducer.StatusCode,
+                StatusDesc = eprProducer.StatusDesc,
+                StatusDate = eprProducer.StatusDate
+            }).ToList()
+        };
     }
 }

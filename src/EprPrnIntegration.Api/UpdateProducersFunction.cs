@@ -54,7 +54,7 @@ public class UpdateProducersFunction(IOrganisationService organisationService, I
         }
 
         // Send data to NPWD via pEPR API
-        var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers);
+        var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
 
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 

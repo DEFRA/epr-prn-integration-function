@@ -8,11 +8,11 @@
     "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
-    "UpdateProducersStartHour": "18" // Start time in 24-hour format
-
+    "UpdateProducersStartHour": "18", // Start time in 24-hour format
+    "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta"
   },
   "Service": {
-    "Url": "https://devrwdwebwa7407.azurewebsites.net/", //"http://localhost:5000/",
+    "Url": "http://localhost:5000/",
     "EndPointName": "api/organisations",
     "BearerToken": null,
     "HttpClientName": null,
