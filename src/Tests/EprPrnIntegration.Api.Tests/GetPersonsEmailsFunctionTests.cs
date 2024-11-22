@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace EprPrnIntegration.Test.Api;
+namespace EprPrnIntegration.Api.Tests;
 
 public class GetPersonsEmailsFunctionTests
 {

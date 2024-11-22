@@ -1,7 +1,7 @@
 ﻿using EprPrnIntegration.Api.Models;
 using System.Text.Json;
 
-namespace EprPrnIntegration.Test.Common.Helpers;
+namespace EprPrnIntegration.Common.Tests.Helpers;
 
 public class FakeHttpMessageHandler : HttpMessageHandler
 {

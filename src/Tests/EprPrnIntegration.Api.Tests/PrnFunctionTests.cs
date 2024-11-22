@@ -1,15 +1,14 @@
-﻿using EprPrnIntegration.Api;
-using EprPrnIntegration.Common.Service;
+﻿using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Net;
-using EprPrnIntegration.Test.Common.Helpers;
 using Xunit;
 using Constants = EprPrnIntegration.Common.Constants;
 
-namespace EprPrnIntegration.Test.Api;
+namespace EprPrnIntegration.Api.Tests;
 
 public class PrnFunctionTests
 {

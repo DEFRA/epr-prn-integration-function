@@ -1,7 +1,7 @@
 ﻿using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 
-namespace EprPrnIntegration.Test.Common.Mappers;
+namespace EprPrnIntegration.Common.Tests.Mappers;
 
 public class ProducerMapperTests
 {

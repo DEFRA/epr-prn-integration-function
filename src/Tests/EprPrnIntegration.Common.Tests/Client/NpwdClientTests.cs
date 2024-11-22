@@ -6,7 +6,7 @@ using Moq;
 using Moq.Protected;
 using System.Net;
 
-namespace EprPrnIntegration.Test.Common.Client
+namespace EprPrnIntegration.Common.Tests.Client
 {
     public class NpwdClientTests
     {
@@ -94,7 +94,7 @@ namespace EprPrnIntegration.Test.Common.Client
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
             _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())

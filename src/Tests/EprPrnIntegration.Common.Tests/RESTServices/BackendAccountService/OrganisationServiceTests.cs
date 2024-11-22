@@ -1,23 +1,22 @@
-﻿using System.Net;
-using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Common.Configuration;
+﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
-using EprPrnIntegration.Test.Common.Helpers;
+using EprPrnIntegration.Common.Tests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using System.Net;
 
-namespace EprPrnIntegration.Test.Common.RESTServices.BackendAccountService
+namespace EprPrnIntegration.Common.Tests.RESTServices.BackendAccountService
 {
     public class OrganisationServiceTests
     {
         private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
         private readonly Mock<ILogger<OrganisationService>> _loggerMock;
-        private readonly Mock<IOptions<Service>> _configMock;
+        private readonly Mock<IOptions<Configuration.Service>> _configMock;
         private readonly OrganisationService _organisationService;
 
         public OrganisationServiceTests()
@@ -26,12 +25,12 @@ namespace EprPrnIntegration.Test.Common.RESTServices.BackendAccountService
             _loggerMock = new Mock<ILogger<OrganisationService>>();
 
             // Setting up the configuration mock
-            var serviceConfig = new Service
+            var serviceConfig = new Configuration.Service
             {
                 Url = "http://localhost:5000/",
                 EndPointName = "api/organisations"
             };
-            _configMock = new Mock<IOptions<Service>>();
+            _configMock = new Mock<IOptions<Configuration.Service>>();
             _configMock.Setup(c => c.Value).Returns(serviceConfig);
 
             // Create a mock HttpClient
@@ -184,7 +183,7 @@ namespace EprPrnIntegration.Test.Common.RESTServices.BackendAccountService
 
             var httpClient = new HttpClient(new MockHttpMessageHandler(
                 responseContent: "Internal Server Error",
-                statusCode: System.Net.HttpStatusCode.InternalServerError));
+                statusCode: HttpStatusCode.InternalServerError));
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 

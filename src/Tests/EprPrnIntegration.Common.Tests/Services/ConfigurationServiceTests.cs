@@ -6,7 +6,7 @@ using Moq;
 using System.Configuration;
 using Constants = EprPrnIntegration.Common.Constants;
 
-namespace EprPrnIntegration.Test.Common.Services;
+namespace EprPrnIntegration.Common.Tests.Services;
 
 public class ConfigurationServiceTests
 {

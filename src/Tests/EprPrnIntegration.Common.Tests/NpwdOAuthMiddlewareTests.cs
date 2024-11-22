@@ -1,4 +1,4 @@
-namespace EprPrnIntegration.Test.Common
+namespace EprPrnIntegration.Common.Tests
 {
     public class NpwdOAuthMiddlewareTests
     {
