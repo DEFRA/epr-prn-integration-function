@@ -12,7 +12,8 @@
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
     "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
-    "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true"
+    "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
     "Service:EndPointName": "api/organisations"
+
   }
 }
