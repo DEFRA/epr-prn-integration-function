@@ -8,8 +8,7 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        var hostBuilderConfiguration = new HostBuilderConfiguration();
-        var host = hostBuilderConfiguration.BuildHost();
+        var host = HostBuilderConfiguration.BuildHost();
         host.Run();
     }
 }
