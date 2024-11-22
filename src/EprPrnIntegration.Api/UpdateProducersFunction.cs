@@ -15,7 +15,7 @@ public class UpdateProducersFunction(IOrganisationService organisationService, I
 {
     [FunctionName("UpdateProducersList")]
     public async Task Run(
-        [TimerTrigger("UpdateProducersTrigger")]
+        [TimerTrigger("%UpdateProducersTrigger%")]
         TimerInfo myTimer)
     {
         logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");

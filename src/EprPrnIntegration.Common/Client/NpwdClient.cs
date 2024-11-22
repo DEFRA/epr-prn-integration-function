@@ -8,12 +8,12 @@ public class NpwdClient(
     IHttpClientFactory httpClientFactory,
     IConfigurationService configurationService) : INpwdClient
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Common.Constants.HttpClientNames.Npwd);
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.Npwd);
 
     public async Task<HttpResponseMessage> Patch<T>(T dataModel, string path)
     {
-        var producersData = JsonConvert.SerializeObject(dataModel);
-        var requestContent = new StringContent(producersData, Encoding.UTF8, "application/json");
+        var data = JsonConvert.SerializeObject(dataModel);
+        var requestContent = new StringContent(data, Encoding.UTF8, "application/json");
 
         var baseAddress = configurationService.GetNpwdApiBaseUrl();
         if (string.IsNullOrEmpty(baseAddress))
