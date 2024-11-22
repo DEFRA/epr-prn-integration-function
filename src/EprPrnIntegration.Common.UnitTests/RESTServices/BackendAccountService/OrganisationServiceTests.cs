@@ -89,7 +89,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
 
             var expectedResponse = JsonConvert.SerializeObject(new List<UpdatedProducersResponseModel>
     {
-        new UpdatedProducersResponseModel
+        new()
         {
             ProducerName = "Producer A",
             CompaniesHouseNumber = "12345678",
@@ -100,12 +100,9 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             Country = "Test Country",
             Postcode = "12345",
             OrganisationId = 1,
-            OrganisationTypeId = 2,
             IsComplianceScheme = true,
-            StatusCode = "Active",
-            StatusDesc = "Active Description"
         },
-        new UpdatedProducersResponseModel
+        new()
         {
             ProducerName = "Producer B",
             CompaniesHouseNumber = "87654321",
@@ -116,10 +113,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             Country = "Another Country",
             Postcode = "54321",
             OrganisationId = 2,
-            OrganisationTypeId = 3,
             IsComplianceScheme = false,
-            StatusCode = "Inactive",
-            StatusDesc = "Inactive Description"
         }
     });
 

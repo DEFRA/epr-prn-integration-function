@@ -71,10 +71,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                     Postcode = "12345",
                     IsComplianceScheme = true,
                     ReferenceNumber = "REF001",
-                    ExternalId = "EXT001",
-                    StatusCode = "Active",
-                    StatusDesc = "Active Description",
-                    StatusDate = "2024-01-01"
+                    ExternalId = "EXT001"
                 }
             };
 
@@ -97,9 +94,6 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Equal("Compliance Scheme", producer.EntityTypeName);
             Assert.Equal("REF001", producer.EPRCode);
             Assert.Equal("EXT001", producer.EPRId);
-            Assert.Equal("Active", producer.StatusCode);
-            Assert.Equal("Active Description", producer.StatusDesc);
-            Assert.Equal("2024-01-01", producer.StatusDate);
         }
 
         [Fact]

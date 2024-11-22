@@ -35,7 +35,7 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting updated producers list.");
-        return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-dd}&To={to:yyyy-MM-dd}",
+        return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-ddTHH:mm:ss}&To={to:yyyy-MM-ddTHH:mm:ss}",
             cancellationToken, false);
     }
 }

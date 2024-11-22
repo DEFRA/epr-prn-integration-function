@@ -22,11 +22,7 @@ public class UpdatedProducersResponseModel
     public bool ValidatedWithCompaniesHouse { get; set; }
     public bool IsComplianceScheme { get; set; }
     public int OrganisationId { get; set; }
-    public int OrganisationTypeId { get; set; }
     public bool IsDeleted { get; set; }
     public int? ProducerTypeId { get; set; }
-    public string StatusCode { get; set; }
-    public string StatusDesc { get; set; }
-    public string StatusDate { get; set; }
     public string ExternalId { get; set; }
 }
