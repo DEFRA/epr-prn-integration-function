@@ -29,7 +29,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\EprPrnIntegration.Api\EprPrnIntegration.Api.csproj" />
 	  <ProjectReference Include="..\..\EprPrnIntegration.Common\EprPrnIntegration.Common.csproj" />
-	  <ProjectReference Include="..\EprPrnIntegration.Test.Common\EprPrnIntegration.Test.Common.csproj" />
+	  <ProjectReference Include="..\EprPrnIntegration.Common.Tests\EprPrnIntegration.Common.Tests.csproj" />
 	</ItemGroup>
 
 </Project>
