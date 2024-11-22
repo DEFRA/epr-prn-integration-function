@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -13,10 +12,9 @@ namespace EprPrnIntegration.Api;
 public class UpdateProducersFunction(IOrganisationService organisationService, INpwdClient npwdClient, 
     ILogger<UpdateProducersFunction> logger, IConfiguration configuration)
 {
-    [FunctionName("UpdateProducersList")]
+    [Function("UpdateProducersList")]
     public async Task Run(
-        [TimerTrigger("%UpdateProducersTrigger%")]
-        TimerInfo myTimer)
+        [TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
         logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
 
