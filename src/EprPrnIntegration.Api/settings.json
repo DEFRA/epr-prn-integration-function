@@ -9,5 +9,12 @@
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
     "UpdateProducersStartHour": "18", // Start time in 24-hour format
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta"
+  },
+  "Service": {
+    "Url": "https://devrwdwebwa7407.azurewebsites.net/",
+    "EndPointName": "api/organisations",
+    "BearerToken": null,
+    "HttpClientName": null,
+    "Retries": null
   }
 }
