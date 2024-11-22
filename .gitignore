@@ -413,3 +413,4 @@ FodyWeavers.xsd
 
 # AppSettings Development file
 **/appSettings.Development.json
+/src/EprPrnIntegration.Api/local.settings.json
