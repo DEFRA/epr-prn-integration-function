@@ -25,7 +25,7 @@ namespace EprPrnIntegration.Api
         {
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
-            //ToDo: find out the filter criteria and add it
+            //pending find out the filter criteria and add it
             var filter = "1 eq 1";
 
             var npwdIssuedPrns = new List<NpwdPrn>();
