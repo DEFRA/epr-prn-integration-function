@@ -46,7 +46,17 @@ public class NpwdOAuthMiddleware : DelegatingHandler
                     })
                     .ExecuteAsync(cancellationToken);
 
-                _accessToken = result.AccessToken;
+                var accessToken = result.AccessToken;
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    _logger.LogError("Access token is null");
+                }
+                else
+                {
+                    _logger.LogInformation($"AccessToken last 5 char is: {result.AccessToken.Substring(result.AccessToken.Length - 5)}");
+
+                    _accessToken = result.AccessToken;
+                }
             }
 
             request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, _accessToken);
