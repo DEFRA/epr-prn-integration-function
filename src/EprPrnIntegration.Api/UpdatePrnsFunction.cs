@@ -44,14 +44,14 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
             {
                 logger.LogWarning(
                     $"No updated Prns are retrieved from common database form time period {fromDate} to {toDate}.");
-                return null;
+                return;
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
                 $"Failed to retrieve data from common backend. form time period {fromDate} to {toDate}.");
-            return null;
+            return;
         }
 
         // Send data to NPWD via pEPR API
@@ -69,7 +69,5 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         {
             logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
         }
-
-        return null;
     }
 }
