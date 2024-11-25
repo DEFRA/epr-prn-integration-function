@@ -38,7 +38,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.NpwdPush))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(_httpClient);
 
             _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
@@ -54,8 +54,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 {
                     ProducerName = "Test Producer",
                     CompanyRegNo = "12345678",
-                    Postcode = "12345",
-                    StatusCode = "Active"
+                    Postcode = "12345"
                 }
             };
 
@@ -93,7 +92,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.NpwdPush))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
             _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())

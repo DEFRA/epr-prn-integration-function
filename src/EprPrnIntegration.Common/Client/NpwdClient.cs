@@ -8,7 +8,7 @@ public class NpwdClient(
     IHttpClientFactory httpClientFactory,
     IConfigurationService configurationService) : INpwdClient
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.NpwdPush);
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.Npwd);
 
     public async Task<HttpResponseMessage> Patch<T>(T dataModel, string path)
     {

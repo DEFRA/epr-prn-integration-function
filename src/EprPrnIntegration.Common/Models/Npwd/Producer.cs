@@ -10,6 +10,21 @@ public class Producer
     [JsonPropertyName("AddressLine2")]
     public string AddressLine2 { get; set; }
 
+    [JsonPropertyName("AddressLine3")]
+    public string AddressLine3 { get; set; }
+
+    [JsonPropertyName("AddressLine4")]
+    public string AddressLine4 { get; set; }
+
+    [JsonPropertyName("Country")]
+    public string Country { get; set; }
+
+    [JsonPropertyName("County")]
+    public string County { get; set; }
+
+    [JsonPropertyName("Town")]
+    public string Town { get; set; }
+
     [JsonPropertyName("CompanyRegNo")]
     public string CompanyRegNo { get; set; }
 
@@ -30,13 +45,4 @@ public class Producer
 
     [JsonPropertyName("ProducerName")]
     public string ProducerName { get; set; }
-
-    [JsonPropertyName("StatusCode")]
-    public string StatusCode { get; set; }
-
-    [JsonPropertyName("StatusDesc")]
-    public string StatusDesc { get; set; }
-
-    [JsonPropertyName("StatusDate")]
-    public string StatusDate { get; set; }
 }

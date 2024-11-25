@@ -2,8 +2,7 @@
 {
     public static class HttpClientNames
     {
-        public const string NpwdGet = "NpwdClientGet";
-        public const string NpwdPush = "NpwdClientPush";
+        public const string Npwd = "NpwdClient";
     }
 
     public static class HttpHeaderNames

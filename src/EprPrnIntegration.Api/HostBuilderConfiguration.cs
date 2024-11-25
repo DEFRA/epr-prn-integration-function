@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.Security;
 
 namespace EprPrnIntegration.Api;
 [ExcludeFromCodeCoverage]
@@ -41,19 +40,8 @@ public static class HostBuilderConfiguration
         services.AddTransient<NpwdOAuthMiddleware>();
         
         // Add HttpClients
-        services.AddHttpClient(Common.Constants.HttpClientNames.NpwdGet)
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>();
-
-        services.AddHttpClient(Common.Constants.HttpClientNames.NpwdPush)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
-            .ConfigurePrimaryHttpMessageHandler(() =>
-            {
-                return new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
-                        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" || errors == SslPolicyErrors.None
-                };
-            });
 
         // Add configuration
         services.ConfigureOptions(configuration);

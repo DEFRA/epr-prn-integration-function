@@ -22,7 +22,7 @@ public class PrnFunctionTests
         // Set up a mock HttpClient
         _mockHttpClient = new HttpClient(new MockHttpMessageHandler());
         _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.NpwdGet))
+            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.Npwd))
             .Returns(_mockHttpClient);
     }
 
@@ -40,7 +40,7 @@ public class PrnFunctionTests
         };
 
         _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.NpwdGet))
+            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.Npwd))
             .Returns(httpClient);
 
         var function = new PrnFunction(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _loggerMock.Object);
@@ -68,7 +68,7 @@ public class PrnFunctionTests
         };
 
         _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.NpwdGet))
+            .Setup(factory => factory.CreateClient(Constants.HttpClientNames.Npwd))
             .Returns(httpClient);
 
         var function = new PrnFunction(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _loggerMock.Object);
