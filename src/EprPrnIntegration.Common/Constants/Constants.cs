@@ -1,10 +1,9 @@
-﻿using System.IO;
-
-namespace EprPrnIntegration.Common.Constants
+﻿namespace EprPrnIntegration.Common.Constants
 {
     public static class HttpClientNames
     {
-        public const string Npwd = "NpwdClient";
+        public const string NpwdGet = "NpwdClientGet";
+        public const string NpwdPush = "NpwdClientPush";
     }
 
     public static class HttpHeaderNames

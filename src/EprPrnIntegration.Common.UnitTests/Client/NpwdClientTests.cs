@@ -38,7 +38,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.NpwdPush))
                 .Returns(_httpClient);
 
             _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object);
@@ -93,7 +93,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 BaseAddress = new Uri("http://localhost")
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.NpwdPush))
                 .Returns(httpClient);
 
             _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())

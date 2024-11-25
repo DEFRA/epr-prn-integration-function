@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Security;
+
 namespace EprPrnIntegration.Api;
 [ExcludeFromCodeCoverage]
 public static class HostBuilderConfiguration
@@ -28,17 +30,32 @@ public static class HostBuilderConfiguration
         // Add Application Insights
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        // Add HttpClient
-        services.AddHttpClient();
+       
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();
+        
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
-        services.AddHttpClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd)
+        
+        // Add HttpClients
+        services.AddHttpClient(Common.Constants.HttpClientNames.NpwdGet)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>();
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.NpwdPush)
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                return new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" || errors == SslPolicyErrors.None
+                };
+            });
+
+        // Add configuration
         services.ConfigureOptions(configuration);
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
