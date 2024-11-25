@@ -32,6 +32,7 @@ public static class HostBuilderConfiguration
        
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
+        services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();

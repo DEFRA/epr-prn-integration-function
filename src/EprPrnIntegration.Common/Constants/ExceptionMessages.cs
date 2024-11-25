@@ -5,6 +5,8 @@
         // HttpGovPayService exceptions
         public const string OrganisationServiceBaseUrlMissing = "OrganisationService BaseUrl configuration is missing";
         public const string OrganisationServiceEndPointNameMissing = "OrganisationService EndPointName configuration is missing";
+        public const string PrnServiceBaseUrlMissing = "PrnService BaseUrl configuration is missing";
+        public const string PrnServiceEndPointNameMissing = "PrnService EndPointName configuration is missing";
 
         // HttpGovPayService exceptions
         public const string BearerTokenNull = "Bearer token is null. Unable to initiate payment.";

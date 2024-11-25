@@ -10,4 +10,6 @@ public class Service
     public string? BearerToken { get; set; }
     public string? HttpClientName { get; set; }
     public int? Retries { get; set; }
+    public string? PrnBaseUrl { get; set; }
+    public string? PrnEndPointName { get; set; }
 }
