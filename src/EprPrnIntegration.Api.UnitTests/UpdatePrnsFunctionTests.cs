@@ -1,135 +1,123 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Configuration;
+using Moq;
 using Xunit;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using System.Net;
 using global::EprPrnIntegration.Common.Client;
+using global::EprPrnIntegration.Common.Models;
+using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using global::EprPrnIntegration.Api.UnitTests.Helpers;
+using System.Net;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
     public class UpdatePrnsFunctionTests
     {
-        private readonly Mock<IPrnService> _prnServiceMock;
-        private readonly Mock<INpwdClient> _npwdClientMock;
-        private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
-        private readonly Mock<IConfiguration> _configurationMock;
-        private readonly UpdatePrnsFunction _function;
+        private readonly Mock<IPrnService> _mockPrnService;
+        private readonly Mock<INpwdClient> _mockNpwdClient;
+        private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly MockLogger<UpdatePrnsFunction> _mockLogger;
+        private UpdatePrnsFunction _function;
 
         public UpdatePrnsFunctionTests()
         {
-            _prnServiceMock = new Mock<IPrnService>();
-            _npwdClientMock = new Mock<INpwdClient>();
-            _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
-            _configurationMock = new Mock<IConfiguration>();
+            _mockPrnService = new Mock<IPrnService>();
+            _mockNpwdClient = new Mock<INpwdClient>();
+            _mockConfiguration = new Mock<IConfiguration>();
+            _mockLogger = new MockLogger<UpdatePrnsFunction>();
 
             _function = new UpdatePrnsFunction(
-                _prnServiceMock.Object,
-                _npwdClientMock.Object,
-                _loggerMock.Object,
-                _configurationMock.Object
+                _mockPrnService.Object,
+                _mockNpwdClient.Object,
+                _mockLogger,
+                _mockConfiguration.Object
             );
         }
 
         [Fact]
-        public async Task Run_ShouldReturnNull_WhenNoUpdatedPrnsAreRetrieved()
+        public async Task Run_ShouldUseDefaultStartHour_WhenConfigurationIsInvalid()
         {
             // Arrange
-            _configurationMock.Setup(config => config["UpdatePrnsStartHour"]).Returns("18");
-            _prnServiceMock.Setup(service => service.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                                    .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
+            _mockConfiguration.Setup(c => c["UpdatePrnsStartHour"]).Returns("invalid");
 
             // Act
-            var result = await _function.Run(It.IsAny<HttpRequest>());
+            await _function.Run(null);
 
             // Assert
-            Assert.Null(result);
+            var logMessage = _mockLogger.LogMessages
+                .FirstOrDefault(msg => msg.Contains("Invalid StartHour configuration value"));
+            Assert.NotNull(logMessage);
+            Assert.Contains("Using default value of 18(6pm)", logMessage);
         }
 
         [Fact]
-        public async Task Run_ShouldHandleException_WhenExceptionOccursDuringDataRetrieval()
+        public async Task Run_ShouldLogWarning_WhenNoUpdatedPrnsRetrieved()
         {
             // Arrange
-            _configurationMock.Setup(config => config["UpdatePrnsStartHour"]).Returns("18");
-            _prnServiceMock.Setup(service => service.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                                    .ThrowsAsync(new Exception("Data retrieval failed"));
+            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
 
             // Act
-            var result = await _function.Run(It.IsAny<HttpRequest>());
+            await _function.Run(null);
 
             // Assert
-            Assert.Null(result);
+            var logMessage = _mockLogger.LogMessages
+                .FirstOrDefault(msg => msg.Contains("No updated Prns are retrieved from common database"));
+            Assert.NotNull(logMessage);
+        }
+               
+
+        [Fact]
+        public async Task Run_ShouldLogSuccess_WhenPrnListUpdatedSuccessfully()
+        {
+            // Arrange
+            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+            // Act
+            await _function.Run(null);
+
+            // Assert
+            var logMessage = _mockLogger.LogMessages
+                .FirstOrDefault(msg => msg.Contains("Prns list successfully updated in NPWD"));
+            Assert.NotNull(logMessage);
         }
 
         [Fact]
-        public async Task Run_ShouldUpdatePrnsSuccessfully_WhenPrnsAreRetrieved()
+        public async Task Run_ShouldLogError_WhenPrnListUpdateFails()
         {
             // Arrange
-            var updatedPrnsList = new List<UpdatedPrnsResponseModel>
-            {
-                new UpdatedPrnsResponseModel
-                {
-                    EvidenceNo = "EVID12345",
-                    EvidenceStatusCode = "EV_ACCEP",
-                    StatusDate = new DateTime(2024, 11, 25, 18, 0, 0)
-                },
-                new UpdatedPrnsResponseModel
-                {
-                    EvidenceNo = "EVID67890",
-                    EvidenceStatusCode = "EV_AWACCEP",
-                    StatusDate = new DateTime(2024, 11, 25, 19, 0, 0)
-                }
-            };
+            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-            _configurationMock.Setup(config => config["UpdatePrnsStartHour"]).Returns("18");
-            _prnServiceMock.Setup(service => service.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                                    .ReturnsAsync(updatedPrnsList);
-
-            _npwdClientMock.Setup(client => client.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
-                           .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
 
             // Act
-            var result = await _function.Run(It.IsAny<HttpRequest>());
+            await _function.Run(null);
 
             // Assert
-            Assert.Null(result);
+            var logMessage = _mockLogger.LogMessages
+                .FirstOrDefault(msg => msg.Contains("Failed to update Prns list in NPWD"));
+            Assert.NotNull(logMessage);
+            Assert.Contains("Status Code: BadRequest", logMessage);
         }
 
         [Fact]
-        public async Task Run_ShouldLogError_WhenNPwdApiCallFails()
+        public async Task Run_ShouldLogError_WhenPrnServiceThrowsException()
         {
             // Arrange
-            var updatedPrnsList = new List<UpdatedPrnsResponseModel>
-            {
-                new UpdatedPrnsResponseModel
-                {
-                    EvidenceNo = "EVID12345",
-                    EvidenceStatusCode = "EV_ACCEP",
-                    StatusDate = new DateTime(2024, 11, 25, 18, 0, 0)
-                },
-                new UpdatedPrnsResponseModel
-                {
-                    EvidenceNo = "EVID67890",
-                    EvidenceStatusCode = "EV_AWACCEP",
-                    StatusDate = new DateTime(2024, 11, 25, 19, 0, 0)
-                }
-            };
-
-            _configurationMock.Setup(config => config["UpdatePrnsStartHour"]).Returns("18");
-            _prnServiceMock.Setup(service => service.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                                    .ReturnsAsync(updatedPrnsList);
-
-            _npwdClientMock.Setup(client => client.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
-                           .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
+            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Service error"));
 
             // Act
-            var result = await _function.Run(It.IsAny<HttpRequest>());
+            await _function.Run(null);
 
             // Assert
-            Assert.Null(result);
+            var logMessage = _mockLogger.LogMessages
+                .FirstOrDefault(msg => msg.Contains("Failed to retrieve data from common backend"));
+            Assert.NotNull(logMessage);
         }
     }
 }
-
