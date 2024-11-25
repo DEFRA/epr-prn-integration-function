@@ -14,6 +14,8 @@
     "Service:EndPointName": "api/organisations",
     "Service:BearerToken": null,
     "Service:HttpClientName": null,
-    "Service:Retries": null
+    "Service:Retries": null,
+    "Service:PrnBaseUrl": "http://localhost:5575/", 
+    "Service:PrnEndPointName": "api/v1/prn"
   }
 }
