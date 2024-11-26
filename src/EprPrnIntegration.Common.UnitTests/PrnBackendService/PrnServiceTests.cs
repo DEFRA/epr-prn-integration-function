@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 using EprPrnIntegration.Common.UnitTests.Helpers;
 using EprPrnIntegration.Common.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 {
@@ -13,12 +14,12 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
     {
         private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
         private readonly Mock<IOptions<Configuration.Service>> _mockConfig;
-        private readonly MockLogger<PrnService> _mockLogger;
+        private readonly Mock<ILogger<PrnService>> _loggerMock;
 
         public PrnServiceTests()
         {
             _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            _mockLogger = new MockLogger<PrnService>();
+            _loggerMock = new Mock<ILogger<PrnService>>();
             _mockConfig = new Mock<IOptions<Configuration.Service>>();
 
             _mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
@@ -37,7 +38,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             return new PrnService(
                 _mockHttpContextAccessor.Object,
                 httpClientFactoryMock,
-                _mockLogger,
+                _loggerMock.Object,
                 _mockConfig.Object
             );
         }
@@ -89,7 +90,12 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             await _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
 
             // Assert
-            Assert.Contains("Getting updated PRN's.", _mockLogger.LogMessages);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
         [Fact]

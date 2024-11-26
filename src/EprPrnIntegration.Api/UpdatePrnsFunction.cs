@@ -55,7 +55,6 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         // Send data to NPWD via pEPR API
-        //Venkat to just 
         var npwdUpdatedPrns = (List<UpdatedPrnsResponseModel>)updatedEprPrns;
 
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);

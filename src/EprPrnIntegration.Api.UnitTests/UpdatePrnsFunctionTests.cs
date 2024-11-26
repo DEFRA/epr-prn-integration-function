@@ -4,8 +4,8 @@ using Xunit;
 using global::EprPrnIntegration.Common.Client;
 using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using global::EprPrnIntegration.Api.UnitTests.Helpers;
 using System.Net;
+using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -14,7 +14,7 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<IPrnService> _mockPrnService;
         private readonly Mock<INpwdClient> _mockNpwdClient;
         private readonly Mock<IConfiguration> _mockConfiguration;
-        private readonly MockLogger<UpdatePrnsFunction> _mockLogger;
+        private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
         private UpdatePrnsFunction _function;
 
         public UpdatePrnsFunctionTests()
@@ -22,12 +22,12 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnService = new Mock<IPrnService>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockConfiguration = new Mock<IConfiguration>();
-            _mockLogger = new MockLogger<UpdatePrnsFunction>();
+            _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
 
             _function = new UpdatePrnsFunction(
                 _mockPrnService.Object,
                 _mockNpwdClient.Object,
-                _mockLogger,
+                _loggerMock.Object,
                 _mockConfiguration.Object
             );
         }
@@ -42,10 +42,24 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(null);
 
             // Assert
-            var logMessage = _mockLogger.LogMessages
-                .FirstOrDefault(msg => msg.Contains("Invalid StartHour configuration value"));
-            Assert.NotNull(logMessage);
-            Assert.Contains("Using default value of 18(6pm)", logMessage);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Invalid StartHour configuration value")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
+            _loggerMock.Verify(
+                logger => logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Using default value of 18(6pm)")),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()
+                ),
+                Times.Once,
+                "Expected log message containing 'Using default value of 18(6pm)'"
+            );
         }
 
         [Fact]
@@ -59,11 +73,13 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(null);
 
             // Assert
-            var logMessage = _mockLogger.LogMessages
-                .FirstOrDefault(msg => msg.Contains("No updated Prns are retrieved from common database"));
-            Assert.NotNull(logMessage);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated Prns are retrieved from common database")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
-               
 
         [Fact]
         public async Task Run_ShouldLogSuccess_WhenPrnListUpdatedSuccessfully()
@@ -79,9 +95,12 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(null);
 
             // Assert
-            var logMessage = _mockLogger.LogMessages
-                .FirstOrDefault(msg => msg.Contains("Prns list successfully updated in NPWD"));
-            Assert.NotNull(logMessage);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Prns list successfully updated in NPWD")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
         [Fact]
@@ -98,10 +117,18 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(null);
 
             // Assert
-            var logMessage = _mockLogger.LogMessages
-                .FirstOrDefault(msg => msg.Contains("Failed to update Prns list in NPWD"));
-            Assert.NotNull(logMessage);
-            Assert.Contains("Status Code: BadRequest", logMessage);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to update Prns list in NPWD")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Status Code: BadRequest")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
         [Fact]
@@ -115,9 +142,20 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(null);
 
             // Assert
-            var logMessage = _mockLogger.LogMessages
-                .FirstOrDefault(msg => msg.Contains("Failed to retrieve data from common backend"));
-            Assert.NotNull(logMessage);
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data from common backend")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("form time period")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
+
     }
 }
