@@ -21,15 +21,14 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         // Read the start hour (e.g., 18 for 6 PM) from configuration
         var startHourConfig = configuration["UpdatePrnsStartHour"];
-        if (!int.TryParse(startHourConfig, out var startHour) || startHour < 0 || startHour > 23)
+        if (!int.TryParse(startHourConfig, out var startHourParsed) || startHourParsed < 0 || startHourParsed > 23)
         {
-            logger.LogError(
-                $"Invalid StartHour configuration value: {startHourConfig}. Using default value of 18(6pm).");
-            startHour = 18; // Default to 6 PM if configuration is invalid
+            logger.LogError($"Invalid StartHour configuration value: {startHourConfig}. Using default value of 18(6pm).");
+            startHourParsed = 18; // Default to 6 PM if configuration is invalid
         }
 
         // Calculate fromDate and toDate
-        var toDate = DateTime.Today.AddHours(startHour); // Configurable hour today
+        var toDate = DateTime.Today.AddHours(startHourParsed); // Configurable hour today
         var fromDate = toDate.AddDays(-1); // Same hour yesterday
 
         logger.LogInformation($"Fetching Prns from {fromDate} to {toDate}.");
