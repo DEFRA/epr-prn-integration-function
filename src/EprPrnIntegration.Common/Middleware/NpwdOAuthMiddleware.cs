@@ -45,7 +45,7 @@ public class NpwdOAuthMiddleware : DelegatingHandler
                         {"resource", _configurationService.NpwdAccessTokenUrl! },
                     })
                     .ExecuteAsync(cancellationToken);
-
+                
                 _accessToken = result.AccessToken;
             }
 

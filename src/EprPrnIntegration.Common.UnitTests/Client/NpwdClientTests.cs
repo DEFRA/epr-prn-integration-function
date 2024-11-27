@@ -61,8 +61,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 {
                     ProducerName = "Test Producer",
                     CompanyRegNo = "12345678",
-                    Postcode = "12345",
-                    StatusCode = "Active"
+                    Postcode = "12345"
                 }
             };
 

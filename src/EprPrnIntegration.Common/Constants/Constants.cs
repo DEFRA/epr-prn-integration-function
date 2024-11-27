@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace EprPrnIntegration.Common.Constants
+﻿namespace EprPrnIntegration.Common.Constants
 {
     public static class HttpClientNames
     {
@@ -31,5 +29,6 @@ namespace EprPrnIntegration.Common.Constants
     public static class NpwdApiPath
     {
         public const string UpdateProducers = "odata/producers";
+        public const string UpdatePrns = "odata/PRNs";
     }
 }

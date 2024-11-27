@@ -41,6 +41,7 @@ public static class HostBuilderConfiguration
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
+        services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -48,7 +49,9 @@ public static class HostBuilderConfiguration
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
-        services.AddHttpClient(EprPrnIntegration.Common.Constants.HttpClientNames.Npwd)
+        
+        // Add HttpClients
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
         services.AddServiceBus(configuration);
