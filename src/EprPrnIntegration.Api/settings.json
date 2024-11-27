@@ -10,11 +10,7 @@
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
     "UpdateProducersStartHour": "18", // Start time in 24-hour format
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
-    "Service:Url": "http://localhost:5000/",
     "Service:EndPointName": "api/organisations",
-    "Service:BearerToken": null,
-    "Service:HttpClientName": null,
-    "Service:Retries": null,
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
     "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
