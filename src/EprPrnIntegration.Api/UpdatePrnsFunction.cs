@@ -12,10 +12,9 @@ namespace EprPrnIntegration.Api;
 public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger, IConfiguration configuration)
 {
-    [FunctionName("UpdatePrnsList")]
+    [Function("UpdatePrnsList")]
     public async Task Run(
-        [TimerTrigger("%UpdatePrnsTrigger%")]
-        TimerInfo myTimer)
+        [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
         logger.LogInformation($"UpdatePrnsList function executed at: {DateTime.UtcNow}");
 
