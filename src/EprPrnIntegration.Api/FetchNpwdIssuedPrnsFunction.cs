@@ -1,7 +1,6 @@
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Service;
-using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -25,8 +24,14 @@ namespace EprPrnIntegration.Api
         {
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
-            //pending find out the filter criteria and add it
-            var filter = "1 eq 1";
+            var lastFetched = GetLastFetchedTime();
+            var currentRunDateTime = DateTime.UtcNow;
+
+            var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
+            if (lastFetched != null)
+            {
+                filter = $"""{filter} and StatusDate ge {lastFetched.Value.ToUniversalTime():O} and StatusDate lt {currentRunDateTime.ToUniversalTime():O}""";
+            }
 
             var npwdIssuedPrns = new List<NpwdPrn>();
             try
@@ -55,6 +60,7 @@ namespace EprPrnIntegration.Api
             {
                 await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
+                SetLastFetchTime(currentRunDateTime);
             }
             catch (Exception ex)
             {
@@ -63,6 +69,20 @@ namespace EprPrnIntegration.Api
             }
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+        }
+
+        private void SetLastFetchTime(DateTime currentRunDateTime)
+        {
+            _logger.LogInformation($"Setting CurrentRunDateTime For Future lastRun {currentRunDateTime:O}");
+            //Pending pushing last run logic is done by Ehsan 
+        }
+
+        private DateTime? GetLastFetchedTime()
+        {
+            _logger.LogInformation("Getting Future lastRun DateTime to fetch data");
+            //pending setting null as the logic to pull lastrun is going to be done by Ehsan
+            //Make sure you set in utc format and parse in utc format
+            return null;
         }
     }
 }
