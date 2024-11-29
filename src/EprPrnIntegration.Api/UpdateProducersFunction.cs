@@ -16,6 +16,18 @@ public class UpdateProducersFunction(IOrganisationService organisationService, I
     [Function("UpdateProducersList")]
     public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+
+        if (!bool.TryParse(configuration[ConfigSettingKeys.RunIntegrationFeatureFlag], out bool isOn))
+        {
+            isOn = false;
+        }
+
+        if (!isOn)
+        {
+            logger.LogInformation("UpdateProducersList function is turned off");
+            return;
+        }
+
         logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
 
         int startHour = GetStartHour(configuration["UpdateProducersStartHour"]);

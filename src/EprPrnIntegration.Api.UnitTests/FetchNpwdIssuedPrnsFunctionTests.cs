@@ -6,6 +6,7 @@ using Xunit;
 using EprPrnIntegration.Common.Client;
 using Microsoft.Azure.Functions.Worker;
 using AutoFixture;
+using Microsoft.Extensions.Configuration;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -15,6 +16,8 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<ILogger<FetchNpwdIssuedPrnsFunction>> _mockLogger;
         private readonly Mock<INpwdClient> _mockNpwdClient;
         private readonly Mock<IServiceBusProvider> _mockServiceBusProvider;
+        private readonly Mock<IConfiguration> _mockConfiguration;
+
         private readonly FetchNpwdIssuedPrnsFunction _function;
 
         public FetchNpwdIssuedPrnsFunctionTests()
@@ -24,12 +27,17 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockLogger = new Mock<ILogger<FetchNpwdIssuedPrnsFunction>>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockServiceBusProvider = new Mock<IServiceBusProvider>();
+            _mockConfiguration = new Mock<IConfiguration>();
 
             // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
-                _mockServiceBusProvider.Object);
+                _mockServiceBusProvider.Object,
+                _mockConfiguration.Object);
+
+            // Turn the feature flag on
+            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns("True");
         }
 
         [Fact]
@@ -103,6 +111,29 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once); 
             Assert.Equal("Error pushing to queue", ex.Message); 
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("False")]
+        public async Task Run_Ends_When_Feature_Flag_Is_Flase_Or_Not_Set(string featureFlag)
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns(featureFlag);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is turned off"))));
+            _mockLogger.Verify(logger => logger.Log(
+                      It.IsAny<LogLevel>(),
+                      It.IsAny<EventId>(),
+                      It.IsAny<It.IsAnyType>(),
+                      It.IsAny<Exception>(),
+                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                  Times.Once());
         }
     }
 }

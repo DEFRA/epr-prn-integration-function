@@ -13,6 +13,7 @@
     public static class ConfigSettingKeys
     {
         public const string KeyVaultUrl = "AzureKeyVaultUrl";
+        public const string RunIntegrationFeatureFlag = "RunIntegration";
 
         public static class NpwdOAuth
         {

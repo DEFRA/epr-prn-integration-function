@@ -6,6 +6,7 @@ using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using System.Net;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -30,6 +31,9 @@ namespace EprPrnIntegration.Api.UnitTests
                 _loggerMock.Object,
                 _mockConfiguration.Object
             );
+
+            // Turn the feature flag on
+            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns("True");
         }
 
         [Fact]
@@ -157,5 +161,27 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("False")]
+        public async Task Run_Ends_When_Feature_Flag_Is_Flase_Or_Not_Set(string featureFlag)
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns(featureFlag);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is turned off"))));
+            _loggerMock.Verify(logger => logger.Log(
+                      It.IsAny<LogLevel>(),
+                      It.IsAny<EventId>(),
+                      It.IsAny<It.IsAnyType>(),
+                      It.IsAny<Exception>(),
+                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                  Times.Once());
+        }
     }
 }

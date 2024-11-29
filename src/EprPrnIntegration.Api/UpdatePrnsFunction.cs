@@ -16,6 +16,18 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     public async Task Run(
         [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
+
+        if (!bool.TryParse(configuration[ConfigSettingKeys.RunIntegrationFeatureFlag], out bool isOn))
+        {
+            isOn = false;
+        }
+
+        if (!isOn)
+        {
+            logger.LogInformation("UpdatePrnsList function is turned off");
+            return;
+        }
+
         logger.LogInformation($"UpdatePrnsList function executed at: {DateTime.UtcNow}");
 
         // Read the start hour (e.g., 18 for 6 PM) from configuration

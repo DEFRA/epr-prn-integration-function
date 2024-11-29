@@ -17,6 +17,12 @@ public class UpdateProducersFunctionTests
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
 
+    public UpdateProducersFunctionTests()
+    {
+        // Turn the feature flag on
+        _configurationMock.Setup(c => c["RunIntegration"]).Returns("True");
+    }
+
     [Fact]
     public async Task Run_InvalidStartHour_UsesDefaultValue()
     {
@@ -154,5 +160,30 @@ public class UpdateProducersFunctionTests
             It.Is<It.IsAnyType>((v, t) => v.ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
             null,
             (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("False")]
+    public async Task Run_Ends_When_Feature_Flag_Is_Flase_Or_Not_Set(string featureFlag)
+    {
+        // Arrange
+        _configurationMock.Setup(c => c["RunIntegration"]).Returns(featureFlag);
+
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is turned off"))));
+        _loggerMock.Verify(logger => logger.Log(
+                  It.IsAny<LogLevel>(),
+                  It.IsAny<EventId>(),
+                  It.IsAny<It.IsAnyType>(),
+                  It.IsAny<Exception>(),
+                  It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+              Times.Once());
     }
 }
