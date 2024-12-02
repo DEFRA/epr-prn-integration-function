@@ -49,17 +49,17 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Invalid StartHour configuration value")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Invalid StartHour configuration value")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
             _loggerMock.Verify(
                 logger => logger.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Using default value of 18(6pm)")),
+                    It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Using default value of 18(6pm)")),
                     null,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
                 Times.Once,
                 "Expected log message containing 'Using default value of 18(6pm)'"
@@ -80,9 +80,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated Prns are retrieved from common database")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -102,9 +102,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Prns list successfully updated in NPWD")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -124,15 +124,15 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to update Prns list in NPWD")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Status Code: BadRequest")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -149,16 +149,16 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data from common backend")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("form time period")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Theory]

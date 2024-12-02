@@ -37,9 +37,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Invalid StartHour configuration value")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Invalid StartHour configuration value")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -69,9 +69,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Producers list successfully updated")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Producers list successfully updated")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -94,9 +94,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated producers")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated producers")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -119,9 +119,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data")),
             It.IsAny<Exception>(),
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -157,9 +157,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Theory]
