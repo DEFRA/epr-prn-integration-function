@@ -1,27 +1,23 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api;
 
 public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
-    ILogger<UpdatePrnsFunction> logger, IConfiguration configuration)
+    ILogger<UpdatePrnsFunction> logger, IConfiguration configuration, IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
         [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
-
-        if (!bool.TryParse(configuration[ConfigSettingKeys.RunIntegrationFeatureFlag], out bool isOn))
-        {
-            isOn = false;
-        }
-
+        bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
             logger.LogInformation("UpdatePrnsList function is turned off");

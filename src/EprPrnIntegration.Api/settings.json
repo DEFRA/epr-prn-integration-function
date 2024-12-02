@@ -15,6 +15,6 @@
     "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
     "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
-    "RunIntegration": true // feature flag
+    "FeatureManagement:RunIntegration": true // feature flag
   }
 }

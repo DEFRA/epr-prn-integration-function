@@ -1,10 +1,12 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -16,11 +18,16 @@ public class UpdateProducersFunctionTests
     private readonly Mock<INpwdClient> _npwdClientMock = new();
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
+    private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
 
     public UpdateProducersFunctionTests()
     {
         // Turn the feature flag on
-        _configurationMock.Setup(c => c["RunIntegration"]).Returns("True");
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = true
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
     }
 
     [Fact]
@@ -28,7 +35,7 @@ public class UpdateProducersFunctionTests
     {
         // Arrange
         _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns("invalid");
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -58,7 +65,7 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -85,7 +92,7 @@ public class UpdateProducersFunctionTests
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedProducersResponseModel>());
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -110,7 +117,7 @@ public class UpdateProducersFunctionTests
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Fetch error"));
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -148,7 +155,7 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(responseMessage);
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -162,16 +169,17 @@ public class UpdateProducersFunctionTests
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("False")]
-    public async Task Run_Ends_When_Feature_Flag_Is_Flase_Or_Not_Set(string featureFlag)
+    [Fact]
+    public async Task Run_Ends_When_Feature_Flag_Is_False()
     {
         // Arrange
-        _configurationMock.Setup(c => c["RunIntegration"]).Returns(featureFlag);
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = false
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);

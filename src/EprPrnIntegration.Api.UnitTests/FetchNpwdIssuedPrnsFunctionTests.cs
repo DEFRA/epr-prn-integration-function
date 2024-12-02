@@ -6,7 +6,8 @@ using Xunit;
 using EprPrnIntegration.Common.Client;
 using Microsoft.Azure.Functions.Worker;
 using AutoFixture;
-using Microsoft.Extensions.Configuration;
+using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -16,7 +17,7 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<ILogger<FetchNpwdIssuedPrnsFunction>> _mockLogger;
         private readonly Mock<INpwdClient> _mockNpwdClient;
         private readonly Mock<IServiceBusProvider> _mockServiceBusProvider;
-        private readonly Mock<IConfiguration> _mockConfiguration;
+        private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
 
         private readonly FetchNpwdIssuedPrnsFunction _function;
 
@@ -27,17 +28,22 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockLogger = new Mock<ILogger<FetchNpwdIssuedPrnsFunction>>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockServiceBusProvider = new Mock<IServiceBusProvider>();
-            _mockConfiguration = new Mock<IConfiguration>();
+            _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
 
             // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
                 _mockServiceBusProvider.Object,
-                _mockConfiguration.Object);
+                _mockFeatureConfig.Object);
 
             // Turn the feature flag on
-            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns("True");
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = true
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
         }
 
         [Fact]
@@ -113,14 +119,15 @@ namespace EprPrnIntegration.Api.UnitTests
             Assert.Equal("Error pushing to queue", ex.Message); 
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("False")]
-        public async Task Run_Ends_When_Feature_Flag_Is_Flase_Or_Not_Set(string featureFlag)
+        [Fact]
+        public async Task Run_Ends_When_Feature_Flag_Is_False()
         {
             // Arrange
-            _mockConfiguration.Setup(c => c["RunIntegration"]).Returns(featureFlag);
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = false
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
             // Act
             await _function.Run(new TimerInfo());

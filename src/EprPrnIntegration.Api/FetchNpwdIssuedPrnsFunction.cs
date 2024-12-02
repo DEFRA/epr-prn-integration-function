@@ -1,10 +1,10 @@
 using EprPrnIntegration.Common.Client;
-using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api
 {
@@ -13,25 +13,20 @@ namespace EprPrnIntegration.Api
         private readonly ILogger<FetchNpwdIssuedPrnsFunction> _logger;
         private readonly INpwdClient _npwdClient;
         private readonly IServiceBusProvider _serviceBusProvider;
-        private readonly IConfiguration _configuration;
+        private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IConfiguration configuration)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IOptions<FeatureManagementConfiguration> featureConfig)
         {
             _logger = logger;
             _npwdClient = npwdClient;
             _serviceBusProvider = serviceBusProvider;
-            _configuration = configuration;
+            _featureConfig = featureConfig;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         {
-
-            if (!bool.TryParse(_configuration[ConfigSettingKeys.RunIntegrationFeatureFlag], out bool isOn))
-            {
-                isOn = false;
-            }
-
+            bool isOn = _featureConfig.Value.RunIntegration ?? false;
             if (!isOn)
             {
                 _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is turned off");
