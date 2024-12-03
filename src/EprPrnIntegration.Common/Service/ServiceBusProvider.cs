@@ -20,25 +20,46 @@ namespace EprPrnIntegration.Common.Service
         }
         public async Task SendFetchedNpwdPrnsToQueue(List<NpwdPrn> prns)
         {
+            ServiceBusMessageBatch? messageBatch = null;
             try
             {
                 await using var sender = _serviceBusClient.CreateSender(_serviceBusConfig.Value.FetchPrnQueueName);
-                using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
+                messageBatch = await sender.CreateMessageBatchAsync();
                 foreach (var prn in prns)
                 {
                     var jsonPrn = JsonSerializer.Serialize(prn);
-                    if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonPrn)))
+                    var message = new ServiceBusMessage(jsonPrn);
+                    if (!messageBatch.TryAddMessage(message))
                     {
-                        _logger.LogWarning("SendFetchedNpwdPrnsToQueue - The message with EvidenNo: {EvidenNo} is too large to fit in the batch.", prn.EvidenceNo);
+                        _logger.LogInformation("SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {count}", messageBatch.Count);
+                        await sender.SendMessagesAsync(messageBatch);
+
+                        _logger.LogInformation("SendFetchedNpwdPrnsToQueue - Disposing current batch and creating new batch");
+                        messageBatch.Dispose();
+                        messageBatch = await sender.CreateMessageBatchAsync();
+
+                        _logger.LogInformation("SendFetchedNpwdPrnsToQueue - Adding message in new batch");
+                        if (!messageBatch.TryAddMessage(message))
+                        {
+                            throw new InvalidOperationException("SendFetchedNpwdPrnsToQueue - Could not add message into new batch");
+                        }
                     }
                 }
-                await sender.SendMessagesAsync(messageBatch);
-                _logger.LogInformation("SendFetchedNpwdPrnsToQueue - A batch of {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, _serviceBusConfig.Value.FetchPrnQueueName);
+                if (messageBatch.Count > 0)
+                {
+                    _logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {count}", messageBatch.Count);
+                    await sender.SendMessagesAsync(messageBatch);
+                }
+                _logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, _serviceBusConfig.Value.FetchPrnQueueName);
             }
             catch (Exception ex)
             {
                 _logger.LogError("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {exception}", ex);
                 throw;
+            }
+            finally
+            {
+                messageBatch?.Dispose();
             }
         }
 
