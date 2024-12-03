@@ -6,6 +6,8 @@ using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
@@ -68,6 +70,8 @@ public static class HostBuilderConfiguration
             var apiKey = configuration.GetValue<string>("MessagingConfig:ApiKey");
             return new NotificationClient(apiKey);
         });
+
+        services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
     }
 
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)

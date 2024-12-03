@@ -1,6 +1,8 @@
 ﻿using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Validators;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
@@ -115,6 +117,12 @@ namespace EprPrnIntegration.Common.Service
                                     var prn = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                                     if (prn != null)
                                     {
+                                        //IValidator<NpwdPrn> npwdPrnValidator inject this and use below code to validate
+                                        //var validationResult = _npwdPrnValidator.Validate(npwdIssuedPrn);
+                                        //if (!validationResult.IsValid)
+                                        //{
+                                        //}
+
                                         if (IsValidPrn(prn))
                                         {
                                             prns.Add(prn);
