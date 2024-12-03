@@ -14,6 +14,8 @@
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
     "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
-    "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true"
+    "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
+    "ServiceBus:DeltaSyncQueueName": "UseDevelopmentStorage=true",
+    "DefaultLastRunDate": "2024-01-01"
   }
 }
