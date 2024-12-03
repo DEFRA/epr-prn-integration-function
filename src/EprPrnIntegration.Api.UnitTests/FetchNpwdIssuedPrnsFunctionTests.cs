@@ -133,7 +133,7 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(new TimerInfo());
 
             // Assert
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is turned off"))));
+            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag"))));
             _mockLogger.Verify(logger => logger.Log(
                       It.IsAny<LogLevel>(),
                       It.IsAny<EventId>(),

@@ -21,7 +21,7 @@ public class UpdateProducersFunction(IOrganisationService organisationService, I
         bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
-            logger.LogInformation("UpdateProducersList function is turned off");
+            logger.LogInformation("UpdateProducersList function is disabled by feature flag");
             return;
         }
 

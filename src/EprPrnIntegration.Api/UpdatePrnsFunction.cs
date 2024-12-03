@@ -20,7 +20,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
-            logger.LogInformation("UpdatePrnsList function is turned off");
+            logger.LogInformation("UpdatePrnsList function is disabled by feature flag");
             return;
         }
 

@@ -185,7 +185,7 @@ public class UpdateProducersFunctionTests
         await function.Run(null);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is turned off"))));
+        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
         _loggerMock.Verify(logger => logger.Log(
                   It.IsAny<LogLevel>(),
                   It.IsAny<EventId>(),

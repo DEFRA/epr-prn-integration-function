@@ -29,7 +29,7 @@ namespace EprPrnIntegration.Api
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
             if (!isOn)
             {
-                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is turned off");
+                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
                 return;
             }
 

@@ -187,7 +187,7 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(new TimerInfo());
 
             // Assert
-            _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is turned off"))));
+            _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
             _loggerMock.Verify(logger => logger.Log(
                       It.IsAny<LogLevel>(),
                       It.IsAny<EventId>(),
