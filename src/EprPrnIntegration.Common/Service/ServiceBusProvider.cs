@@ -66,6 +66,11 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
+        /// <summary>
+        /// This is the Receiver for the messages in the delta sync queue
+        /// </summary>
+        /// <param name="syncType"></param>
+        /// <returns></returns>
         public async Task<DeltaSyncExecution?> ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
         {
             try
