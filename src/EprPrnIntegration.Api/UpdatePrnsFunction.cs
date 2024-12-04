@@ -1,5 +1,6 @@
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
@@ -14,7 +15,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
-        [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
+    [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
         logger.LogInformation($"UpdatePrnsList function executed at: {DateTime.UtcNow}");
 
@@ -53,8 +54,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         // Send data to NPWD via pEPR API
-        var npwdUpdatedPrns = (List<UpdatedPrnsResponseModel>)updatedEprPrns;
-
+        var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
 
         if (pEprApiResponse.IsSuccessStatusCode)

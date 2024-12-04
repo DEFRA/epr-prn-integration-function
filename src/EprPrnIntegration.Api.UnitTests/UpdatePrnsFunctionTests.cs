@@ -6,6 +6,7 @@ using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using System.Net;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -23,7 +24,7 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockConfiguration = new Mock<IConfiguration>();
             _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
-
+            _mockConfiguration.Setup(c => c["PrnsContext"]).Returns("https://fat.npwd.org.uk/odata/PRNs/$delta");
             _function = new UpdatePrnsFunction(
                 _mockPrnService.Object,
                 _mockNpwdClient.Object,
@@ -37,6 +38,7 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             // Arrange
             _mockConfiguration.Setup(c => c["UpdatePrnsStartHour"]).Returns("invalid");
+            var mockTimerInfo = new Mock<TimerInfo>();
 
             // Act
             await _function.Run(null);
@@ -68,6 +70,7 @@ namespace EprPrnIntegration.Api.UnitTests
             // Arrange
             _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
+            var mockTimerInfo = new Mock<TimerInfo>();
 
             // Act
             await _function.Run(null);
@@ -88,8 +91,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<object>(), It.IsAny<string>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+            var mockTimerInfo = new Mock<TimerInfo>();
 
             // Act
             await _function.Run(null);
@@ -110,8 +114,11 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
+            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<object>(), It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent("Bad Request")
+                });
 
             // Act
             await _function.Run(null);
@@ -123,6 +130,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to update Prns list in NPWD")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
@@ -131,12 +139,14 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
+
         [Fact]
         public async Task Run_ShouldLogError_WhenPrnServiceThrowsException()
         {
             // Arrange
             _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Exception("Service error"));
+            var mockTimerInfo = new Mock<TimerInfo>();
 
             // Act
             await _function.Run(null);
@@ -156,6 +166,5 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
-
     }
 }

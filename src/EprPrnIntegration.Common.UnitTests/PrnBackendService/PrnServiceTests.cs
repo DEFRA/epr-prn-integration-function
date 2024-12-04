@@ -49,8 +49,8 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = DateTime.Now },
-                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = DateTime.Now }
+                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active" },
+                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive" }
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -77,7 +77,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = DateTime.Now }
+                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active" }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);
