@@ -1,4 +1,6 @@
+using System.Net;
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
@@ -7,6 +9,7 @@ using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -19,14 +22,23 @@ public class UpdateProducersFunctionTests
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<IServiceBusProvider> _serviceBusProviderMock = new();
+    private readonly Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
 
-    // Test: Check if the function handles valid StartHour properly
+    public UpdateProducersFunctionTests()
+    {
+        // Turn the feature flag on
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = true
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+    }
+
     [Fact]
     public async Task Run_ValidStartHour_FetchesAndUpdatesProducers()
     {
         // Arrange
-        var startHour = 18;
-        _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns(startHour.ToString());
+        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
         var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
 
         _organisationServiceMock
@@ -47,7 +59,7 @@ public class UpdateProducersFunctionTests
             });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object);
+            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -61,18 +73,16 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Producers list successfully updated")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Producers list successfully updated")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
-    // Test: Ensure that when no updated producers are found, a warning is logged
     [Fact]
     public async Task Run_NoUpdatedProducers_LogsWarning()
     {
         // Arrange
-        var startHour = 18;
-        _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns(startHour.ToString());
+        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
 
         _organisationServiceMock
             .Setup(service =>
@@ -88,7 +98,7 @@ public class UpdateProducersFunctionTests
             });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object);
+            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -97,18 +107,16 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated producers")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated producers")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
-    // Test: Handle when fetching updated producers fails, logs an error
     [Fact]
     public async Task Run_FailedToFetchData_LogsError()
     {
         // Arrange
-        var startHour = 18;
-        _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns(startHour.ToString());
+        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
 
         _organisationServiceMock
             .Setup(service =>
@@ -124,7 +132,7 @@ public class UpdateProducersFunctionTests
             });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object);
+            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -133,18 +141,16 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data")),
             It.IsAny<Exception>(),
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
-    // Test: Handle API response failure, logs raw response body
     [Fact]
     public async Task Run_FailedToUpdateProducers_LogsRawResponseBody()
     {
         // Arrange
-        var startHour = 18;
-        _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns(startHour.ToString());
+        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
         var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
 
         var responseBody =
@@ -152,7 +158,7 @@ public class UpdateProducersFunctionTests
 
         var responseMessage = new HttpResponseMessage
         {
-            StatusCode = System.Net.HttpStatusCode.BadRequest,
+            StatusCode = HttpStatusCode.BadRequest,
             Content = new StringContent(responseBody)
         };
 
@@ -174,7 +180,7 @@ public class UpdateProducersFunctionTests
             });
 
         var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object);
+            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -184,17 +190,44 @@ public class UpdateProducersFunctionTests
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) =>
-                v.ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
+                $"{v}".ToString()
+                    .Contains(
+                        $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_Ends_When_Feature_Flag_Is_False()
+    {
+        // Arrange
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = false
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
+        _loggerMock.Verify(logger => logger.Log(
+                  It.IsAny<LogLevel>(),
+                  It.IsAny<EventId>(),
+                  It.IsAny<It.IsAnyType>(),
+                  It.IsAny<Exception>(),
+                  It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+              Times.Once());
     }
 
     [Fact]
     public async Task Run_SendsDeltaSyncExecutionToQueue()
     {
         // Arrange
-        var startHour = 18;
-        _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns(startHour.ToString());
+        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
         var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
 
         _organisationServiceMock
@@ -225,12 +258,51 @@ public class UpdateProducersFunctionTests
             _npwdClientMock.Object,
             _loggerMock.Object,
             _configurationMock.Object,
-            _serviceBusProviderMock.Object);
+            _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
 
         // Assert
         _serviceBusProviderMock.Verify(provider => provider.SendDeltaSyncExecutionToQueue(It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatedProducers)), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_NoMessageInQueue_UsesDefaultFromConfig()
+    {
+        // Arrange
+        var defaultDatetime = "2024-01-01";
+            _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultDatetime);
+        var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
+
+        _serviceBusProviderMock
+            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync((DeltaSyncExecution)null);
+
+        _organisationServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
+
+        var function = new UpdateProducersFunction(
+            _organisationServiceMock.Object,
+            _npwdClientMock.Object,
+            _loggerMock.Object,
+            _configurationMock.Object,
+            _serviceBusProviderMock.Object,
+            _mockFeatureConfig.Object
+        );
+
+        // Act
+        await function.Run(null);
+
+        // Assert: Verify that DeltaSyncExecution is created using the default date from config
+        _serviceBusProviderMock.Verify(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers), Times.Once);
+        _organisationServiceMock.Verify(service =>
+            service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

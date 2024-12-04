@@ -1,21 +1,29 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api;
 
 public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
-    ILogger<UpdatePrnsFunction> logger, IConfiguration configuration)
+    ILogger<UpdatePrnsFunction> logger, IConfiguration configuration, IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
         [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
+        bool isOn = featureConfig.Value.RunIntegration ?? false;
+        if (!isOn)
+        {
+            logger.LogInformation("UpdatePrnsList function is disabled by feature flag");
+            return;
+        }
+
         logger.LogInformation($"UpdatePrnsList function executed at: {DateTime.UtcNow}");
 
         // Read the start hour (e.g., 18 for 6 PM) from configuration

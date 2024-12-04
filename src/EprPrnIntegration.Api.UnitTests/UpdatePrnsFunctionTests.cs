@@ -6,6 +6,9 @@ using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using System.Net;
 using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -13,23 +16,36 @@ namespace EprPrnIntegration.Api.UnitTests
     {
         private readonly Mock<IPrnService> _mockPrnService;
         private readonly Mock<INpwdClient> _mockNpwdClient;
-        private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
+        private readonly Mock<IConfiguration> _mockConfiguration;
+        private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
+
+
         private UpdatePrnsFunction _function;
 
         public UpdatePrnsFunctionTests()
         {
             _mockPrnService = new Mock<IPrnService>();
             _mockNpwdClient = new Mock<INpwdClient>();
-            _mockConfiguration = new Mock<IConfiguration>();
             _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
+            _mockConfiguration = new Mock<IConfiguration>();
+            _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
 
             _function = new UpdatePrnsFunction(
                 _mockPrnService.Object,
                 _mockNpwdClient.Object,
                 _loggerMock.Object,
-                _mockConfiguration.Object
+                _mockConfiguration.Object,
+                _mockFeatureConfig.Object
             );
+
+            // Turn the feature flag on
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = true
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
         }
 
         [Fact]
@@ -45,17 +61,17 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Invalid StartHour configuration value")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Invalid StartHour configuration value")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
             _loggerMock.Verify(
                 logger => logger.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Using default value of 18(6pm)")),
+                    It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Using default value of 18(6pm)")),
                     null,
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
                 Times.Once,
                 "Expected log message containing 'Using default value of 18(6pm)'"
@@ -76,9 +92,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated Prns are retrieved from common database")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -98,9 +114,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Prns list successfully updated in NPWD")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -120,15 +136,15 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to update Prns list in NPWD")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Status Code: BadRequest")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -145,17 +161,40 @@ namespace EprPrnIntegration.Api.UnitTests
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data from common backend")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("form time period")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
+        [Fact]
+        public async Task Run_Ends_When_Feature_Flag_Is_False()
+        {
+            // Arrange
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = false
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
+            _loggerMock.Verify(logger => logger.Log(
+                      It.IsAny<LogLevel>(),
+                      It.IsAny<EventId>(),
+                      It.IsAny<It.IsAnyType>(),
+                      It.IsAny<Exception>(),
+                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                  Times.Once());
+        }
     }
 }

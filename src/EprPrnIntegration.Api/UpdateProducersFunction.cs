@@ -1,14 +1,15 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api;
 
@@ -17,34 +18,54 @@ public class UpdateProducersFunction(
     INpwdClient npwdClient,
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
-    IServiceBusProvider serviceBusProvider)
+    IServiceBusProvider serviceBusProvider,
+    IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdateProducersList")]
     public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
-        logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
+        var isOn = featureConfig.Value.RunIntegration ?? false;
+        if (!isOn)
+        {
+            logger.LogInformation("UpdateProducersList function is disabled by feature flag");
+            return;
+        }
+
+        logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
         var deltaRun = await DeltaSyncExecution();
 
         var toDate = DateTime.UtcNow;
         var fromDate = deltaRun.LastSyncDateTime;
          
-        logger.LogInformation($"Fetching producers from {fromDate} to {toDate}.");
+        logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
-            logger.LogWarning($"No updated producers retrieved for time period {fromDate} to {toDate}.");
+            logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
             return;
         }
 
         var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-        await HandleApiResponse(pEprApiResponse, fromDate, toDate);
-
-        deltaRun.LastSyncDateTime = DateTime.UtcNow;
-        await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaRun);
+        if (pEprApiResponse.IsSuccessStatusCode)
+        {
+            logger.LogInformation(
+                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate, toDate);
+            
+            // set lastSyncDateTime to toDate as we may receive update during execution 
+            deltaRun.LastSyncDateTime = toDate;
+            await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaRun);
+        }
+        else
+        {
+            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+            logger.LogError(
+                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                pEprApiResponse.StatusCode, responseBody);
+        }
     }
 
     private async Task<DeltaSyncExecution> DeltaSyncExecution()
@@ -67,21 +88,8 @@ public class UpdateProducersFunction(
         catch (Exception ex)
         {
             logger.LogError(ex,
-                $"Failed to retrieve data from accounts backend for time period {fromDate} to {toDate}.");
+                "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
             return null;
         }
-    }
-
-    private async Task HandleApiResponse(HttpResponseMessage pEprApiResponse, DateTime fromDate, DateTime toDate)
-    {
-        if (pEprApiResponse.IsSuccessStatusCode)
-        {
-            logger.LogInformation(
-                $"Producers list successfully updated in NPWD for time period {fromDate} to {toDate}.");
-            return;
-        }
-
-        var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-        logger.LogError($"Failed to parse error response body. Raw Response Body: {responseBody}");
     }
 }
