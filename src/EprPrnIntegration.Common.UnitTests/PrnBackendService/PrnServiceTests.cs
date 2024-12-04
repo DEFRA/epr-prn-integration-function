@@ -93,9 +93,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated PRN's.")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]

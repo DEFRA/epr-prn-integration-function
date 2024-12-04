@@ -65,6 +65,7 @@ public static class HostBuilderConfiguration
     {
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
+        services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
         return services;
     }
 

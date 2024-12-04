@@ -1,10 +1,12 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -16,13 +18,24 @@ public class UpdateProducersFunctionTests
     private readonly Mock<INpwdClient> _npwdClientMock = new();
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
+    private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
+
+    public UpdateProducersFunctionTests()
+    {
+        // Turn the feature flag on
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = true
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+    }
 
     [Fact]
     public async Task Run_InvalidStartHour_UsesDefaultValue()
     {
         // Arrange
         _configurationMock.Setup(c => c["UpdateProducersStartHour"]).Returns("invalid");
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -31,9 +44,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Invalid StartHour configuration value")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Invalid StartHour configuration value")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -52,7 +65,7 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -63,9 +76,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Producers list successfully updated")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Producers list successfully updated")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -79,7 +92,7 @@ public class UpdateProducersFunctionTests
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedProducersResponseModel>());
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -88,9 +101,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No updated producers")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated producers")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -104,7 +117,7 @@ public class UpdateProducersFunctionTests
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Fetch error"));
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -113,9 +126,9 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to retrieve data")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data")),
             It.IsAny<Exception>(),
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -142,7 +155,7 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(responseMessage);
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object);
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -151,8 +164,34 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains($"Failed to parse error response body. Raw Response Body: {responseBody}")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_Ends_When_Feature_Flag_Is_False()
+    {
+        // Arrange
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = false
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _mockFeatureConfig.Object);
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
+        _loggerMock.Verify(logger => logger.Log(
+                  It.IsAny<LogLevel>(),
+                  It.IsAny<EventId>(),
+                  It.IsAny<It.IsAnyType>(),
+                  It.IsAny<Exception>(),
+                  It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+              Times.Once());
     }
 }

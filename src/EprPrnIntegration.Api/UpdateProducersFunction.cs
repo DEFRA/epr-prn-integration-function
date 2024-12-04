@@ -1,4 +1,5 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
@@ -7,15 +8,23 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api;
 
 public class UpdateProducersFunction(IOrganisationService organisationService, INpwdClient npwdClient, 
-    ILogger<UpdateProducersFunction> logger, IConfiguration configuration)
+    ILogger<UpdateProducersFunction> logger, IConfiguration configuration, IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdateProducersList")]
     public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        bool isOn = featureConfig.Value.RunIntegration ?? false;
+        if (!isOn)
+        {
+            logger.LogInformation("UpdateProducersList function is disabled by feature flag");
+            return;
+        }
+
         logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
 
         int startHour = GetStartHour(configuration["UpdateProducersStartHour"]);
