@@ -41,36 +41,23 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                await using var sender = serviceBusClient.CreateSender(config.Value.DeltaSyncQueueName);
-                using var messageBatch = await sender.CreateMessageBatchAsync();
+                var existingMessage = await ReceiveDeltaSyncExecutionFromQueue(deltaSyncExecution.SyncType);
 
+                logger.LogInformation(
+                    existingMessage != null
+                        ? "SendDeltaSyncExecutionToQueue - Updated existing message for SyncType: {SyncType} in the queue"
+                        : "SendDeltaSyncExecutionToQueue - Created new message for SyncType: {SyncType} in the queue",
+                    deltaSyncExecution.SyncType);
+
+                await using var sender = serviceBusClient.CreateSender(config.Value.DeltaSyncQueueName);
                 var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
                     ContentType = "application/json"
                 };
-
-                var existingMessage = await ReceiveDeltaSyncExecutionFromQueue(deltaSyncExecution.SyncType);
-
-                if (existingMessage != null)
-                {
-                    if (!messageBatch.TryAddMessage(message))
-                    {
-                        logger.LogWarning("SendDeltaSyncExecutionToQueue - The updated message for SyncType: {SyncType} is too large to fit in the batch.", deltaSyncExecution.SyncType);
-                    }
-                    logger.LogInformation("SendDeltaSyncExecutionToQueue - Updated existing message for SyncType: {SyncType} in the queue", deltaSyncExecution.SyncType);
-                }
-                else
-                {
-                    if (!messageBatch.TryAddMessage(message))
-                    {
-                        logger.LogWarning("SendDeltaSyncExecutionToQueue - The new message for SyncType: {SyncType} is too large to fit in the batch.", deltaSyncExecution.SyncType);
-                    }
-                    logger.LogInformation("SendDeltaSyncExecutionToQueue - Created new message for SyncType: {SyncType} in the queue", deltaSyncExecution.SyncType);
-                }
-
-                await sender.SendMessagesAsync(messageBatch);
-                logger.LogInformation("SendDeltaSyncExecutionToQueue - A batch of {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.DeltaSyncQueueName);
+                
+                await sender.SendMessageAsync(message);
+                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {queue}", config.Value.DeltaSyncQueueName);
             }
             catch (Exception ex)
             {
@@ -101,6 +88,7 @@ namespace EprPrnIntegration.Common.Service
 
                         if (deltaSync != null && deltaSync.SyncType == syncType)
                         {
+                            await receiver.CompleteMessageAsync(message);
                             return deltaSync;
                         }
 
@@ -113,7 +101,6 @@ namespace EprPrnIntegration.Common.Service
                     }
                 }
 
-                // no message is found with the expected type and hence return null
                 return null;
             }
             catch (Exception ex)
