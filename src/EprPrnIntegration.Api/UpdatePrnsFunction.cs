@@ -61,7 +61,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         // Send data to NPWD via pEPR API
-        var npwdUpdatedPrns = (List<UpdatedPrnsResponseModel>)updatedEprPrns;
+        var npwdUpdatedPrns = updatedEprPrns;
 
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
 
@@ -72,6 +72,10 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
         else
         {
+            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+            logger.LogError(
+                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                pEprApiResponse.StatusCode, responseBody);
             logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
         }
     }

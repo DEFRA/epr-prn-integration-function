@@ -1,11 +1,10 @@
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,7 +17,7 @@ public class UpdateProducersFunction(
     INpwdClient npwdClient,
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
-    IServiceBusProvider serviceBusProvider,
+    IUtilities utilities,
     IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdateProducersList")]
@@ -33,7 +32,7 @@ public class UpdateProducersFunction(
 
         logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        var deltaRun = await DeltaSyncExecution();
+        var deltaRun = await utilities.GetDeltaSyncExecution();
 
         var toDate = DateTime.UtcNow;
         var fromDate = deltaRun.LastSyncDateTime;
@@ -53,11 +52,10 @@ public class UpdateProducersFunction(
         if (pEprApiResponse.IsSuccessStatusCode)
         {
             logger.LogInformation(
-                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate, toDate);
-            
-            // set lastSyncDateTime to toDate as we may receive update during execution 
-            deltaRun.LastSyncDateTime = toDate;
-            await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaRun);
+                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
+                toDate);
+
+            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
         }
         else
         {
@@ -66,17 +64,6 @@ public class UpdateProducersFunction(
                 "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
                 pEprApiResponse.StatusCode, responseBody);
         }
-    }
-
-    private async Task<DeltaSyncExecution> DeltaSyncExecution()
-    {
-        var deltaMessage =
-            await serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
-        return deltaMessage ?? new DeltaSyncExecution
-        {
-            LastSyncDateTime = DateTime.Parse(configuration["DefaultLastRunDate"]),
-            SyncType = NpwdDeltaSyncType.UpdatedProducers
-        };
     }
 
     private async Task<List<UpdatedProducersResponseModel>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
