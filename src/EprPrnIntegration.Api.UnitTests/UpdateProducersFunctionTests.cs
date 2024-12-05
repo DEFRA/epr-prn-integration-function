@@ -128,7 +128,7 @@ public class UpdateProducersFunctionTests
                 SyncType = NpwdDeltaSyncType.UpdatedProducers,
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
-        
+
         // Act
         await function.Run(null);
 

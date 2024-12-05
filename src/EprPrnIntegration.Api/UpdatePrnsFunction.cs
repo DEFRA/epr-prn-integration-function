@@ -2,9 +2,11 @@ using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,12 +14,13 @@ namespace EprPrnIntegration.Api;
 
 public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
+    IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
     IUtilities utilities)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
-        [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
+    [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
         bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
@@ -56,8 +59,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         // Send data to NPWD via pEPR API
-        var npwdUpdatedPrns = updatedEprPrns;
-
+        var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
 
         if (pEprApiResponse.IsSuccessStatusCode)

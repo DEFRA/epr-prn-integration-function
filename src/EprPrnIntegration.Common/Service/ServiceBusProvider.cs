@@ -111,7 +111,7 @@ namespace EprPrnIntegration.Common.Service
             catch (Exception ex)
             {
                 logger.LogError("ReceiveDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
-                throw; 
+                throw;
             }
         }
     }

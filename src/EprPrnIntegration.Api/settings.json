@@ -9,12 +9,14 @@
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
+    "UpdatePrnsTrigger": "0 0 18 * * 1-5",
+    "PrnsContext": "https://fat.npwd.org.uk/odata/PRNs/$delta",
     "Service:EndPointName": "api/organisations",
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
     "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
     "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
-    "FeatureManagement:RunIntegration": true // feature flag
+    "FeatureManagement:RunIntegration": true, // feature flag
     "ServiceBus:DeltaSyncQueueName": "UseDevelopmentStorage=true",
     "DefaultLastRunDate": "2024-01-01"
   }

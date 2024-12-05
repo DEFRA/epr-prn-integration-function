@@ -29,7 +29,7 @@ public class PrnService : BaseHttpService, IPrnService
         var fromDate = from.ToString("yyyy/MM/dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         var toDate = to.ToString("yyyy/MM/dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         _logger.LogInformation("Getting updated PRN's.");
-        return await Get<List<UpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?fromDate={fromDate}&toDate={toDate}",
+        return await Get<List<UpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
             cancellationToken, false);
     }
 }

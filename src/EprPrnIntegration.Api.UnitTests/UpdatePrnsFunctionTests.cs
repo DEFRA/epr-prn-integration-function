@@ -1,10 +1,12 @@
 ﻿using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using global::EprPrnIntegration.Common.Client;
 using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -17,6 +19,7 @@ public class UpdatePrnsFunctionTests
 {
     private readonly Mock<IPrnService> _mockPrnService;
     private readonly Mock<INpwdClient> _mockNpwdClient;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
     private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
     private Mock<IUtilities> _mockUtilities;
@@ -27,6 +30,7 @@ public class UpdatePrnsFunctionTests
     {
         _mockPrnService = new Mock<IPrnService>();
         _mockNpwdClient = new Mock<INpwdClient>();
+        _mockConfiguration = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
         _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
         _mockUtilities = new Mock<IUtilities>();
@@ -35,6 +39,7 @@ public class UpdatePrnsFunctionTests
             _mockPrnService.Object,
             _mockNpwdClient.Object,
             _loggerMock.Object,
+            _mockConfiguration.Object,
             _mockFeatureConfig.Object,
             _mockUtilities.Object
         );
@@ -84,7 +89,7 @@ public class UpdatePrnsFunctionTests
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities
@@ -122,7 +127,7 @@ public class UpdatePrnsFunctionTests
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
 
         // Act
@@ -207,8 +212,8 @@ public class UpdatePrnsFunctionTests
         // Arrange
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
-       
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities
@@ -250,7 +255,7 @@ public class UpdatePrnsFunctionTests
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities

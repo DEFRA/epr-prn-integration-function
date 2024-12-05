@@ -36,7 +36,7 @@ public class UpdateProducersFunction(
 
         var toDate = DateTime.UtcNow;
         var fromDate = deltaRun.LastSyncDateTime;
-         
+
         logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
