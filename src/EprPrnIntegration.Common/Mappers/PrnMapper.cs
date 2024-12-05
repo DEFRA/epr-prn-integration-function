@@ -20,7 +20,8 @@ public static class PrnMapper
             Value = updatedPrns.Select(eprProducer => new UpdatedPrnsResponseModel
             {
                 EvidenceNo = eprProducer.EvidenceNo,
-                EvidenceStatusCode = eprProducer.EvidenceStatusCode
+                EvidenceStatusCode = eprProducer.EvidenceStatusCode,
+                StatusDate = eprProducer.StatusDate
             }).ToList()
         };
     }

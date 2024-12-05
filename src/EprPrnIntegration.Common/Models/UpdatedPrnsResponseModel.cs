@@ -7,4 +7,5 @@ public class UpdatedPrnsResponseModel
 {
     public required string EvidenceNo { get; set; }
     public required string EvidenceStatusCode { get; set; }
+    public DateTime? StatusDate { get; set; }
 }
