@@ -6,6 +6,8 @@ using Xunit;
 using EprPrnIntegration.Common.Client;
 using Microsoft.Azure.Functions.Worker;
 using AutoFixture;
+using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -15,6 +17,8 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<ILogger<FetchNpwdIssuedPrnsFunction>> _mockLogger;
         private readonly Mock<INpwdClient> _mockNpwdClient;
         private readonly Mock<IServiceBusProvider> _mockServiceBusProvider;
+        private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
+
         private readonly FetchNpwdIssuedPrnsFunction _function;
 
         public FetchNpwdIssuedPrnsFunctionTests()
@@ -24,12 +28,22 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockLogger = new Mock<ILogger<FetchNpwdIssuedPrnsFunction>>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockServiceBusProvider = new Mock<IServiceBusProvider>();
+            _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
 
             // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
-                _mockServiceBusProvider.Object);
+                _mockServiceBusProvider.Object,
+                _mockFeatureConfig.Object);
+
+            // Turn the feature flag on
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = true
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
         }
 
         [Fact]
@@ -103,6 +117,30 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once); 
             Assert.Equal("Error pushing to queue", ex.Message); 
+        }
+
+        [Fact]
+        public async Task Run_Ends_When_Feature_Flag_Is_False()
+        {
+            // Arrange
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = false
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag"))));
+            _mockLogger.Verify(logger => logger.Log(
+                      It.IsAny<LogLevel>(),
+                      It.IsAny<EventId>(),
+                      It.IsAny<It.IsAnyType>(),
+                      It.IsAny<Exception>(),
+                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                  Times.Once());
         }
     }
 }

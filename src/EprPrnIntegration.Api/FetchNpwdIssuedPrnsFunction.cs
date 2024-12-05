@@ -1,9 +1,10 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Service;
-using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api
 {
@@ -12,17 +13,26 @@ namespace EprPrnIntegration.Api
         private readonly ILogger<FetchNpwdIssuedPrnsFunction> _logger;
         private readonly INpwdClient _npwdClient;
         private readonly IServiceBusProvider _serviceBusProvider;
+        private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IOptions<FeatureManagementConfiguration> featureConfig)
         {
             _logger = logger;
             _npwdClient = npwdClient;
             _serviceBusProvider = serviceBusProvider;
+            _featureConfig = featureConfig;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         {
+            bool isOn = _featureConfig.Value.RunIntegration ?? false;
+            if (!isOn)
+            {
+                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
+                return;
+            }
+
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
             //pending find out the filter criteria and add it
