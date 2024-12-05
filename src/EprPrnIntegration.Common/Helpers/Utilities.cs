@@ -7,14 +7,14 @@ namespace EprPrnIntegration.Common.Helpers;
 
 public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration configuration) : IUtilities
 {
-    public async Task<DeltaSyncExecution> GetDeltaSyncExecution()
+    public async Task<DeltaSyncExecution> GetDeltaSyncExecution(NpwdDeltaSyncType syncType)
     {
         var deltaMessage =
-            await serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
+            await serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(syncType);
         return deltaMessage ?? new DeltaSyncExecution
         {
             LastSyncDateTime = DateTime.Parse(configuration["DefaultLastRunDate"]),
-            SyncType = NpwdDeltaSyncType.UpdatedProducers
+            SyncType = syncType
         };
     }
 

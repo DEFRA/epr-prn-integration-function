@@ -32,7 +32,7 @@ public class UpdateProducersFunction(
 
         logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        var deltaRun = await utilities.GetDeltaSyncExecution();
+        var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers);
 
         var toDate = DateTime.UtcNow;
         var fromDate = deltaRun.LastSyncDateTime;

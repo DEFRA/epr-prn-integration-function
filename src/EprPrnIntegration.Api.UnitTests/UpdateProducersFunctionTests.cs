@@ -1,16 +1,16 @@
-using System.Net;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Net;
 using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
@@ -21,8 +21,10 @@ public class UpdateProducersFunctionTests
     private readonly Mock<INpwdClient> _npwdClientMock = new();
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
-    private readonly Mock<IServiceBusProvider> _serviceBusProviderMock = new();
+    private readonly Mock<IUtilities> _utilitiesMock = new();
     private readonly Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
+
+    private readonly UpdateProducersFunction function;
 
     public UpdateProducersFunctionTests()
     {
@@ -32,14 +34,16 @@ public class UpdateProducersFunctionTests
             RunIntegration = true
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+        function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
+            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object);
     }
 
     [Fact]
     public async Task Run_ValidStartHour_FetchesAndUpdatesProducers()
     {
         // Arrange
-        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
+        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
 
         _organisationServiceMock
             .Setup(service =>
@@ -50,16 +54,13 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(new DeltaSyncExecution
             {
                 SyncType = NpwdDeltaSyncType.UpdatedProducers,
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
-
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -89,16 +90,13 @@ public class UpdateProducersFunctionTests
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<UpdatedProducersResponseModel>());
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(new DeltaSyncExecution
             {
                 SyncType = NpwdDeltaSyncType.UpdatedProducers,
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
-
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -123,17 +121,14 @@ public class UpdateProducersFunctionTests
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Fetch error"));
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(new DeltaSyncExecution
             {
                 SyncType = NpwdDeltaSyncType.UpdatedProducers,
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
-
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
-
+        
         // Act
         await function.Run(null);
 
@@ -171,16 +166,13 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(responseMessage);
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(new DeltaSyncExecution
             {
                 SyncType = NpwdDeltaSyncType.UpdatedProducers,
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
-
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
@@ -207,8 +199,6 @@ public class UpdateProducersFunctionTests
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
-        var function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object, _loggerMock.Object, _configurationMock.Object, _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
-
         // Act
         await function.Run(null);
 
@@ -227,7 +217,6 @@ public class UpdateProducersFunctionTests
     public async Task Run_SendsDeltaSyncExecutionToQueue()
     {
         // Arrange
-        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
         var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
 
         _organisationServiceMock
@@ -245,26 +234,18 @@ public class UpdateProducersFunctionTests
             LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
         };
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(deltaSyncExecution);
-
-        _serviceBusProviderMock
-            .Setup(provider => provider.SendDeltaSyncExecutionToQueue(It.IsAny<DeltaSyncExecution>()))
-            .Returns(Task.CompletedTask); // Mock the Send method to complete successfully.
-
-        var function = new UpdateProducersFunction(
-            _organisationServiceMock.Object,
-            _npwdClientMock.Object,
-            _loggerMock.Object,
-            _configurationMock.Object,
-            _serviceBusProviderMock.Object, _mockFeatureConfig.Object);
 
         // Act
         await function.Run(null);
 
         // Assert
-        _serviceBusProviderMock.Verify(provider => provider.SendDeltaSyncExecutionToQueue(It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatedProducers)), Times.Once);
+        _utilitiesMock.Verify(
+            provider => provider.SetDeltaSyncExecution(
+                It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatedProducers), It.IsAny<DateTime>()),
+            Times.Once);
     }
 
     [Fact]
@@ -272,12 +253,17 @@ public class UpdateProducersFunctionTests
     {
         // Arrange
         var defaultDatetime = "2024-01-01";
-            _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultDatetime);
         var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
 
-        _serviceBusProviderMock
-            .Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers))
-            .ReturnsAsync((DeltaSyncExecution)null);
+        var defaultDeltaSync = new DeltaSyncExecution
+        {
+            LastSyncDateTime = DateTime.Parse(defaultDatetime),
+            SyncType = NpwdDeltaSyncType.UpdatedProducers
+        };
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(defaultDeltaSync);
 
         _organisationServiceMock
             .Setup(service =>
@@ -288,20 +274,10 @@ public class UpdateProducersFunctionTests
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
-        var function = new UpdateProducersFunction(
-            _organisationServiceMock.Object,
-            _npwdClientMock.Object,
-            _loggerMock.Object,
-            _configurationMock.Object,
-            _serviceBusProviderMock.Object,
-            _mockFeatureConfig.Object
-        );
-
         // Act
         await function.Run(null);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
-        _serviceBusProviderMock.Verify(provider => provider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers), Times.Once);
         _organisationServiceMock.Verify(service =>
             service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }

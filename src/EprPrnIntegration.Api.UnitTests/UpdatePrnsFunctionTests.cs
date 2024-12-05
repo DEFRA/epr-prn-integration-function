@@ -1,200 +1,271 @@
-﻿using Microsoft.Extensions.Configuration;
-using Moq;
-using Xunit;
+﻿using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Queues;
 using global::EprPrnIntegration.Common.Client;
 using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using System.Net;
-using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker;
-using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
+using System.Net;
+using Xunit;
 
-namespace EprPrnIntegration.Api.UnitTests
+namespace EprPrnIntegration.Api.UnitTests;
+
+public class UpdatePrnsFunctionTests
 {
-    public class UpdatePrnsFunctionTests
+    private readonly Mock<IPrnService> _mockPrnService;
+    private readonly Mock<INpwdClient> _mockNpwdClient;
+    private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
+    private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
+    private Mock<IUtilities> _mockUtilities;
+
+    private UpdatePrnsFunction _function;
+
+    public UpdatePrnsFunctionTests()
     {
-        private readonly Mock<IPrnService> _mockPrnService;
-        private readonly Mock<INpwdClient> _mockNpwdClient;
-        private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
-        private readonly Mock<IConfiguration> _mockConfiguration;
-        private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
+        _mockPrnService = new Mock<IPrnService>();
+        _mockNpwdClient = new Mock<INpwdClient>();
+        _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
+        _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
+        _mockUtilities = new Mock<IUtilities>();
 
+        _function = new UpdatePrnsFunction(
+            _mockPrnService.Object,
+            _mockNpwdClient.Object,
+            _loggerMock.Object,
+            _mockFeatureConfig.Object,
+            _mockUtilities.Object
+        );
 
-        private UpdatePrnsFunction _function;
-
-        public UpdatePrnsFunctionTests()
+        // Turn the feature flag on
+        var config = new FeatureManagementConfiguration
         {
-            _mockPrnService = new Mock<IPrnService>();
-            _mockNpwdClient = new Mock<INpwdClient>();
-            _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
-            _mockConfiguration = new Mock<IConfiguration>();
-            _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
+            RunIntegration = true
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
-            _function = new UpdatePrnsFunction(
-                _mockPrnService.Object,
-                _mockNpwdClient.Object,
-                _loggerMock.Object,
-                _mockConfiguration.Object,
-                _mockFeatureConfig.Object
-            );
+    }
 
-            // Turn the feature flag on
-            var config = new FeatureManagementConfiguration
+
+    [Fact]
+    public async Task Run_ShouldLogWarning_WhenNoUpdatedPrnsRetrieved()
+    {
+        // Arrange
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
             {
-                RunIntegration = true
-            };
-            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
 
-        }
 
-        [Fact]
-        public async Task Run_ShouldUseDefaultStartHour_WhenConfigurationIsInvalid()
-        {
-            // Arrange
-            _mockConfiguration.Setup(c => c["UpdatePrnsStartHour"]).Returns("invalid");
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
 
-            // Act
-            await _function.Run(null);
+        // Act
+        await _function.Run(null);
 
-            // Assert
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Invalid StartHour configuration value")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
 
-            _loggerMock.Verify(
-                logger => logger.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Using default value of 18(6pm)")),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ),
-                Times.Once,
-                "Expected log message containing 'Using default value of 18(6pm)'"
-            );
-        }
+    [Fact]
+    public async Task Run_ShouldLogSuccess_WhenPrnListUpdatedSuccessfully()
+    {
+        // Arrange
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
 
-        [Fact]
-        public async Task Run_ShouldLogWarning_WhenNoUpdatedPrnsRetrieved()
-        {
-            // Arrange
-            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
-            // Act
-            await _function.Run(null);
-
-            // Assert
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task Run_ShouldLogSuccess_WhenPrnListUpdatedSuccessfully()
-        {
-            // Arrange
-            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
-
-            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-
-            // Act
-            await _function.Run(null);
-
-            // Assert
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task Run_ShouldLogError_WhenPrnListUpdateFails()
-        {
-            // Arrange
-            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
-
-            _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
-
-            // Act
-            await _function.Run(null);
-
-            // Assert
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task Run_ShouldLogError_WhenPrnServiceThrowsException()
-        {
-            // Arrange
-            _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Service error"));
-
-            // Act
-            await _function.Run(null);
-
-            // Assert
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-
-            _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task Run_Ends_When_Feature_Flag_Is_False()
-        {
-            // Arrange
-            var config = new FeatureManagementConfiguration
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
             {
-                RunIntegration = false
-            };
-            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
 
-            // Act
-            await _function.Run(new TimerInfo());
+        // Act
+        await _function.Run(null);
 
-            // Assert
-            _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
-            _loggerMock.Verify(logger => logger.Log(
-                      It.IsAny<LogLevel>(),
-                      It.IsAny<EventId>(),
-                      It.IsAny<It.IsAnyType>(),
-                      It.IsAny<Exception>(),
-                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                  Times.Once());
-        }
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_ShouldLogError_WhenPrnListUpdateFails()
+    {
+        // Arrange
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_ShouldLogError_WhenPrnServiceThrowsException()
+    {
+        // Arrange
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Service error"));
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_Ends_When_Feature_Flag_Is_False()
+    {
+        // Arrange
+        var config = new FeatureManagementConfiguration
+        {
+            RunIntegration = false
+        };
+        _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert
+        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
+        _loggerMock.Verify(logger => logger.Log(
+                It.IsAny<LogLevel>(),
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once());
+    }
+
+    [Fact]
+    public async Task Run_SendsDeltaSyncExecutionToQueue()
+    {
+        // Arrange
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+       
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+
+        // Mock DeltaSyncExecution
+        var deltaSyncExecution = new DeltaSyncExecution
+        {
+            SyncType = NpwdDeltaSyncType.UpdatePrns,
+            LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
+        };
+
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(deltaSyncExecution);
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        _mockUtilities.Verify(
+            provider => provider.SetDeltaSyncExecution(
+                It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns), It.IsAny<DateTime>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_NoMessageInQueue_UsesDefaultFromConfig()
+    {
+        // Arrange
+        var defaultDatetime = "2024-01-01";
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<List<UpdatedPrnsResponseModel>>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                LastSyncDateTime = DateTime.Parse(defaultDatetime),
+                SyncType = NpwdDeltaSyncType.UpdatePrns
+            });
+
+        // Act
+        await _function.Run(null);
+
+        // Assert: Verify that DeltaSyncExecution is created using the default date from config
+        _mockPrnService.Verify(service =>
+            service.GetUpdatedPrns(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
