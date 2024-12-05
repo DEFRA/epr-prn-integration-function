@@ -49,8 +49,8 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = DateTime.Now },
-                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = DateTime.Now }
+                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
+                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -77,7 +77,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = DateTime.Now }
+                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);
@@ -95,7 +95,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
         [Fact]
