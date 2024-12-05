@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Exceptions;
+﻿using System.Diagnostics.CodeAnalysis;
+using EprPrnIntegration.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -7,6 +8,7 @@ using System.Net.Http.Json;
 
 namespace EprPrnIntegration.Common.RESTServices
 {
+    [ExcludeFromCodeCoverage]
     public abstract class BaseHttpService
     {
         protected readonly string _baseUrl;

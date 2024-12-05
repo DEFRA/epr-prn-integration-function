@@ -1,5 +1,3 @@
-using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Common;
 using EprPrnIntegration.Common.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

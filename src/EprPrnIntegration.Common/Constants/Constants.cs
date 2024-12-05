@@ -25,4 +25,10 @@
             public const string ApiBaseUrl = "NpwdApiBaseUrl";
         }
     }
+
+    public static class NpwdApiPath
+    {
+        public const string UpdateProducers = "odata/producers";
+        public const string UpdatePrns = "odata/PRNs";
+    }
 }
