@@ -44,6 +44,10 @@ namespace EprPrnIntegration.Api.UnitTests
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
                 _mockServiceBusProvider.Object,
+                _mockEmailService.Object,
+                _mockOrganisationService.Object,
+                _mockPrnService.Object,
+                _mockValidator.Object,
                 _mockFeatureConfig.Object);
 
             // Turn the feature flag on

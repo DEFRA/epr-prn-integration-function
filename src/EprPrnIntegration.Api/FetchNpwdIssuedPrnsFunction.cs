@@ -38,8 +38,8 @@ namespace EprPrnIntegration.Api
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
-        //public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
-        public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
+        //public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
             if (!isOn)
@@ -103,7 +103,7 @@ namespace EprPrnIntegration.Api
                 _logger.LogError("Failed fetching prns from the queue with exception: {ex}", ex);
                 throw;
             }
-            
+
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
         }
 
