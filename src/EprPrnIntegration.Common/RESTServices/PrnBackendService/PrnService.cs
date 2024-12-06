@@ -32,4 +32,10 @@ public class PrnService : BaseHttpService, IPrnService
         return await Get<List<UpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
             cancellationToken, false);
     }
+
+    public async Task SavePrn(SavePrnDetailsRequest request)
+    {
+        _logger.LogInformation($"Saving PRN with id {request.EvidenceNo}" );
+        await Post($"prn/prn-details", request, CancellationToken.None);
+    }
 }

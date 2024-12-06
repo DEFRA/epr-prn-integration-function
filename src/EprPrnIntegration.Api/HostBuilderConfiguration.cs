@@ -6,6 +6,8 @@ using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
@@ -13,6 +15,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Notify.Client;
+using Notify.Interfaces;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
@@ -46,6 +50,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();
+        services.AddSingleton<IEmailService, EmailService>();
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
@@ -58,13 +63,22 @@ public static class HostBuilderConfiguration
         services.ConfigureOptions(configuration);
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
-    }
+        
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            var apiKey = configuration.GetValue<string>("MessagingConfig:ApiKey");
+            return new NotificationClient(apiKey);
+        });
 
+        services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
+    }
 
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
+        services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         return services;
     }
 
