@@ -25,16 +25,16 @@ namespace EprPrnIntegration.Api
         private readonly IOrganisationService _organisationService;
         private readonly IPrnService _prnService;
         private readonly IValidator<NpwdPrn> _validator;
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig)
         {
             _logger = logger;
             _npwdClient = npwdClient;
             _serviceBusProvider = serviceBusProvider;
             _emailService = emailService;
-            _featureConfig = featureConfig;
             _organisationService = organisationService;
             _prnService = prnService;
             _validator = validator;
+            _featureConfig = featureConfig;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]

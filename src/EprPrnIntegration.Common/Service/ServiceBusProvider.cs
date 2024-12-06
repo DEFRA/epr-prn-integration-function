@@ -52,7 +52,7 @@ namespace EprPrnIntegration.Common.Service
                     deltaSyncExecution.SyncType);
 
                 await using var sender = serviceBusClient.CreateSender(config.Value.DeltaSyncQueueName);
-                var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
+                var executionMessage = System.Text.Json.JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
                     ContentType = "application/json"
@@ -91,7 +91,7 @@ namespace EprPrnIntegration.Common.Service
                 {
                     try
                     {
-                        var deltaSync = JsonSerializer.Deserialize<DeltaSyncExecution>(message.Body.ToString());
+                        var deltaSync = System.Text.Json.JsonSerializer.Deserialize<DeltaSyncExecution>(message.Body.ToString());
 
                         if (deltaSync != null && deltaSync.SyncType == syncType)
                         {
@@ -121,16 +121,16 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                await using var receiver = _serviceBusClient.CreateReceiver(_serviceBusConfig.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
 
                 // Continue receiving messages until the queue is empty or we have processed the relevant range
-                var messages = await receiver.ReceiveMessagesAsync(maxMessages: 10, _serviceBusConfig.Value.MaxWaitTime); //TODO: maxMessages change to int.MaxValue after testing
+                var messages = await receiver.ReceiveMessagesAsync(maxMessages: 10, config.Value.MaxWaitTime); //TODO: maxMessages change to int.MaxValue after testing
 
                 return messages;
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to receive messages from queue with exception: {ExceptionMessage}", ex.Message);
+                logger.LogError("Failed to receive messages from queue with exception: {ExceptionMessage}", ex.Message);
                 throw;
             }
         }
@@ -139,7 +139,7 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                await using var sender = _serviceBusClient.CreateSender(_serviceBusConfig.Value.FetchPrnQueueName);
+                await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
 
                 var retryMessage = new ServiceBusMessage(receivedMessage.Body)
                 {
@@ -160,11 +160,11 @@ namespace EprPrnIntegration.Common.Service
                 await sender.SendMessageAsync(retryMessage);
 
                 var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
-                _logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
+                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
+                logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
                 throw;
             }
         }
@@ -173,7 +173,7 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                await using var errorQueueSender = _serviceBusClient.CreateSender(_serviceBusConfig.Value.ErrorPrnQueue);
+                await using var errorQueueSender = serviceBusClient.CreateSender(config.Value.ErrorPrnQueue);
 
                 var errorMessage = new ServiceBusMessage(receivedMessage.Body)
                 {
@@ -192,11 +192,11 @@ namespace EprPrnIntegration.Common.Service
                 await errorQueueSender.SendMessageAsync(errorMessage);
 
                 var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
-                _logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidence?.EvidenceNo);
+                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidence?.EvidenceNo);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
+                logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
             }
         }
     }
