@@ -2,6 +2,7 @@
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
@@ -51,6 +52,7 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IEmailService, EmailService>();
+        services.AddScoped<IUtilities, Utilities>();
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
@@ -79,6 +81,7 @@ public static class HostBuilderConfiguration
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
+        services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
         return services;
     }
 

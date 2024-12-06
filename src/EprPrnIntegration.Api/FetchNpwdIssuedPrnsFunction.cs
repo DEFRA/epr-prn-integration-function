@@ -1,6 +1,7 @@
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Mappers;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api
 {
@@ -19,6 +21,7 @@ namespace EprPrnIntegration.Api
         private readonly INpwdClient _npwdClient;
         private readonly IServiceBusProvider _serviceBusProvider;
         private readonly IEmailService _emailService;
+        private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
         private readonly IOrganisationService _organisationService;
         private readonly IPrnService _prnService;
         private readonly IValidator<NpwdPrn> _validator;
@@ -28,6 +31,7 @@ namespace EprPrnIntegration.Api
             _npwdClient = npwdClient;
             _serviceBusProvider = serviceBusProvider;
             _emailService = emailService;
+            _featureConfig = featureConfig;
             _organisationService = organisationService;
             _prnService = prnService;
             _validator = validator;
@@ -37,6 +41,13 @@ namespace EprPrnIntegration.Api
         //public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
+            bool isOn = _featureConfig.Value.RunIntegration ?? false;
+            if (!isOn)
+            {
+                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
+                return;
+            }
+
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
             var lastFetched = await GetLastFetchedTimeAsync();

@@ -9,9 +9,7 @@
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
     "UpdatePrnsTrigger": "* * * * * *",
-    "UpdateProducersStartHour": "18", // Start time in 24-hour format
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
-    "UpdatePrnsTrigger": "0 1 * * * 1-5",
     "PrnsContext": "https://fat.npwd.org.uk/odata/PRNs/$delta",
     "Service:EndPointName": "api/organisations",
     "Service:PrnBaseUrl": "https://devrwdwebwa7418.azurewebsites.net/",
@@ -21,5 +19,8 @@
     "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
     "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
     "ServiceBus:MaxWaitTime": "1"
+    "FeatureManagement:RunIntegration": true, // feature flag
+    "ServiceBus:DeltaSyncQueueName": "UseDevelopmentStorage=true",
+    "DefaultLastRunDate": "2024-01-01"
   }
 }
