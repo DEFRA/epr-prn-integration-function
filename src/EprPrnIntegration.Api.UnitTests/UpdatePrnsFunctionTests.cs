@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Configuration;
+﻿using AutoFixture;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
@@ -23,6 +24,7 @@ public class UpdatePrnsFunctionTests
     private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
     private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
     private Mock<IUtilities> _mockUtilities;
+    private readonly Fixture _fixture = new();
 
     private UpdatePrnsFunction _function;
 
@@ -272,5 +274,52 @@ public class UpdatePrnsFunctionTests
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _mockPrnService.Verify(service =>
             service.GetUpdatedPrns(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_CallsInsertSyncData_WhenPatchToNpwdIsSuccessful()
+    {
+
+        var deltaRun = _fixture.Create<DeltaSyncExecution>();
+        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
+
+        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+            .ReturnsAsync(deltaRun);
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+            .ReturnsAsync(updatePrns);
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        // Act
+        await _function.Run(default!);
+
+        _mockPrnService.Verify(service =>
+            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_NoCallsToInsertSyncData_WhenPatchToNpwdFails()
+    {
+
+        var deltaRun = _fixture.Create<DeltaSyncExecution>();
+        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
+
+        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+            .ReturnsAsync(deltaRun);
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+            .ReturnsAsync(updatePrns);
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadGateway));
+
+        // Act
+        await _function.Run(default!);
+
+        // Assert: Verify that DeltaSyncExecution is created using the default date from config
+        _mockPrnService.Verify(service =>
+            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
     }
 }
