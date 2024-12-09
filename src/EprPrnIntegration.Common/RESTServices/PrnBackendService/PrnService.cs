@@ -45,7 +45,7 @@ public class PrnService : BaseHttpService, IPrnService
                 syncedPrns.Add((InsertPeprNpwdSyncModel)updateprn);
             }
             await Post("updatesyncstatus", syncedPrns, default);
-            _logger.LogInformation("Sync data iserted");
+            _logger.LogInformation("Sync data inserted");
         }
         catch (Exception ex)
         {

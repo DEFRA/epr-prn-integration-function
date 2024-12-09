@@ -153,7 +153,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data iserted"))));
+            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
         }
     }
 }
