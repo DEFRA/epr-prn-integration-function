@@ -1,10 +1,11 @@
 ﻿using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Common.Service
 {
@@ -21,7 +22,7 @@ namespace EprPrnIntegration.Common.Service
                 using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
                 foreach (var prn in prns)
                 {
-                    var jsonPrn = JsonSerializer.Serialize(prn);
+                    var jsonPrn = System.Text.Json.JsonSerializer.Serialize(prn);
                     if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonPrn)))
                     {
                         logger.LogWarning("SendFetchedNpwdPrnsToQueue - The message with EvidenNo: {EvidenNo} is too large to fit in the batch.", prn.EvidenceNo);
@@ -50,7 +51,7 @@ namespace EprPrnIntegration.Common.Service
                     deltaSyncExecution.SyncType);
 
                 await using var sender = serviceBusClient.CreateSender(config.Value.DeltaSyncQueueName);
-                var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
+                var executionMessage = System.Text.Json.JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
                     ContentType = "application/json"
@@ -89,7 +90,7 @@ namespace EprPrnIntegration.Common.Service
                 {
                     try
                     {
-                        var deltaSync = JsonSerializer.Deserialize<DeltaSyncExecution>(message.Body.ToString());
+                        var deltaSync = System.Text.Json.JsonSerializer.Deserialize<DeltaSyncExecution>(message.Body.ToString());
 
                         if (deltaSync != null && deltaSync.SyncType == syncType)
                         {
@@ -112,6 +113,89 @@ namespace EprPrnIntegration.Common.Service
             {
                 logger.LogError("ReceiveDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
                 throw;
+            }
+        }
+
+        public async Task<IEnumerable<ServiceBusReceivedMessage>> ReceiveFetchedNpwdPrnsFromQueue()
+        {
+            try
+            {
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+
+                // Continue receiving messages until the queue is empty or we have processed the relevant range
+                var messages = await receiver.ReceiveMessagesAsync(maxMessages: 10, config.Value.MaxWaitTime); //TODO: maxMessages change to int.MaxValue after testing
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Failed to receive messages from queue with exception: {ExceptionMessage}", ex.Message);
+                throw;
+            }
+        }
+
+            public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage)
+            {
+                try
+                {
+                    await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
+
+                    var retryMessage = new ServiceBusMessage(receivedMessage.Body)
+                    {
+                        ContentType = receivedMessage.ContentType,
+                        MessageId = receivedMessage.MessageId,
+                        CorrelationId = receivedMessage.CorrelationId,
+                        Subject = receivedMessage.Subject,
+                        To = receivedMessage.To
+                    };
+
+                    // Copy over the application properties to ensure message state is preserved.
+                    foreach (var property in receivedMessage.ApplicationProperties)
+                    {
+                        retryMessage.ApplicationProperties.Add(property.Key, property.Value);
+                    }
+
+                    // Send the message back to the FetchPrnQueue.
+                    await sender.SendMessageAsync(retryMessage);
+
+                    var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
+                    logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
+                    throw;
+                }
+            }
+
+        public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage)
+        {
+            try
+            {
+                await using var errorQueueSender = serviceBusClient.CreateSender(config.Value.ErrorPrnQueue);
+
+                var errorMessage = new ServiceBusMessage(receivedMessage.Body)
+                {
+                    ContentType = receivedMessage.ContentType,
+                    MessageId = receivedMessage.MessageId,
+                    CorrelationId = receivedMessage.CorrelationId,
+                    Subject = receivedMessage.Subject,
+                    To = receivedMessage.To
+                };
+
+                foreach (var property in receivedMessage.ApplicationProperties)
+                {
+                    errorMessage.ApplicationProperties.Add(property.Key, property.Value);
+                }
+
+                await errorQueueSender.SendMessageAsync(errorMessage);
+
+                var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
+                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidence?.EvidenceNo);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
             }
         }
     }
