@@ -68,6 +68,8 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
                 $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
             
             await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+            // Insert sync data into common prn backend
+            await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
         }
         else
         {
