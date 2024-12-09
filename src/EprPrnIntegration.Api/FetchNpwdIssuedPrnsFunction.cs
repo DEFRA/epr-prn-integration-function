@@ -12,6 +12,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using EprPrnIntegration.Common.Helpers;
 
 namespace EprPrnIntegration.Api
 {
@@ -25,7 +26,8 @@ namespace EprPrnIntegration.Api
         private readonly IOrganisationService _organisationService;
         private readonly IPrnService _prnService;
         private readonly IValidator<NpwdPrn> _validator;
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig)
+        private readonly IUtilities _utilities;
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities)
         {
             _logger = logger;
             _npwdClient = npwdClient;
@@ -35,6 +37,7 @@ namespace EprPrnIntegration.Api
             _prnService = prnService;
             _validator = validator;
             _featureConfig = featureConfig;
+            _utilities = utilities;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
@@ -50,14 +53,14 @@ namespace EprPrnIntegration.Api
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
-            var lastFetched = await GetLastFetchedTimeAsync();
-            var currentRunDateTime = DateTime.UtcNow;
-
+            var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns);
+            var toDate = DateTime.UtcNow;
             var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
-            if (lastFetched != null)
+
+            if (deltaRun != null && deltaRun.LastSyncDateTime != DateTime.MinValue)
             {
-                filter = $@"""{filter} and ((StatusDate ge {lastFetched.Value.ToUniversalTime():O} and StatusDate lt {currentRunDateTime.ToUniversalTime():O}) 
-                            or (ModifiedOn ge {lastFetched.Value.ToUniversalTime():O} and ModifiedOn lt {currentRunDateTime.ToUniversalTime():O}))""";
+                filter = $@"""{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) 
+                            or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))""";
             }
 
             var npwdIssuedPrns = new List<NpwdPrn>();
@@ -85,8 +88,10 @@ namespace EprPrnIntegration.Api
             try
             {
                 await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
-                SetLastFetchTime(currentRunDateTime);
+
+                await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
             }
             catch (Exception ex)
             {
@@ -187,20 +192,6 @@ namespace EprPrnIntegration.Api
                     }
                 }
             }
-        }
-
-        private void SetLastFetchTime(DateTime currentRunDateTime)
-        {
-            _logger.LogInformation($"Setting CurrentRunDateTime For Future lastRun {currentRunDateTime:O}");
-            //Pending pushing last run logic is done by Ehsan 
-        }
-
-        private async Task<DateTime?> GetLastFetchedTimeAsync()
-        {
-            _logger.LogInformation("Getting Future lastRun DateTime to fetch data");
-            //pending setting null as the logic to pull lastrun is going to be done by Ehsan
-            //Make sure you set in utc format and parse in utc format
-            return null;
         }
     }
 }

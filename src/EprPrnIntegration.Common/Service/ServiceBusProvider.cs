@@ -6,7 +6,6 @@ using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Text.Json;
 
 namespace EprPrnIntegration.Common.Service
 {
@@ -135,39 +134,39 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
-        public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage)
-        {
-            try
+            public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage)
             {
-                await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
-
-                var retryMessage = new ServiceBusMessage(receivedMessage.Body)
+                try
                 {
-                    ContentType = receivedMessage.ContentType,
-                    MessageId = receivedMessage.MessageId,
-                    CorrelationId = receivedMessage.CorrelationId,
-                    Subject = receivedMessage.Subject,
-                    To = receivedMessage.To
-                };
+                    await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
 
-                // Copy over the application properties to ensure message state is preserved.
-                foreach (var property in receivedMessage.ApplicationProperties)
-                {
-                    retryMessage.ApplicationProperties.Add(property.Key, property.Value);
+                    var retryMessage = new ServiceBusMessage(receivedMessage.Body)
+                    {
+                        ContentType = receivedMessage.ContentType,
+                        MessageId = receivedMessage.MessageId,
+                        CorrelationId = receivedMessage.CorrelationId,
+                        Subject = receivedMessage.Subject,
+                        To = receivedMessage.To
+                    };
+
+                    // Copy over the application properties to ensure message state is preserved.
+                    foreach (var property in receivedMessage.ApplicationProperties)
+                    {
+                        retryMessage.ApplicationProperties.Add(property.Key, property.Value);
+                    }
+
+                    // Send the message back to the FetchPrnQueue.
+                    await sender.SendMessageAsync(retryMessage);
+
+                    var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
+                    logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
                 }
-
-                // Send the message back to the FetchPrnQueue.
-                await sender.SendMessageAsync(retryMessage);
-
-                var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
-                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
+                catch (Exception ex)
+                {
+                    logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
+                    throw;
+                }
             }
-            catch (Exception ex)
-            {
-                logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
-                throw;
-            }
-        }
 
         public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage)
         {

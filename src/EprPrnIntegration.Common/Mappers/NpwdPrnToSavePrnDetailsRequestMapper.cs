@@ -34,7 +34,8 @@ namespace EprPrnIntegration.Common.Mappers
                 ProducerAgency = npwdPrn.ProducerAgency,
                 RecoveryProcessCode = npwdPrn.RecoveryProcessCode,
                 ReprocessorAgency = npwdPrn.ReprocessorAgency,
-                StatusDate = npwdPrn.StatusDate
+                StatusDate = npwdPrn.StatusDate,
+                CreatedByUser = "IntegrationFA"
             };
         }
 

@@ -4,7 +4,7 @@ namespace EprPrnIntegration.Common.Mappers
 {
     public static class NpwdStatusToPrnStatusMapper
     {
-        public static PrnStatus? Map(string npwdStatus)
+        public static EprnStatus? Map(string npwdStatus)
         {
             if (string.IsNullOrEmpty(npwdStatus))
             {
@@ -14,14 +14,14 @@ namespace EprPrnIntegration.Common.Mappers
             switch (npwdStatus.ToUpper())
             {
                 case "EV-ACCEP":
-                    return PrnStatus.Accepted;
+                    return EprnStatus.ACCEPTED;
                 case "EV-ACANCEL":
-                    return PrnStatus.Rejected;
+                    return EprnStatus.REJECTED;
                 case "EV-CANCEL":
-                    return PrnStatus.Cancelled;
+                    return EprnStatus.CANCELLED;
                 case "EV-AWACCEP":
                 case "EV-AWACCEP-EPR":
-                    return PrnStatus.AwaitingAcceptance;
+                    return EprnStatus.AWAITINGACCEPTANCE;
                 default:
                     return null;
             }

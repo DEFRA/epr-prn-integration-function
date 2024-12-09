@@ -12,7 +12,7 @@ public class SavePrnDetailsRequest
     public bool? DecemberWaste { get; set; }
     public string? EvidenceMaterial { get; set; }
     public string? EvidenceNo { get; set; }
-    public PrnStatus? EvidenceStatusCode { get; set; }
+    public EprnStatus? EvidenceStatusCode { get; set; }
     public int? EvidenceTonnes { get; set; }
     public DateTime? IssueDate { get; set; }
     public Guid? IssuedByNPWDCode { get; set; }
@@ -32,4 +32,5 @@ public class SavePrnDetailsRequest
     public string? ReprocessorAgency { get; set; }
     public DateTime? StatusDate { get; set; }
     public Guid? ExternalId { get; set; }
+    public string? CreatedByUser { get; set; }
 }

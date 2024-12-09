@@ -32,5 +32,6 @@ namespace EprPrnIntegration.Common.Models
         public string? RecoveryProcessCode { get; set; }
         public string? ReprocessorAgency { get; set; }
         public DateTime StatusDate { get; set; }
+        public string? CreatedByUser { get; set; }
     }
 }

@@ -1,10 +1,10 @@
 ﻿namespace EprPrnIntegration.Common.Enums
 {
-    public enum PrnStatus
+    public enum EprnStatus
     {
-        Accepted = 1,
-        Rejected,
-        Cancelled,
-        AwaitingAcceptance,
+        ACCEPTED = 1,
+        REJECTED,
+        CANCELLED,
+        AWAITINGACCEPTANCE
     }
 }
