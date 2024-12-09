@@ -43,6 +43,7 @@ public class UpdateProducersFunction(
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
             logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
+            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
             return;
         }
 
