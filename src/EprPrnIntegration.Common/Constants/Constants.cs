@@ -1,5 +1,10 @@
 ﻿namespace EprPrnIntegration.Common.Constants
 {
+    public static class Constants
+    {
+        public const string ApplicationName = "PRN Integration Function Application";
+    }
+
     public static class HttpClientNames
     {
         public const string Npwd = "NpwdClient";
