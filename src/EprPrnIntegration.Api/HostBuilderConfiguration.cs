@@ -47,17 +47,18 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddScoped<IUtilities, Utilities>();
+        services.AddScoped<IEmailService, EmailService>();
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
 
         // Add retry resilience policy
-        var apiCallsRetryConfig = new ApiCallsRetryConfig();
-        configuration.GetSection("ApiCallsRetryConfig").Bind(apiCallsRetryConfig);
+        ApiCallsRetryConfig apiCallsRetryConfig = new();
+        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
 
         var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
-            .WaitAndRetryAsync(apiCallsRetryConfig.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig.WaitTimeBetweenRetryInSecs ?? 30));
+            .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
 
         // Add HttpClients
         services.AddHttpClient();
