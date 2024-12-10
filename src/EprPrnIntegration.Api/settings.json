@@ -1,25 +1,34 @@
 {
   "IsEncrypted": false,
   "Values": {
+    "FeatureManagement:RunIntegration": true, // feature flag
+    "DefaultLastRunDate": "2024-01-01",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "HOST": "localhost",
     "Functions:Worker:HostEndpoint": "http://localhost:7071",
     "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
-    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
-    "NpwdEmail": "npwd.support@solution7.co.uk",
-    "NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
-    "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
     "UpdatePrnsTrigger": "0 0 18 * * 1-5",
+    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
+    "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
     "PrnsContext": "https://fat.npwd.org.uk/odata/PRNs/$delta",
+    "Service:Url": "https://devrwdwebwa7407.azurewebsites.net/",
     "Service:EndPointName": "api/organisations",
+    "Service:PrnBaseUrl": "https://devrwdwebwa7418.azurewebsites.net/",
+    "Service:PrnEndPointName": "api/v1/prn",
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
-    "ServiceBus:FullyQualifiedNamespace": "UseDevelopmentStorage=true",
-    "ServiceBus:FetchPrnQueueName": "UseDevelopmentStorage=true",
-    "ServiceBus:ErrorPrnQueue": "UseDevelopmentStorage=true",
-    "FeatureManagement:RunIntegration": true, // feature flag
-    "ServiceBus:DeltaSyncQueueName": "UseDevelopmentStorage=true",
-    "DefaultLastRunDate": "2024-01-01"
+    "ServiceBus:FullyQualifiedNamespace": "DEVRWDINFSB1402.servicebus.windows.net",
+    "ServiceBus:FetchPrnQueueName": "defra.epr.npwd.integration.fetchprn.dev7",
+    "ServiceBus:ErrorPrnQueue": "defra.epr.npwd.integration.errorqueue.dev7",
+    "ServiceBus:DeltaSyncQueueName": "defra.npwd.integration.lastsuccessfulrun.dev7",
+    "ServiceBus:MaxWaitTime": "1",
+    "MessagingConfig:ApiKey": "",
+    "MessagingConfig:PrnTemplateId": "a43a573c-3367-4aa2-b9ac-6b347ce8bf32",
+    "MessagingConfig:PERNTemplateId": "24925202-125b-4b85-b54a-9f3100301eb4",
+    "MessagingConfig:NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
+    "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
+    "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
+    "ApiCallsRetryConfig:MaxAttempts": 3 
   }
 }
