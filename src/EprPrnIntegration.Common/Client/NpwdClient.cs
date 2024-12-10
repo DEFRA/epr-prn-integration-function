@@ -40,14 +40,22 @@ public class NpwdClient(
             throw new UriFormatException("Base address for NPWD API is null or empty.");
         }
 
-        _httpClient.BaseAddress = new Uri(baseAddress!);
+        if (baseAddress.EndsWith('/'))
+            baseAddress = baseAddress.TrimEnd('/');
 
-        var response = await _httpClient.GetAsync($"oData/PRNs?$filter={filter}");
-        response.EnsureSuccessStatusCode();
-        var jsonBody = await response.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<GetPrnsResponseModel>(jsonBody)!;
+        var requestUrl = $"{baseAddress}/oData/PRNs?$filter={filter}";
+        List<NpwdPrn> issuedPrns = [];
+        while(!string.IsNullOrEmpty(requestUrl))
+        {
+            var response = await _httpClient.GetAsync(requestUrl);
+            response.EnsureSuccessStatusCode();
+            var jsonBody = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<GetPrnsResponseModel>(jsonBody)!;
+            issuedPrns.AddRange(result.Value);
+            requestUrl = result.NextLink;
+        }
 
-        logger.LogInformation("Fetched total: {totalPrns} prns from npwd", result.Value.Count);
-        return result.Value;
+        logger.LogInformation("Fetched total: {totalPrns} prns from npwd", issuedPrns.Count);
+        return issuedPrns;
     }
 }

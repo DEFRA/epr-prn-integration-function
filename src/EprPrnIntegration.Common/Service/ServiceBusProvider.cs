@@ -5,7 +5,7 @@ using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace EprPrnIntegration.Common.Service
 {
@@ -16,25 +16,46 @@ namespace EprPrnIntegration.Common.Service
     {
         public async Task SendFetchedNpwdPrnsToQueue(List<NpwdPrn> prns)
         {
+            ServiceBusMessageBatch? messageBatch = null;
             try
             {
                 await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
-                using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
+                messageBatch = await sender.CreateMessageBatchAsync();
                 foreach (var prn in prns)
                 {
-                    var jsonPrn = System.Text.Json.JsonSerializer.Serialize(prn);
-                    if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonPrn)))
+                    var jsonPrn = JsonSerializer.Serialize(prn);
+                    var message = new ServiceBusMessage(jsonPrn);
+                    if (!messageBatch.TryAddMessage(message))
                     {
-                        logger.LogWarning("SendFetchedNpwdPrnsToQueue - The message with EvidenNo: {EvidenNo} is too large to fit in the batch.", prn.EvidenceNo);
+                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {count}", messageBatch.Count);
+                        await sender.SendMessagesAsync(messageBatch);
+
+                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Disposing current batch and creating new batch");
+                        messageBatch.Dispose();
+                        messageBatch = await sender.CreateMessageBatchAsync();
+
+                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Adding message in new batch");
+                        if (!messageBatch.TryAddMessage(message))
+                        {
+                            throw new InvalidOperationException("SendFetchedNpwdPrnsToQueue - Could not add message into new batch");
+                        }
                     }
                 }
-                await sender.SendMessagesAsync(messageBatch);
-                logger.LogInformation("SendFetchedNpwdPrnsToQueue - A batch of {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
+                if (messageBatch.Count > 0)
+                {
+                    logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {count}", messageBatch.Count);
+                    await sender.SendMessagesAsync(messageBatch);
+                }
+                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
             }
             catch (Exception ex)
             {
                 logger.LogError("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {exception}", ex);
                 throw;
+            }
+            finally
+            {
+                messageBatch?.Dispose();
             }
         }
 
@@ -158,7 +179,7 @@ namespace EprPrnIntegration.Common.Service
                     // Send the message back to the FetchPrnQueue.
                     await sender.SendMessageAsync(retryMessage);
 
-                    var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
+                    var evidence = JsonSerializer.Deserialize<Evidence>(receivedMessage.Body.ToString());
                     logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
                 }
                 catch (Exception ex)
@@ -190,7 +211,7 @@ namespace EprPrnIntegration.Common.Service
 
                 await errorQueueSender.SendMessageAsync(errorMessage);
 
-                var evidence = JsonConvert.DeserializeObject<Evidence>(receivedMessage.Body.ToString());
+                var evidence = JsonSerializer.Deserialize<Evidence>(receivedMessage.Body.ToString());
                 logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidence?.EvidenceNo);
             }
             catch (Exception ex)

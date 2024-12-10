@@ -1,5 +1,4 @@
-﻿using System.Dynamic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
@@ -7,7 +6,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
-using Microsoft.Azure.Amqp.Framing;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -68,31 +67,41 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
             _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
             _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-            _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
+            _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Exactly(2));
 
         }
 
         [Fact]
-        public async Task SendApprovedSubmissionsToQueueAsync_MessageTooMany_Warns()
+        public async Task SendFetchedPrnsToQueueAsync_SendBatchAndCreateNewAndAddMessage()
         {
             // Arrange
             var npwdPrns = fixture.CreateMany<NpwdPrn>(10).ToList();
-            int messageCountThreshold = 1;
-            List<ServiceBusMessage> messageList = [];
-            messageList.Add(new ServiceBusMessage());
-            ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
-                batchSizeBytes: 500,
-                batchMessageStore: messageList,
+            int messageCountThreshold = 6;
+            List<ServiceBusMessage> messageList1 = [];
+            List<ServiceBusMessage> messageList2 = [];
+            ServiceBusMessageBatch messageBatch1 = ServiceBusModelFactory.ServiceBusMessageBatch(
+                batchSizeBytes: 10 * 1024 *1024,
+                batchMessageStore: messageList1,
                 batchOptions: new CreateMessageBatchOptions(),
-                tryAddCallback: _ => messageList.Count < messageCountThreshold);
-            _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
+                tryAddCallback: _ => messageList1.Count < messageCountThreshold);
+            ServiceBusMessageBatch messageBatch2 = ServiceBusModelFactory.ServiceBusMessageBatch(
+                batchSizeBytes: 10 * 1024 * 1024,
+                batchMessageStore: messageList2,
+                batchOptions: new CreateMessageBatchOptions(),
+                tryAddCallback: _ => messageList2.Count < messageCountThreshold);
+            _serviceBusSenderMock.SetupSequence(sender => sender.CreateMessageBatchAsync(default))
+                .ReturnsAsync(messageBatch1)
+                .ReturnsAsync(messageBatch2);
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
             // Act
             await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns);
 
             // Assert
-            _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-            _loggerMock.VerifyLog(l => l.LogWarning(It.IsAny<string>()), Times.Exactly(10));
+            _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Exactly(1));
+            _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Exactly(2));
+            _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Exactly(2));
+            messageBatch1.Count.Should().Be(6);
+            messageBatch2.Count.Should().Be(4);
         }
 
         [Fact]
@@ -149,7 +158,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
 
             _serviceBusReceiverMock.Setup(receiver => receiver
                     .ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((List<ServiceBusReceivedMessage>)null);
+                .ReturnsAsync((List<ServiceBusReceivedMessage>)null!);
 
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
             // Act
@@ -171,7 +180,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
 
             _serviceBusReceiverMock.Setup(receiver => receiver
                     .ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((List<ServiceBusReceivedMessage>)null);
+                .ReturnsAsync((List<ServiceBusReceivedMessage>)null!);
 
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
             _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("error"));
@@ -274,8 +283,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             // Arrange
             var npwdPrns = fixture.CreateMany<NpwdPrn>(10).ToList();
             int messageCountThreshold = 1;
-            List<ServiceBusMessage> messageList = new List<ServiceBusMessage>();
-            messageList.Add(new ServiceBusMessage());
+            List<ServiceBusMessage> messageList = [new ServiceBusMessage()];
 
             ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
                 batchSizeBytes: 500,
