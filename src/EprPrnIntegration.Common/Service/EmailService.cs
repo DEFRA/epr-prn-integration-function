@@ -1,6 +1,4 @@
-﻿using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Models.Npwd;
+﻿using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Interfaces;
@@ -24,8 +22,8 @@ public class EmailService : IEmailService
 
     public void SendEmailToNpwd(string errorMessage)
     {
-        var npwdEmailAddress = _messagingConfig.NPWDEmail;
-        var templateId = _messagingConfig.NPWDTemplateId;
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdEmailTemplateId;
 
         var parameters = new Dictionary<string, object>
         {

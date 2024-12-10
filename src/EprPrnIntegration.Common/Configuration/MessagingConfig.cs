@@ -7,7 +7,7 @@ public class MessagingConfig
 {
     public string? PrnTemplateId { get; set; }
     public string? PERNTemplateId { get; set; }
-    public string? NPWDTemplateId { get; set; }
-    public string? NPWDEmail { get; set; }
+    public string? NpwdEmailTemplateId { get; set; }
+    public string? NpwdEmail { get; set; }
     public string? ApiKey { get; set; }
 }

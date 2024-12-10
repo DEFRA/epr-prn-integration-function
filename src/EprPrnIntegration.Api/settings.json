@@ -7,6 +7,8 @@
     "Functions:Worker:HostEndpoint": "http://localhost:7071",
     "AzureKeyVaultUrl": "https://devrwdinfkv1401.vault.azure.net/",
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
+    "NpwdEmail": "npwd.support@solution7.co.uk",
+    "NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "UpdateProducersTrigger": "0 0 18 * * 1-5",
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
     "UpdatePrnsTrigger": "0 0 18 * * 1-5",
