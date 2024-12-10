@@ -6,8 +6,12 @@ using Xunit;
 using EprPrnIntegration.Common.Client;
 using Microsoft.Azure.Functions.Worker;
 using AutoFixture;
+using FluentValidation;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Options;
+using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Queues;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -20,22 +24,36 @@ namespace EprPrnIntegration.Api.UnitTests
         private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
 
         private readonly FetchNpwdIssuedPrnsFunction _function;
-
+        private readonly Mock<IOrganisationService> _mockOrganisationService;
+        private readonly Mock<IEmailService> _mockEmailService;
+        private readonly Mock<IValidator<NpwdPrn>> _mockValidator;
+        private readonly Mock<IPrnService> _mockPrnService;
+        private readonly Mock<IUtilities> _mockPrnUtilities;
         public FetchNpwdIssuedPrnsFunctionTests()
         {
-               _fixture = new Fixture();
+            _fixture = new Fixture();
             // Mock dependencies
             _mockLogger = new Mock<ILogger<FetchNpwdIssuedPrnsFunction>>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockServiceBusProvider = new Mock<IServiceBusProvider>();
             _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
+            _mockOrganisationService = new Mock<IOrganisationService>();
+            _mockEmailService = new Mock<IEmailService>();
+            _mockValidator = new Mock<IValidator<NpwdPrn>>();
+            _mockPrnService = new Mock<IPrnService>();
+            _mockPrnUtilities = new Mock<IUtilities>();
 
             // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
                 _mockServiceBusProvider.Object,
-                _mockFeatureConfig.Object);
+                _mockEmailService.Object,
+                _mockOrganisationService.Object,
+                _mockPrnService.Object,
+                _mockValidator.Object,
+                _mockFeatureConfig.Object,
+                _mockPrnUtilities.Object);
 
             // Turn the feature flag on
             var config = new FeatureManagementConfiguration
@@ -53,10 +71,13 @@ namespace EprPrnIntegration.Api.UnitTests
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
 
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
-                           .ReturnsAsync(npwdIssuedPrns); 
+                           .ReturnsAsync(npwdIssuedPrns);
 
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
-                                   .Returns(Task.CompletedTask);
+            .Returns(Task.CompletedTask);
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
             // Act
             await _function.Run(new TimerInfo());
@@ -78,6 +99,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .Returns(Task.CompletedTask);
 
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
             // Act
             await _function.Run(new TimerInfo());
 
@@ -92,12 +116,15 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             var exception = new HttpRequestException("Error fetching PRNs");
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
-                           .ThrowsAsync(exception); 
+                           .ThrowsAsync(exception);
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo())); 
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed Get Prns from npwd"))), Times.Once);
-            Assert.Equal("Error fetching PRNs", ex.Message); 
+            Assert.Equal("Error fetching PRNs", ex.Message);
         }
 
         [Fact]
@@ -107,16 +134,20 @@ namespace EprPrnIntegration.Api.UnitTests
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
 
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
-                           .ReturnsAsync(npwdIssuedPrns); 
+                           .ReturnsAsync(npwdIssuedPrns);
+
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
             var exception = new Exception("Error pushing to queue");
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
-                                   .ThrowsAsync(exception); 
+                                   .ThrowsAsync(exception);
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
-            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once); 
-            Assert.Equal("Error pushing to queue", ex.Message); 
+            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once);
+            Assert.Equal("Error pushing to queue", ex.Message);
         }
 
         [Fact]

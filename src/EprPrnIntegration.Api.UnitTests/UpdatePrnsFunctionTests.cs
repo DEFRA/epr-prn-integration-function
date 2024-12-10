@@ -36,7 +36,6 @@ public class UpdatePrnsFunctionTests
         _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
         _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
         _mockUtilities = new Mock<IUtilities>();
-
         _function = new UpdatePrnsFunction(
             _mockPrnService.Object,
             _mockNpwdClient.Object,
@@ -183,7 +182,6 @@ public class UpdatePrnsFunctionTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
-
     [Fact]
     public async Task Run_Ends_When_Feature_Flag_Is_False()
     {

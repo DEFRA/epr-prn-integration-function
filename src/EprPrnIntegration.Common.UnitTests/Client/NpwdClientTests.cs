@@ -84,7 +84,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             // Arrange
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
-                .Setup<Task<HttpResponseMessage>>(
+                .SetupSequence<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
@@ -139,29 +139,42 @@ namespace EprPrnIntegration.Common.UnitTests.Client
         }
 
         [Fact]
-        public async Task GetIssuedPrns_ShouldCallNpwdGetPrnsWithPassedFilter_and_ReturnIssuePrns()
+        public async Task GetIssuedPrns_ShouldCallNpwdGetPrnsWithPassedFilter_and_ReturnAllIssuedPrns()
         {
             var npwdGetIssuedPrnsResponse = _fixture.Create<GetPrnsResponseModel>();
-            var jsonResponse = JsonConvert.SerializeObject(npwdGetIssuedPrnsResponse);
-            
+
             var filter = "1 eq 1";
-            var baseUrl = "http://localhost";
-            var expectedRequestUri = new Uri($"{baseUrl}/oData/PRNs?$filter={filter}");
+            var baseUrl = "http://localhost/";
+
+            //Respnse witth next link
+            npwdGetIssuedPrnsResponse.NextLink = $"{baseUrl}oData/PRNs?$filter={filter}";
+            var jsonResponse1 = JsonConvert.SerializeObject(npwdGetIssuedPrnsResponse);
+
+            //Repsone with next null
+            npwdGetIssuedPrnsResponse.NextLink = null;
+            var jsonReponse2 = JsonConvert.SerializeObject(npwdGetIssuedPrnsResponse);
+
+            var expectedRequestUri = new Uri($"{baseUrl}oData/PRNs?$filter={filter}");
 
             _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
                 .Returns(baseUrl);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
-                .Setup<Task<HttpResponseMessage>>(
+                .SetupSequence<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(jsonResponse)
-                });
+                    Content = new StringContent(jsonResponse1)
+                })
+                .ReturnsAsync(new HttpResponseMessage
+                                {
+                                    StatusCode = HttpStatusCode.OK,
+                                    Content = new StringContent(jsonReponse2)
+                                });
 
             var httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
@@ -178,13 +191,13 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             httpMessageHandlerMock.Protected()
             .Verify(
                 "SendAsync",
-                Times.Once(),
+                Times.Exactly(2),
                 ItExpr.Is<HttpRequestMessage>(
                     req => req.Method == HttpMethod.Get
                            && req.RequestUri == expectedRequestUri),
                 ItExpr.IsAny<CancellationToken>());
 
-            result.Should().BeEquivalentTo(npwdGetIssuedPrnsResponse.Value);
+            result.Should().BeEquivalentTo([..npwdGetIssuedPrnsResponse.Value, ..npwdGetIssuedPrnsResponse.Value]);
         }
 
         [Fact]
