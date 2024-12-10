@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
@@ -37,9 +39,6 @@ public static class HostBuilderConfiguration
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        // Add HttpClient
-        services.AddHttpClient();
-
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<IPrnService, PrnService>();
@@ -51,11 +50,21 @@ public static class HostBuilderConfiguration
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
-        
-        // Add HttpClients
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
+        // Add retry resilience policy
+        var apiCallsRetryConfig = new ApiCallsRetryConfig();
+        configuration.GetSection("ApiCallsRetryConfig").Bind(apiCallsRetryConfig);
+
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .WaitAndRetryAsync(apiCallsRetryConfig.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig.WaitTimeBetweenRetryInSecs ?? 30));
+
+        // Add HttpClients
+        services.AddHttpClient();
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .AddPolicyHandler(retryPolicy);
+            
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
         // Configure Azure Key Vault
