@@ -6,6 +6,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,7 @@ public class UpdateProducersFunctionTests
     private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<IUtilities> _utilitiesMock = new();
     private readonly Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
+    private readonly Mock<IEmailService> _emailServiceMock = new();
 
     private readonly UpdateProducersFunction function;
 
@@ -36,7 +38,7 @@ public class UpdateProducersFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object);
+            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object, _emailServiceMock.Object);
     }
 
     [Fact]
