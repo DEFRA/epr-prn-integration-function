@@ -295,11 +295,13 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
             // Act
-            await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns));
 
             // Assert
             _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-            _loggerMock.VerifyLog(l => l.LogWarning(It.IsAny<string>()), Times.Exactly(10)); // Expected 10 warnings for each message
+            _serviceBusSenderMock.Verify(r => r.CreateMessageBatchAsync(default), Times.Exactly(2));
+
+            _loggerMock.VerifyLog(l => l.LogError(It.Is<string>(s => s.Contains("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception"))), Times.Once);
         }
 
         [Fact]
