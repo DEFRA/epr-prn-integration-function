@@ -7,6 +7,8 @@ using System.Text.Json;
 using EprPrnIntegration.Common.UnitTests.Helpers;
 using EprPrnIntegration.Common.Exceptions;
 using Microsoft.Extensions.Logging;
+using AutoFixture;
+using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 {
@@ -15,7 +17,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
         private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
         private readonly Mock<IOptions<Configuration.Service>> _mockConfig;
         private readonly Mock<ILogger<PrnService>> _loggerMock;
-
+        private readonly Fixture _fixture = new();
         public PrnServiceTests()
         {
             _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
@@ -49,8 +51,8 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active" },
-                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive" }
+                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
+                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -77,7 +79,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active" }
+                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);
@@ -128,6 +130,30 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Assert
             var exception = await Assert.ThrowsAsync<ResponseCodeException>(() => _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken));
             Assert.Contains("EprPrnIntegration.Common.Exceptions.ResponseCodeException", exception.Message);
+        }
+
+        [Fact]
+        public async Task InsertPeprNpwdSyncPrns_LogsError_IfInvalidStatus()
+        {
+            var updatedPrns = _fixture.CreateMany<UpdatedPrnsResponseModel>();
+            // Arrange
+            var sut = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
+
+            await sut.InsertPeprNpwdSyncPrns(updatedPrns);
+
+            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(),It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
+        }
+
+        [Fact]
+        public async Task InsertPeprNpwdSyncPrns_CallsService()
+        {
+            var updatedPrns = _fixture.Build<UpdatedPrnsResponseModel>().
+                With(p => p.EvidenceStatusCode, "EV-ACCEP").CreateMany();
+    
+            var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
+
+            await sut.InsertPeprNpwdSyncPrns(updatedPrns);
+            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
         }
     }
 }

@@ -1,51 +1,70 @@
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api;
 
-public class UpdateProducersFunction(IOrganisationService organisationService, INpwdClient npwdClient, 
-    ILogger<UpdateProducersFunction> logger, IConfiguration configuration)
+public class UpdateProducersFunction(
+    IOrganisationService organisationService,
+    INpwdClient npwdClient,
+    ILogger<UpdateProducersFunction> logger,
+    IConfiguration configuration,
+    IUtilities utilities,
+    IOptions<FeatureManagementConfiguration> featureConfig)
 {
     [Function("UpdateProducersList")]
-    public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
-        logger.LogInformation($"UpdateProducersList function executed at: {DateTime.UtcNow}");
+        var isOn = featureConfig.Value.RunIntegration ?? false;
+        if (!isOn)
+        {
+            logger.LogInformation("UpdateProducersList function is disabled by feature flag");
+            return;
+        }
 
-        int startHour = GetStartHour(configuration["UpdateProducersStartHour"]);
+        logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        var toDate = DateTime.Today.AddHours(startHour);
-        var fromDate = toDate.AddDays(-1);
+        var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers);
 
-        logger.LogInformation($"Fetching producers from {fromDate} to {toDate}.");
+        var toDate = DateTime.UtcNow;
+        var fromDate = deltaRun.LastSyncDateTime;
+
+        logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
-            logger.LogWarning($"No updated producers retrieved for time period {fromDate} to {toDate}.");
+            logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
+            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
             return;
         }
 
         var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
         var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-        await HandleApiResponse(pEprApiResponse, fromDate, toDate);
-    }
-
-    private int GetStartHour(string startHourConfig)
-    {
-        if (!int.TryParse(startHourConfig, out var startHour) || startHour < 0 || startHour > 23)
+        if (pEprApiResponse.IsSuccessStatusCode)
         {
-            logger.LogError($"Invalid StartHour configuration value: {startHourConfig}. Using default value of 18 (6 PM).");
-            return 18; // Default to 6 PM if configuration is invalid
+            logger.LogInformation(
+                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
+                toDate);
+
+            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
         }
-        return startHour;
+        else
+        {
+            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+            logger.LogError(
+                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                pEprApiResponse.StatusCode, responseBody);
+        }
     }
 
     private async Task<List<UpdatedProducersResponseModel>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
@@ -56,20 +75,9 @@ public class UpdateProducersFunction(IOrganisationService organisationService, I
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"Failed to retrieve data from accounts backend for time period {fromDate} to {toDate}.");
+            logger.LogError(ex,
+                "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
             return null;
         }
-    }
-
-    private async Task HandleApiResponse(HttpResponseMessage pEprApiResponse, DateTime fromDate, DateTime toDate)
-    {
-        if (pEprApiResponse.IsSuccessStatusCode)
-        {
-            logger.LogInformation($"Producers list successfully updated in NPWD for time period {fromDate} to {toDate}.");
-            return;
-        }
-
-        var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-        logger.LogError($"Failed to parse error response body. Raw Response Body: {responseBody}");
     }
 }
