@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,7 +19,8 @@ public class UpdateProducersFunction(
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
     IUtilities utilities,
-    IOptions<FeatureManagementConfiguration> featureConfig)
+    IOptions<FeatureManagementConfiguration> featureConfig,
+    IEmailService emailService)
 {
     [Function("UpdateProducersList")]
     public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
@@ -48,22 +50,32 @@ public class UpdateProducersFunction(
         }
 
         var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
-        var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-        if (pEprApiResponse.IsSuccessStatusCode)
+        try
         {
-            logger.LogInformation(
-                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
-                toDate);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+            if (pEprApiResponse.IsSuccessStatusCode)
+            {
+                logger.LogInformation(
+                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
+                    toDate);
+
+                await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+            }
+            else
+            {
+                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+                logger.LogError(
+                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                    pEprApiResponse.StatusCode, responseBody);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-            logger.LogError(
-                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                pEprApiResponse.StatusCode, responseBody);
+            logger!.LogError(message: $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}", exception: ex);
+            emailService!.SendEmailToNpwd()
+
         }
     }
 

@@ -22,13 +22,14 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public void SendEmailToNpwd(string npwdEmailAddress, string errorMessage)
+    public void SendEmailToNpwd(string errorMessage)
     {
+        var npwdEmailAddress = _messagingConfig.NPWDEmail;
         var templateId = _messagingConfig.NPWDTemplateId;
 
         var parameters = new Dictionary<string, object>
         {
-                                    { "emailAddress", npwdEmailAddress },
+                                    { "emailAddress", npwdEmailAddress! },
                                     { "applicationName", Constants.Constants.ApplicationName },                                   
                                     { "logId", Guid.NewGuid() }, // To be set to a proper AppInsights Log Id in future
                                     { "errorMessage", errorMessage },
