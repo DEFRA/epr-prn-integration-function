@@ -44,7 +44,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 .Setup(client => client.SendEmail(
                     _mockMessagingConfig.NpwdEmail,
                     _mockMessagingConfig.NpwdEmailTemplateId,
-                    It.IsAny<Dictionary<string, object>>(),null,null,null))
+                    It.IsAny<Dictionary<string, object>>(), null, null, null))
                 .Returns(response);
 
             var emailService = CreateEmailService();
@@ -60,7 +60,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                     parameters.ContainsKey("emailAddress") &&
                     parameters["emailAddress"].Equals(_mockMessagingConfig.NpwdEmail) &&
                     parameters.ContainsKey("errorMessage") &&
-                    parameters["errorMessage"].Equals("Test error message")),null,null,null),
+                    parameters["errorMessage"].Equals("Test error message")), null, null, null),
                 Times.Once);
 
             _mockLogger.Verify(logger => logger.Log(
@@ -79,7 +79,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 .Setup(client => client.SendEmail(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    It.IsAny<Dictionary<string, object>>(),null,null,null))
+                    It.IsAny<Dictionary<string, object>>(), null, null, null))
                 .Throws(new Exception("Test exception"));
 
             var emailService = CreateEmailService();
@@ -97,5 +97,56 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()));
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeDependencies()
+        {
+            // Act
+            var emailService = CreateEmailService();
+
+            // Assert
+            emailService.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void SendEmailToNpwd_ShouldNotThrow_WhenNpwdEmailAddressIsNull()
+        {
+            // Arrange
+            _mockMessagingConfig.NpwdEmail = null;
+            var emailService = CreateEmailService();
+
+            // Act
+            Action act = () => emailService.SendEmailToNpwd("Test error message");
+
+            // Assert
+            act.Should().NotThrow();
+            _mockLogger.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("GOV UK NOTIFY ERROR")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+        }
+
+        [Fact]
+        public void SendEmailToNpwd_ShouldNotThrow_WhenTemplateIdIsNull()
+        {
+            // Arrange
+            _mockMessagingConfig.NpwdEmailTemplateId = null;
+            var emailService = CreateEmailService();
+
+            // Act
+            Action act = () => emailService.SendEmailToNpwd("Test error message");
+
+            // Assert
+            act.Should().NotThrow();
+            _mockLogger.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("GOV UK NOTIFY ERROR")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+        }
+
     }
 }
