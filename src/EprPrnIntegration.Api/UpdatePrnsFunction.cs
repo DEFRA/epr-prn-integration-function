@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
-    IUtilities utilities)
+    IUtilities utilities, IEmailService _emailService)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
@@ -60,7 +61,19 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         // Send data to NPWD via pEPR API
         var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
-        var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+        HttpResponseMessage? pEprApiResponse;
+        try
+        {
+            pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+        }
+        catch (Exception ex)
+        {
+
+            _emailService.SendEmailToNpwd(ex.Message);
+            logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns");            
+
+            pEprApiResponse = new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+        }
 
         if (pEprApiResponse.IsSuccessStatusCode)
         {

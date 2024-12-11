@@ -3,6 +3,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
+using EprPrnIntegration.Common.Service;
 using global::EprPrnIntegration.Common.Client;
 using global::EprPrnIntegration.Common.Models;
 using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
@@ -25,7 +26,7 @@ public class UpdatePrnsFunctionTests
     private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
     private Mock<IUtilities> _mockUtilities;
     private readonly Fixture _fixture = new();
-
+    private readonly Mock<IEmailService> _emailService;
     private UpdatePrnsFunction _function;
 
     public UpdatePrnsFunctionTests()
@@ -36,6 +37,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
         _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
         _mockUtilities = new Mock<IUtilities>();
+        _emailService = new Mock<IEmailService>();
 
         _function = new UpdatePrnsFunction(
             _mockPrnService.Object,
@@ -43,7 +45,8 @@ public class UpdatePrnsFunctionTests
             _loggerMock.Object,
             _mockConfiguration.Object,
             _mockFeatureConfig.Object,
-            _mockUtilities.Object
+            _mockUtilities.Object,
+            _emailService.Object
         );
 
         // Turn the feature flag on
