@@ -31,4 +31,10 @@
         public const string UpdateProducers = "odata/producers";
         public const string UpdatePrns = "odata/PRNs";
     }
+
+    public static class ExporterCodePrefixes
+    {
+        public const string EaExport = "EX";
+        public const string SepaExport = "SX";
+    }
 }

@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Models;
+﻿using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Models;
 
 namespace EprPrnIntegration.Common.Mappers
 {
@@ -9,7 +10,6 @@ namespace EprPrnIntegration.Common.Mappers
         {
             return new SavePrnDetailsRequest
             {
-                ExternalId = Guid.NewGuid(),
                 AccreditationNo = npwdPrn.AccreditationNo,
                 AccreditationYear = npwdPrn.AccreditationYear.ToString(),
                 CancelledDate = npwdPrn.CancelledDate,
@@ -46,6 +46,17 @@ namespace EprPrnIntegration.Common.Mappers
                 return guid;
             }
             return null;
+        }
+
+        public static bool IsExport(string evidenceNo)
+        {
+            if (string.IsNullOrEmpty(evidenceNo))
+                return false;
+
+            var val = evidenceNo.Substring(0, 2).Trim();
+
+            return string.Equals(val, ExporterCodePrefixes.EaExport, StringComparison.InvariantCultureIgnoreCase)
+                    || string.Equals(val, ExporterCodePrefixes.SepaExport, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }

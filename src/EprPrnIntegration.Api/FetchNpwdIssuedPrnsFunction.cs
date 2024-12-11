@@ -13,6 +13,8 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
+using Microsoft.Extensions.Configuration;
+using System.Configuration;
 
 namespace EprPrnIntegration.Api
 {
@@ -27,7 +29,9 @@ namespace EprPrnIntegration.Api
         private readonly IPrnService _prnService;
         private readonly IValidator<NpwdPrn> _validator;
         private readonly IUtilities _utilities;
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities)
+        private readonly IConfiguration _configuration;
+
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
         {
             _logger = logger;
             _npwdClient = npwdClient;
@@ -38,6 +42,7 @@ namespace EprPrnIntegration.Api
             _validator = validator;
             _featureConfig = featureConfig;
             _utilities = utilities;
+            _configuration = configuration;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
@@ -53,14 +58,13 @@ namespace EprPrnIntegration.Api
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
-            var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns);
+            var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
             var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
 
-            if (deltaRun != null && deltaRun.LastSyncDateTime != DateTime.MinValue)
+            if (deltaRun != null && deltaRun.LastSyncDateTime > DateTime.Parse(_configuration["DefaultLastRunDate"]!))
             {
-                filter = $@"""{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) 
-                            or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))""";
+                filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
 
             var npwdIssuedPrns = new List<NpwdPrn>();
@@ -158,11 +162,11 @@ namespace EprPrnIntegration.Api
                                         FirstName = producer.FirstName, // "Venkat",
                                         LastName = producer.LastName, // "Rangala",
                                         NameOfExporterReprocessor = request.ReprocessorAgency!,
-                                        NameOfProducerComplianceScheme = request.RecoveryProcessCode!,
+                                        NameOfProducerComplianceScheme = request.IssuedToOrgName,
                                         PrnNumber = request.EvidenceNo!,
                                         Material = request.EvidenceMaterial!,
                                         Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                                        IsPrn = true //How about PERN Check?
+                                        IsPrn = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
                                     };
                                     producers.Add(producerEmail);
                                 }

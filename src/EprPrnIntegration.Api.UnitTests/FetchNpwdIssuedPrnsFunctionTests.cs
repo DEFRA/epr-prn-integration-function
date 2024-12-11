@@ -12,6 +12,7 @@ using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Queues;
+using Microsoft.Extensions.Configuration;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -29,6 +30,7 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<IValidator<NpwdPrn>> _mockValidator;
         private readonly Mock<IPrnService> _mockPrnService;
         private readonly Mock<IUtilities> _mockPrnUtilities;
+        private readonly Mock<IConfiguration> _mockConfiguration;
         public FetchNpwdIssuedPrnsFunctionTests()
         {
             _fixture = new Fixture();
@@ -42,6 +44,7 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockValidator = new Mock<IValidator<NpwdPrn>>();
             _mockPrnService = new Mock<IPrnService>();
             _mockPrnUtilities = new Mock<IUtilities>();
+            _mockConfiguration = new Mock<IConfiguration>();
 
             // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
@@ -53,7 +56,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 _mockPrnService.Object,
                 _mockValidator.Object,
                 _mockFeatureConfig.Object,
-                _mockPrnUtilities.Object);
+                _mockPrnUtilities.Object,
+                _mockConfiguration.Object);
 
             // Turn the feature flag on
             var config = new FeatureManagementConfiguration
@@ -61,6 +65,9 @@ namespace EprPrnIntegration.Api.UnitTests
                 RunIntegration = true
             };
             _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+            _mockConfiguration
+            .Setup(config => config["DefaultLastRunDate"])
+            .Returns("2024-12-01");
 
         }
 

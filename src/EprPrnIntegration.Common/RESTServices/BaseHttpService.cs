@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Common.RESTServices
 {
@@ -14,12 +15,14 @@ namespace EprPrnIntegration.Common.RESTServices
         protected readonly string _baseUrl;
         protected readonly HttpClient _httpClient;
         protected IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<BaseHttpService> _logger;
 
         protected BaseHttpService(
             IHttpContextAccessor httpContextAccessor,
             IHttpClientFactory httpClientFactory,
             string baseUrl,
-            string endPointName)
+            string endPointName,
+            ILogger<BaseHttpService> logger)
         {
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
@@ -32,7 +35,7 @@ namespace EprPrnIntegration.Common.RESTServices
             {
                 throw new ArgumentNullException(nameof(endPointName));
             }
-                
+
 
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -41,6 +44,7 @@ namespace EprPrnIntegration.Common.RESTServices
                 _baseUrl = _baseUrl.TrimEnd('/');
 
             _baseUrl = $"{_baseUrl}/{endPointName}";
+            _logger = logger;
         }
 
         protected void SetBearerToken(string token)
@@ -65,7 +69,7 @@ namespace EprPrnIntegration.Common.RESTServices
                 }
                 else
                 {
-                    url = $"{_baseUrl}/{url}";
+                    url = $"{_baseUrl}/{url}";  
                 }
             }
 
@@ -185,19 +189,36 @@ namespace EprPrnIntegration.Common.RESTServices
                 throw new ResponseCodeException(response.StatusCode, content!);
             }
         }
-
         private async Task Send(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
         {
-            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                _httpContextAccessor.HttpContext.Response.StatusCode = (int)response.StatusCode;
-                // for now we don't know how we're going to handle errors specifically,
-                // so we'll just throw an error with the error code
-                throw new ServiceException($"Error occurred calling API with error code: {response.StatusCode}. Message: {response.ReasonPhrase}");
+                var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
+                        response.StatusCode, responseBody);
+
+                    _httpContextAccessor.HttpContext.Response.StatusCode = (int)response.StatusCode;
+
+                    throw new ServiceException($"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. " +
+                                               $"Message: {responseBody}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, $"HTTP request failed {_httpClient.BaseAddress}. Exception: {ex.Message}");
+                throw new ServiceException($"Error occurred while sending HTTP request  {_httpClient.BaseAddress}.", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unexpected error occurred during HTTP request {_httpClient.BaseAddress}.");
+                throw new ServiceException($"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.", ex);
             }
         }
+
 
         private static T ReturnValue<T>(string value)
         {

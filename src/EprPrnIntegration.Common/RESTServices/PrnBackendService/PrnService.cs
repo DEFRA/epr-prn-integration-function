@@ -19,7 +19,7 @@ public class PrnService : BaseHttpService, IPrnService
         IOptions<Configuration.Service> config)
         : base(httpContextAccessor, httpClientFactory,
             config.Value.PrnBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceBaseUrlMissing),
-            config.Value.PrnEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceEndPointNameMissing))
+            config.Value.PrnEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceEndPointNameMissing), logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
