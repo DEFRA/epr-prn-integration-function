@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Notify.Client;
+using Notify.Interfaces;
 using Polly;
 using Polly.Extensions.Http;
 using System.Configuration;
@@ -48,6 +50,15 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
+
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            MessagingConfig messagingConfig = new();
+            configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
+
+            return new NotificationClient(messagingConfig.ApiKey);
+        });
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();

@@ -283,4 +283,48 @@ public class UpdateProducersFunctionTests
         _organisationServiceMock.Verify(service =>
             service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task Run_ValidStartHour_FetchAndUpdatesProducers_HandlesNpwdClientErrorsCorrectly()
+    {
+        // Arrange
+        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+
+        _organisationServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Throws<Exception>();
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatedProducers,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });        
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _organisationServiceMock.Verify(
+            service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+            Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("An error was encountered on attempting to call NPWD API ")),
+            It.IsAny<Exception>(),
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+
+        _emailServiceMock.Verify(x => x.SendEmailToNpwd(It.IsAny<string>()), Times.Once);
+    }
 }
