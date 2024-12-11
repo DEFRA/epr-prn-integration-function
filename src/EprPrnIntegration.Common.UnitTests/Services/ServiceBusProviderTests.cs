@@ -411,5 +411,56 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
             _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
         }
+
+        [Fact]
+        public async Task ReceiveFetchedNpwdPrnsFromQueue_NoMessages_ReturnsEmptyList()
+        {
+            // Arrange
+            _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+            _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ServiceBusReceivedMessage>());
+
+            // Act
+            var result = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+
+    [Fact]
+        public async Task ReceiveFetchedNpwdPrnsFromQueue_MessagesFound_ReturnsDeserializedList()
+        {
+            // Arrange
+            var npwdPrns = fixture.CreateMany<NpwdPrn>(3).ToList();
+            var messages = npwdPrns.Select(prn => ServiceBusModelFactory.ServiceBusReceivedMessage(
+                new BinaryData(JsonSerializer.Serialize(npwdPrns)))).ToList();
+            _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+            _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(messages);
+
+            _serviceBusReceiverMock.Setup(receiver => receiver.CompleteMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
+
+            // Assert
+            Assert.Equal(npwdPrns.Count, result.Count());
+        }
+
+        [Fact]
+        public async Task ReceiveFetchedNpwdPrnsFromQueue_ExceptionThrown_LogsErrorAndRethrows()
+        {
+            // Arrange
+            _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+            _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Service bus connection error"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue());
+            Assert.Equal("Service bus connection error", exception.Message);
+            _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to receive messages from queue with exception"))), Times.Once);
+        }
     }
 }
