@@ -58,7 +58,9 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 _mockMessagingConfig.NpwdEmailTemplateId,
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("emailAddress") &&
-                    parameters["emailAddress"].Equals(_mockMessagingConfig.NpwdEmail) &&
+                    parameters.ContainsKey("applicationName") &&
+                    parameters["applicationName"].Equals(Constants.Constants.ApplicationName) &&
+                    parameters.ContainsKey("logId") &&
                     parameters.ContainsKey("errorMessage") &&
                     parameters["errorMessage"].Equals("Test error message")), null, null, null),
                 Times.Once);
