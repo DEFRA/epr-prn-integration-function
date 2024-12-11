@@ -23,8 +23,7 @@ public class UpdateProducersFunction(
     IEmailService emailService)
 {
     [Function("UpdateProducersList")]
-    //public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
-    public async Task Run([HttpTrigger(AuthorizationLevel.Function, "get")] Microsoft.AspNetCore.Http.HttpRequest req)
+    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)    
     {
         var isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
