@@ -12,6 +12,7 @@
     "UpdatePrnsTrigger": "0 0 18 * * 1-5",
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
+    "UpdatePrnsTrigger": "0 0 18 * * 1-5",
     "PrnsContext": "https://fat.npwd.org.uk/odata/PRNs/$delta",
     "Service:Url": "https://devrwdwebwa7407.azurewebsites.net/",
     "Service:EndPointName": "api/organisations",
