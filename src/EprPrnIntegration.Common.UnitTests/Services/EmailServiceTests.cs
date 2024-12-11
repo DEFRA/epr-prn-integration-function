@@ -11,78 +11,78 @@ namespace EprPrnIntegration.Common.UnitTests.Services
 {
     public class EmailServiceTests
     {
-        [Fact]
-        public void SendEmailToNpwd_ShouldLogInformation_WhenEmailIsSentSuccessfully()
+        private readonly Mock<INotificationClient> _mockNotificationClient;
+        private readonly Mock<ILogger<EmailService>> _mockLogger;
+        private readonly MessagingConfig _mockMessagingConfig;
+        private readonly IOptions<MessagingConfig> _mockOptions;
+
+        public EmailServiceTests()
         {
-            // Arrange
-            var mockNotificationClient = new Mock<INotificationClient>();
-            var mockLogger = new Mock<ILogger<EmailService>>();
-            var mockMessagingConfig = new MessagingConfig
+            _mockNotificationClient = new Mock<INotificationClient>();
+            _mockLogger = new Mock<ILogger<EmailService>>();
+            _mockMessagingConfig = new MessagingConfig
             {
                 NpwdEmail = "test@example.com",
                 NpwdEmailTemplateId = "template123"
             };
+            _mockOptions = Mock.Of<IOptions<MessagingConfig>>(opt => opt.Value == _mockMessagingConfig);
+        }
 
-            var mockOptions = Mock.Of<IOptions<MessagingConfig>>(opt => opt.Value == mockMessagingConfig);
+        private EmailService CreateEmailService() =>
+            new EmailService(_mockNotificationClient.Object, _mockOptions, _mockLogger.Object);
 
+        [Fact]
+        public void SendEmailToNpwd_ShouldLogInformation_WhenEmailIsSentSuccessfully()
+        {
+            // Arrange
             var response = new EmailNotificationResponse
             {
                 id = "response123"
             };
 
-            mockNotificationClient
+            _mockNotificationClient
                 .Setup(client => client.SendEmail(
-                    mockMessagingConfig.NpwdEmail,
-                    mockMessagingConfig.NpwdEmailTemplateId,
-                    It.IsAny<Dictionary<string, object>>(), null,null,null))
+                    _mockMessagingConfig.NpwdEmail,
+                    _mockMessagingConfig.NpwdEmailTemplateId,
+                    It.IsAny<Dictionary<string, object>>(),null,null,null))
                 .Returns(response);
 
-            var emailService = new EmailService(mockNotificationClient.Object, mockOptions, mockLogger.Object);
+            var emailService = CreateEmailService();
 
             // Act
             emailService.SendEmailToNpwd("Test error message");
 
             // Assert
-            mockNotificationClient.Verify(client => client.SendEmail(
-                mockMessagingConfig.NpwdEmail,
-                mockMessagingConfig.NpwdEmailTemplateId,
+            _mockNotificationClient.Verify(client => client.SendEmail(
+                _mockMessagingConfig.NpwdEmail,
+                _mockMessagingConfig.NpwdEmailTemplateId,
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("emailAddress") &&
-                    parameters["emailAddress"].Equals(mockMessagingConfig.NpwdEmail) &&
+                    parameters["emailAddress"].Equals(_mockMessagingConfig.NpwdEmail) &&
                     parameters.ContainsKey("errorMessage") &&
-                    parameters["errorMessage"].Equals("Test error message")
-                ),null,null,null), Times.Once);
+                    parameters["errorMessage"].Equals("Test error message")),null,null,null),
+                Times.Once);
 
-            mockLogger.Verify(logger => logger.Log(
+            _mockLogger.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Email sent to NPWD")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
         }
 
         [Fact]
         public void SendEmailToNpwd_ShouldLogError_WhenExceptionIsThrown()
         {
             // Arrange
-            var mockNotificationClient = new Mock<INotificationClient>();
-            var mockLogger = new Mock<ILogger<EmailService>>();
-            var mockMessagingConfig = new MessagingConfig
-            {
-                NpwdEmail = "test@example.com",
-                NpwdEmailTemplateId = "template123"
-            };
-
-            var mockOptions = Mock.Of<IOptions<MessagingConfig>>(opt => opt.Value == mockMessagingConfig);
-
-            mockNotificationClient
+            _mockNotificationClient
                 .Setup(client => client.SendEmail(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<Dictionary<string, object>>(),null,null,null))
                 .Throws(new Exception("Test exception"));
 
-            var emailService = new EmailService(mockNotificationClient.Object, mockOptions, mockLogger.Object);
+            var emailService = CreateEmailService();
 
             // Act
             Action act = () => emailService.SendEmailToNpwd("Test error message");
@@ -90,12 +90,12 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             // Assert
             act.Should().NotThrow(); // Ensure the method handles exceptions internally
 
-            mockLogger.Verify(logger => logger.Log(
+            _mockLogger.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("GOV UK NOTIFY ERROR")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
         }
     }
 }
