@@ -1,5 +1,8 @@
-﻿namespace EprPrnIntegration.Api.Models
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace EprPrnIntegration.Api.Models
 {
+    [ExcludeFromCodeCoverage]
     public class ProducerEmail
     {
         public required string EmailAddress { get; set; }

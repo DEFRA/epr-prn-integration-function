@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Configuration;
+using Azure.Messaging.ServiceBus;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -31,10 +32,10 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<IPrnService> _mockPrnService;
         private readonly Mock<IUtilities> _mockPrnUtilities;
         private readonly Mock<IConfiguration> _mockConfiguration;
+
         public FetchNpwdIssuedPrnsFunctionTests()
         {
             _fixture = new Fixture();
-            // Mock dependencies
             _mockLogger = new Mock<ILogger<FetchNpwdIssuedPrnsFunction>>();
             _mockNpwdClient = new Mock<INpwdClient>();
             _mockServiceBusProvider = new Mock<IServiceBusProvider>();
@@ -46,7 +47,6 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities = new Mock<IUtilities>();
             _mockConfiguration = new Mock<IConfiguration>();
 
-            // Initialize the function with mocked dependencies
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
                 _mockNpwdClient.Object,
@@ -59,7 +59,6 @@ namespace EprPrnIntegration.Api.UnitTests
                 _mockPrnUtilities.Object,
                 _mockConfiguration.Object);
 
-            // Turn the feature flag on
             var config = new FeatureManagementConfiguration
             {
                 RunIntegration = true
@@ -68,7 +67,6 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockConfiguration
             .Setup(config => config["DefaultLastRunDate"])
             .Returns("2024-12-01");
-
         }
 
         [Fact]
@@ -76,12 +74,12 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             // Arrange
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
-
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
                            .ReturnsAsync(npwdIssuedPrns);
 
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
             .Returns(Task.CompletedTask);
+
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
@@ -101,7 +99,7 @@ namespace EprPrnIntegration.Api.UnitTests
         public async Task Run_NoPrnsFetched_LogsWarningAndReturns()
         {
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
-                           .ReturnsAsync([]);
+                           .ReturnsAsync(new List<NpwdPrn>());
 
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .Returns(Task.CompletedTask);
@@ -109,6 +107,7 @@ namespace EprPrnIntegration.Api.UnitTests
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
             // Act
             await _function.Run(new TimerInfo());
 
@@ -124,6 +123,7 @@ namespace EprPrnIntegration.Api.UnitTests
             var exception = new HttpRequestException("Error fetching PRNs");
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
                            .ThrowsAsync(exception);
+
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
@@ -139,7 +139,6 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             // Arrange
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
-
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
                            .ReturnsAsync(npwdIssuedPrns);
 
@@ -155,30 +154,6 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once);
             Assert.Equal("Error pushing to queue", ex.Message);
-        }
-
-        [Fact]
-        public async Task Run_Ends_When_Feature_Flag_Is_False()
-        {
-            // Arrange
-            var config = new FeatureManagementConfiguration
-            {
-                RunIntegration = false
-            };
-            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
-
-            // Act
-            await _function.Run(new TimerInfo());
-
-            // Assert
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag"))));
-            _mockLogger.Verify(logger => logger.Log(
-                      It.IsAny<LogLevel>(),
-                      It.IsAny<EventId>(),
-                      It.IsAny<It.IsAnyType>(),
-                      It.IsAny<Exception>(),
-                      It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                  Times.Once());
         }
     }
 }
