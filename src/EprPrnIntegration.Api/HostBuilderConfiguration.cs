@@ -69,6 +69,7 @@ public static class HostBuilderConfiguration
 
         var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
             .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
 
         // Add HttpClients
@@ -79,6 +80,7 @@ public static class HostBuilderConfiguration
             
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
+
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
     }
