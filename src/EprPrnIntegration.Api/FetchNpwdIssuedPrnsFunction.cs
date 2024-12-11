@@ -116,7 +116,7 @@ namespace EprPrnIntegration.Api
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
         }
 
-        private async Task ProcessIssuedPrnsAsync()
+        public async Task ProcessIssuedPrnsAsync()
         {
             while (true)
             {
