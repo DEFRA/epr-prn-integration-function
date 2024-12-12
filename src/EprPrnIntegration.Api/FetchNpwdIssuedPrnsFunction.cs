@@ -47,7 +47,6 @@ namespace EprPrnIntegration.Api
 
         [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
-        //public async Task Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
         {
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
             if (!isOn)

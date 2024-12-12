@@ -36,6 +36,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
         _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
         _mockUtilities = new Mock<IUtilities>();
+
         _function = new UpdatePrnsFunction(
             _mockPrnService.Object,
             _mockNpwdClient.Object,
@@ -318,6 +319,7 @@ public class UpdatePrnsFunctionTests
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _mockPrnService.Verify(service =>
+            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
             service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
     }
 }
