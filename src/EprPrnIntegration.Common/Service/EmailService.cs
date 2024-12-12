@@ -11,7 +11,7 @@ public class EmailService : IEmailService
     private readonly MessagingConfig _messagingConfig;
     private readonly INotificationClient _notificationClient;
     private readonly ILogger<EmailService> _logger;
-    private const string ExceptionLogMessage = "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
+    
     public EmailService(INotificationClient notificationClient, IOptions<MessagingConfig> messagingConfig, ILogger<EmailService> logger)
     {
         _notificationClient = notificationClient;
@@ -45,7 +45,7 @@ public class EmailService : IEmailService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ExceptionLogMessage, organisationId, templateId);
+                _logger.LogError(ex, Constants.Values.ExceptionLogMessage, organisationId, templateId);
             }
         }
     }

@@ -1,5 +1,10 @@
 ﻿namespace EprPrnIntegration.Common.Constants
 {
+    public static class Values
+    {
+        public const string ExceptionLogMessage = "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
+    }
+
     public static class HttpClientNames
     {
         public const string Npwd = "NpwdClient";

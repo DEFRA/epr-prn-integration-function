@@ -320,6 +320,5 @@ public class UpdatePrnsFunctionTests
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _mockPrnService.Verify(service =>
             service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
-            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
     }
 }

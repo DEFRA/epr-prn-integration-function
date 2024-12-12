@@ -69,7 +69,7 @@ namespace EprPrnIntegration.Common.RESTServices
                 }
                 else
                 {
-                    url = $"{_baseUrl}/{url}";  
+                    url = $"{_baseUrl}/{url}";
                 }
             }
 

@@ -46,7 +46,7 @@ namespace EprPrnIntegration.Common.Service
                     logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {count}", messageBatch.Count);
                     await sender.SendMessagesAsync(messageBatch);
                 }
-                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {MessageBatchCount} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
+                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {count} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
             }
             catch (Exception ex)
             {

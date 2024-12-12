@@ -60,8 +60,7 @@ namespace EprPrnIntegration.Api
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
             var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
-
-            if (deltaRun != null && deltaRun.LastSyncDateTime > DateTime.Parse(_configuration["DefaultLastRunDate"]!))
+            if (deltaRun != null && DateTime.TryParse(_configuration["DefaultLastRunDate"], out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
             {
                 filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
@@ -156,10 +155,10 @@ namespace EprPrnIntegration.Api
                                 foreach (var producer in producerEmails)
                                 {
                                     var producerEmail = new ProducerEmail
-                                    { //TODO: Confirm if the fields mapped are ok
-                                        EmailAddress = producer.Email,// "venkata.rangala.external@eviden.com",
-                                        FirstName = producer.FirstName, // "Venkat",
-                                        LastName = producer.LastName, // "Rangala",
+                                    {
+                                        EmailAddress = producer.Email,
+                                        FirstName = producer.FirstName,
+                                        LastName = producer.LastName,
                                         NameOfExporterReprocessor = request.ReprocessorAgency!,
                                         NameOfProducerComplianceScheme = request.IssuedToOrgName,
                                         PrnNumber = request.EvidenceNo!,
