@@ -6,15 +6,13 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
-using System.Configuration;
+using Azure.Messaging.ServiceBus;
 
 namespace EprPrnIntegration.Api
 {
@@ -114,7 +112,7 @@ namespace EprPrnIntegration.Api
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
         }
 
-        public async Task ProcessIssuedPrnsAsync()
+        internal async Task ProcessIssuedPrnsAsync()
         {
             while (true)
             {
@@ -146,33 +144,7 @@ namespace EprPrnIntegration.Api
                                 var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(messageContent!);
                                 await _prnService.SavePrn(request);
                                 _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
-
-                                // Get list of producers
-                                var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None);
-                                _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
-
-                                var producers = new List<ProducerEmail>();
-                                foreach (var producer in producerEmails)
-                                {
-                                    var producerEmail = new ProducerEmail
-                                    {
-                                        EmailAddress = producer.Email,
-                                        FirstName = producer.FirstName,
-                                        LastName = producer.LastName,
-                                        NameOfExporterReprocessor = request.ReprocessorAgency!,
-                                        NameOfProducerComplianceScheme = request.IssuedToOrgName,
-                                        PrnNumber = request.EvidenceNo!,
-                                        Material = request.EvidenceMaterial!,
-                                        Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                                        IsPrn = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
-                                    };
-                                    producers.Add(producerEmail);
-                                }
-
-                                _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
-                                _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
-
-                                _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
+                                await SendEmailToProducers(message, messageContent, request);
                             }
                             catch (Exception ex)
                             {
@@ -194,6 +166,36 @@ namespace EprPrnIntegration.Api
                     }
                 }
             }
+        }
+
+        private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
+        {
+            // Get list of producers
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None);
+            _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
+
+            var producers = new List<ProducerEmail>();
+            foreach (var producer in producerEmails)
+            {
+                var producerEmail = new ProducerEmail
+                {
+                    EmailAddress = producer.Email,
+                    FirstName = producer.FirstName,
+                    LastName = producer.LastName,
+                    NameOfExporterReprocessor = request.ReprocessorAgency!,
+                    NameOfProducerComplianceScheme = request.IssuedToOrgName,
+                    PrnNumber = request.EvidenceNo!,
+                    Material = request.EvidenceMaterial!,
+                    Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
+                    IsPrn = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
+                };
+                producers.Add(producerEmail);
+            }
+
+            _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
+            _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
+
+            _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
         }
     }
 }
