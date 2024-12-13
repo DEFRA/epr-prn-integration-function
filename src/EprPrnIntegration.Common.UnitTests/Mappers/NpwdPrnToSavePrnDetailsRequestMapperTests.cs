@@ -1,8 +1,5 @@
-﻿using System;
-using EprPrnIntegration.Common.Constants;
-using EprPrnIntegration.Common.Models;
+﻿using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Mappers;
-using Xunit;
 
 namespace EprPrnIntegration.Tests.Mappers
 {
