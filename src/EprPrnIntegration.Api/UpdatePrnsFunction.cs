@@ -86,7 +86,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
         catch (Exception ex)
         {
-            _emailService.SendEmailToNpwd(ex.Message);
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
             logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");            
         }
         

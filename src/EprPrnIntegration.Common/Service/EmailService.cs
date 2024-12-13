@@ -19,7 +19,7 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public void SendEmailToNpwd(string errorMessage)
+    public void SendUpdatePrnsErrorEmailToNpwd(string errorMessage)
     {
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdEmailTemplateId;

@@ -2,5 +2,5 @@
 
 public interface IEmailService
 {
-    void SendEmailToNpwd(string errorMessage);
+    void SendUpdatePrnsErrorEmailToNpwd(string errorMessage);
 }

@@ -50,7 +50,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             var emailService = CreateEmailService();
 
             // Act
-            emailService.SendEmailToNpwd("Test error message");
+            emailService.SendUpdatePrnsErrorEmailToNpwd("Test error message");
 
             // Assert
             _mockNotificationClient.Verify(client => client.SendEmail(
@@ -87,7 +87,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             var emailService = CreateEmailService();
 
             // Act
-            Action act = () => emailService.SendEmailToNpwd("Test error message");
+            Action act = () => emailService.SendUpdatePrnsErrorEmailToNpwd("Test error message");
 
             // Assert
             act.Should().NotThrow(); // Ensure the method handles exceptions internally
@@ -118,7 +118,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             var emailService = CreateEmailService();
 
             // Act
-            Action act = () => emailService.SendEmailToNpwd("Test error message");
+            Action act = () => emailService.SendUpdatePrnsErrorEmailToNpwd("Test error message");
 
             // Assert
             act.Should().NotThrow();
@@ -138,7 +138,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             var emailService = CreateEmailService();
 
             // Act
-            Action act = () => emailService.SendEmailToNpwd("Test error message");
+            Action act = () => emailService.SendUpdatePrnsErrorEmailToNpwd("Test error message");
 
             // Assert
             act.Should().NotThrow();
