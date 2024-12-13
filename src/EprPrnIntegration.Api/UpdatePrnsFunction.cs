@@ -61,36 +61,34 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         // Send data to NPWD via pEPR API
         var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
-        HttpResponseMessage? pEprApiResponse;
+       
         try
         {
-            pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+           var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+
+            if (pEprApiResponse.IsSuccessStatusCode)
+            {
+                logger.LogInformation(
+                    $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
+
+                await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                // Insert sync data into common prn backend
+                await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
+            }
+            else
+            {
+                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+                logger.LogError(
+                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                    pEprApiResponse.StatusCode, responseBody);
+                logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
+            }
         }
         catch (Exception ex)
         {
-
             _emailService.SendEmailToNpwd(ex.Message);
-            logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns");            
-
-            pEprApiResponse = new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");            
         }
-
-        if (pEprApiResponse.IsSuccessStatusCode)
-        {
-            logger.LogInformation(
-                $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
-            
-            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
-            // Insert sync data into common prn backend
-            await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
-        }
-        else
-        {
-            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-            logger.LogError(
-                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                pEprApiResponse.StatusCode, responseBody);
-            logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
-        }
+        
     }
 }
