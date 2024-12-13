@@ -14,6 +14,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Notify.Client;
+using Notify.Interfaces;
+using Polly;
+using Polly.Extensions.Http;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
@@ -37,9 +41,6 @@ public static class HostBuilderConfiguration
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        // Add HttpClient
-        services.AddHttpClient();
-
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<IPrnService, PrnService>();
@@ -48,16 +49,38 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddScoped<IUtilities, Utilities>();
+        services.AddScoped<IEmailService, EmailService>();
+
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            MessagingConfig messagingConfig = new();
+            configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
+
+            return new NotificationClient(messagingConfig.ApiKey);
+        });
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
-        
-        // Add HttpClients
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
 
+        // Add retry resilience policy
+        ApiCallsRetryConfig apiCallsRetryConfig = new();
+        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
+
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
+            .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
+
+        // Add HttpClients
+        services.AddHttpClient();
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .AddPolicyHandler(retryPolicy);
+            
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
+
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
     }
