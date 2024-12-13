@@ -6,6 +6,6 @@ namespace EprPrnIntegration.Common.Configuration;
 public class MessagingConfig
 {
     public string? PrnTemplateId { get; set; }
-    public string? PERNTemplateId { get; set; }
+    public string? PernTemplateId { get; set; }
     public string? ApiKey { get; set; }
 }

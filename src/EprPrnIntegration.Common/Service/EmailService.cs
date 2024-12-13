@@ -23,7 +23,7 @@ public class EmailService : IEmailService
     {
         foreach (var producer in producerEmails)
         {
-            var templateId = producer.IsPrn ? _messagingConfig.PrnTemplateId : _messagingConfig.PERNTemplateId;
+            var templateId = producer.IsPrn ? _messagingConfig.PrnTemplateId : _messagingConfig.PernTemplateId;
             var parameters = new Dictionary<string, object>
                                 {
                                     { "emailAddress", producer.EmailAddress },

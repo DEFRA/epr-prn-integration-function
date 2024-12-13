@@ -32,7 +32,7 @@ namespace EprPrnIntegration.Api.UnitTests
             {
                 ApiKey = "api-key",
                 PrnTemplateId = "prnTemplateId",
-                PERNTemplateId = "pernTemplateId"
+                PernTemplateId = "pernTemplateId"
             };
 
             // Setup the mock IOptions<MessagingConfig> to return the proper MessagingConfig
