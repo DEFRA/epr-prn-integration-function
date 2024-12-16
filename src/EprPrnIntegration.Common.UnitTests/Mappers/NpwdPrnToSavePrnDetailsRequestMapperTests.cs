@@ -1,14 +1,10 @@
-﻿using System;
-using EprPrnIntegration.Common.Constants;
-using EprPrnIntegration.Common.Models;
+﻿using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Mappers;
-using Xunit;
 
 namespace EprPrnIntegration.Tests.Mappers
 {
     public class NpwdPrnToSavePrnDetailsRequestMapperTests
     {
-        // Test for the Map method
         [Fact]
         public void Map_ValidNpwdPrn_ReturnsMappedSavePrnDetailsRequest()
         {
@@ -44,7 +40,7 @@ namespace EprPrnIntegration.Tests.Mappers
 
             // Act
             var result = NpwdPrnToSavePrnDetailsRequestMapper.Map(npwdPrn);
-            var temp = Guid.Parse(npwdPrn.IssuedToNPWDCode);
+
             // Assert
             Assert.NotNull(result);
             Assert.Equal(npwdPrn.AccreditationNo, result.AccreditationNo);
@@ -75,74 +71,19 @@ namespace EprPrnIntegration.Tests.Mappers
             Assert.Equal("IntegrationFA", result.CreatedByUser);
         }
 
-        // Test for the IsExport method when evidenceNo starts with "EA"
-        [Fact]
-        public void IsExport_EvidenceNoStartsWithEa_ReturnsTrue()
+        [Theory]
+        [InlineData("EX123456", true)] // Starts with "EX"
+        [InlineData("SXPA123456", true)] // Starts with "SXPA"
+        [InlineData("XYZ123456", false)] // Does not start with "EX" or "SXPA"
+        [InlineData("", false)] // Empty string
+        [InlineData(null, false)] // Null string
+        public void IsExport_ReturnsExpectedResult(string evidenceNo, bool expectedResult)
         {
-            // Arrange
-            var evidenceNo = "EX123456";
-
             // Act
             var result = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(evidenceNo);
 
             // Assert
-            Assert.True(result);
-        }
-
-        // Test for the IsExport method when evidenceNo starts with "SEPA"
-        [Fact]
-        public void IsExport_EvidenceNoStartsWithSepa_ReturnsTrue()
-        {
-            // Arrange
-            var evidenceNo = "SXPA123456";
-
-            // Act
-            var result = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(evidenceNo);
-
-            // Assert
-            Assert.True(result);
-        }
-
-        // Test for the IsExport method when evidenceNo does not start with "EA" or "SEPA"
-        [Fact]
-        public void IsExport_EvidenceNoDoesNotStartWithEaOrSepa_ReturnsFalse()
-        {
-            // Arrange
-            var evidenceNo = "XYZ123456";
-
-            // Act
-            var result = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(evidenceNo);
-
-            // Assert
-            Assert.False(result);
-        }
-
-        // Test for the IsExport method when evidenceNo is empty
-        [Fact]
-        public void IsExport_EmptyEvidenceNo_ReturnsFalse()
-        {
-            // Arrange
-            var evidenceNo = "";
-
-            // Act
-            var result = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(evidenceNo);
-
-            // Assert
-            Assert.False(result);
-        }
-
-        // Test for the IsExport method when evidenceNo is null
-        [Fact]
-        public void IsExport_NullEvidenceNo_ReturnsFalse()
-        {
-            // Arrange
-            string evidenceNo = null;
-
-            // Act
-            var result = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(evidenceNo);
-
-            // Assert
-            Assert.False(result);
+            Assert.Equal(expectedResult, result);
         }
     }
 }

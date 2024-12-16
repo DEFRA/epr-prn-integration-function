@@ -13,8 +13,8 @@ using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Validators;
-using Microsoft.ApplicationInsights;
 
 namespace EprPrnIntegration.Api
 {
@@ -30,9 +30,8 @@ namespace EprPrnIntegration.Api
         private readonly IValidator<NpwdPrn> _validator;
         private readonly IUtilities _utilities;
         private readonly IConfiguration _configuration;
-        private readonly TelemetryClient _telemetryClient;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration, TelemetryClient telemetryClient)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
         {
             _logger = logger;
             _npwdClient = npwdClient;
@@ -44,7 +43,6 @@ namespace EprPrnIntegration.Api
             _featureConfig = featureConfig;
             _utilities = utilities;
             _configuration = configuration;
-            _telemetryClient = telemetryClient;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
@@ -89,11 +87,13 @@ namespace EprPrnIntegration.Api
                 throw;
             }
 
-
-            // Prns from NPWD must pass validation rules
+            // prns from NPWD must pass validation
             var validNpwdIssuedPrns = new List<NpwdPrn>();
             foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
             {
+                // 
+                npwdPrn.ValidOrganisationIds = new List<Guid>();
+
                 var validator = new NpwdPrnValidator();
                 var validationResult = validator.Validate(npwdPrn);
                 if (validationResult != null && validationResult.IsValid)
@@ -103,18 +103,10 @@ namespace EprPrnIntegration.Api
                 }
 
                 var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
-
-                _telemetryClient.TrackEvent("NpwdPrnValidationError", new Dictionary<string, string>
-                {
-                    { "PrnNumber", npwdPrn.EvidenceNo ?? string.Empty },
-                    { "IncomingStatus", npwdPrn.EvidenceStatusDesc ?? string.Empty },
-                    { "Date", DateTime.Now.ToUniversalTime().ToString("o") },
-                    { "OrganisationName", npwdPrn.IssuedToOrgName ?? string.Empty },
-                    { "ErrorComments", errorMessages }
-                });
-
+                var eventData = CreateCustomEvent(npwdPrn, errorMessages);
+                _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
             }
-            
+
             if (validNpwdIssuedPrns.Count == 0)
             {
                 _logger.LogWarning("Zero Prns in Npwd passed validation for filter {Filter}", filter);
@@ -128,6 +120,7 @@ namespace EprPrnIntegration.Api
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
                 await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                LogCustomEvents(validNpwdIssuedPrns);
             }
             catch (Exception ex)
             {
@@ -146,6 +139,33 @@ namespace EprPrnIntegration.Api
             }
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+        }
+
+        private void LogCustomEvents(List<NpwdPrn> npwdIssuedPrns)
+        {
+            foreach (var npwdPrn in npwdIssuedPrns)
+            {
+                var eventData = CreateCustomEvent(npwdPrn);
+                _utilities.AddCustomEvent(CustomEvents.IssuedPrn, eventData);
+            }
+        }
+
+        private Dictionary<string, string> CreateCustomEvent(NpwdPrn npwdPrn, string errorMessage = "")
+        {
+            Dictionary<string, string> eventData = new()
+            {
+                { "PRN Number", npwdPrn.EvidenceNo ?? "No PRN Number" },
+                { "Incoming Status", npwdPrn.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { "Date", DateTime.UtcNow.ToString() },
+                { "Organisaton Name", npwdPrn.IssuedToOrgName ?? "Blank Organisation Name"},
+            };
+
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                eventData.Add("Error Comments", errorMessage);
+            }
+
+            return eventData;
         }
 
         internal async Task ProcessIssuedPrnsAsync()
