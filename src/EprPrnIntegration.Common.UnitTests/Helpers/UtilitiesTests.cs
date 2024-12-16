@@ -23,10 +23,9 @@ public class UtilitiesTests
         _configurationMock = new Mock<IConfiguration>();
         _telemetryChannel = new Mock<ITelemetryChannel>();
 
-        TelemetryConfiguration configuration = new TelemetryConfiguration
+        TelemetryConfiguration configuration = new()
         {
-            TelemetryChannel = _telemetryChannel.Object,
-            InstrumentationKey = Guid.NewGuid().ToString()
+            TelemetryChannel = _telemetryChannel.Object
         };
 
         configuration.TelemetryInitializers.Add(new OperationCorrelationTelemetryInitializer());
