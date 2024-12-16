@@ -183,7 +183,6 @@ public class UpdatePrnsFunctionTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
-
     [Fact]
     public async Task Run_Ends_When_Feature_Flag_Is_False()
     {
