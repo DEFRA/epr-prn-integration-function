@@ -16,7 +16,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // Accreditation No
         [Fact]
-        public void Should_Not_Have_Error_When_AccreditationNo_Is_Valid()
+        public void AccreditationNo_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             var result = _sut.TestValidate(npwdPrn);
@@ -27,7 +27,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
-        public void Should_Have_Error_When_AccreditationNo_Is_NulllOrEmpty(string? npwdAccreditationNo)
+        public void AccreditationNo_Should_Have_Error_When_Is_NulllOrEmpty(string? npwdAccreditationNo)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.AccreditationNo = npwdAccreditationNo;
@@ -37,7 +37,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // EvidenceNo, equates to PRN Number
         [Fact]
-        public void Should_Not_Have_Error_When_EvidenceNo_Is_Valid()
+        public void EvidenceNo_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             var result = _sut.TestValidate(npwdPrn);
@@ -48,7 +48,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
-        public void Should_Have_Error_When_EvidenceNo_Is_NulllOrEmpty(string? npwdEvidenceNo)
+        public void EvidenceNo_Should_Have_Error_When_Is_NulllOrEmpty(string? npwdEvidenceNo)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceNo = npwdEvidenceNo;
@@ -58,9 +58,12 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // IssuedToEPRId, equates to organisation id
         [Fact]
-        public void Should_Not_Have_Error_When_IssuedEPRId_Is_Valid()
+        public void IssuedEPRId_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
+            var orgId = Guid.NewGuid();
+            npwdPrn.IssuedToEPRId = orgId.ToString();
+            npwdPrn.ValidOrganisationIds = new List<Guid> { orgId };
             var result = _sut.TestValidate(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.IssuedToEPRId);
         }
@@ -69,7 +72,9 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
-        public void Should_Have_Error_When_IssuedEPRId_Is_NulllOrEmpty(string? npwdEprId)
+        [InlineData("OrganisationId")]
+        [InlineData("05be0802-19ac-4c80-b99d-6452577bf93d")]
+        public void IssuedEPRId_Should_Have_Error_When_Is_NulllOrEmpty_Or_Not_Guid_Or_Invalid_Guid(string? npwdEprId)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssuedToEPRId = npwdEprId;
@@ -79,7 +84,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // Tonnage
         [Fact]
-        public void Should_Not_Have_Error_When_Tonnage_Is_Valid()
+        public void Tonnage_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             var result = _sut.TestValidate(npwdPrn);
@@ -89,7 +94,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [Theory]
         [InlineData(-1)]
         [InlineData(0)]
-        public void Should_Have_Error_When_Tonnage_Is_Not_Valid(int npwdTonnage)
+        public void Tonnage_Should_Have_Error_When_Is_Not_Valid(int npwdTonnage)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceTonnes = npwdTonnage;
@@ -106,7 +111,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData("Steel")]
         [InlineData("Wood")]
         [InlineData("aluminium")]
-        public void Should_Not_Have_Error_When_EvidenceMaterial_Is_Valid(string? npwdMaterial)
+        public void EvidenceMaterial_Should_Not_Have_Error_When_Is_Valid(string? npwdMaterial)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceMaterial = npwdMaterial;
@@ -119,7 +124,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData("")]
         [InlineData(" ")]
         [InlineData("Zinc")]
-        public void Should_Have_Error_When_EvidenceMaterial_Is_NulllOrEmpty(string? npwdMaterial)
+        public void EvidenceMaterial_Should_Have_Error_When_Is_NulllOrEmpty_Or_InvalidMaterial(string? npwdMaterial)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceMaterial = npwdMaterial;
@@ -130,7 +135,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         // Accreditation Year
         private const int MinAccreditationYear = 2025;
         [Fact]
-        public void Should_Not_Have_Error_When_AccrediationYear_Is_Valid()
+        public void AccrediationYear_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             int maxYear =  DateTime.UtcNow.Year + 1;
@@ -143,7 +148,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         [Fact]
-        public void Should_Have_Error_When_AccreditationYear_Is_Out_Of_Bounds()
+        public void AccreditationYear_Should_Have_Error_When_Is_Out_Of_Bounds()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.AccreditationYear = MinAccreditationYear - 1;
@@ -157,7 +162,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // Cancelled Date
         [Fact]
-        public void Should_Not_Have_Error_When_CancelledDate_Is_Valid()
+        public void CancelledDate_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.CancelledDate = null;
@@ -171,19 +176,33 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         [Fact]
-        public void Should_Have_Error_When_CancelledDate_Is_Null_And_Status_Is_Not_Cancelled()
+        public void CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled()
+        {
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            npwdPrn.EvidenceStatusCode = "EV-CANCEL";
+            npwdPrn.CancelledDate = null;
+
+            var result = _sut.TestValidate(npwdPrn);
+            result.ShouldHaveValidationErrorFor(x => x.CancelledDate)
+                .WithErrorMessage("Cancellation date must not be null when PRN has status of EV-CANCEL");
+
+        }
+
+        [Fact]
+        public void CancelledDate_Should_Have_Error_When_Is_Not_Null_And_Status_Is_Not_Cancelled()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = "EV-AWACCEP";
             npwdPrn.CancelledDate = DateTime.UtcNow;
 
             var result = _sut.TestValidate(npwdPrn);
-            result.ShouldHaveValidationErrorFor(x => x.CancelledDate);
+            result.ShouldHaveValidationErrorFor(x => x.CancelledDate)
+                 .WithErrorMessage("Cancellation date must be null when PRN is not cancelled");
         }
 
         // Issue Date
         [Fact]
-        public void Should_Not_Have_Error_When_IssueDate_Is_Valid()
+        public void IssueDate_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssueDate = DateTime.UtcNow;
@@ -192,7 +211,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         [Fact]
-        public void Should_Have_Error_When_IssueDate_Is_Nulll()
+        public void IssueDate_Should_Have_Error_When_Is_Nulll()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssueDate = null;

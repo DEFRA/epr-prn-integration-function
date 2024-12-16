@@ -33,5 +33,9 @@ namespace EprPrnIntegration.Common.Models
         public string? ReprocessorAgency { get; set; }
         public DateTime? StatusDate { get; set; }
         public string? CreatedByUser { get; set; }
+
+
+        // for validation purposes, to ensure IssuedToEPRId exits as an organisation in pEPR
+        public List<Guid>? ValidOrganisationIds { get; set; }
     }
 }
