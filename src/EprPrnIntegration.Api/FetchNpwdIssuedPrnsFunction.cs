@@ -13,6 +13,8 @@ using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
+using EprPrnIntegration.Common.Validators;
+using Microsoft.ApplicationInsights;
 
 namespace EprPrnIntegration.Api
 {
@@ -28,8 +30,9 @@ namespace EprPrnIntegration.Api
         private readonly IValidator<NpwdPrn> _validator;
         private readonly IUtilities _utilities;
         private readonly IConfiguration _configuration;
+        private readonly TelemetryClient _telemetryClient;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _logger = logger;
             _npwdClient = npwdClient;
@@ -41,6 +44,7 @@ namespace EprPrnIntegration.Api
             _featureConfig = featureConfig;
             _utilities = utilities;
             _configuration = configuration;
+            _telemetryClient = telemetryClient;
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
@@ -85,9 +89,41 @@ namespace EprPrnIntegration.Api
                 throw;
             }
 
+
+            // Prns from NPWD must pass validation rules
+            var validNpwdIssuedPrns = new List<NpwdPrn>();
+            foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
+            {
+                var validator = new NpwdPrnValidator();
+                var validationResult = validator.Validate(npwdPrn);
+                if (validationResult != null && validationResult.IsValid)
+                {
+                    validNpwdIssuedPrns.Add(npwdPrn);
+                    continue;
+                }
+
+                var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+
+                _telemetryClient.TrackEvent("NpwdPrnValidationError", new Dictionary<string, string>
+                {
+                    { "PrnNumber", npwdPrn.EvidenceNo ?? string.Empty },
+                    { "IncomingStatus", npwdPrn.EvidenceStatusDesc ?? string.Empty },
+                    { "Date", DateTime.Now.ToUniversalTime().ToString("o") },
+                    { "OrganisationName", npwdPrn.IssuedToOrgName ?? string.Empty },
+                    { "ErrorComments", errorMessages }
+                });
+
+            }
+            
+            if (validNpwdIssuedPrns.Count == 0)
+            {
+                _logger.LogWarning("Zero Prns in Npwd passed validation for filter {Filter}", filter);
+                return;
+            }
+
             try
             {
-                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(validNpwdIssuedPrns);
 
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
