@@ -91,9 +91,6 @@ namespace EprPrnIntegration.Api
             var validNpwdIssuedPrns = new List<NpwdPrn>();
             foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
             {
-                // 
-                npwdPrn.ValidOrganisationIds = new List<Guid>();
-
                 var validator = new NpwdPrnValidator();
                 var validationResult = validator.Validate(npwdPrn);
                 if (validationResult != null && validationResult.IsValid)
