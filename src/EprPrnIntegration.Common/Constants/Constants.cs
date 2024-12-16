@@ -42,4 +42,9 @@
         public const string EaExport = "EX";
         public const string SepaExport = "SX";
     }
+
+    public static class CustomEvents
+    {
+        public const string IssuedPrn = "IssuedPrn";
+    }
 }

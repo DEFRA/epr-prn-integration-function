@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Api.Models;
 using System.Text.Json;
+using EprPrnIntegration.Common.Constants;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -289,6 +290,28 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.Is<string>(filter => filter == expectedFilter)), Times.Once);
             _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("function started"))));
             _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("Prns Pushed into Message"))));
+        }
+
+        [Fact]
+        public async Task Run_AddCustomEventForFetchedPrns()
+        {
+            // Arrange
+            var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ReturnsAsync(npwdIssuedPrns);
+
+            _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
+            .Returns(Task.CompletedTask);
+
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.IssuedPrn),
+                It.IsAny<Dictionary<string,string>>()), Times.Exactly(3));
         }
     }
 }

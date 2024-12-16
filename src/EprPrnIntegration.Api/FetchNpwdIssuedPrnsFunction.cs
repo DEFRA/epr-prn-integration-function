@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
+using EprPrnIntegration.Common.Constants;
 
 namespace EprPrnIntegration.Api
 {
@@ -92,6 +93,7 @@ namespace EprPrnIntegration.Api
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
                 await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                LogCustomEvents(npwdIssuedPrns);
             }
             catch (Exception ex)
             {
@@ -110,6 +112,23 @@ namespace EprPrnIntegration.Api
             }
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+        }
+
+        private void LogCustomEvents(List<NpwdPrn> npwdIssuedPrns)
+        {
+            foreach (var prns in npwdIssuedPrns)
+            {
+
+                Dictionary<string, string> eventData = new()
+                {
+                    { "PRN Number", prns.EvidenceNo ?? "No PRN Number" },
+                    { "Incoming Status", prns.EvidenceStatusCode ?? "Blank Incoming Status" },
+                    { "Date",DateTime.UtcNow.ToString() },
+                    { "Organisaton Name",prns.IssuedToOrgName ?? "Blank Organisation Name"},
+                };
+
+                _utilities.AddCustomEvent(CustomEvents.IssuedPrn, eventData);
+            }
         }
 
         internal async Task ProcessIssuedPrnsAsync()
