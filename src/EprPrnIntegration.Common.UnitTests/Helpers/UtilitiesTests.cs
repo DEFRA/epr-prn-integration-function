@@ -15,17 +15,17 @@ public class UtilitiesTests
     private readonly Mock<IServiceBusProvider> _serviceBusProviderMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Utilities _utilities;
-    private readonly Mock<ITelemetryChannel> _telemetryChannel;
+    private readonly Mock<ITelemetryChannel> _mockTelemetryChannel;
 
     public UtilitiesTests()
     {
         _serviceBusProviderMock = new Mock<IServiceBusProvider>();
         _configurationMock = new Mock<IConfiguration>();
-        _telemetryChannel = new Mock<ITelemetryChannel>();
+        _mockTelemetryChannel = new Mock<ITelemetryChannel>();
 
         TelemetryConfiguration configuration = new()
         {
-            TelemetryChannel = _telemetryChannel.Object
+            TelemetryChannel = _mockTelemetryChannel.Object
         };
 
         configuration.TelemetryInitializers.Add(new OperationCorrelationTelemetryInitializer());
@@ -107,6 +107,6 @@ public class UtilitiesTests
             {"test1", "test1" }
         });
 
-        _telemetryChannel.Verify(t => t.Send(It.IsAny<ITelemetry>()), Times.Once);
+        _mockTelemetryChannel.Verify(t => t.Send(It.IsAny<ITelemetry>()), Times.Once);
     }
 }
