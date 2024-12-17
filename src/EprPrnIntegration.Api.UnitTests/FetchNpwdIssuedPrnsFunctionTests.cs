@@ -17,6 +17,7 @@ using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Api.Models;
 using System.Text.Json;
 using EprPrnIntegration.Common.Constants;
+using FluentAssertions;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -73,6 +74,23 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task Run_Ends_When_Feature_Flag_Is_False()
+        {
+            // Arrange
+            var config = new FeatureManagementConfiguration
+            {
+                RunIntegration = false
+            };
+            _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag"))));
+        }
+
+        [Fact]
         public async Task Run_FetchesPrnsAndPushesToQueue_Successfully()
         {
             // Arrange
@@ -121,7 +139,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task Run_FetchPrnsThrowsException_LogsErrorAndThrows()
+        public async Task Run_FetchPrnsThrowsHttpException_LogsErrorAndThrows()
         {
             var exception = new HttpRequestException("Error fetching PRNs");
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
@@ -135,6 +153,20 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed Get Prns from npwd"))), Times.Once);
             Assert.Equal("Error fetching PRNs", ex.Message);
+        }
+
+        [Fact]
+        public async Task Run_FetchPrnsThrowsOtherException_LogsErrorAndThrows()
+        {
+            var exception = new InvalidCastException("Invalid cast");
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ThrowsAsync(exception);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidCastException>(() => _function.Run(new TimerInfo()));
+            _mockLogger.VerifyLog(logger => logger.LogError(It.IsAny<InvalidCastException>(),
+                It.Is<string>(s => s.Contains("Failed Get Prns method for filter"))), Times.Once);
+            Assert.Equal("Invalid cast", ex.Message);
         }
 
         [Fact]
@@ -157,6 +189,25 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once);
             Assert.Equal("Error pushing to queue", ex.Message);
+        }
+
+        [Fact]
+        public async Task Run_CatchesExceptionForProcess_LogsErrorAndThrows()
+        {
+            // Arrange
+            var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ReturnsAsync(npwdIssuedPrns);
+
+            _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
+                                   .Returns(Task.CompletedTask);
+
+            _mockServiceBusProvider.Setup(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                       .Throws(new HttpRequestException());
+
+            // Act & Assert
+            await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed fetching prns from the queue"))), Times.Once);
         }
 
         [Fact]
@@ -262,7 +313,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task Run_SubsequentRun_UsesDefaultFilterIfLastSyncDateIsBeforeDefaultLastRunDate()
+        public async Task Run_UsesDefaultFilterIfLastSyncDateIsBeforeDefaultLastRunDate()
         {
             // Arrange
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
@@ -290,6 +341,28 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.Is<string>(filter => filter == expectedFilter)), Times.Once);
             _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("function started"))));
             _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("Prns Pushed into Message"))));
+        }
+
+        [Fact]
+        public async Task Run_AddDateFilterIfLastSyncDateIsPresentAndNotDeafult()
+        {
+            var passedFilter = "";
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>())).ReturnsAsync([])
+                .Callback<string>(f => passedFilter = f);
+
+            var defaultLastRunDate = DateTime.UtcNow.AddDays(-10);
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = defaultLastRunDate.AddDays(1), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+
+            _mockConfiguration.Setup(config => config["DefaultLastRunDate"]).Returns(defaultLastRunDate.ToString("O"));
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            passedFilter.Should().Contain($"and ((StatusDate ge {deltaSyncExecution.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt");
+            passedFilter.Should().Contain($"or (ModifiedOn ge {deltaSyncExecution.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt");
+
         }
 
         [Fact]
