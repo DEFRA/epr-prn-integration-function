@@ -376,15 +376,36 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
             .Returns(Task.CompletedTask);
 
-            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
-            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
-            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-
             // Act
             await _function.Run(new TimerInfo());
 
             _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.IssuedPrn),
                 It.IsAny<Dictionary<string,string>>()), Times.Exactly(3));
+        }
+
+        [Fact]
+        public async Task Run_AddCustomEventForFetchedPrnsLogsDefaultValuesIfValueDoesntExists()
+        {
+            // Arrange
+            var npwdIssuedPrn = _fixture.Create<NpwdPrn>();
+
+            npwdIssuedPrn.EvidenceNo = npwdIssuedPrn.EvidenceStatusCode = npwdIssuedPrn.IssuedToOrgName = null;
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ReturnsAsync([npwdIssuedPrn]);
+
+            _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
+            .Returns(Task.CompletedTask);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.IssuedPrn),
+                It.Is<Dictionary<string, string>>(
+                    data => data["PRN Number"] == "No PRN Number" &&
+                    data["PRN Number"] == "No PRN Number" &&
+                    data["Organisaton Name"] == "Blank Organisation Name"
+
+                    )), Times.Exactly(3));
         }
     }
 }
