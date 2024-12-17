@@ -91,8 +91,14 @@ namespace EprPrnIntegration.Api
             var validNpwdIssuedPrns = new List<NpwdPrn>();
             foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
             {
-                //var validOrgIds = new List<Guid>();
-                //npwdPrn.ValidOrganisationIds = validOrgIds;
+                if (Guid.TryParse(npwdPrn.IssuedToEPRId, out _))
+                {
+                    var organisation = await _organisationService.GetOrganisationAsync(npwdPrn.IssuedToEPRId, new CancellationToken());
+                    if (organisation != null)
+                    {
+                        npwdPrn.ValidOrganisationIds = [organisation.Id];
+                    }
+                }
 
                 var validationResult = _validator.Validate(npwdPrn);
                 if (validationResult != null && validationResult.IsValid)

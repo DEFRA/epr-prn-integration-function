@@ -9,4 +9,6 @@ public interface IOrganisationService
 
     Task<List<UpdatedProducersResponseModel>> GetUpdatedProducers(DateTime from, DateTime to,
         CancellationToken cancellationToken);
+
+    Task<OrganisationDetailModel> GetOrganisationAsync(string organisationId, CancellationToken cancellationToken);
 }

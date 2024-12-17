@@ -38,4 +38,11 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-ddTHH:mm:ss}&To={to:yyyy-MM-ddTHH:mm:ss}",
             cancellationToken, false);
     }
+
+    public async Task<OrganisationDetailModel> GetOrganisationAsync(string organisationId, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        return await Get<OrganisationDetailModel>($"organisation-by-externalId?externalId={organisationId}",
+            cancellationToken, false);
+    }
 }
