@@ -1,3 +1,4 @@
+using AutoFixture;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -23,6 +24,7 @@ public class UpdateProducersFunctionTests
     private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<IUtilities> _utilitiesMock = new();
     private readonly Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
+    private readonly Fixture _fixture = new();
 
     private readonly UpdateProducersFunction function;
 
@@ -280,5 +282,31 @@ public class UpdateProducersFunctionTests
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _organisationServiceMock.Verify(service =>
             service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_AddCustomEventForUpdateProducers()
+    {
+        // Arrange
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
+        _utilitiesMock.Setup(u => u.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers)).ReturnsAsync(_fixture.Create<DeltaSyncExecution>());
+        
+        _organisationServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+            .ReturnsAsync([updatedProducers[0]]);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
+
+        // Act
+        await function.Run(new());
+
+        _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
+            It.Is<Dictionary<string, string>>(
+                data => data["Organization name"] == updatedProducers[0].ProducerName
+                && data["Organisation ID"] == updatedProducers[0].OrganisationId.ToString()
+                && data["Address"] == updatedProducers[0].OrganisationAddress)), Times.Once);
     }
 }
