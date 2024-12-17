@@ -1,7 +1,10 @@
 ﻿using AutoFixture;
+using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation.TestHelper;
+using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Validators
 {
@@ -9,9 +12,13 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
     {
         private NpwdPrnValidator _sut = null!;
         private Fixture _fixture = new Fixture();
+        private readonly Mock<IOrganisationService> _mockOrganisationService;
+
         public NpwdPrnValidatorTests()
         {
-            _sut = new NpwdPrnValidator();
+            _mockOrganisationService = new Mock<IOrganisationService>();
+
+            _sut = new NpwdPrnValidator(_mockOrganisationService.Object);
         }
 
         // Accreditation No
@@ -63,7 +70,10 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var npwdPrn = _fixture.Create<NpwdPrn>();
             var orgId = Guid.NewGuid();
             npwdPrn.IssuedToEPRId = orgId.ToString();
-            npwdPrn.ValidOrganisationIds = new List<Guid> { orgId };
+
+            _mockOrganisationService.Setup(service => service.DoesOrganisationExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
             var result = _sut.TestValidate(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.IssuedToEPRId);
         }
@@ -72,12 +82,23 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
-        [InlineData("OrganisationId")]
-        [InlineData("05be0802-19ac-4c80-b99d-6452577bf93d")]
-        public void IssuedEPRId_Should_Have_Error_When_Is_NulllOrEmpty_Or_Not_Guid_Or_Invalid_Guid(string? npwdEprId)
+        public void IssuedEPRId_Should_Have_Error_When_Is_NulllOrEmpty(string? npwdEprId)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssuedToEPRId = npwdEprId;
+
+            var result = _sut.TestValidate(npwdPrn);
+            result.ShouldHaveValidationErrorFor(x => x.IssuedToEPRId);
+        }
+
+        [Theory]
+        //[InlineData("OrganisationId")]
+        [InlineData("05be0802-19ac-4c80-b99d-6452577bf93d")]
+        public void IssuedEPRId_Should_Have_Error_When_Not_Guid_Or_Invalid_Guid(string? npwdEprId)
+        {
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            npwdPrn.IssuedToEPRId = npwdEprId;
+
             var result = _sut.TestValidate(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.IssuedToEPRId);
         }

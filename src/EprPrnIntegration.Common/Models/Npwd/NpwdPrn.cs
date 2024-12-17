@@ -34,8 +34,8 @@ namespace EprPrnIntegration.Common.Models
         public DateTime? StatusDate { get; set; }
         public string? CreatedByUser { get; set; }
 
+        public string? IssuedToEntityTypeCode { get; set; }
 
-        // for validation purposes, to ensure IssuedToEPRId exits as an organisation in pEPR
-        public List<Guid>? ValidOrganisationIds { get; set; }
+        public bool IsComplianceScheme => (IssuedToEntityTypeCode ?? string.Empty).Equals("CS");
     }
 }

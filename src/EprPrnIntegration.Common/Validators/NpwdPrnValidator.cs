@@ -1,12 +1,17 @@
 ﻿using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using FluentValidation;
 
 namespace EprPrnIntegration.Common.Validators
 {
     public class NpwdPrnValidator : AbstractValidator<NpwdPrn>
     {
-        public NpwdPrnValidator()
+        private readonly IOrganisationService _organisationService;
+
+        public NpwdPrnValidator(IOrganisationService organisationService)
         {
+            _organisationService = organisationService;
+
             // 1.Accreditation Number not blank
             RuleFor(prn => prn.AccreditationNo).NotNull().NotEmpty();
 
@@ -48,26 +53,20 @@ namespace EprPrnIntegration.Common.Validators
 
         }
 
-        private bool BeValidIssuedToEPRId(NpwdPrn prn, string? eprId)
+        // ensure IssuedToEPRId exits as an organisation or compliance scheme in pEPR
+        private bool BeValidIssuedToEPRId(NpwdPrn npwdPrn, string? eprId)
         {
-
             if (string.IsNullOrWhiteSpace(eprId))
             {
                 return false;
             }
 
-            if (prn.ValidOrganisationIds == null)
+            if (Guid.TryParse(npwdPrn.IssuedToEPRId, out _))
             {
-                return false;
+                return _organisationService.DoesOrganisationExistAsync(npwdPrn.IssuedToEPRId, new CancellationToken()).Result;
             }
-
-            if (!Guid.TryParse(eprId, out Guid orgId))
-            {
-                return false;
-            }
-
-            return prn.ValidOrganisationIds.Contains(orgId);
-
+            
+            return false;
         }
     }
 }
