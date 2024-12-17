@@ -87,6 +87,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+
             // Act
             await _function.Run(new TimerInfo());
 
@@ -152,6 +154,8 @@ namespace EprPrnIntegration.Api.UnitTests
             var exception = new Exception("Error pushing to queue");
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .ThrowsAsync(exception);
+
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
@@ -282,6 +286,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockConfiguration.Setup(config => config["DefaultLastRunDate"])
                               .Returns(defaultLastRunDate.ToString("O"));
 
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+
             // Act
             await _function.Run(new TimerInfo());
 
@@ -306,6 +312,8 @@ namespace EprPrnIntegration.Api.UnitTests
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
 
             // Act
             await _function.Run(new TimerInfo());

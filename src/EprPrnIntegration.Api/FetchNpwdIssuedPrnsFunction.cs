@@ -87,12 +87,14 @@ namespace EprPrnIntegration.Api
                 throw;
             }
 
-            // prns from NPWD must pass validation
+            // prns sourced from NPWD must pass validation
             var validNpwdIssuedPrns = new List<NpwdPrn>();
             foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
             {
-                var validator = new NpwdPrnValidator();
-                var validationResult = validator.Validate(npwdPrn);
+                //var validOrgIds = new List<Guid>();
+                //npwdPrn.ValidOrganisationIds = validOrgIds;
+
+                var validationResult = _validator.Validate(npwdPrn);
                 if (validationResult != null && validationResult.IsValid)
                 {
                     validNpwdIssuedPrns.Add(npwdPrn);
