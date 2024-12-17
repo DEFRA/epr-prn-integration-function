@@ -405,7 +405,7 @@ namespace EprPrnIntegration.Api.UnitTests
                     data["PRN Number"] == "No PRN Number" &&
                     data["Organisaton Name"] == "Blank Organisation Name"
 
-                    )), Times.Exactly(3));
+                    )), Times.Once);
         }
     }
 }
