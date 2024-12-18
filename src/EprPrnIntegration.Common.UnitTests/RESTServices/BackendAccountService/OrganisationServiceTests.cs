@@ -3,6 +3,7 @@ using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.UnitTests.Helpers;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -190,6 +191,59 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             // Act & Assert
             await Assert.ThrowsAsync<ResponseCodeException>(() =>
                 organisationService.GetUpdatedProducers(from, to, CancellationToken.None));
+        }
+
+        [Fact]
+        public async Task DoesProducerOrComplianceSchemeExistAsync_ShouldCallApiAndReturnExistsFlag()
+        {
+            // Arrange
+            var organisationId = Guid.NewGuid().ToString();
+
+            var httpClient = new HttpClient(new MockHttpMessageHandler(
+                responseContent: "Any valid content",
+                statusCode: HttpStatusCode.OK));
+
+            var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
+
+            var organisationService = new OrganisationService(
+                _httpContextAccessorMock.Object,
+                httpClientFactoryMock,
+                _loggerMock.Object,
+                _configMock.Object);
+
+            // Act
+            bool result = await _organisationService.DoesProducerOrComplianceSchemeExistAsync(organisationId, "CS", CancellationToken.None);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Theory]
+        [InlineData(204)]
+        [InlineData(400)]
+        [InlineData(500)]
+        public async Task DoesProducerOrComplianceSchemeExistAsync_ShouldCallApiAndReturnNotExistsFlag(int statusCode)
+        {
+            // Arrange
+            var organisationId = Guid.NewGuid().ToString();
+
+            var httpClient = new HttpClient(new MockHttpMessageHandler(
+                responseContent: "Invalid content",
+                statusCode: (HttpStatusCode)statusCode));
+
+            var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
+
+            var organisationService = new OrganisationService(
+                _httpContextAccessorMock.Object,
+                httpClientFactoryMock,
+                _loggerMock.Object,
+                _configMock.Object);
+
+            // Act
+            bool result = await organisationService.DoesProducerOrComplianceSchemeExistAsync(organisationId, "CS", CancellationToken.None);
+
+            // Assert
+            result.Should().BeFalse();
         }
     }
 }

@@ -76,6 +76,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
             var result = _sut.TestValidate(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.IssuedToEPRId);
+            _mockOrganisationService.Verify(provider => provider.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Theory]
@@ -183,15 +184,23 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // Cancelled Date
         [Fact]
-        public void CancelledDate_Should_Not_Have_Error_When_Is_Valid()
+        public void CancelledDate_Should_Not_Have_Error_When_Is_Null_And_Status_Is_Not_Cancelled()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.CancelledDate = null;
+            
             var result = _sut.TestValidate(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.CancelledDate);
+        }
 
+        [Fact]
+        public void CancelledDate_Should_Not_Have_Error_When_Is_Not_Null_And_Status_Is_Cancelled()
+        {
+            var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = "EV-CANCEL";
             npwdPrn.CancelledDate = DateTime.UtcNow;
+
+            var result = _sut.TestValidate(npwdPrn);
             result = _sut.TestValidate(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.CancelledDate);
         }

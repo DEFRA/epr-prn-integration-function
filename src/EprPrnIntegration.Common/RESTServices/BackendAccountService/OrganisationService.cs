@@ -39,7 +39,6 @@ public class OrganisationService : BaseHttpService, IOrganisationService
             cancellationToken, false);
     }
 
-
     /// <inheritdoc/>
     public async Task<bool> DoesProducerOrComplianceSchemeExistAsync(string organisationId, string entityTypeCode, CancellationToken cancellationToken)
     {
