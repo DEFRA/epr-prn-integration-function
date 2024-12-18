@@ -279,9 +279,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Successfully processed and sent emails")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Successfully processed and sent emails")),
                 It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)), Times.Once);
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
         }
 
         [Fact]
@@ -444,6 +444,40 @@ namespace EprPrnIntegration.Api.UnitTests
                     data["Organisaton Name"] == "Blank Organisation Name"
 
                     )), Times.Once);
+        }
+
+        [Fact]
+        public void FilterValidNpwdIssuedPrns_Returns_All_Valid_Prns()
+        {
+            // Arrange
+            var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+
+            // Act
+            var validNpwdPrns = _function.FilterValidNpwdIssuedPrns(npwdIssuedPrns);
+
+            // Assert
+            validNpwdPrns.Should().BeEquivalentTo(npwdIssuedPrns);
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.IsAny<Dictionary<string, string>>()), Times.Never);
+        }
+
+        [Fact]
+        public void FilterValidNpwdIssuedPrns_Returns_Only_Valid_Prns()
+        {
+            // Arrange
+            var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+            var validNpwdPrn = npwdIssuedPrns[0];
+
+            _mockValidator.Setup(v => v.Validate(validNpwdPrn)).Returns(new FluentValidation.Results.ValidationResult());
+
+            // Act
+            var validNpwdPrns = _function.FilterValidNpwdIssuedPrns(npwdIssuedPrns);
+
+            // Assert
+            validNpwdPrns.Should().BeEquivalentTo(new List<NpwdPrn> { validNpwdPrn });
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.IsAny<Dictionary<string, string>>()), Times.Exactly(npwdIssuedPrns.Count - 1));
         }
     }
 }
