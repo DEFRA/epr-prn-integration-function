@@ -105,8 +105,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
-
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             // Act
             await _function.Run(new TimerInfo());
 
@@ -209,7 +209,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .ThrowsAsync(exception);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
@@ -231,7 +232,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
                        .Throws(new HttpRequestException());
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
@@ -266,7 +268,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             var producerEmailsTask = Task.FromResult(_fixture.CreateMany<PersonEmail>().ToList());
             _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -298,8 +301,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>()))
-                .Returns(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
 
             _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
                 .Returns(Task.CompletedTask);
@@ -325,7 +328,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
                 .ThrowsAsync(new Exception("Error saving PRN"));
 
@@ -361,8 +365,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockConfiguration.Setup(config => config["DefaultLastRunDate"])
                               .Returns(defaultLastRunDate.ToString("O"));
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
-
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             // Act
             await _function.Run(new TimerInfo());
 
@@ -410,7 +414,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             // Act
             await _function.Run(new TimerInfo());
@@ -432,7 +437,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
             .Returns(Task.CompletedTask);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             // Act
             await _function.Run(new TimerInfo());
@@ -451,8 +457,8 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             // Arrange
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
-
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             // Act
             var validNpwdPrns = _function.FilterValidNpwdIssuedPrns(npwdIssuedPrns);
 
@@ -469,11 +475,11 @@ namespace EprPrnIntegration.Api.UnitTests
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
             var validNpwdPrn = npwdIssuedPrns[0];
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>()))
-                .Returns(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
 
-            _mockValidator.Setup(v => v.Validate(validNpwdPrn)).Returns(new FluentValidation.Results.ValidationResult());
-
+            _mockValidator.Setup(x => x.ValidateAsync(validNpwdPrn, It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             // Act
             var validNpwdPrns = _function.FilterValidNpwdIssuedPrns(npwdIssuedPrns);
 

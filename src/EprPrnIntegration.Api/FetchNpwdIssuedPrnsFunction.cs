@@ -128,7 +128,7 @@ namespace EprPrnIntegration.Api
 
             foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
             {
-                var validationResult = _validator.Validate(npwdPrn);
+                var validationResult = _validator.ValidateAsync(npwdPrn).Result;
                 if (validationResult != null && validationResult.IsValid)
                 {
                     validNpwdIssuedPrns.Add(npwdPrn);
@@ -163,7 +163,7 @@ namespace EprPrnIntegration.Api
                     {
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
 
-                        var validationResult = _validator.Validate(messageContent!);
+                        var validationResult = await _validator.ValidateAsync(messageContent!);
 
                         if (validationResult.IsValid)
                         {

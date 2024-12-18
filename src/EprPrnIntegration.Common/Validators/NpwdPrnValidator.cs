@@ -20,7 +20,7 @@ namespace EprPrnIntegration.Common.Validators
 
             // 3.EprID not blank
             // 4.EprID - need to verify from pEPR whether given Id exists in pEPR whether its an organisation or Compliance
-            RuleFor(prn => prn.IssuedToEPRId).Must(BeValidIssuedToEPRId).WithMessage("IssuedToEPRId must match an existing PEPR organisation or compliance scheme");
+            RuleFor(prn => prn.IssuedToEPRId).MustAsync(async (prn, id, cancellation) => await BeValidIssuedToEPRIdAsync(prn, id)).WithMessage("IssuedToEPRId must match an existing PEPR organisation or compliance scheme");
 
             // 5.Tonnage - is integer greater than zero
             RuleFor(prn => prn.EvidenceTonnes).GreaterThan(0);
@@ -54,7 +54,7 @@ namespace EprPrnIntegration.Common.Validators
         }
 
         // ensure IssuedToEPRId exits as an organisation or compliance scheme in pEPR
-        private bool BeValidIssuedToEPRId(NpwdPrn npwdPrn, string? eprId)
+        private async Task<bool> BeValidIssuedToEPRIdAsync(NpwdPrn npwdPrn, string? eprId)
         {
             if (string.IsNullOrWhiteSpace(eprId))
             {
@@ -63,7 +63,7 @@ namespace EprPrnIntegration.Common.Validators
 
             if (Guid.TryParse(npwdPrn.IssuedToEPRId, out _))
             {
-                return _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken()).Result;
+                return await _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken());
             }
             
             return false;
