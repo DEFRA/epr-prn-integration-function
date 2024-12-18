@@ -76,7 +76,7 @@ namespace EprPrnIntegration.Common.RESTServices
             return await Send<T>(CreateMessage(url, null, HttpMethod.Get), cancellationToken);
         }
 
-        protected virtual async Task<bool> GetOk<T>(string url, CancellationToken cancellationToken, bool includeTrailingSlash = true)
+        protected virtual async Task<bool> GetOk(string url, CancellationToken cancellationToken, bool includeTrailingSlash = true)
         {
             if (string.IsNullOrEmpty(url))
             {

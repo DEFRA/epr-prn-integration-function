@@ -39,10 +39,12 @@ public class OrganisationService : BaseHttpService, IOrganisationService
             cancellationToken, false);
     }
 
-    public async Task<bool> DoesOrganisationExistAsync(string organisationId, CancellationToken cancellationToken)
+
+    /// <inheritdoc/>
+    public async Task<bool> DoesProducerOrComplianceSchemeExistAsync(string organisationId, string entityTypeCode, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
-        return await GetOk<OrganisationDetailModel>($"organisation-by-externalId?externalId={organisationId}",
+        return await GetOk($"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
             cancellationToken, false);
     }
 }

@@ -71,7 +71,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var orgId = Guid.NewGuid();
             npwdPrn.IssuedToEPRId = orgId.ToString();
 
-            _mockOrganisationService.Setup(service => service.DoesOrganisationExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<CancellationToken>()))
+            _mockOrganisationService.Setup(service => service.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
             var result = _sut.TestValidate(npwdPrn);

@@ -20,7 +20,7 @@ namespace EprPrnIntegration.Common.Validators
 
             // 3.EprID not blank
             // 4.EprID - need to verify from pEPR whether given Id exists in pEPR whether its an organisation or Compliance
-            RuleFor(prn => prn.IssuedToEPRId).Must(BeValidIssuedToEPRId).WithMessage("IssuedToEPRId must match a PEPR organisatoin Id");
+            RuleFor(prn => prn.IssuedToEPRId).Must(BeValidIssuedToEPRId).WithMessage("IssuedToEPRId must match an existing PEPR organisation or compliance scheme");
 
             // 5.Tonnage - is integer greater than zero
             RuleFor(prn => prn.EvidenceTonnes).GreaterThan(0);
@@ -63,7 +63,7 @@ namespace EprPrnIntegration.Common.Validators
 
             if (Guid.TryParse(npwdPrn.IssuedToEPRId, out _))
             {
-                return _organisationService.DoesOrganisationExistAsync(npwdPrn.IssuedToEPRId, new CancellationToken()).Result;
+                return _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken()).Result;
             }
             
             return false;
