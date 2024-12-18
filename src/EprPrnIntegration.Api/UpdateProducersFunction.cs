@@ -75,7 +75,7 @@ public class UpdateProducersFunction(
             Dictionary<string, string> eventData = new()
                 {
                     { "Organization name", producer.ProducerName },
-                    { "Organisation ID", producer.OrganisationId.ToString() },
+                    { "Organisation ID", producer.ReferenceNumber.ToString() },
                     { "Date",DateTime.UtcNow.ToString() },
                     { "Address",producer.OrganisationAddress},
                 };
