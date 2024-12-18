@@ -145,10 +145,9 @@ namespace EprPrnIntegration.Api
 
                 foreach (var message in messages)
                 {
-                    var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
-
                     try
                     {
+                        var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
 
                         var validationResult = _validator.Validate(messageContent!);

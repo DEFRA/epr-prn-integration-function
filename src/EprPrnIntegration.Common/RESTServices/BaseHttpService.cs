@@ -201,8 +201,6 @@ namespace EprPrnIntegration.Common.RESTServices
                     _logger.LogError("API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
                         response.StatusCode, responseBody);
 
-                    _httpContextAccessor.HttpContext.Response.StatusCode = (int)response.StatusCode;
-
                     throw new ServiceException($"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. " +
                                                $"Message: {responseBody}");
                 }
