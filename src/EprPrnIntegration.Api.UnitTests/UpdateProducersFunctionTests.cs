@@ -45,7 +45,7 @@ public class UpdateProducersFunctionTests
     public async Task Run_ValidStartHour_FetchesAndUpdatesProducers()
     {
         // Arrange
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
 
         _organisationServiceMock
             .Setup(service =>
@@ -219,7 +219,7 @@ public class UpdateProducersFunctionTests
     public async Task Run_SendsDeltaSyncExecutionToQueue()
     {
         // Arrange
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
 
         _organisationServiceMock
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
@@ -255,7 +255,7 @@ public class UpdateProducersFunctionTests
     {
         // Arrange
         var defaultDatetime = "2024-01-01";
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
 
         var defaultDeltaSync = new DeltaSyncExecution
         {
@@ -306,7 +306,7 @@ public class UpdateProducersFunctionTests
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
             It.Is<Dictionary<string, string>>(
                 data => data["Organization name"] == updatedProducers[0].ProducerName
-                && data["Organisation ID"] == updatedProducers[0].OrganisationId.ToString()
+                && data["Organisation ID"] == updatedProducers[0].ReferenceNumber.ToString()
                 && data["Address"] == updatedProducers[0].OrganisationAddress)), Times.Once);
     }
 }
