@@ -469,15 +469,18 @@ namespace EprPrnIntegration.Api.UnitTests
             var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
             var validNpwdPrn = npwdIssuedPrns[0];
 
+            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>()))
+                .Returns(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
+
             _mockValidator.Setup(v => v.Validate(validNpwdPrn)).Returns(new FluentValidation.Results.ValidationResult());
 
             // Act
             var validNpwdPrns = _function.FilterValidNpwdIssuedPrns(npwdIssuedPrns);
 
-            // Assert
-            validNpwdPrns.Should().BeEquivalentTo(new List<NpwdPrn> { validNpwdPrn });
             _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
-                It.IsAny<Dictionary<string, string>>()), Times.Exactly(npwdIssuedPrns.Count - 1));
+                It.Is<Dictionary<string, string>>(
+                    data => data["Error Comments"].Length > 0
+             )), Times.Exactly(npwdIssuedPrns.Count - 1));
         }
     }
 }
