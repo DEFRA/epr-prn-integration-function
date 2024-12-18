@@ -172,6 +172,28 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task Run_FetchPrns_LogsWarning_When_All_Prns_Fail_Validation()
+        {
+            // Arrange
+            var npwdIssuedPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ReturnsAsync(npwdIssuedPrns);
+
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            // Act
+            await _function.Run(new TimerInfo());
+
+            // Assert
+            _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.IsAny<string>()), Times.Once);
+            _mockServiceBusProvider.Verify(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()), Times.Never);
+            _mockLogger.VerifyLog(x => x.LogWarning(It.Is<string>(s => s.StartsWith("Zero Prns in Npwd passed validation for filter"))));
+        }
+
+
+        [Fact]
         public async Task Run_PushPrnsToQueueThrowsException_LogsErrorAndThrows()
         {
             // Arrange
