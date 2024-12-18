@@ -46,6 +46,7 @@
     public static class CustomEvents
     {
         public const string IssuedPrn = "IssuedPrn";
+        public const string UpdateProducer = "UpdateProducer";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
     }
 }
