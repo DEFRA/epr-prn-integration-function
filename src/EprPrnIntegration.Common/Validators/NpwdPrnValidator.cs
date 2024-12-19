@@ -35,7 +35,7 @@ namespace EprPrnIntegration.Common.Validators
                 .WithMessage("Material must be one of: " + String.Join(", ", validMaterials));
 
             // 7.AccreditationYear: Should should be valid 4 digit integer(Year)
-            int minYear = 2025;
+            int minYear = 2024;
             int maxYear = DateTime.UtcNow.Year + 1;
             RuleFor(prn => prn.AccreditationYear).InclusiveBetween(minYear, maxYear);
 

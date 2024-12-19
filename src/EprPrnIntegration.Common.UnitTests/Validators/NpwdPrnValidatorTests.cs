@@ -154,7 +154,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         // Accreditation Year
-        private const int MinAccreditationYear = 2025;
+        private const int MinAccreditationYear = 2024;
         [Fact]
         public async Task AccrediationYear_Should_Not_Have_Error_When_Is_Valid()
         {
