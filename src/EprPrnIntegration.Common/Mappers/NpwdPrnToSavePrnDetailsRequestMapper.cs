@@ -27,7 +27,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             IssuerRef = npwdPrn.IssuerRef,
             MaterialOperationCode = ParseGuid(npwdPrn.MaterialOperationCode),
             ModifiedOn = npwdPrn.ModifiedOn,
-            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? DateTime.MinValue.ToString(),
+            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? "0001",
             PrnSignatory = npwdPrn.PRNSignatory,
             PrnSignatoryPosition = npwdPrn.PRNSignatoryPosition,
             ProducerAgency = npwdPrn.ProducerAgency,
