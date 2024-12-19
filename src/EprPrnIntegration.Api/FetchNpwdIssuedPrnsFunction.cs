@@ -158,10 +158,6 @@ namespace EprPrnIntegration.Api
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
                                 await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message);
-
-                                var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
-                                var eventData = CreateCustomEvent(messageContent, errorMessages);
-                                _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
                                 continue;
                             }
                         }
@@ -169,6 +165,10 @@ namespace EprPrnIntegration.Api
                         {
                             _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
                             await _serviceBusProvider.SendMessageToErrorQueue(message);
+
+                            var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+                            var eventData = CreateCustomEvent(messageContent, errorMessages);
+                            _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
                         }
                     }
                     catch (Exception ex)
