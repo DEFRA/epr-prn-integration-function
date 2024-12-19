@@ -11,5 +11,6 @@ public class MessagingConfig
     public string? PERNTemplateId { get; set; }
     public string? NpwdEmailTemplateId { get; set; }
     public string? NpwdEmail { get; set; }
+    public string? PernTemplateId { get; set; }
     public string? ApiKey { get; set; }
 }

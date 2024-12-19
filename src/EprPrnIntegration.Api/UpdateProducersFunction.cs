@@ -62,6 +62,7 @@ public class UpdateProducersFunction(
                     toDate);
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                LogCustomEvents(updatedEprProducers);
             }
             else
             {
@@ -75,6 +76,22 @@ public class UpdateProducersFunction(
         {
             logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}");
             emailService!.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
+        }
+    }
+
+    private void LogCustomEvents(List<UpdatedProducersResponseModel> updatedEprProducers)
+    {
+        foreach (var producer in updatedEprProducers)
+        {
+            Dictionary<string, string> eventData = new()
+                {
+                    { "Organization name", producer.ProducerName },
+                    { "Organisation ID", producer.ReferenceNumber.ToString() },
+                    { "Date",DateTime.UtcNow.ToString() },
+                    { "Address",producer.OrganisationAddress},
+                };
+
+            utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
         }
     }
 

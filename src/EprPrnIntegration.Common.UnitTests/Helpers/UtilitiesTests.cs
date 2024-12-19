@@ -2,6 +2,9 @@
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
@@ -12,12 +15,23 @@ public class UtilitiesTests
     private readonly Mock<IServiceBusProvider> _serviceBusProviderMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Utilities _utilities;
+    private readonly Mock<ITelemetryChannel> _mockTelemetryChannel;
 
     public UtilitiesTests()
     {
         _serviceBusProviderMock = new Mock<IServiceBusProvider>();
         _configurationMock = new Mock<IConfiguration>();
-        _utilities = new Utilities(_serviceBusProviderMock.Object, _configurationMock.Object);
+        _mockTelemetryChannel = new Mock<ITelemetryChannel>();
+
+        TelemetryConfiguration configuration = new()
+        {
+            TelemetryChannel = _mockTelemetryChannel.Object
+        };
+
+        configuration.TelemetryInitializers.Add(new OperationCorrelationTelemetryInitializer());
+        TelemetryClient telemetryClient = new(configuration);
+
+        _utilities = new Utilities(_serviceBusProviderMock.Object, _configurationMock.Object, telemetryClient);
     }
 
     [Fact]
@@ -83,5 +97,16 @@ public class UtilitiesTests
         // Assert
         Assert.Equal(latestRun, syncExecution.LastSyncDateTime);
         _serviceBusProviderMock.Verify(provider => provider.SendDeltaSyncExecutionToQueue(syncExecution), Times.Once);
+    }
+
+    [Fact]
+    public void AddCustomEvent_CallsTelementryClient()
+    {
+        _utilities.AddCustomEvent("Event", new Dictionary<string, string>()
+        {
+            {"test1", "test1" }
+        });
+
+        _mockTelemetryChannel.Verify(t => t.Send(It.IsAny<ITelemetry>()), Times.Once);
     }
 }
