@@ -192,11 +192,13 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             result.ShouldNotHaveValidationErrorFor(x => x.CancelledDate);
         }
 
-        [Fact]
-        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Not_Null_And_Status_Is_Cancelled()
+        [Theory]
+        [InlineData("EV-CANCEL")]
+        [InlineData("ev-cancel")]
+        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Not_Null_And_Status_Is_Cancelled(string statusCode)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
-            npwdPrn.EvidenceStatusCode = "EV-CANCEL";
+            npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = DateTime.UtcNow;
 
             var result = await _sut.TestValidateAsync(npwdPrn);
@@ -204,8 +206,10 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             result.ShouldNotHaveValidationErrorFor(x => x.CancelledDate);
         }
 
-        [Fact]
-        public async Task CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled()
+        [Theory]
+        [InlineData("EV-CANCEL")]
+        [InlineData("ev-cancel")]
+        public async Task CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled(string statusCode)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = "EV-CANCEL";
@@ -214,7 +218,6 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.CancelledDate)
                 .WithErrorMessage("Cancellation date must not be null when PRN has status of EV-CANCEL");
-
         }
 
         [Fact]
