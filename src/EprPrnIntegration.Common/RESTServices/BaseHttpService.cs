@@ -76,6 +76,29 @@ namespace EprPrnIntegration.Common.RESTServices
             return await Send<T>(CreateMessage(url, null, HttpMethod.Get), cancellationToken);
         }
 
+        protected virtual async Task<bool> GetOk(string url, CancellationToken cancellationToken, bool includeTrailingSlash = true)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                url = _baseUrl;
+            }
+            else
+            {
+                if (includeTrailingSlash)
+                {
+                    url = $"{_baseUrl}/{url}/";
+                }
+                else
+                {
+                    url = $"{_baseUrl}/{url}";
+                }
+            }
+
+            var requestMessage = CreateMessage(url, null, HttpMethod.Get);
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            return response.StatusCode == System.Net.HttpStatusCode.OK;
+        }
+
         private string ReturnUrl(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -216,7 +239,6 @@ namespace EprPrnIntegration.Common.RESTServices
                 throw new ServiceException($"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.", ex);
             }
         }
-
 
         private static T ReturnValue<T>(string value)
         {

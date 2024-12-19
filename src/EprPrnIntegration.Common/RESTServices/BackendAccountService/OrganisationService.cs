@@ -38,4 +38,12 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-ddTHH:mm:ss}&To={to:yyyy-MM-ddTHH:mm:ss}",
             cancellationToken, false);
     }
+
+    /// <inheritdoc/>
+    public async Task<bool> DoesProducerOrComplianceSchemeExistAsync(string organisationId, string entityTypeCode, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        return await GetOk($"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
+            cancellationToken, false);
+    }
 }

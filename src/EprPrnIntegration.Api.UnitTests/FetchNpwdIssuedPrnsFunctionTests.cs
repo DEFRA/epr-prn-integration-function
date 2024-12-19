@@ -185,6 +185,9 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .ThrowsAsync(exception);
 
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
             // Act & Assert
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once);
@@ -238,7 +241,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             var producerEmailsTask = Task.FromResult(_fixture.CreateMany<PersonEmail>().ToList());
             _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -251,9 +255,12 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Successfully processed and sent emails")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Successfully processed and sent emails")),
                 It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)), Times.Once);
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.IsAny<Dictionary<string, string>>()), Times.Never);
         }
 
         [Fact]
@@ -270,8 +277,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
 
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>()))
-                .Returns(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
 
             _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
                 .Returns(Task.CompletedTask);
@@ -282,6 +289,68 @@ namespace EprPrnIntegration.Api.UnitTests
             // Assert
             _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogWarning(It.Is<string>(s => s.Contains("Validation failed for message Id"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessIssuedPrnsAsync_InvalidMessage_AddsCustomEvent()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([]);
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
+
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _function.ProcessIssuedPrnsAsync();
+
+            // Assert
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.Is<Dictionary<string, string>>(
+                data => data["Error Comments"] == "Validation failed"
+                )), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessIssuedPrnsAsync_InvalidMessage_AddsCustomEvent_WithMultipleErrorComments()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([]);
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult {
+                                Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed 1"), new FluentValidation.Results.ValidationFailure("Error", "Validation failed 2") } 
+                            });
+
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _function.ProcessIssuedPrnsAsync();
+
+            // Assert
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.Is<Dictionary<string, string>>(
+                data => data["Error Comments"] == "Validation failed 1 | Validation failed 2"
+                )), Times.Once);
         }
 
         [Fact]
@@ -297,7 +366,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
                 .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
                 .ReturnsAsync([]);
-            _mockValidator.Setup(v => v.Validate(It.IsAny<NpwdPrn>())).Returns(new FluentValidation.Results.ValidationResult());
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
                 .ThrowsAsync(new Exception("Error saving PRN"));
 
@@ -310,6 +380,37 @@ namespace EprPrnIntegration.Api.UnitTests
             // Assert
             _mockServiceBusProvider.Verify(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessIssuedPrnsAsync_ExceptionDuringValidation_LogsError()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([]);
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Some unexpected problem")); ;
+
+            // Act and Assert
+            bool rethrowsException = false;
+            try
+            {
+                await _function.ProcessIssuedPrnsAsync();
+                _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.StartsWith("Unexpected Error processing message Id"))), Times.Once);
+            }
+            catch (Exception ex) {
+                rethrowsException = true;
+            }
+
+            rethrowsException.Should().BeTrue();
         }
 
         [Fact]
@@ -333,6 +434,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockConfiguration.Setup(config => config["DefaultLastRunDate"])
                               .Returns(defaultLastRunDate.ToString("O"));
 
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             // Act
             await _function.Run(new TimerInfo());
 
@@ -362,7 +465,6 @@ namespace EprPrnIntegration.Api.UnitTests
 
             passedFilter.Should().Contain($"and ((StatusDate ge {deltaSyncExecution.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt");
             passedFilter.Should().Contain($"or (ModifiedOn ge {deltaSyncExecution.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt");
-
         }
 
         [Fact]
@@ -376,11 +478,15 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
             .Returns(Task.CompletedTask);
 
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
             // Act
             await _function.Run(new TimerInfo());
 
             _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.IssuedPrn),
-                It.IsAny<Dictionary<string,string>>()), Times.Exactly(3));
+                It.IsAny<Dictionary<string, string>>()), Times.Exactly(3));
         }
 
         [Fact]
@@ -407,5 +513,6 @@ namespace EprPrnIntegration.Api.UnitTests
 
                     )), Times.Once);
         }
+
     }
 }

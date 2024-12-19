@@ -33,5 +33,8 @@ namespace EprPrnIntegration.Common.Models
         public string? ReprocessorAgency { get; set; }
         public DateTime? StatusDate { get; set; }
         public string? CreatedByUser { get; set; }
+
+        // CS = Compliance Scheme, DR = Direct Producer
+        public string? IssuedToEntityTypeCode { get; set; }
     }
 }

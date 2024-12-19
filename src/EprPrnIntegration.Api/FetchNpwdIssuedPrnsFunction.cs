@@ -114,23 +114,6 @@ namespace EprPrnIntegration.Api
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
         }
 
-        private void LogCustomEvents(List<NpwdPrn> npwdIssuedPrns)
-        {
-            foreach (var prns in npwdIssuedPrns)
-            {
-
-                Dictionary<string, string> eventData = new()
-                {
-                    { "PRN Number", prns.EvidenceNo ?? "No PRN Number" },
-                    { "Incoming Status", prns.EvidenceStatusCode ?? "Blank Incoming Status" },
-                    { "Date",DateTime.UtcNow.ToString() },
-                    { "Organisaton Name",prns.IssuedToOrgName ?? "Blank Organisation Name"},
-                };
-
-                _utilities.AddCustomEvent(CustomEvents.IssuedPrn, eventData);
-            }
-        }
-
         internal async Task ProcessIssuedPrnsAsync()
         {
             while (true)
@@ -150,8 +133,8 @@ namespace EprPrnIntegration.Api
                         var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
 
-                        var validationResult = _validator.Validate(messageContent!);
-
+                        // prns sourced from NPWD must pass validation
+                        var validationResult = await _validator.ValidateAsync(messageContent!);
                         if (validationResult.IsValid)
                         {
                             try
@@ -175,6 +158,10 @@ namespace EprPrnIntegration.Api
                         {
                             _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
                             await _serviceBusProvider.SendMessageToErrorQueue(message);
+
+                            var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+                            var eventData = CreateCustomEvent(messageContent, errorMessages);
+                            _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
                         }
                     }
                     catch (Exception ex)
@@ -184,6 +171,33 @@ namespace EprPrnIntegration.Api
                     }
                 }
             }
+        }
+
+        private void LogCustomEvents(List<NpwdPrn> npwdIssuedPrns)
+        {
+            foreach (var npwdPrn in npwdIssuedPrns)
+            {
+                var eventData = CreateCustomEvent(npwdPrn);
+                _utilities.AddCustomEvent(CustomEvents.IssuedPrn, eventData);
+            }
+        }
+
+        private Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
+        {
+            Dictionary<string, string> eventData = new()
+            {
+                { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
+                { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { "Date", DateTime.UtcNow.ToString() },
+                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
+            };
+
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                eventData.Add("Error Comments", errorMessage);
+            }
+
+            return eventData;
         }
 
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
