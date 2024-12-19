@@ -182,10 +182,15 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         // Cancelled Date
-        [Fact]
-        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Null_And_Status_Is_Not_Cancelled()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [InlineData("EV-AWACCEP")]
+        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Null_And_Status_Is_Not_Cancelled(string statusCode)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
+            npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = null;
             
             var result = await _sut.TestValidateAsync(npwdPrn);
@@ -212,7 +217,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         public async Task CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled(string statusCode)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
-            npwdPrn.EvidenceStatusCode = "EV-CANCEL";
+            npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = null;
 
             var result = await _sut.TestValidateAsync(npwdPrn);
@@ -220,11 +225,15 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
                 .WithErrorMessage("Cancellation date must not be null when PRN has status of EV-CANCEL");
         }
 
-        [Fact]
-        public async Task CancelledDate_Should_Have_Error_When_Is_Not_Null_And_Status_Is_Not_Cancelled()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [InlineData("EV-AWACCEP")]
+        public async Task CancelledDate_Should_Have_Error_When_Is_Not_Null_And_Status_Is_Not_Cancelled(string statusCode)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
-            npwdPrn.EvidenceStatusCode = "EV-AWACCEP";
+            npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = DateTime.UtcNow;
 
             var result = await _sut.TestValidateAsync(npwdPrn);

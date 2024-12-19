@@ -240,7 +240,6 @@ namespace EprPrnIntegration.Common.RESTServices
             }
         }
 
-
         private static T ReturnValue<T>(string value)
         {
             if (IsValidJson(value))
