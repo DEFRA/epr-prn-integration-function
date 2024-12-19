@@ -322,6 +322,38 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task ProcessIssuedPrnsAsync_InvalidMessage_AddsCustomEvent_WithMultipleErrorComments()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([]);
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult {
+                                Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed 1"), new FluentValidation.Results.ValidationFailure("Error", "Validation failed 2") } 
+                            });
+
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _function.ProcessIssuedPrnsAsync();
+
+            // Assert
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.NpwdPrnValidationError),
+                It.Is<Dictionary<string, string>>(
+                data => data["Error Comments"] == "Validation failed 1 | Validation failed 2"
+                )), Times.Once);
+        }
+
+        [Fact]
         public async Task ProcessIssuedPrnsAsync_ExceptionDuringProcessing_AddsMessageBackToQueue()
         {
             // Arrange
