@@ -86,8 +86,7 @@ namespace EprPrnIntegration.Api
                 throw;
             }
 
-            var validNpwdIssuedPrns = FilterValidNpwdIssuedPrns(npwdIssuedPrns);
-            if (validNpwdIssuedPrns.Count == 0)
+            if (npwdIssuedPrns.Count == 0)
             {
                 _logger.LogWarning("Zero Prns in Npwd passed validation for filter {Filter}", filter);
                 return;
@@ -95,12 +94,12 @@ namespace EprPrnIntegration.Api
 
             try
             {
-                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(validNpwdIssuedPrns);
+                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
 
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
                 await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
-                LogCustomEvents(validNpwdIssuedPrns);
+                LogCustomEvents(npwdIssuedPrns);
             }
             catch (Exception ex)
             {
@@ -119,28 +118,6 @@ namespace EprPrnIntegration.Api
             }
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
-        }
-
-        // prns sourced from NPWD must pass validation
-        public List<NpwdPrn> FilterValidNpwdIssuedPrns(List<NpwdPrn> npwdIssuedPrns)
-        {
-            var validNpwdIssuedPrns = new List<NpwdPrn>();
-
-            foreach (NpwdPrn npwdPrn in npwdIssuedPrns)
-            {
-                var validationResult = _validator.ValidateAsync(npwdPrn).Result;
-                if (validationResult != null && validationResult.IsValid)
-                {
-                    validNpwdIssuedPrns.Add(npwdPrn);
-                    continue;
-                }
-
-                var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
-                var eventData = CreateCustomEvent(npwdPrn, errorMessages);
-                _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
-            }
-
-            return validNpwdIssuedPrns;
         }
 
         internal async Task ProcessIssuedPrnsAsync()
@@ -163,8 +140,8 @@ namespace EprPrnIntegration.Api
                     {
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
 
+                        // prns sourced from NPWD must pass validation
                         var validationResult = await _validator.ValidateAsync(messageContent!);
-
                         if (validationResult.IsValid)
                         {
                             try
@@ -181,6 +158,10 @@ namespace EprPrnIntegration.Api
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
                                 await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message);
+
+                                var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+                                var eventData = CreateCustomEvent(messageContent, errorMessages);
+                                _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
                                 continue;
                             }
                         }
@@ -208,14 +189,14 @@ namespace EprPrnIntegration.Api
             }
         }
 
-        private Dictionary<string, string> CreateCustomEvent(NpwdPrn npwdPrn, string errorMessage = "")
+        private Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
         {
             Dictionary<string, string> eventData = new()
             {
-                { "PRN Number", npwdPrn.EvidenceNo ?? "No PRN Number" },
-                { "Incoming Status", npwdPrn.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
+                { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
                 { "Date", DateTime.UtcNow.ToString() },
-                { "Organisaton Name", npwdPrn.IssuedToOrgName ?? "Blank Organisation Name"},
+                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
             };
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
