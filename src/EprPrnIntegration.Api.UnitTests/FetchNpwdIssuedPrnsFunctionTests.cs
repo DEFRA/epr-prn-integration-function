@@ -351,6 +351,37 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task ProcessIssuedPrnsAsync_ExceptionDuringValidation_LogsError()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
+                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([]);
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Some unexpected problem")); ;
+
+            // Act and Assert
+            bool rethrowsException = false;
+            try
+            {
+                await _function.ProcessIssuedPrnsAsync();
+                _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.StartsWith("Unexpected Error processing message Id"))), Times.Once);
+            }
+            catch (Exception ex) {
+                rethrowsException = true;
+            }
+
+            rethrowsException.Should().BeTrue();
+        }
+
+        [Fact]
         public async Task Run_UsesDefaultFilterIfLastSyncDateIsBeforeDefaultLastRunDate()
         {
             // Arrange
