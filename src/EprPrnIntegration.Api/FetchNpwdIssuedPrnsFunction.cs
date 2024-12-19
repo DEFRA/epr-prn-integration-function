@@ -86,12 +86,6 @@ namespace EprPrnIntegration.Api
                 throw;
             }
 
-            if (npwdIssuedPrns.Count == 0)
-            {
-                _logger.LogWarning("Zero Prns in Npwd passed validation for filter {Filter}", filter);
-                return;
-            }
-
             try
             {
                 await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
