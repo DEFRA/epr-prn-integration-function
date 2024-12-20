@@ -78,6 +78,22 @@ public class UpdateProducersFunction(
         }
     }
 
+    private void LogCustomEvents(List<UpdatedProducersResponseModel> updatedEprProducers)
+    {
+        foreach (var producer in updatedEprProducers)
+        {
+            Dictionary<string, string> eventData = new()
+                {
+                    { "Organization name", producer.ProducerName },
+                    { "Organisation ID", producer.ReferenceNumber.ToString() },
+                    { "Date",DateTime.UtcNow.ToString() },
+                    { "Address",producer.OrganisationAddress},
+                };
+
+            utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
+        }
+    }
+
     private async Task<List<UpdatedProducersResponseModel>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
     {
         try

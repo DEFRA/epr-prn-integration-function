@@ -19,7 +19,7 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         IOptions<Configuration.Service> config)
         : base(httpContextAccessor, httpClientFactory,
             config.Value.Url ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceBaseUrlMissing),
-            config.Value.EndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceEndPointNameMissing))
+            config.Value.EndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceEndPointNameMissing), logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -36,6 +36,14 @@ public class OrganisationService : BaseHttpService, IOrganisationService
     {
         _logger.LogInformation("Getting updated producers list.");
         return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-ddTHH:mm:ss}&To={to:yyyy-MM-ddTHH:mm:ss}",
+            cancellationToken, false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> DoesProducerOrComplianceSchemeExistAsync(string organisationId, string entityTypeCode, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        return await GetOk($"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
             cancellationToken, false);
     }
 }

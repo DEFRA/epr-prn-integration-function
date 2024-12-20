@@ -1,5 +1,10 @@
 ﻿namespace EprPrnIntegration.Common.Constants
 {
+    public static class Values
+    {
+        public const string ExceptionLogMessage = "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
+    }
+
     public static class Constants
     {
         public const string ApplicationName = "PRN Integration Function Application";
@@ -35,5 +40,18 @@
     {
         public const string UpdateProducers = "odata/producers";
         public const string UpdatePrns = "odata/PRNs";
+    }
+
+    public static class ExporterCodePrefixes
+    {
+        public const string EaExport = "EX";
+        public const string SepaExport = "SX";
+    }
+
+    public static class CustomEvents
+    {
+        public const string IssuedPrn = "IssuedPrn";
+        public const string UpdateProducer = "UpdateProducer";
+        public const string NpwdPrnValidationError = "NpwdPrnValidationError";
     }
 }
