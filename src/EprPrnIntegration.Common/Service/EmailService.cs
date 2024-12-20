@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Interfaces;
+using System.Diagnostics;
 
 namespace EprPrnIntegration.Common.Service;
 
@@ -23,13 +24,14 @@ public class EmailService : IEmailService
     {
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdEmailTemplateId;
+        var operationId = Activity.Current?.RootId ?? string.Empty;
 
         var parameters = new Dictionary<string, object>
         {
                                     { "emailAddress", npwdEmailAddress! },
-                                    { "applicationName", Constants.Constants.ApplicationName },                                   
-                                    { "logId", Guid.NewGuid() }, // To be set to a proper AppInsights Log Id in future
-                                    { "errorMessage", errorMessage },
+                                    { "ApplicationName", Constants.Constants.ApplicationName },                                   
+                                    { "OperationId", operationId },
+                                    { "ErrorMessage", errorMessage },
                                 };
 
         try
