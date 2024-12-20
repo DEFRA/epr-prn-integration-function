@@ -62,6 +62,7 @@ public class UpdateProducersFunction(
                     toDate);
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                LogCustomEvents(updatedEprProducers);
             }
             else
             {
