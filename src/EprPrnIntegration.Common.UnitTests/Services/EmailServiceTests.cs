@@ -3,13 +3,11 @@ using Xunit;
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Service;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using Moq;
 using Notify.Interfaces;
 using Notify.Models;
 using Notify.Models.Responses;
@@ -22,7 +20,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
         private readonly Mock<IOptions<MessagingConfig>> _mockMessagingConfig;
         private readonly Mock<ILogger<EmailService>> _mockLogger;
         private readonly EmailService _emailService;
-        private readonly MessagingConfig _mockMessagingConfig;
+        private readonly MessagingConfig _messagingConfig;
         private readonly IOptions<MessagingConfig> _mockOptions;
 
         public EmailServiceTests()
