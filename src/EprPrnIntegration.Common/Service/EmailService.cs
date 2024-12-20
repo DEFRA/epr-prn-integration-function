@@ -12,7 +12,6 @@ public class EmailService : IEmailService
     private readonly ILogger<EmailService> _logger;
     private const string ExceptionLogMessageGeneric = "GOV UK NOTIFY ERROR. Method: SendEmail: {emailAddress} Template: {templateId}";
 
-
     public EmailService(INotificationClient notificationClient, IOptions<MessagingConfig> messagingConfig, ILogger<EmailService> logger)
     {
         _notificationClient = notificationClient;
@@ -20,7 +19,7 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public void SendEmailToNpwd(string errorMessage)
+    public void SendUpdatePrnsErrorEmailToNpwd(string errorMessage)
     {
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdEmailTemplateId;

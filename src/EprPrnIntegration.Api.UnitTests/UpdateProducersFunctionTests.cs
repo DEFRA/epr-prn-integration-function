@@ -325,6 +325,6 @@ public class UpdateProducersFunctionTests
             It.IsAny<Exception>(),
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
 
-        _emailServiceMock.Verify(x => x.SendEmailToNpwd(It.IsAny<string>()), Times.Once);
+        _emailServiceMock.Verify(x => x.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
     }
 }

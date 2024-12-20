@@ -74,7 +74,7 @@ public class UpdateProducersFunction(
         catch (Exception ex)
         {
             logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}");
-            emailService!.SendEmailToNpwd(ex.Message);
+            emailService!.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
         }
     }
 
