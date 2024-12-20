@@ -34,7 +34,7 @@ namespace EprPrnIntegration.Common.Models
         public DateTime? StatusDate { get; set; }
         public string? CreatedByUser { get; set; }
 
-        // CS = Compliance Scheme, DR = Direct Producer
+        // CS = Compliance Scheme, DR = Direct Registrant
         public string? IssuedToEntityTypeCode { get; set; }
     }
 }
