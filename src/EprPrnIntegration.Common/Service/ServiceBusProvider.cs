@@ -155,7 +155,7 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
-            public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage)
+            public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
             {
                 try
                 {
@@ -178,9 +178,7 @@ namespace EprPrnIntegration.Common.Service
 
                     // Send the message back to the FetchPrnQueue.
                     await sender.SendMessageAsync(retryMessage);
-
-                    var evidence = JsonSerializer.Deserialize<Evidence>(receivedMessage.Body.ToString());
-                    logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidence?.EvidenceNo);
+                    logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidenceNo);
                 }
                 catch (Exception ex)
                 {
@@ -189,7 +187,7 @@ namespace EprPrnIntegration.Common.Service
                 }
             }
 
-        public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage)
+        public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
         {
             try
             {
@@ -210,9 +208,7 @@ namespace EprPrnIntegration.Common.Service
                 }
 
                 await errorQueueSender.SendMessageAsync(errorMessage);
-
-                var evidence = JsonSerializer.Deserialize<Evidence>(receivedMessage.Body.ToString());
-                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidence?.EvidenceNo);
+                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidenceNo);
             }
             catch (Exception ex)
             {

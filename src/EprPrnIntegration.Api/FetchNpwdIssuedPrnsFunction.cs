@@ -126,14 +126,16 @@ namespace EprPrnIntegration.Api
                     break;
                 }
 
+                string evidenceNo = string.Empty;
                 foreach (var message in messages)
                 {
                     try
                     {
                         var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
-
-                        // prns sourced from NPWD must pass validation
+                        evidenceNo = messageContent?.EvidenceNo ?? "Missing";
+                        
+                            // prns sourced from NPWD must pass validation
                         var validationResult = await _validator.ValidateAsync(messageContent!);
                         if (validationResult.IsValid)
                         {
@@ -150,14 +152,14 @@ namespace EprPrnIntegration.Api
                             catch (Exception ex)
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                                await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message);
+                                await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message, evidenceNo);
                                 continue;
                             }
                         }
                         else
                         {
                             _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
-                            await _serviceBusProvider.SendMessageToErrorQueue(message);
+                            await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
 
                             var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                             var eventData = CreateCustomEvent(messageContent, errorMessages);

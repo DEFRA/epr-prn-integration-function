@@ -280,14 +280,14 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                             .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
 
-            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _function.ProcessIssuedPrnsAsync();
 
             // Assert
-            _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()), Times.Once);
+            _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogWarning(It.Is<string>(s => s.Contains("Validation failed for message Id"))), Times.Once);
         }
 
@@ -308,7 +308,7 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                             .ReturnsAsync(new FluentValidation.Results.ValidationResult { Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed") } });
 
-            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -340,7 +340,7 @@ namespace EprPrnIntegration.Api.UnitTests
                                 Errors = { new FluentValidation.Results.ValidationFailure("Error", "Validation failed 1"), new FluentValidation.Results.ValidationFailure("Error", "Validation failed 2") } 
                             });
 
-            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>()))
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -371,14 +371,14 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
                 .ThrowsAsync(new Exception("Error saving PRN"));
 
-            _mockServiceBusProvider.Setup(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>()))
+            _mockServiceBusProvider.Setup(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _function.ProcessIssuedPrnsAsync();
 
             // Assert
-            _mockServiceBusProvider.Verify(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>()), Times.Once);
+            _mockServiceBusProvider.Verify(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
         }
 
