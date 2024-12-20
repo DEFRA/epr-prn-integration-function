@@ -325,9 +325,8 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default)).Returns(Task.CompletedTask);
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
-            
             // Act
-            await _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage);
+            await _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage, "EvidenceNo");
 
             // Assert
             _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.Is<ServiceBusMessage>(msg =>
@@ -357,7 +356,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("ServiceBus error"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage));
+            await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage, "EvidenceNo"));
 
             // Assert
             _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
@@ -379,7 +378,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
             // Act
-            await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage);
+            await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, "EvidenceNo");
 
             // Assert
             _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
