@@ -8,6 +8,7 @@ using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +36,7 @@ public static class HostBuilderConfiguration
             .Build();
     }
 
+    [SuppressMessage("Minor Code Smell", "S125:Sections of code should not be commented out", Justification = "The code may be reworked")]
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
         // Add Application Insights
@@ -71,20 +73,38 @@ public static class HostBuilderConfiguration
             .HandleTransientHttpError()
             .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
             .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
+            //.WaitAndRetryAsync(
+            //    apiCallsRetryConfig?.MaxAttempts ?? 3,
+            //    (outcome, delay, retryAttempt, context) =>
+            //    {
+            //        if (outcome.Result.StatusCode == System.Net.HttpStatusCode.TooManyRequests
+            //            && outcome.Result.Headers.TryGetValues("Retry-After", out var values)
+            //            && int.TryParse(values.FirstOrDefault(), out int retryAfterSeconds))
+            //        {
+            //            delay = TimeSpan.FromSeconds(retryAfterSeconds);
+            //        }
+            //        else
+            //        {
+            //            delay = TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30);
+            //        }
+
+            //        context["RetryAfter"] = delay;
+            //        // return delay;
+            //        //return Task.FromResult(delay);
+            //    });
 
         // Add HttpClients
         services.AddHttpClient();
         services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>()
             .AddPolicyHandler(retryPolicy);
-            
+
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
 
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
     }
-
 
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
