@@ -406,7 +406,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 await _function.ProcessIssuedPrnsAsync();
                 _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.StartsWith("Unexpected Error processing message Id"))), Times.Once);
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 rethrowsException = true;
             }
 

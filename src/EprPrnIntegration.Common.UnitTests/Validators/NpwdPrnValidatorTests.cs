@@ -123,11 +123,12 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             result.ShouldHaveValidationErrorFor(x => x.EvidenceTonnes);
         }
 
-        // Material e.g. paper
+        // Material e.g. wood
         [Theory]
         [InlineData("Aluminium")]
-        [InlineData("Glass")]
-        [InlineData("Paper")]
+        [InlineData("Glass Other")]
+        [InlineData("Glass Re-melt")]
+        [InlineData("Paper/board")]
         [InlineData("Plastic")]
         [InlineData("Steel")]
         [InlineData("Wood")]

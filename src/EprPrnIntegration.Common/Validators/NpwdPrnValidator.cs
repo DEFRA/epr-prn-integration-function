@@ -29,7 +29,7 @@ namespace EprPrnIntegration.Common.Validators
             RuleFor(prn => prn.EvidenceMaterial).NotNull().NotEmpty();
 
             // 6b.and should be a text value and should match Material Names List
-            var validMaterials = new List<string>() { "Aluminium", "Glass", "Paper", "Plastic", "Steel", "Wood" };
+            var validMaterials = new List<string>() { "Aluminium", "Glass Other", "Glass Re-melt", "Paper/board", "Plastic", "Steel", "Wood" };
             RuleFor(prn => prn.EvidenceMaterial)
                 .Must(material => validMaterials.Contains(material ?? string.Empty, StringComparer.OrdinalIgnoreCase))
                 .WithMessage("Material must be one of: " + String.Join(", ", validMaterials));
