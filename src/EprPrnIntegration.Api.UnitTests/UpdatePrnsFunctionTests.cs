@@ -186,6 +186,7 @@ public class UpdatePrnsFunctionTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
+
     [Fact]
     public async Task Run_Ends_When_Feature_Flag_Is_False()
     {
@@ -325,4 +326,30 @@ public class UpdatePrnsFunctionTests
             service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
     }
 
+    [Fact]
+    public async Task Run_SendsErrorEmail_WhenExeptionIsThrown_ByNpwdHttpClient()
+    {
+        // Arrange
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        _mockNpwdClient.Setup(x => x.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .Throws<Exception>();
+            
+
+        // Act
+        await _function.Run(null);
+
+        // Assert
+        _emailService.Verify(x => x.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to patch NpwdUpdatedPrns"))), Times.Once);
+    }
 }

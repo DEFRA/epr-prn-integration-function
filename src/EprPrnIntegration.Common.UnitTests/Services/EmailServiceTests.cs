@@ -83,7 +83,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
         }
 
         [Fact]
-        public void SendEmailsToProducers_LogsError_WhenSendEmailFailsold()
+        public void SendEmailsToProducers_LogsError_WhenSendEmailFails()
         {
             // Arrange
             var producerEmails = new List<ProducerEmail>
@@ -184,5 +184,39 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "pernTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
         }
 
+
+        [Fact]
+        public void SendUpdatePrnsErrorEmailToNpwd_LogsInformation_WhenSendEmailSucceeds()
+        {
+            // Arrange
+            _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+                .Returns(new EmailNotificationResponse { id = "ABC1121" });
+
+            // Act
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+
+            // Assert
+            _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to NPWD with email address"))), Times.Once);
+        }
+
+        [Fact]
+        public void SendUpdatePrnsErrorEmailToNpwd_LogsError_WhenSendEmailFails()
+        {
+            // Arrange
+            _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+                .Throws(new Exception("Error sending email"));
+
+            // Act
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+
+            // Assert
+            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR"))), Times.Once);
+        }
     }
 }
