@@ -5,6 +5,11 @@
         public const string ExceptionLogMessage = "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
     }
 
+    public static class Constants
+    {
+        public const string ApplicationName = "PRN Integration Function Application";
+    }
+
     public static class HttpClientNames
     {
         public const string Npwd = "NpwdClient";

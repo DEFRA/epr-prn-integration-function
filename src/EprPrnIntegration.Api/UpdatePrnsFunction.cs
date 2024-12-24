@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
-    IUtilities utilities)
+    IUtilities utilities, IEmailService _emailService)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
@@ -60,24 +61,34 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         // Send data to NPWD via pEPR API
         var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
-        var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+       
+        try
+        {
+           var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
 
-        if (pEprApiResponse.IsSuccessStatusCode)
-        {
-            logger.LogInformation(
-                $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
-            
-            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
-            // Insert sync data into common prn backend
-            await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
+            if (pEprApiResponse.IsSuccessStatusCode)
+            {
+                logger.LogInformation(
+                    $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
+
+                await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                // Insert sync data into common prn backend
+                await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
+            }
+            else
+            {
+                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+                logger.LogError(
+                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                    pEprApiResponse.StatusCode, responseBody);
+                logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-            logger.LogError(
-                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                pEprApiResponse.StatusCode, responseBody);
-            logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
+            logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");            
         }
+        
     }
 }

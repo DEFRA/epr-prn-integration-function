@@ -10,6 +10,7 @@ using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Notify.Client;
 using Notify.Interfaces;
+using Polly;
+using Polly.Extensions.Http;
 using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
@@ -35,14 +38,12 @@ public static class HostBuilderConfiguration
             .Build();
     }
 
+    [SuppressMessage("Minor Code Smell", "S125:Sections of code should not be commented out", Justification = "The code may be reworked")]
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
         // Add Application Insights
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-
-        // Add HttpClient
-        services.AddHttpClient();
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
@@ -53,16 +54,57 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
+        services.AddScoped<IEmailService, EmailService>();
+
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            MessagingConfig messagingConfig = new();
+            configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
+
+            return new NotificationClient(messagingConfig.ApiKey);
+        });
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
-        
+
+        // Add retry resilience policy
+        ApiCallsRetryConfig apiCallsRetryConfig = new();
+        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
+
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
+            .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
+            //.WaitAndRetryAsync(
+            //    apiCallsRetryConfig?.MaxAttempts ?? 3,
+            //    (outcome, delay, retryAttempt, context) =>
+            //    {
+            //        if (outcome.Result.StatusCode == System.Net.HttpStatusCode.TooManyRequests
+            //            && outcome.Result.Headers.TryGetValues("Retry-After", out var values)
+            //            && int.TryParse(values.FirstOrDefault(), out int retryAfterSeconds))
+            //        {
+            //            delay = TimeSpan.FromSeconds(retryAfterSeconds);
+            //        }
+            //        else
+            //        {
+            //            delay = TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30);
+            //        }
+
+            //        context["RetryAfter"] = delay;
+            //        // return delay;
+            //        //return Task.FromResult(delay);
+            //    });
+
         // Add HttpClients
+        services.AddHttpClient();
         services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .AddPolicyHandler(retryPolicy);
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
+
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
         

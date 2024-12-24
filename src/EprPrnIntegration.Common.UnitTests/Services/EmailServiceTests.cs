@@ -1,17 +1,13 @@
 ﻿using Moq;
-using Xunit;
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using Notify.Interfaces;
-using Notify.Models;
 using Notify.Models.Responses;
 
-namespace EprPrnIntegration.Api.UnitTests
+namespace EprPrnIntegration.Common.UnitTests.Services
 {
     public class EmailServiceTests
     {
@@ -32,9 +28,11 @@ namespace EprPrnIntegration.Api.UnitTests
             {
                 ApiKey = "api-key",
                 PrnTemplateId = "prnTemplateId",
-                PernTemplateId = "pernTemplateId"
+                PernTemplateId = "pernTemplateId",
+                NpwdEmailTemplateId = "npwdEmailTemplateId",
+                NpwdEmail = "npwd@email.com"
             };
-
+            
             // Setup the mock IOptions<MessagingConfig> to return the proper MessagingConfig
             _mockMessagingConfig = new Mock<IOptions<MessagingConfig>>();
             _mockMessagingConfig.Setup(m => m.Value).Returns(_messagingConfig);
@@ -42,6 +40,9 @@ namespace EprPrnIntegration.Api.UnitTests
             // Instantiate the EmailService with the mock dependencies
             _emailService = new EmailService(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
         }
+
+        private EmailService CreateEmailService() =>
+            new EmailService(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
 
         [Fact]
         public void SendEmailsToProducers_SuccessfullySendsEmails_LogsInformation()
@@ -71,6 +72,8 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
                 .Returns(expectedResponse);
 
+            var emailService = CreateEmailService();
+
             // Act
             _emailService.SendEmailsToProducers(producerEmails, organisationId);
 
@@ -80,7 +83,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public void SendEmailsToProducers_LogsError_WhenSendEmailFailsold()
+        public void SendEmailsToProducers_LogsError_WhenSendEmailFails()
         {
             // Arrange
             var producerEmails = new List<ProducerEmail>
@@ -179,6 +182,41 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "pernTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
+        }
+
+
+        [Fact]
+        public void SendUpdatePrnsErrorEmailToNpwd_LogsInformation_WhenSendEmailSucceeds()
+        {
+            // Arrange
+            _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+                .Returns(new EmailNotificationResponse { id = "ABC1121" });
+
+            // Act
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+
+            // Assert
+            _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to NPWD with email address"))), Times.Once);
+        }
+
+        [Fact]
+        public void SendUpdatePrnsErrorEmailToNpwd_LogsError_WhenSendEmailFails()
+        {
+            // Arrange
+            _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+                .Throws(new Exception("Error sending email"));
+
+            // Act
+            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+
+            // Assert
+            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR"))), Times.Once);
         }
     }
 }
