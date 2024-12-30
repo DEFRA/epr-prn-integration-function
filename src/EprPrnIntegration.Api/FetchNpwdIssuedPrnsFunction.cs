@@ -14,6 +14,9 @@ using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
+using Azure.Core;
+using Azure.Messaging;
+using EprPrnIntegration.Common.Models.Npwd;
 
 namespace EprPrnIntegration.Api
 {
@@ -116,6 +119,7 @@ namespace EprPrnIntegration.Api
 
         internal async Task ProcessIssuedPrnsAsync()
         {
+            var errorList = new List<Dictionary<string, string>>();
             while (true)
             {
                 var messages = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
@@ -134,8 +138,8 @@ namespace EprPrnIntegration.Api
                         var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
                         evidenceNo = messageContent?.EvidenceNo ?? "Missing";
-                        
-                            // prns sourced from NPWD must pass validation
+
+                        // prns sourced from NPWD must pass validation
                         var validationResult = await _validator.ValidateAsync(messageContent!);
                         if (validationResult.IsValid)
                         {
@@ -163,6 +167,7 @@ namespace EprPrnIntegration.Api
 
                             var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                             var eventData = CreateCustomEvent(messageContent, errorMessages);
+                            errorList.Add(eventData);
                             _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
                         }
                     }
@@ -172,6 +177,15 @@ namespace EprPrnIntegration.Api
                         throw;
                     }
                 }
+            }
+
+            if (errorList.Any())
+            {
+                _logger.LogInformation("Sending error summary email to NPWD.");
+
+                _emailService.SendErrorSummaryEmail(errorList);
+
+                _logger.LogInformation("Sent error summary emai to NPWD");
             }
         }
 

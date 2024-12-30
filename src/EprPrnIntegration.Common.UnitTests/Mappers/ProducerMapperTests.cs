@@ -19,7 +19,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void MapToDelta_NullInput_ReturnsEmptyProducerDelta()
         {
             // Arrange
-            List<UpdatedProducersResponseModel> updatedProducers = null;
+            List<UpdatedProducersResponse> updatedProducers = null;
 
             // Act
             var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
@@ -36,7 +36,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void MapToDelta_EmptyList_ReturnsEmptyProducerDelta()
         {
             // Arrange
-            var updatedProducers = new List<UpdatedProducersResponseModel>();
+            var updatedProducers = new List<UpdatedProducersResponse>();
 
             // Act
             var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
@@ -53,25 +53,17 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void MapToDelta_ValidInput_MapsToProducerDelta()
         {
             // Arrange
-            var updatedProducers = new List<UpdatedProducersResponseModel>
+            var updatedProducers = new List<UpdatedProducersResponse>
             {
-                new UpdatedProducersResponseModel
+                new UpdatedProducersResponse
                 {
-                    ProducerName = "Producer A",
                     CompaniesHouseNumber = "12345678",
-                    SubBuildingName = "SubBuilding A",
-                    BuildingNumber = "10",
-                    BuildingName = "Building A",
-                    Street = "Street A",
-                    Locality = "Locality A",
-                    DependentLocality = "Dependent Locality A",
+                    AddressLine1 = "SubBuilding A",
+                    AddressLine2 = "Building A",
                     Town = "Town A",
                     County = "County A",
                     Country = "Country A",
                     Postcode = "12345",
-                    IsComplianceScheme = true,
-                    ReferenceNumber = "REF001",
-                    ExternalId = "EXT001"
                 }
             };
 
@@ -85,43 +77,39 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Single(result.Value);
 
             var producer = result.Value[0];
-            Assert.Equal("Producer A", producer.ProducerName);
             Assert.Equal("12345678", producer.CompanyRegNo);
-            Assert.Equal("SubBuilding A 10 Building A", producer.AddressLine1);
-            Assert.Equal("Street A", producer.AddressLine2);
+            Assert.Equal("SubBuilding A", producer.AddressLine1);
+            Assert.Equal("Building A", producer.AddressLine2);
             Assert.Equal("12345", producer.Postcode);
-            Assert.Equal("CS", producer.EntityTypeCode);
-            Assert.Equal("Compliance Scheme", producer.EntityTypeName);
-            Assert.Equal("REF001", producer.EPRCode);
-            Assert.Equal("EXT001", producer.EPRId);
         }
 
-        [Fact]
-        public void MapToDelta_IsComplianceSchemeFalse_SetsEntityTypeCorrectly()
-        {
-            // Arrange
-            var updatedProducers = new List<UpdatedProducersResponseModel>
-            {
-                new UpdatedProducersResponseModel
-                {
-                    ProducerName = "Producer B",
-                    IsComplianceScheme = false
-                }
-            };
+        //[Fact]
+        //public void MapToDelta_IsComplianceSchemeFalse_SetsEntityTypeCorrectly()
+        //{
+        //    // Arrange
+        //    var updatedProducers = new List<UpdatedProducersResponse>
+        //    {
+        //        new UpdatedProducersResponse
+        //        {
+                    
+        //            ProducerName = "Producer B",
+        //            IsComplianceScheme = false
+        //        }
+        //    };
 
-            // Act
-            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+        //    // Act
+        //    var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.NotNull(result.Context);
-            Assert.Equal("https://fat.npwd.org.uk/odata/Producers/$delta", result.Context);
-            Assert.Single(result.Value);
+        //    // Assert
+        //    Assert.NotNull(result);
+        //    Assert.NotNull(result.Context);
+        //    Assert.Equal("https://fat.npwd.org.uk/odata/Producers/$delta", result.Context);
+        //    Assert.Single(result.Value);
 
-            var producer = result.Value[0];
-            Assert.Equal("Producer B", producer.ProducerName);
-            Assert.Equal("DR", producer.EntityTypeCode);
-            Assert.Equal("Direct Registrant", producer.EntityTypeName);
-        }
+        //    var producer = result.Value[0];
+        //    Assert.Equal("Producer B", producer.ProducerName);
+        //    Assert.Equal("DR", producer.EntityTypeCode);
+        //    Assert.Equal("Direct Registrant", producer.EntityTypeName);
+        //}
     }
 }

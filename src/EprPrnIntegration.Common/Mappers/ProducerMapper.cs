@@ -7,7 +7,7 @@ namespace EprPrnIntegration.Common.Mappers;
 public static class ProducerMapper
 {
     public static ProducerDelta Map(
-        List<UpdatedProducersResponseModel> updatedEprProducers, IConfiguration configuration)
+        List<UpdatedProducersResponse> updatedEprProducers, IConfiguration configuration)
     {
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
@@ -19,22 +19,25 @@ public static class ProducerMapper
             Context = configuration["ProducersContext"],
             Value = updatedEprProducers.Select(eprProducer => new Producer
             {
-                AddressLine1 = string.IsNullOrWhiteSpace($"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}".Trim())
-                    ? null
-                    : $"{eprProducer.SubBuildingName} {eprProducer.BuildingNumber} {eprProducer.BuildingName}".Trim(),
-                AddressLine2 = eprProducer.Street,
-                AddressLine3 = eprProducer.Locality,
-                AddressLine4 = eprProducer.DependentLocality,
-                CompanyRegNo = eprProducer.CompaniesHouseNumber,
-                EntityTypeCode = eprProducer.IsComplianceScheme ? "CS" : "DR",
-                EntityTypeName = eprProducer.IsComplianceScheme ? "Compliance Scheme" : "Direct Registrant",
-                Country = eprProducer.Country,
-                County = eprProducer.County,
-                Town = eprProducer.Town,
-                EPRId = eprProducer.ExternalId,
-                EPRCode = eprProducer.ReferenceNumber,
-                Postcode = eprProducer.Postcode,
-                ProducerName = eprProducer.ProducerName
+                AddressLine1 = eprProducer.AddressLine1 ?? string.Empty,
+                AddressLine2 = eprProducer.AddressLine2 ?? string.Empty,
+                CompanyRegNo = eprProducer.CompaniesHouseNumber ?? string.Empty,
+                //TODO: logic for the below
+                //EntityTypeCode = eprProducer.IsComplianceScheme ? "CS" : "DR", // need
+                //EntityTypeName = eprProducer.IsComplianceScheme ? "Compliance Scheme" : "Direct Registrant", // needed
+
+                Country = eprProducer.Country ?? string.Empty,
+                County = eprProducer.County ?? string.Empty,
+                Town = eprProducer.Town ?? string.Empty,
+                Postcode = eprProducer.Postcode ?? string.Empty,
+                //TODO add the statusCode & statusDesc fields once available through the stored procedure
+                //statusCode & statusDesc
+
+                //Do we need these? If yes, how to add these available via the stored procedure
+                //EPRId = eprProducer.ExternalId,
+                //EPRCode = eprProducer.ReferenceNumber,
+                //ProducerName = eprProducer.ProducerName
+
             }).ToList()
         };
     }

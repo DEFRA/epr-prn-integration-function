@@ -4,7 +4,7 @@ using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace EprPrnIntegration.Api;
 
 public class UpdateProducersFunction(
-    IOrganisationService organisationService,
+    ICommonDataService commonDataService,
     INpwdClient npwdClient,
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
@@ -68,14 +68,14 @@ public class UpdateProducersFunction(
         }
     }
 
-    private void LogCustomEvents(List<UpdatedProducersResponseModel> updatedEprProducers)
+    private void LogCustomEvents(List<UpdatedProducersResponse> updatedEprProducers)
     {
         foreach (var producer in updatedEprProducers)
         {
             Dictionary<string, string> eventData = new()
                 {
-                    { "Organization name", producer.ProducerName },
-                    { "Organisation ID", producer.ReferenceNumber.ToString() },
+                    { "Organization name", producer.OrganisationName! },
+                    { "Organisation ID", producer.OrganisationId! },
                     { "Date",DateTime.UtcNow.ToString() },
                     { "Address",producer.OrganisationAddress},
                 };
@@ -84,11 +84,11 @@ public class UpdateProducersFunction(
         }
     }
 
-    private async Task<List<UpdatedProducersResponseModel>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
     {
         try
         {
-            return await organisationService.GetUpdatedProducers(fromDate, toDate, new CancellationToken());
+            return await commonDataService.GetUpdatedProducers(fromDate, toDate, new CancellationToken());
         }
         catch (Exception ex)
         {

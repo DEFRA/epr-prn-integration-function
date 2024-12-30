@@ -6,6 +6,8 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.CommonService;
+using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
@@ -46,6 +48,7 @@ public static class HostBuilderConfiguration
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
+        services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
