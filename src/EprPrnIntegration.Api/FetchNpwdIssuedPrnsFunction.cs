@@ -78,6 +78,7 @@ namespace EprPrnIntegration.Api
             catch (HttpRequestException ex)
             {
                 _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
+                _emailService.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
                 throw;
             }
             catch (Exception ex)
@@ -152,7 +153,7 @@ namespace EprPrnIntegration.Api
                             catch (Exception ex)
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                                await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message, evidenceNo);
+                                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                                 continue;
                             }
                         }
