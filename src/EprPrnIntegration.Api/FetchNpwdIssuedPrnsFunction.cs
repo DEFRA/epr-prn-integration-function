@@ -77,7 +77,6 @@ namespace EprPrnIntegration.Api
             catch (HttpRequestException ex)
             {
                 _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
-                _emailService.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
                 throw;
             }
             catch (Exception ex)

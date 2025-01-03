@@ -36,7 +36,7 @@ namespace EprPrnIntegration.Common.Validators
 
             // 7.AccreditationYear: Should should be valid 4 digit integer(Year)
             int minYear = 2024;
-            int maxYear = 2025;
+            int maxYear = DateTime.UtcNow.Year + 1;
             RuleFor(prn => prn.AccreditationYear).InclusiveBetween(minYear, maxYear);
 
             // 8.If the status is cancelled then there should be a valid date in field Cancelled Date.

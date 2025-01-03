@@ -99,7 +99,7 @@ namespace EprPrnIntegration.Common.Service
             {
                 await using var receiver = serviceBusClient.CreateReceiver(config.Value.DeltaSyncQueueName);
 
-                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, maxWaitTime: TimeSpan.FromSeconds(config.Value.MaxWaitTime ?? 1));
+                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, maxWaitTime: TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
 
                 if (messages == null || !messages.Any())
                 {
@@ -144,7 +144,7 @@ namespace EprPrnIntegration.Common.Service
                 await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
 
                 // Continue receiving messages until the queue is empty or we have processed the relevant range
-                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTime?? 1));
+                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds?? 1));
 
                 return messages;
             }
