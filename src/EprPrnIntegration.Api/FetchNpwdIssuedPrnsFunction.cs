@@ -71,9 +71,8 @@ namespace EprPrnIntegration.Api
                 if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
                 {
                     _logger.LogWarning($"No Prns Exists in npwd for filter {filter}");
-                    return;
                 }
-                _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns.Count, filter);
+                _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns!.Count, filter);
             }
             catch (HttpRequestException ex)
             {
@@ -152,7 +151,7 @@ namespace EprPrnIntegration.Api
                             catch (Exception ex)
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                                await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message, evidenceNo);
+                                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                                 continue;
                             }
                         }
@@ -205,7 +204,7 @@ namespace EprPrnIntegration.Api
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
             // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None);
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None) ?? [];
             _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
             var producers = new List<ProducerEmail>();
