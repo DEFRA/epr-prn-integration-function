@@ -10,6 +10,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace EprPrnIntegration.Api;
 
@@ -82,13 +83,16 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
                     "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
                     pEprApiResponse.StatusCode, responseBody);
                 logger.LogError($"Failed to update Prns list in NPWD. Status Code: {pEprApiResponse.StatusCode}");
+
+                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    _emailService.SendUpdatePrnsErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                }
             }
         }
         catch (Exception ex)
         {
-            _emailService.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
             logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");            
-        }
-        
+        }      
     }
 }
