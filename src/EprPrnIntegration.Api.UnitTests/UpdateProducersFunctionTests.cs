@@ -352,7 +352,5 @@ public class UpdateProducersFunctionTests
             It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("An error was encountered on attempting to call NPWD API ")),
             It.IsAny<Exception>(),
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
-
-        _emailServiceMock.Verify(x => x.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
     }
 }

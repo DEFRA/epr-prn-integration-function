@@ -86,7 +86,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
                 if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
                 {
-                    _emailService.SendUpdatePrnsErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                    _emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
                 }
             }
         }

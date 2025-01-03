@@ -196,7 +196,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 .Returns(new EmailNotificationResponse { id = "ABC1121" });
 
             // Act
-            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+            _emailService.SendErrorEmailToNpwd(It.IsAny<string>());
 
             // Assert
             _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to NPWD with email address"))), Times.Once);
@@ -213,7 +213,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
                 .Throws(new Exception("Error sending email"));
 
             // Act
-            _emailService.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>());
+            _emailService.SendErrorEmailToNpwd(It.IsAny<string>());
 
             // Assert
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR"))), Times.Once);
