@@ -326,8 +326,11 @@ public class UpdatePrnsFunctionTests
             service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
     }
 
-    [Fact]
-    public async Task Run_SendsErrorEmail_WhenExeptionIsThrown_ByNpwdHttpClient()
+    [Theory]
+    [InlineData(System.Net.HttpStatusCode.InternalServerError)]
+    [InlineData(System.Net.HttpStatusCode.RequestTimeout)]
+    [InlineData(System.Net.HttpStatusCode.GatewayTimeout)]
+    public async Task Run_SendsErrorEmail_EmailToNpwd_When_ServerSide_Error_Occurs(System.Net.HttpStatusCode statusCode)
     {
         // Arrange
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
@@ -342,14 +345,13 @@ public class UpdatePrnsFunctionTests
             });
 
         _mockNpwdClient.Setup(x => x.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .Throws<Exception>();
+            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error")});
             
 
         // Act
         await _function.Run(null);
 
         // Assert
-        _emailService.Verify(x => x.SendUpdatePrnsErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to patch NpwdUpdatedPrns"))), Times.Once);
+        _emailService.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
     }
 }

@@ -152,6 +152,26 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed Get Prns from npwd"))), Times.Once);
             Assert.Equal("Error fetching PRNs", ex.Message);
+            _mockEmailService.Verify(email => email.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData(System.Net.HttpStatusCode.InternalServerError)]
+        [InlineData(System.Net.HttpStatusCode.RequestTimeout)]
+        [InlineData(System.Net.HttpStatusCode.GatewayTimeout)]
+        public async Task Run_FetchPrnsSend_EmailToNpwd_When_ServerSide_Error_Occurs(System.Net.HttpStatusCode statusCode)
+        {
+            var exception = new HttpRequestException("Error fetching PRNs", null, statusCode);
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ThrowsAsync(exception);
+
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+            _mockEmailService.Verify(email => email.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
         }
 
         [Fact]

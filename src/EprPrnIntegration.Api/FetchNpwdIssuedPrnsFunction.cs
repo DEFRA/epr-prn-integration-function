@@ -14,6 +14,7 @@ using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
+using System.Net;
 
 namespace EprPrnIntegration.Api
 {
@@ -77,6 +78,12 @@ namespace EprPrnIntegration.Api
             catch (HttpRequestException ex)
             {
                 _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
+
+                if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    _emailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
+                }
+
                 throw;
             }
             catch (Exception ex)

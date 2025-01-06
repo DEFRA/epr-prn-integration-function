@@ -10,6 +10,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace EprPrnIntegration.Api;
 
@@ -23,7 +24,7 @@ public class UpdateProducersFunction(
     IEmailService emailService)
 {
     [Function("UpdateProducersList")]
-    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)    
+    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
         var isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
@@ -70,12 +71,16 @@ public class UpdateProducersFunction(
                 logger.LogError(
                     "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
                     pEprApiResponse.StatusCode, responseBody);
+
+                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                }
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}");
-            emailService!.SendUpdatePrnsErrorEmailToNpwd(ex.Message);
         }
     }
 

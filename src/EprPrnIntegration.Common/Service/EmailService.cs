@@ -52,7 +52,7 @@ public class EmailService : IEmailService
         }
     }
 
-    public void SendUpdatePrnsErrorEmailToNpwd(string errorMessage)
+    public void SendErrorEmailToNpwd(string errorMessage)
     {
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdEmailTemplateId;
