@@ -117,7 +117,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task Run_NoPrnsFetched_LogsWarningAndReturns()
+        public async Task Run_NoPrnsFetched_LogsWarning()
         {
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
                            .ReturnsAsync(new List<NpwdPrn>());
@@ -134,7 +134,6 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.IsAny<string>()), Times.Once);
-            _mockServiceBusProvider.Verify(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()), Times.Never);
             _mockLogger.VerifyLog(x => x.LogWarning(It.Is<string>(s => s.Contains("No Prns Exists"))));
         }
 
@@ -354,7 +353,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task ProcessIssuedPrnsAsync_ExceptionDuringProcessing_AddsMessageBackToQueue()
+        public async Task ProcessIssuedPrnsAsync_ExceptionDuringProcessing_AddsMessageBackToErrorQueue()
         {
             // Arrange
             var npwdPrn = _fixture.Create<NpwdPrn>();
@@ -378,7 +377,7 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.ProcessIssuedPrnsAsync();
 
             // Assert
-            _mockServiceBusProvider.Verify(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
+            _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
         }
 

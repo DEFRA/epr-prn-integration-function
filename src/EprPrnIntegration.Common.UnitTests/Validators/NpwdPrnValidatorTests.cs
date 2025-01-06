@@ -177,7 +177,7 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.AccreditationYear);
 
-            npwdPrn.AccreditationYear = MinAccreditationYear + 2;
+            npwdPrn.AccreditationYear = DateTime.UtcNow.Year + 2;
             result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.AccreditationYear);
         }
