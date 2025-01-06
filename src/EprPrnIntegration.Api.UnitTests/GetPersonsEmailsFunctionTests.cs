@@ -35,6 +35,7 @@ public class GetPersonsEmailsFunctionTests
     {
         // Arrange
         var organisationId = "12345";
+        var entityTypeCode = "CS";
         var responseEmails = new List<PersonEmail>
         {
             new PersonEmail { FirstName = "John", LastName = "Doe", Email = "john.doe@example.com" },
@@ -42,13 +43,14 @@ public class GetPersonsEmailsFunctionTests
         };
 
         _organisationServiceMock
-            .Setup(service => service.GetPersonEmailsAsync(organisationId, CancellationToken.None))
+            .Setup(service => service.GetPersonEmailsAsync(organisationId, entityTypeCode, CancellationToken.None))
             .ReturnsAsync(responseEmails);
 
         var function = new GetPersonsEmailsFunction(_loggerMock.Object, _organisationServiceMock.Object);
 
         var httpRequestMock = new Mock<HttpRequest>();
         httpRequestMock.Setup(req => req.Query["organisationId"]).Returns(organisationId);
+        httpRequestMock.Setup(req => req.Query["entityTypeCode"]).Returns(entityTypeCode);
 
         // Act
         var result = await function.Run(httpRequestMock.Object);
@@ -59,7 +61,7 @@ public class GetPersonsEmailsFunctionTests
         Assert.Equal(2, actualResponse.Count);
         Assert.Equal("john.doe@example.com", actualResponse[0].Email);
         Assert.Equal("jane.doe@example.com", actualResponse[1].Email);
-        _organisationServiceMock.Verify(service => service.GetPersonEmailsAsync(organisationId, CancellationToken.None), Times.Once);
+        _organisationServiceMock.Verify(service => service.GetPersonEmailsAsync(organisationId, entityTypeCode,CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -67,15 +69,16 @@ public class GetPersonsEmailsFunctionTests
     {
         // Arrange
         var organisationId = "12345";
-
+        var entityTypeCode = "CS";
         _organisationServiceMock
-            .Setup(service => service.GetPersonEmailsAsync(organisationId, CancellationToken.None))
+            .Setup(service => service.GetPersonEmailsAsync(organisationId, entityTypeCode, CancellationToken.None))
             .ThrowsAsync(new HttpRequestException());
 
         var function = new GetPersonsEmailsFunction(_loggerMock.Object, _organisationServiceMock.Object);
 
         var httpRequestMock = new Mock<HttpRequest>();
         httpRequestMock.Setup(req => req.Query["organisationId"]).Returns(organisationId);
+        httpRequestMock.Setup(req => req.Query["entityTypeCode"]).Returns(entityTypeCode);
 
         // Act
         var result = await function.Run(httpRequestMock.Object);
@@ -90,15 +93,17 @@ public class GetPersonsEmailsFunctionTests
     {
         // Arrange
         var organisationId = "12345";
+        var entityTypeCode = "CS";
 
         _organisationServiceMock
-            .Setup(service => service.GetPersonEmailsAsync(organisationId, CancellationToken.None))
+            .Setup(service => service.GetPersonEmailsAsync(organisationId, entityTypeCode, CancellationToken.None))
             .ThrowsAsync(new Exception("Unexpected error"));
 
         var function = new GetPersonsEmailsFunction(_loggerMock.Object, _organisationServiceMock.Object);
 
         var httpRequestMock = new Mock<HttpRequest>();
         httpRequestMock.Setup(req => req.Query["organisationId"]).Returns(organisationId);
+        httpRequestMock.Setup(req => req.Query["entityTypeCode"]).Returns(entityTypeCode);
 
         // Act
         var result = await function.Run(httpRequestMock.Object);

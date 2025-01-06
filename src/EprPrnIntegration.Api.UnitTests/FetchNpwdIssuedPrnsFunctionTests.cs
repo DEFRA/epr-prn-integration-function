@@ -245,7 +245,7 @@ namespace EprPrnIntegration.Api.UnitTests
                              .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             var producerEmailsTask = Task.FromResult(_fixture.CreateMany<PersonEmail>().ToList());
-            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(producerEmailsTask);
 
             // Act
