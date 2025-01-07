@@ -6,4 +6,5 @@ public interface IEmailService
 {
     void SendErrorEmailToNpwd(string errorMessage);
     void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId);
+    void SendErrorSummaryEmail(List<Dictionary<string, string>> errorList);
 }
