@@ -10,7 +10,6 @@ using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +20,6 @@ using Notify.Client;
 using Notify.Interfaces;
 using Polly;
 using Polly.Extensions.Http;
-using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Api;
