@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Api.Models;
+﻿using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

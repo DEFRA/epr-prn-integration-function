@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Service;
+﻿using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.UnitTests.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

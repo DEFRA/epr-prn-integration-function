@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Npwd;

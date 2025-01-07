@@ -18,6 +18,7 @@ using EprPrnIntegration.Api.Models;
 using System.Text.Json;
 using EprPrnIntegration.Common.Constants;
 using FluentAssertions;
+using EprPrnIntegration.Api.Functions;
 
 namespace EprPrnIntegration.Api.UnitTests
 {

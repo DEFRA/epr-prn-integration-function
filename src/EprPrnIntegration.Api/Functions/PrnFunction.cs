@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace EprPrnIntegration.Api
+namespace EprPrnIntegration.Api.Functions
 {
     public class PrnFunction
     {
@@ -26,7 +26,7 @@ namespace EprPrnIntegration.Api
             {
                 var baseAddress = _configurationService.GetNpwdApiBaseUrl();
 
-                _httpClient.BaseAddress =  new Uri(baseAddress!);
+                _httpClient.BaseAddress = new Uri(baseAddress!);
 
                 var response = await _httpClient.GetAsync("oData/PRNs");
                 response.EnsureSuccessStatusCode();

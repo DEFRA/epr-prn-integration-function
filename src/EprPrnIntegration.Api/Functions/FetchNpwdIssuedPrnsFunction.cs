@@ -16,7 +16,7 @@ using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
 using System.Net;
 
-namespace EprPrnIntegration.Api
+namespace EprPrnIntegration.Api.Functions
 {
     public class FetchNpwdIssuedPrnsFunction
     {
@@ -45,7 +45,7 @@ namespace EprPrnIntegration.Api
             _configuration = configuration;
         }
 
-        [Function("FetchNpwdIssuedPrnsFunction")]
+       // [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         {
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
@@ -140,8 +140,8 @@ namespace EprPrnIntegration.Api
                         var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
                         evidenceNo = messageContent?.EvidenceNo ?? "Missing";
-                        
-                            // prns sourced from NPWD must pass validation
+
+                        // prns sourced from NPWD must pass validation
                         var validationResult = await _validator.ValidateAsync(messageContent!);
                         if (validationResult.IsValid)
                         {
@@ -211,7 +211,7 @@ namespace EprPrnIntegration.Api
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
             // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!,messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
             _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
             var producers = new List<ProducerEmail>();
