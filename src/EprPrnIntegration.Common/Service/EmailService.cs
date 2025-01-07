@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Interfaces;
 using System.Diagnostics;
+using System.Net.Mail;
+using System.Net;
+using Notify.Client;
 
 namespace EprPrnIntegration.Common.Service;
 
@@ -77,6 +80,42 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
+        }
+    }
+
+    public void SendErrorFetchedPrnEmail(Stream attachmentStream)
+    {
+        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
+
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.ErrorMessagesTemplateId;
+        var operationId = Activity.Current?.RootId ?? string.Empty;
+
+        attachmentStream.Position = 0;
+
+        using var memoryStream = new MemoryStream();
+        attachmentStream.CopyTo(memoryStream);
+        var fileBytes = memoryStream.ToArray();
+        var fileUpload = NotificationClient.PrepareUpload(fileBytes, "error_events.csv");
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "emailAddress", npwdEmailAddress! },
+            { "ApplicationName", Constants.CustomEvents.NpwdPrnValidationError },
+            { "OperationId", operationId },
+            { "link_to_file", fileUpload }
+        };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
+
+            var message = $"Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.";
+            _logger.LogInformation(message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
         }
     }
 }

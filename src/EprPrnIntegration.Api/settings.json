@@ -33,6 +33,7 @@
     "MessagingConfig:NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
     "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
-    "ApiCallsRetryConfig:MaxAttempts": 3
+    "ApiCallsRetryConfig:MaxAttempts": 3,
+    "MessagingConfig:ErrorMessagesTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25"
   }
 }

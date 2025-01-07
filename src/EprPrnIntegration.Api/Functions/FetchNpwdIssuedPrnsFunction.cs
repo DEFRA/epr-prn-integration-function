@@ -45,7 +45,7 @@ namespace EprPrnIntegration.Api.Functions
             _configuration = configuration;
         }
 
-       // [Function("FetchNpwdIssuedPrnsFunction")]
+        [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         {
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
@@ -132,7 +132,8 @@ namespace EprPrnIntegration.Api.Functions
                     break;
                 }
 
-                string evidenceNo = string.Empty;
+                var evidenceNo = string.Empty;
+                var validatedErrorMessages = new List<Dictionary<string, string>>();
                 foreach (var message in messages)
                 {
                     try
@@ -170,6 +171,8 @@ namespace EprPrnIntegration.Api.Functions
                             var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                             var eventData = CreateCustomEvent(messageContent, errorMessages);
                             _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
+
+                            validatedErrorMessages.Add(eventData);
                         }
                     }
                     catch (Exception ex)
@@ -178,6 +181,8 @@ namespace EprPrnIntegration.Api.Functions
                         throw;
                     }
                 }
+
+                await SendErrorFetchedPrnEmail(validatedErrorMessages);
             }
         }
 
@@ -236,6 +241,24 @@ namespace EprPrnIntegration.Api.Functions
             _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
 
             _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
+        }
+
+        private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
+        {
+            if (validatedErrorMessages.Any())
+            {
+                var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                {
+                    PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
+                    IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
+                    Date = kv.GetValueOrDefault("Date", DateTime.UtcNow.ToString()),
+                    OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
+                    ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
+                }).ToList();
+
+                var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+                _emailService.SendErrorFetchedPrnEmail(csvStream);
+            }
         }
     }
 }
