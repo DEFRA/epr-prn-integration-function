@@ -96,7 +96,7 @@ public class EmailService : IEmailService
         using var memoryStream = new MemoryStream();
         attachmentStream.CopyTo(memoryStream);
         var fileBytes = memoryStream.ToArray();
-        var fileUpload = NotificationClient.PrepareUpload(fileBytes, "error_events.csv");
+        var fileUpload = NotificationClient.PrepareUpload(fileBytes, $"error_events{DateTime.UtcNow.ToShortDateString()}.csv");
         
         var parameters = new Dictionary<string, object>
         {

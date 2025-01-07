@@ -10,9 +10,15 @@ public static class StreamWriterExtensions
         }
         else
         {
-            var escapedValue = value.Contains(",") || value.Contains("\"") || value.Contains("\n")
-                ? $"\"{value.Replace("\"", "\"\"")}\""
-                : value;
+            string escapedValue;
+            if (value.Contains(",") || value.Contains("\"") || value.Contains("\n"))
+            {
+                escapedValue = $"\"{value.Replace("\"", "\"\"")}\"";
+            }
+            else
+            {
+                escapedValue = value;
+            }
 
             await writer.WriteAsync(escapedValue + ",");
         }
