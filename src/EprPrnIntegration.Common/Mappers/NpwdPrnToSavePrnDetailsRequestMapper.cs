@@ -27,7 +27,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             IssuerRef = npwdPrn.IssuerRef ?? "", // Null is converted to empty for now this need discussion Data Arch
             MaterialOperationCode = ParseGuid(npwdPrn.MaterialOperationCode),
             ModifiedOn = npwdPrn.ModifiedOn,
-            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? "0001",
+            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? "2025",
             PrnSignatory = npwdPrn.PRNSignatory,
             PrnSignatoryPosition = npwdPrn.PRNSignatoryPosition,
             ProducerAgency = npwdPrn.ProducerAgency,
