@@ -10,7 +10,6 @@ using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +20,6 @@ using Notify.Client;
 using Notify.Interfaces;
 using Polly;
 using Polly.Extensions.Http;
-using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Api;
@@ -51,7 +49,6 @@ public static class HostBuilderConfiguration
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
@@ -76,25 +73,6 @@ public static class HostBuilderConfiguration
             .HandleTransientHttpError()
             .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
             .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
-            //.WaitAndRetryAsync(
-            //    apiCallsRetryConfig?.MaxAttempts ?? 3,
-            //    (outcome, delay, retryAttempt, context) =>
-            //    {
-            //        if (outcome.Result.StatusCode == System.Net.HttpStatusCode.TooManyRequests
-            //            && outcome.Result.Headers.TryGetValues("Retry-After", out var values)
-            //            && int.TryParse(values.FirstOrDefault(), out int retryAfterSeconds))
-            //        {
-            //            delay = TimeSpan.FromSeconds(retryAfterSeconds);
-            //        }
-            //        else
-            //        {
-            //            delay = TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30);
-            //        }
-
-            //        context["RetryAfter"] = delay;
-            //        // return delay;
-            //        //return Task.FromResult(delay);
-            //    });
 
         // Add HttpClients
         services.AddHttpClient();
@@ -104,9 +82,6 @@ public static class HostBuilderConfiguration
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
-
-        // Configure Azure Key Vault
-        ConfigureKeyVault(configuration);
         
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
@@ -121,6 +96,7 @@ public static class HostBuilderConfiguration
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
+        services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
@@ -157,15 +133,5 @@ public static class HostBuilderConfiguration
             });
         }
         return services;
-    }
-
-    private static void ConfigureKeyVault(IConfiguration configuration)
-    {
-        var keyVaultUrl = configuration.GetValue<string?>(Common.Constants.ConfigSettingKeys.KeyVaultUrl);
-
-        if (string.IsNullOrWhiteSpace(keyVaultUrl))
-        {
-            throw new ConfigurationErrorsException(Common.Constants.ConfigSettingKeys.KeyVaultUrl);
-        }
     }
 }
