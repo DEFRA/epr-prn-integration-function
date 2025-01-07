@@ -211,7 +211,7 @@ namespace EprPrnIntegration.Api
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
             // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None) ?? [];
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!,messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
             _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
             var producers = new List<ProducerEmail>();
