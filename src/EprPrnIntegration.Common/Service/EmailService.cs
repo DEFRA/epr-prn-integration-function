@@ -88,7 +88,7 @@ public class EmailService : IEmailService
         if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
 
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
-        var templateId = _messagingConfig.ErrorMessagesTemplateId;
+        var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
         var operationId = Activity.Current?.RootId ?? string.Empty;
 
         attachmentStream.Position = 0;

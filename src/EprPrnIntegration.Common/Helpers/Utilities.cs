@@ -42,7 +42,7 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
             await writer.WriteCsvCellAsync("Incoming Status");
             await writer.WriteCsvCellAsync("Date");
             await writer.WriteCsvCellAsync("Organisation Name");
-            await writer.WriteCsvCellAsync("Error Comments");
+            await writer.WriteCsvCellAsync("Error Comments", true);
             await writer.WriteLineAsync();
 
             foreach (var errorEvent in errorEvents)
@@ -51,7 +51,7 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
                 await writer.WriteCsvCellAsync(errorEvent.IncomingStatus);
                 await writer.WriteCsvCellAsync(errorEvent.Date);
                 await writer.WriteCsvCellAsync(errorEvent.OrganisationName);
-                await writer.WriteCsvCellAsync(errorEvent.ErrorComments);
+                await writer.WriteCsvCellAsync(errorEvent.ErrorComments, true);
                 await writer.WriteLineAsync();
             }
 

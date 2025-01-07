@@ -2,11 +2,11 @@
 
 public static class StreamWriterExtensions
 {
-    public static async Task WriteCsvCellAsync(this StreamWriter writer, string value)
+    public static async Task WriteCsvCellAsync(this StreamWriter writer, string value, bool isLastCell = false)
     {
         if (value == null)
         {
-            await writer.WriteAsync(",");
+            await writer.WriteAsync(isLastCell ? "" : ",");
         }
         else
         {
@@ -20,12 +20,13 @@ public static class StreamWriterExtensions
                 escapedValue = value;
             }
 
-            await writer.WriteAsync(escapedValue + ",");
-        }
-    }
+            await writer.WriteAsync(escapedValue);
 
-    public static async Task WriteLineAsync(this StreamWriter writer)
-    {
-        await writer.WriteAsync("\r\n");
+            // Only append a comma if this is not the last cell in the row
+            if (!isLastCell)
+            {
+                await writer.WriteAsync(",");
+            }
+        }
     }
 }
