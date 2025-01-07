@@ -1,11 +1,12 @@
 ﻿using AutoFixture;
 using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
-using EprPrnIntegration.Common.Service;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
@@ -16,17 +17,22 @@ namespace EprPrnIntegration.Common.UnitTests.Client
     public class NpwdClientTests
     {
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
-        private readonly Mock<IConfigurationService> _configurationServiceMock;
+        private readonly Mock<IOptions<NpwdIntegrationConfiguration>> _npwdIntegrationConfigMock;
         private readonly HttpClient _httpClient;
         private Mock<ILogger<NpwdClient>> _mockLogger;
         private static readonly IFixture _fixture = new Fixture();
         private NpwdClient _npwdClient;
+        private NpwdIntegrationConfiguration _npwdConfig;
 
         public NpwdClientTests()
         {
             _httpClientFactoryMock = new Mock<IHttpClientFactory>();
-            _configurationServiceMock = new Mock<IConfigurationService>();
             _mockLogger = new Mock<ILogger<NpwdClient>>();
+            _npwdIntegrationConfigMock = new Mock<IOptions<NpwdIntegrationConfiguration>>();
+
+            _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
+            _npwdConfig.BaseUrl = "http://localhost";
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
             // Mock HttpMessageHandler
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
@@ -48,7 +54,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(_httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
         }
 
         [Fact]
@@ -64,9 +70,6 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                     Postcode = "12345"
                 }
             };
-
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns("http://localhost");
 
             // Act
             var response = await _npwdClient.Patch(updatedProducers, NpwdApiPath.UpdateProducers);
@@ -102,10 +105,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns("http://localhost");
-
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
             // Act
             var response = await _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers);
 
@@ -120,9 +120,12 @@ namespace EprPrnIntegration.Common.UnitTests.Client
         public async Task UpdateProducerList_ShouldThrowException_WhenBaseAddressIsNull()
         {
             // Arrange
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns((string)null); // Simulate null base address
+            _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
+            _npwdConfig.BaseUrl = null;
 
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
+
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
             // Act & Assert
             await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers));
         }
@@ -131,8 +134,12 @@ namespace EprPrnIntegration.Common.UnitTests.Client
         public async Task GetIssuedPrns_ShouldThrowException_WhenBaseAddressIsNull()
         {
             // Arrange
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns(string.Empty); // Simulate null base address
+            _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
+            _npwdConfig.BaseUrl = string.Empty;
+
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
+
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
 
             // Act & Assert
             await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.GetIssuedPrns("1 eq 1"));
@@ -156,8 +163,11 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             var expectedRequestUri = new Uri($"{baseUrl}oData/PRNs?$filter={filter}");
 
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns(baseUrl);
+            // Arrange
+            _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
+            _npwdConfig.BaseUrl = baseUrl;
+
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
@@ -184,7 +194,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
 
             var result = await _npwdClient.GetIssuedPrns(filter);
             // Act & Assert
@@ -206,8 +216,11 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             var filter = "1 eq 1";
             var baseUrl = "http://localhost";
 
-            _configurationServiceMock.Setup(service => service.GetNpwdApiBaseUrl())
-                .Returns(baseUrl);
+            // Arrange
+            _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
+            _npwdConfig.BaseUrl = baseUrl;
+
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             httpMessageHandlerMock.Protected()
@@ -229,7 +242,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _configurationServiceMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
 
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(() => _npwdClient.GetIssuedPrns(filter));
