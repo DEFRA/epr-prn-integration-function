@@ -145,13 +145,13 @@ public class EmailService : IEmailService
 
             var parameters = new Dictionary<string, object>
                             {
-                                { "emailAddress", _messagingConfig.NpwdSupportEmail! },
+                                { "emailAddress", _messagingConfig.NpwdEmail! },
                                 { "ApplicationName", "PRN" },
                                 { "OperationId", "ops1" },
                                 { "ErrorMessage", errorMessages.ToString() }
                             };
 
-            var response = _notificationClient.SendEmail(_messagingConfig.NpwdSupportEmail, _messagingConfig.ErrorMessagesTemplateId, parameters);
+            var response = _notificationClient.SendEmail(_messagingConfig.NpwdEmail, _messagingConfig.ErrorMessagesTemplateId, parameters);
             string message = $"Error Scenarios Email sent to NPWD support.";
             _logger.LogInformation(message);
 

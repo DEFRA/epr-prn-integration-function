@@ -32,6 +32,7 @@
     "MessagingConfig:PERNTemplateId": "24925202-125b-4b85-b54a-9f3100301eb4",
     "MessagingConfig:NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
+    "MessagingConfig:ErrorMessagesTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
     "ApiCallsRetryConfig:MaxAttempts": 3
   }
