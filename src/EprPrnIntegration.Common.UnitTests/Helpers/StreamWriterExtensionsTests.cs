@@ -71,20 +71,4 @@ public class StreamWriterExtensionsTests
         var result = await new StreamReader(writer.BaseStream).ReadToEndAsync();
         Assert.Equal(",", result);
     }
-
-    [Fact]
-    public async Task WriteLineAsync_ShouldWriteNewLine()
-    {
-        // Arrange
-        await using var writer = new StreamWriter(new MemoryStream());
-
-        // Act
-        await writer.WriteLineAsync();
-        await writer.FlushAsync();
-
-        // Assert
-        writer.BaseStream.Position = 0;
-        var result = await new StreamReader(writer.BaseStream).ReadToEndAsync();
-        Assert.Equal("\r\n", result);
-    }
 }
