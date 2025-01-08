@@ -2,6 +2,7 @@
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
 
@@ -77,6 +78,40 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
+        }
+    }
+
+    public void SendReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
+    {
+        var npwdEmailAddress = "stephen.williamson.external@atos.net"; // _messagingConfig.NpwdEmail;
+        var templateId = "07b38a02-8291-4235-9140-b2ee467a5f35"; // _messagingConfig.NpwdReconciliationEmailTemplateId;
+        string filename = string.Format("issuedprns{0:yyyyMMdd}.csv", reportDate);
+
+        Dictionary<string, dynamic> messagePersonalisation = new Dictionary<string, dynamic>
+        {
+            {
+                "report_date", reportDate.ToString("0:dddd MMMM yyyy")
+            },
+            {
+                "report_count", reportCount
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, messagePersonalisation);
+
+            string message = $"Reconciliation email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
+            _logger.LogInformation(message);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
+
         }
     }
 }
