@@ -83,13 +83,12 @@ public class EmailService : IEmailService
         }
     }
 
-    public void SendErrorFetchedPrnEmail(Stream attachmentStream)
+    public void SendValidationErrorPrnEmail(Stream attachmentStream)
     {
         if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
 
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
-        var operationId = Activity.Current?.RootId ?? string.Empty;
 
         attachmentStream.Position = 0;
 
@@ -101,8 +100,6 @@ public class EmailService : IEmailService
         var parameters = new Dictionary<string, object>
         {
             { "emailAddress", npwdEmailAddress! },
-            { "ApplicationName", Constants.CustomEvents.NpwdPrnValidationError },
-            { "OperationId", operationId },
             { "link_to_file", fileUpload }
         };
 

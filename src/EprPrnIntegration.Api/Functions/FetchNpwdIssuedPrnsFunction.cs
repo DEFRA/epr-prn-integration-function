@@ -257,7 +257,7 @@ namespace EprPrnIntegration.Api.Functions
                 }).ToList();
 
                 var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
-                _emailService.SendErrorFetchedPrnEmail(csvStream);
+                _emailService.SendValidationErrorPrnEmail(csvStream);
             }
         }
     }
