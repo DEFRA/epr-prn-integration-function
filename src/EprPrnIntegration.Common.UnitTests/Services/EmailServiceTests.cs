@@ -1,5 +1,4 @@
-﻿using System.Text;
-using EprPrnIntegration.Api.Models;
+﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,7 @@ using Moq;
 using Notify.Client;
 using Notify.Interfaces;
 using Notify.Models.Responses;
+using System.Text;
 
 namespace EprPrnIntegration.Common.UnitTests.Services;
 
@@ -57,7 +57,7 @@ public class EmailServiceTests
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
                 LastName = "Doe",
-                IsPrn = true,
+                IsExporter = true,
                 PrnNumber = "12345",
                 Material = "Plastic",
                 Tonnage = 100,
@@ -95,7 +95,7 @@ public class EmailServiceTests
                 EmailAddress = "producer2@example.com",
                 FirstName = "Jane",
                 LastName = "Smith",
-                IsPrn = false,
+                IsExporter = false,
                 PrnNumber = "67890",
                 Material = "Metal",
                 Tonnage = 200,
@@ -119,7 +119,7 @@ public class EmailServiceTests
     }
 
     [Fact]
-    public void SendEmailsToProducers_UsesCorrectTemplateId_WhenIsPrnIsTrue()
+    public void SendEmailsToProducers_UsesCorrectTemplateId_WhenIsExporterIsTrue()
     {
         // Arrange
         var producerEmails = new List<ProducerEmail>
@@ -129,7 +129,7 @@ public class EmailServiceTests
                 EmailAddress = "producer3@example.com",
                 FirstName = "Mark",
                 LastName = "Taylor",
-                IsPrn = true,
+                IsExporter = true,
                 PrnNumber = "54321",
                 Material = "Wood",
                 Tonnage = 150,
@@ -141,7 +141,7 @@ public class EmailServiceTests
 
         _mockNotificationClient.Setup(client => client.SendEmail(
                 It.IsAny<string>(),
-                "prnTemplateId", // Expect the PRN template
+                "pernTemplateId", // Expect the PRN template
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
             .Returns(new EmailNotificationResponse { id = "responseId" });
 
@@ -149,11 +149,11 @@ public class EmailServiceTests
         _emailService.SendEmailsToProducers(producerEmails, organisationId);
 
         // Assert
-        _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "prnTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
+        _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "pernTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
     }
 
     [Fact]
-    public void SendEmailsToProducers_UsesCorrectTemplateId_WhenIsPrnIsFalse()
+    public void SendEmailsToProducers_UsesCorrectTemplateId_WhenIsExporterIsFalse()
     {
         // Arrange
         var producerEmails = new List<ProducerEmail>
@@ -163,7 +163,7 @@ public class EmailServiceTests
                 EmailAddress = "producer4@example.com",
                 FirstName = "Sarah",
                 LastName = "Johnson",
-                IsPrn = false,
+                IsExporter = false,
                 PrnNumber = "98765",
                 Material = "Glass",
                 Tonnage = 50,
@@ -175,7 +175,7 @@ public class EmailServiceTests
 
         _mockNotificationClient.Setup(client => client.SendEmail(
                 It.IsAny<string>(),
-                "pernTemplateId", // Expect the PERN template
+                "prnTemplateId", // Expect the PERN template
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
             .Returns(new EmailNotificationResponse { id = "responseId" });
 
@@ -183,7 +183,7 @@ public class EmailServiceTests
         _emailService.SendEmailsToProducers(producerEmails, organisationId);
 
         // Assert
-        _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "pernTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
+        _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), "prnTemplateId", It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
     }
 
 

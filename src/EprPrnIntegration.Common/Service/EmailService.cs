@@ -5,8 +5,6 @@ using Microsoft.Extensions.Options;
 using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
-using System.Net.Mail;
-using System.Net;
 using Notify.Client;
 
 namespace EprPrnIntegration.Common.Service;
@@ -29,7 +27,7 @@ public class EmailService : IEmailService
     {
         foreach (var producer in producerEmails)
         {
-            var templateId = producer.IsPrn ? _messagingConfig.PrnTemplateId : _messagingConfig.PernTemplateId;
+            var templateId = producer.IsExporter ? _messagingConfig.PernTemplateId : _messagingConfig.PrnTemplateId;
             var parameters = new Dictionary<string, object>
                                 {
                                     { "emailAddress", producer.EmailAddress },
