@@ -38,7 +38,6 @@ public static class HostBuilderConfiguration
             .Build();
     }
 
-    [SuppressMessage("Minor Code Smell", "S125:Sections of code should not be commented out", Justification = "The code may be reworked")]
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
         // Add Application Insights
