@@ -76,7 +76,7 @@ public class StreamWriterExtensionsTests
     public async Task WriteLineAsync_ShouldWriteNewLine()
     {
         // Arrange
-        using var writer = new StreamWriter(new MemoryStream());
+        await using var writer = new StreamWriter(new MemoryStream());
 
         // Act
         await writer.WriteLineAsync();
