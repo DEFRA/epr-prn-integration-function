@@ -83,7 +83,7 @@ public class EmailService : IEmailService
         }
     }
 
-    public void SendValidationErrorPrnEmail(Stream attachmentStream)
+    public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
     {
         if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
 
@@ -100,6 +100,7 @@ public class EmailService : IEmailService
         var parameters = new Dictionary<string, object>
         {
             { "emailAddress", npwdEmailAddress! },
+            { "reportDate", reportDate! },
             { "link_to_file", fileUpload }
         };
 

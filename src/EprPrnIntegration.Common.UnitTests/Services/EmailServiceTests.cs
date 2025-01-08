@@ -227,7 +227,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services
             Stream nullStream = null;
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(nullStream));
+            Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(nullStream, DateTime.UtcNow));
         }
     }
 }

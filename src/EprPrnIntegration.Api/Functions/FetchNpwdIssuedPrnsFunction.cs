@@ -247,17 +247,18 @@ namespace EprPrnIntegration.Api.Functions
         {
             if (validatedErrorMessages.Any())
             {
+                var dateTimeNow = DateTime.UtcNow;
                 var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
                 {
                     PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
                     IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
-                    Date = kv.GetValueOrDefault("Date", DateTime.UtcNow.ToString()),
+                    Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
                     OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
                     ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
                 }).ToList();
 
                 var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
-                _emailService.SendValidationErrorPrnEmail(csvStream);
+                _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
             }
         }
     }
