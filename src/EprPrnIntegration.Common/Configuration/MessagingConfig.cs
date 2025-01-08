@@ -12,4 +12,5 @@ public class MessagingConfig
     public string? NpwdEmailTemplateId { get; set; }
     public string? NpwdEmail { get; set; }
     public string? ApiKey { get; set; }
+    public string? NpwdValidationErrorsTemplateId { get; set; }
 }

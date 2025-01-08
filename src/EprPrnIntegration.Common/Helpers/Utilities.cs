@@ -29,4 +29,36 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
     {
         telemetryClient.TrackEvent(eventName, eventData);
     }
+
+    public async Task<Stream> CreateErrorEventsCsvStreamAsync(List<ErrorEvent> errorEvents)
+    {
+        var stream = new MemoryStream();
+
+        if (errorEvents?.Count > 0)
+        {
+            await using var writer = new StreamWriter(stream, leaveOpen: true);
+
+            await writer.WriteCsvCellAsync("PRN Number");
+            await writer.WriteCsvCellAsync("Incoming Status");
+            await writer.WriteCsvCellAsync("Date");
+            await writer.WriteCsvCellAsync("Organisation Name");
+            await writer.WriteCsvCellAsync("Error Comments", true);
+            await writer.WriteLineAsync();
+
+            foreach (var errorEvent in errorEvents)
+            {
+                await writer.WriteCsvCellAsync(errorEvent.PrnNumber);
+                await writer.WriteCsvCellAsync(errorEvent.IncomingStatus);
+                await writer.WriteCsvCellAsync(errorEvent.Date);
+                await writer.WriteCsvCellAsync(errorEvent.OrganisationName);
+                await writer.WriteCsvCellAsync(errorEvent.ErrorComments, true);
+                await writer.WriteLineAsync();
+            }
+
+            await writer.FlushAsync();
+        }
+
+        stream.Position = 0;
+        return stream;
+    }
 }

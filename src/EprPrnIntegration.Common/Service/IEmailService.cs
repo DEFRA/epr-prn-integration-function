@@ -6,4 +6,5 @@ public interface IEmailService
 {
     void SendErrorEmailToNpwd(string errorMessage);
     void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId);
+    void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate);
 }
