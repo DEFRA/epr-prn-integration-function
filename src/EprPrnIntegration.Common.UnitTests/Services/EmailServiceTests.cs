@@ -1,11 +1,12 @@
-﻿using Moq;
-using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Common.Service;
+﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 using Notify.Interfaces;
 using Notify.Models.Responses;
+using System.Text;
 
 namespace EprPrnIntegration.Common.UnitTests.Services
 {
@@ -217,6 +218,16 @@ namespace EprPrnIntegration.Common.UnitTests.Services
 
             // Assert
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR"))), Times.Once);
+        }
+
+        [Fact]
+        public void SendErrorFetchedPrnEmail_ShouldThrowArgumentNullException_WhenStreamIsNull()
+        {
+            // Arrange
+            Stream nullStream = null;
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(nullStream, DateTime.UtcNow));
         }
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
 
-namespace EprPrnIntegration.Api;
+namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateProducersFunction(
     IOrganisationService organisationService,

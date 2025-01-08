@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
 
-namespace EprPrnIntegration.Api;
+namespace EprPrnIntegration.Api.Functions;
 
 public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
@@ -62,10 +62,10 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         // Send data to NPWD via pEPR API
         var npwdUpdatedPrns = PrnMapper.Map(updatedEprPrns, configuration);
-       
+
         try
         {
-           var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
@@ -92,7 +92,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,  $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");            
-        }      
+            logger.LogError(ex, $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");
+        }
     }
 }
