@@ -11,6 +11,8 @@ namespace EprPrnIntegration.Common.Configuration
         public string ErrorPrnQueue { get; set; } = null!;
         public string ConnectionString { get; set; } = null!;
         public int? MaxWaitTimeInSeconds { get; set; }
-        public string DeltaSyncQueueName { get; set; } = null!;
+        public string FetchPrnDeltaSyncQueueName { get; set; } = null!;
+        public string UpdateProducerDeltaSyncQueueName { get; set; } = null!;
+        public string UpdatePrnDeltaSyncQueueName { get; set; } = null!;
     }
 }
