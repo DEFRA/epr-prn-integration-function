@@ -232,7 +232,7 @@ namespace EprPrnIntegration.Api.Functions
                     PrnNumber = request.EvidenceNo!,
                     Material = request.EvidenceMaterial!,
                     Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                    IsPrn = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
+                    IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
                 };
                 producers.Add(producerEmail);
             }
