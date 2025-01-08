@@ -16,7 +16,7 @@ using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
 using System.Net;
 
-namespace EprPrnIntegration.Api
+namespace EprPrnIntegration.Api.Functions
 {
     public class FetchNpwdIssuedPrnsFunction
     {
@@ -132,7 +132,8 @@ namespace EprPrnIntegration.Api
                     break;
                 }
 
-                string evidenceNo = string.Empty;
+                var evidenceNo = string.Empty;
+                var validatedErrorMessages = new List<Dictionary<string, string>>();
                 foreach (var message in messages)
                 {
                     try
@@ -140,8 +141,8 @@ namespace EprPrnIntegration.Api
                         var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
                         _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
                         evidenceNo = messageContent?.EvidenceNo ?? "Missing";
-                        
-                            // prns sourced from NPWD must pass validation
+
+                        // prns sourced from NPWD must pass validation
                         var validationResult = await _validator.ValidateAsync(messageContent!);
                         if (validationResult.IsValid)
                         {
@@ -170,6 +171,8 @@ namespace EprPrnIntegration.Api
                             var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                             var eventData = CreateCustomEvent(messageContent, errorMessages);
                             _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
+
+                            validatedErrorMessages.Add(eventData);
                         }
                     }
                     catch (Exception ex)
@@ -178,6 +181,8 @@ namespace EprPrnIntegration.Api
                         throw;
                     }
                 }
+
+                await SendErrorFetchedPrnEmail(validatedErrorMessages);
             }
         }
 
@@ -211,7 +216,7 @@ namespace EprPrnIntegration.Api
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
             // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!,messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
             _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
             var producers = new List<ProducerEmail>();
@@ -236,6 +241,25 @@ namespace EprPrnIntegration.Api
             _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
 
             _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
+        }
+
+        private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
+        {
+            if (validatedErrorMessages.Any())
+            {
+                var dateTimeNow = DateTime.UtcNow;
+                var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                {
+                    PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
+                    IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
+                    Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
+                    OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
+                    ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
+                }).ToList();
+
+                var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+                _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+            }
         }
     }
 }
