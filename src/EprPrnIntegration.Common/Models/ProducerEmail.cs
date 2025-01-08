@@ -13,6 +13,6 @@ namespace EprPrnIntegration.Api.Models
         public required string PrnNumber { get; set; }
         public required string Material { get; set; }
         public decimal Tonnage { get; set; }
-        public bool IsPrn { get; set; }
+        public bool IsExporter { get; set; }
     }
 }
