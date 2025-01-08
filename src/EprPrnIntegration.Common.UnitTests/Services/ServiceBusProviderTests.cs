@@ -488,4 +488,63 @@ public class ServiceBusProviderTests
         updatePrnsQueue.Should().Be(expectedUpdatePrnsQueue);
         fetchNpwdIssuedPrnsQueue.Should().Be(expectedFetchNpwdIssuedPrnsQueue);
     }
+
+    [Fact]
+    public async Task SendMessageToErrorQueue_SuccessfullySendsMessage()
+    {
+        // Arrange
+        var evidenceNo = "12345";
+        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: new BinaryData("Test message body"),
+            messageId: "message-id-1",
+            correlationId: "correlation-id-1",
+            contentType: "application/json",
+            subject: "Test Subject",
+            to: "Test Receiver"
+        );
+
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
+            .Returns(_serviceBusSenderMock.Object);
+
+        // Act
+        await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, evidenceNo);
+
+        // Assert
+        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.Is<ServiceBusMessage>(msg =>
+            msg.Body.ToString() == receivedMessage.Body.ToString() &&
+            msg.MessageId == receivedMessage.MessageId &&
+            msg.CorrelationId == receivedMessage.CorrelationId &&
+            msg.ContentType == receivedMessage.ContentType &&
+            msg.Subject == receivedMessage.Subject &&
+            msg.To == receivedMessage.To &&
+            msg.ApplicationProperties.SequenceEqual(receivedMessage.ApplicationProperties)), It.IsAny<CancellationToken>()), Times.Once);
+
+        _loggerMock.VerifyLog(logger => logger.LogInformation(
+            "Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidenceNo), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendMessageToErrorQueue_LogsErrorOnException()
+    {
+        // Arrange
+        var evidenceNo = "54321";
+        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: new BinaryData("Test message body"),
+            messageId: "message-id-2"
+        );
+
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
+            .Returns(_serviceBusSenderMock.Object);
+
+        _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("ServiceBus exception"));
+
+        // Act
+        await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, evidenceNo);
+
+        // Assert
+        _loggerMock.VerifyLog(logger => logger.LogError(
+            "Failed to send message to error queue with exception: {ExceptionMessage}",
+            "ServiceBus exception"), Times.Once);
+    }
 }
