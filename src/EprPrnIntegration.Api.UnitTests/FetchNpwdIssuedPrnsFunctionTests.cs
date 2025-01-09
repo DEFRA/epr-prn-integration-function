@@ -529,7 +529,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.Is<Dictionary<string, string>>(
                     data => data["PRN Number"] == "No PRN Number" &&
                     data["PRN Number"] == "No PRN Number" &&
-                    data["Organisaton Name"] == "Blank Organisation Name"
+                    data["Organisation Name"] == "Blank Organisation Name"
 
                     )), Times.Once);
         }

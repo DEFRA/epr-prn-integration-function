@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Models;
+﻿using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
 using Microsoft.ApplicationInsights;
@@ -38,11 +39,11 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
         {
             await using var writer = new StreamWriter(stream, leaveOpen: true);
 
-            await writer.WriteCsvCellAsync("PRN Number");
-            await writer.WriteCsvCellAsync("Incoming Status");
-            await writer.WriteCsvCellAsync("Date");
-            await writer.WriteCsvCellAsync("Organisation Name");
-            await writer.WriteCsvCellAsync("Error Comments", true);
+            await writer.WriteCsvCellAsync(CustomEventFields.PrnNumber);
+            await writer.WriteCsvCellAsync(CustomEventFields.IncomingStatus);
+            await writer.WriteCsvCellAsync(CustomEventFields.Date);
+            await writer.WriteCsvCellAsync(CustomEventFields.OrganisationName);
+            await writer.WriteCsvCellAsync(CustomEventFields.ErrorComments, true);
             await writer.WriteLineAsync();
 
             foreach (var errorEvent in errorEvents)

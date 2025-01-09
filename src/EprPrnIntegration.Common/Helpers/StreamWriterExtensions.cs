@@ -10,17 +10,7 @@ public static class StreamWriterExtensions
         }
         else
         {
-            string escapedValue;
-            if (value.Contains(",") || value.Contains("\"") || value.Contains("\n"))
-            {
-                escapedValue = $"\"{value.Replace("\"", "\"\"")}\"";
-            }
-            else
-            {
-                escapedValue = value;
-            }
-
-            await writer.WriteAsync(escapedValue);
+             await writer.WriteAsync(value.CleanCsvString());
 
             // Only append a comma if this is not the last cell in the row
             if (!isLastCell)

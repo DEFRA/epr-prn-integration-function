@@ -199,15 +199,15 @@ namespace EprPrnIntegration.Api.Functions
         {
             Dictionary<string, string> eventData = new()
             {
-                { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
-                { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
+                { CustomEventFields.PrnNumber, npwdPrn?.EvidenceNo ?? "No PRN Number" },
+                { CustomEventFields.IncomingStatus, npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                { CustomEventFields.OrganisationName, npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
             };
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                eventData.Add("Error Comments", errorMessage);
+                eventData.Add(CustomEventFields.ErrorComments, errorMessage);
             }
 
             return eventData;
@@ -250,11 +250,11 @@ namespace EprPrnIntegration.Api.Functions
                 var dateTimeNow = DateTime.UtcNow;
                 var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
                 {
-                    PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
-                    IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
-                    Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
-                    OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
-                    ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
+                    PrnNumber = kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number"),
+                    IncomingStatus = kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status"),
+                    Date = kv.GetValueOrDefault(CustomEventFields.Date, dateTimeNow.ToString()),
+                    OrganisationName = kv.GetValueOrDefault(CustomEventFields.OrganisationName, "Blank Organisation Name"),
+                    ErrorComments = kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)
                 }).ToList();
 
                 var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
