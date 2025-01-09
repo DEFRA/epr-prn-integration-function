@@ -43,7 +43,7 @@ public class UtilitiesTests
         var defaultLastRunDate = "2024-01-01";
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultLastRunDate);
 
-        _serviceBusProviderMock.Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync((DeltaSyncExecution)null);
 
         // Act
@@ -66,7 +66,7 @@ public class UtilitiesTests
             LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
         };
 
-        _serviceBusProviderMock.Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync(expectedExecution);
 
         // Act
