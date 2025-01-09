@@ -15,12 +15,14 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Client;
 using Notify.Interfaces;
 using Polly;
 using Polly.Extensions.Http;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 namespace EprPrnIntegration.Api;
 
@@ -36,7 +38,6 @@ public static class HostBuilderConfiguration
             .Build();
     }
 
-    [SuppressMessage("Minor Code Smell", "S125:Sections of code should not be commented out", Justification = "The code may be reworked")]
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
         // Add Application Insights
@@ -69,16 +70,12 @@ public static class HostBuilderConfiguration
         ApiCallsRetryConfig apiCallsRetryConfig = new();
         configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
 
-        var retryPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)  // Handle Status code = 429 as a specific case
-            .WaitAndRetryAsync(apiCallsRetryConfig?.MaxAttempts ?? 3, retryAttempt => TimeSpan.FromSeconds(apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30));
-
         // Add HttpClients
         services.AddHttpClient();
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd )
             .AddHttpMessageHandler<NpwdOAuthMiddleware>()
-            .AddPolicyHandler(retryPolicy);
+            .AddPolicyHandler((services, request) =>
+            GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
@@ -133,5 +130,32 @@ public static class HostBuilderConfiguration
             });
         }
         return services;
+    }
+    public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(ILogger logger,int retryCount, double sleepDuration, string requestType)
+    {
+        return HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(retryCount, (retryAttempt,res,ctx) =>
+            {
+                if (res.Result != null)
+                {
+                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant() == "retry-after");
+                    int retryAfter = 0;
+                    if (res.Result.StatusCode == HttpStatusCode.TooManyRequests && retryAfterHeader.Value != null && retryAfterHeader.Value.Any())
+                    {
+                        retryAfter = int.Parse(retryAfterHeader.Value.First());
+                        return TimeSpan.FromSeconds(retryAfter);
+                    }
+                }
+                return TimeSpan.FromSeconds(sleepDuration);
+            }, 
+            async (response, timespan, retryAttempt, context) =>
+            {
+                logger
+                .LogInformation("Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previuos request was responded with {StatusCode}",
+                retryAttempt, requestType, timespan.TotalSeconds, response.Result?.StatusCode);
+                await Task.CompletedTask;
+            });
     }
 }
