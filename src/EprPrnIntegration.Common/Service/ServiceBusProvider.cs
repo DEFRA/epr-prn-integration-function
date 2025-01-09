@@ -62,18 +62,10 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                var existingMessage = await ReceiveDeltaSyncExecutionFromQueue(deltaSyncExecution.SyncType);
-
-                logger.LogInformation(
-                    existingMessage != null
-                        ? "SendDeltaSyncExecutionToQueue - Updated existing message for SyncType: {SyncType} in the queue"
-                        : "SendDeltaSyncExecutionToQueue - Created new message for SyncType: {SyncType} in the queue",
-                    deltaSyncExecution.SyncType);
-                
                 var queueName = GetDeltaSyncQueueName(deltaSyncExecution.SyncType);
 
                 await using var sender = serviceBusClient.CreateSender(queueName);
-                var executionMessage = System.Text.Json.JsonSerializer.Serialize(deltaSyncExecution);
+                var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
                     ContentType = "application/json"
@@ -89,7 +81,7 @@ namespace EprPrnIntegration.Common.Service
             }
         }
         
-        public async Task<DeltaSyncExecution?> ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
+        public async Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
         {
             var queueName = GetDeltaSyncQueueName(syncType);
             try
@@ -97,7 +89,6 @@ namespace EprPrnIntegration.Common.Service
                 await using var receiver = serviceBusClient.CreateReceiver(queueName);
 
                 var message = await receiver.ReceiveMessageAsync(maxWaitTime: TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
-                
                 
                 if (message == null)
                 {
@@ -115,7 +106,7 @@ namespace EprPrnIntegration.Common.Service
             }
             catch (Exception ex)
             {
-                logger.LogError("ReceiveDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
+                logger.LogError("GetDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
                 throw;
             }
         }

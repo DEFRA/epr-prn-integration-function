@@ -129,8 +129,12 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var deltaSyncExecution = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
-
-        // Mocking ReceiveDeltaSyncExecutionFromQueue to return null (no existing message)
+        var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
+        var message = new ServiceBusMessage(executionMessage)
+        {
+            ContentType = "application/json"
+        };
+        // Mocking GetDeltaSyncExecutionFromQueue to return null (no existing message)
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
 
         _serviceBusReceiverMock.Setup(receiver => receiver
@@ -143,7 +147,7 @@ public class ServiceBusProviderTests
 
         // Assert: Ensure that SendMessageAsync was called with the correct message
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Created new message for SyncType"))), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("SendDeltaSyncExecutionToQueue - A message has been published to the queue"))), Times.Once);
     }
 
     [Fact]
@@ -152,7 +156,7 @@ public class ServiceBusProviderTests
         // Arrange
         var deltaSyncExecution = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
 
-        // Mock ReceiveDeltaSyncExecutionFromQueue to return a valid response
+        // Mock GetDeltaSyncExecutionFromQueue to return a valid response
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
 
         _serviceBusReceiverMock.Setup(receiver => receiver
@@ -175,7 +179,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync((ServiceBusReceivedMessage?) null);
 
         // Act
-        var result = await _serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
+        var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
 
         // Assert
         Assert.Null(result);
@@ -193,7 +197,7 @@ public class ServiceBusProviderTests
         };
         var message = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(JsonSerializer.Serialize(deltaSyncExecution)));
 
-        // Mock ReceiveDeltaSyncExecutionFromQueue to return a valid response
+        // Mock GetDeltaSyncExecutionFromQueue to return a valid response
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
 
         _serviceBusReceiverMock.Setup(receiver => receiver
@@ -206,7 +210,7 @@ public class ServiceBusProviderTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
+        var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
 
         // Assert
         Assert.NotNull(result);
@@ -231,7 +235,7 @@ public class ServiceBusProviderTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
+        var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
 
         // Assert
         Assert.Null(result);
@@ -249,9 +253,9 @@ public class ServiceBusProviderTests
             .ThrowsAsync(new Exception("Service bus connection error"));
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers));
+        var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers));
         Assert.Equal("Service bus connection error", exception.Message);
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("ReceiveDeltaSyncExecutionFromQueue failed with exception"))), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GetDeltaSyncExecutionFromQueue failed with exception"))), Times.Once);
     }
 
     [Fact]
@@ -436,32 +440,6 @@ public class ServiceBusProviderTests
         var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue());
         Assert.Equal("Service bus connection error", exception.Message);
         _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to receive messages from queue with exception"))), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendDeltaSyncExecutionToQueue_ExistingMessage_LogsUpdateAndSendsMessage()
-    {
-        // Arrange
-        var deltaSyncExecution = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
-        var existingMessage = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
-
-        // Mocking ReceiveDeltaSyncExecutionFromQueue to return an existing message
-        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
-        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(JsonSerializer.Serialize(existingMessage)));
-            
-        _serviceBusReceiverMock.Setup(receiver => receiver
-                .ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(message);
-
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-
-        // Act
-        await _serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaSyncExecution);
-
-        // Assert: Ensure that SendMessageAsync was called with the correct message
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Updated existing message for SyncType"))), Times.Once);
-
     }
 
     [Fact]
