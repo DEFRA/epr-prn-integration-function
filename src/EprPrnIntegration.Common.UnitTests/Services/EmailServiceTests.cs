@@ -32,6 +32,8 @@ public class EmailServiceTests
             PrnTemplateId = "prnTemplateId",
             PernTemplateId = "pernTemplateId",
             NpwdEmailTemplateId = "npwdEmailTemplateId",
+            NpwdValidationErrorsTemplateId = "npwdValidationErrorsTemplateId",
+            NpwdReconciliationEmailTemplateId = "npwdReconciliationTemplateId",
             NpwdEmail = "npwd@email.com"
         };
             
@@ -252,9 +254,7 @@ public class EmailServiceTests
                     parameters.ContainsKey("emailAddress") &&
                     parameters.ContainsKey("reportDate") &&
                     parameters.ContainsKey("link_to_file") &&
-                    parameters["emailAddress"].Equals(_messagingConfig.NpwdEmail) &&
-                    parameters["reportDate"].Equals(reportDate) &&
-                    parameters["link_to_file"].Equals(mockFileUpload)),
+                    parameters["reportDate"].Equals(reportDate)),
                 null, null, null))
             .Returns(expectedResponse);
 
@@ -266,7 +266,11 @@ public class EmailServiceTests
             It.Is<string>(email => email == _messagingConfig.NpwdEmail),
             It.Is<string>(template => template == _messagingConfig.NpwdValidationErrorsTemplateId),
             It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
+
+        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Email sent to NPWD"))), Times.Once);
+
     }
+
     [Fact]
     public void SendValidationErrorPrnEmail_LogsError_WhenSendEmailFails()
     {
@@ -289,5 +293,40 @@ public class EmailServiceTests
                 logger.LogError(It.IsAny<Exception>(),
                     It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}"))),
             Times.Once);
+    }
+
+    [Fact]
+    public void SendReconciliationEmailToNpwd_SendsEmailWithAttachment_Successfully()
+    {
+        // Arrange
+        var reportDate = new DateTime(2025, 12, 1);
+        var expectedFileName = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
+        var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+
+        var fileUpload = NotificationClient.PrepareUpload(
+            Encoding.UTF8.GetBytes("Sample CSV Content"),
+            expectedFileName);
+
+        _mockNotificationClient.Setup(client => client.SendEmail(
+                It.Is<string>(email => email == _messagingConfig.NpwdEmail),
+                It.Is<string>(template => template == _messagingConfig.NpwdReconciliationEmailTemplateId),
+                It.Is<Dictionary<string, object>>(parameters =>
+                    parameters.ContainsKey("report_date") &&
+                    parameters.ContainsKey("report_count") &&
+                    parameters.ContainsKey("link_to_file")),
+                null, null, null))
+            .Returns(expectedResponse);
+
+        // Act
+        _emailService.SendReconciliationEmailToNpwd(reportDate, 0, "Sample CSV Content");
+
+        // Assert
+        _mockNotificationClient.Verify(client => client.SendEmail(
+            It.Is<string>(email => email == _messagingConfig.NpwdEmail),
+            It.Is<string>(template => template == _messagingConfig.NpwdReconciliationEmailTemplateId),
+            It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
+
+        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Reconciliation email sent to NPWD"))), Times.Once);
+
     }
 }

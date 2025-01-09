@@ -9,12 +9,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text;
 
-namespace EprPrnIntegration.Api;
+namespace EprPrnIntegration.Api.Functions;
 
-public class EmailReconcilitionReportToNpwdFunction(
+public class NpwdReconciliationReportFunction(
     IEmailService _emailService,
     IOptions<FeatureManagementConfiguration> _featureConfig,
-    ILogger<EmailReconcilitionReportToNpwdFunction> _logger
+    ILogger<NpwdReconciliationReportFunction> _logger
 )
 {
     // for querying Application Insights
@@ -23,8 +23,8 @@ public class EmailReconcilitionReportToNpwdFunction(
     private const string report_Date = "reportDate";
     private const string org_Name = "orgName";
 
-    [Function("NpwdReconciliationReportFunction")]
-    public async Task Run([TimerTrigger("%NpwdReconciliationReport%")] TimerInfo myTimer)
+    [Function("NpwdReconciliationReport")]
+    public async Task Run([TimerTrigger("%NpwdReconciliationReportTrigger%")] TimerInfo myTimer)
     {
         var isOn = _featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
@@ -35,23 +35,30 @@ public class EmailReconcilitionReportToNpwdFunction(
 
         _logger.LogInformation("NpwdReconciliationReport function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        int rowCount = 0;
-        StringBuilder sb = new StringBuilder();
-
-        // retrieve custom events from Application Insights
-        var customLogs = await GetCustomEventLogsLast24hrsAsync();
-
-        // generate csv
-        if (customLogs != null)
+        try
         {
-            foreach (Azure.Monitor.Query.Models.LogsTable? table in customLogs.Value.AllTables)
-            {
-                rowCount += TransformCustomEventLogToCsv(sb, table);
-            }
-        }
+            int rowCount = 0;
+            StringBuilder sb = new StringBuilder();
 
-        // send reconciliation email with link to csv file
-        _emailService.SendReconciliationEmailToNpwd(DateTime.UtcNow, rowCount, sb.ToString());
+            // retrieve custom events from Application Insights
+            var customLogs = await GetCustomEventLogsLast24hrsAsync();
+
+            // generate csv
+            if (customLogs != null)
+            {
+                foreach (Azure.Monitor.Query.Models.LogsTable? table in customLogs.Value.AllTables)
+                {
+                    rowCount += TransformCustomEventLogToCsv(sb, table);
+                }
+            }
+
+            // send reconciliation email with link to csv file
+            _emailService.SendReconciliationEmailToNpwd(DateTime.UtcNow, rowCount, sb.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed running NpwdReconciliationReport");
+        }
 
     }
 
@@ -59,10 +66,14 @@ public class EmailReconcilitionReportToNpwdFunction(
     {
         LogsQueryClient client = new LogsQueryClient(new DefaultAzureCredential());
         string resourceId = @"/subscriptions/b680e2ba-654e-4e1b-93d7-c8cb2a01409e/resourceGroups/Eviden/providers/microsoft.insights/components/readinglogsfromappinsights";
+        
         string query = @$"customEvents
                             | where name in ('{CustomEvents.IssuedPrn}')
                             | extend prn = parse_json(customDimensions)
-                            | extend prnNumber = prn['{CustomEventFields.PrnNumber}'], status = prn['{CustomEventFields.IncomingStatus}'], reportDate = prn['{CustomEventFields.Date}'], orgName = prn['{CustomEventFields.OrganisationName}']
+                            | extend {prn_Number} = prn['{CustomEventFields.PrnNumber}'], 
+                                {status} = prn['{CustomEventFields.IncomingStatus}'], 
+                                {report_Date} = prn['{CustomEventFields.Date}'], 
+                                {org_Name} = prn['{CustomEventFields.OrganisationName}']
                             | project {prn_Number}, {status}, {report_Date}, {org_Name}";
 
         // Run the query on the Application Insights resource

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
-using Notify.Client;
 
 namespace EprPrnIntegration.Common.Service;
 
@@ -118,14 +117,14 @@ public class EmailService : IEmailService
 
     public void SendReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
     {
-        var npwdEmailAddress = "stephen.williamson.external@atos.net"; // _messagingConfig.NpwdEmail;
-        var templateId = "07b38a02-8291-4235-9140-b2ee467a5f35"; // _messagingConfig.NpwdReconciliationEmailTemplateId;
-        string filename = string.Format("issuedprns{0:yyyyMMdd}.csv", reportDate);
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconciliationEmailTemplateId;
+        string filename = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
 
-        Dictionary<string, dynamic> messagePersonalisation = new Dictionary<string, dynamic>
+        Dictionary<string, object> messagePersonalisation = new Dictionary<string, object>
         {
             {
-                "report_date", reportDate.ToString("0:dddd MMMM yyyy")
+                "report_date", reportDate.ToString("dd/MM/yyyy")
             },
             {
                 "report_count", reportCount
