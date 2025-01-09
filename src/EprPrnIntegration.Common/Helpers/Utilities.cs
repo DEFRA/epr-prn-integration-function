@@ -17,15 +17,14 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
             // To increase the expiry of the message
             // We complete the message on retrieval, push back to avoid loss in case of execution failure.
             await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaMessage);
+            return deltaMessage;
         }
         
-        deltaMessage ??= new DeltaSyncExecution
+        return new DeltaSyncExecution
         {
             LastSyncDateTime = DateTime.Parse(configuration["DefaultLastRunDate"]),
             SyncType = syncType
         };
-
-        return deltaMessage;
     }
 
     public async Task SetDeltaSyncExecution(DeltaSyncExecution syncExecution, DateTime latestRun)
