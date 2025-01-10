@@ -11,9 +11,17 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
 {
     public async Task<DeltaSyncExecution> GetDeltaSyncExecution(NpwdDeltaSyncType syncType)
     {
-        var deltaMessage =
-            await serviceBusProvider.ReceiveDeltaSyncExecutionFromQueue(syncType);
-        return deltaMessage ?? new DeltaSyncExecution
+        var deltaMessage = await serviceBusProvider.GetDeltaSyncExecutionFromQueue(syncType);
+
+        if (deltaMessage != null)
+        {
+            // To increase the expiry of the message
+            // We complete the message on retrieval, push back to avoid loss in case of execution failure.
+            await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaMessage);
+            return deltaMessage;
+        }
+        
+        return new DeltaSyncExecution
         {
             LastSyncDateTime = DateTime.Parse(configuration["DefaultLastRunDate"]),
             SyncType = syncType
@@ -22,6 +30,9 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
 
     public async Task SetDeltaSyncExecution(DeltaSyncExecution syncExecution, DateTime latestRun)
     {
+        // getting the message to make sure it gets removed from the queue, so send push a new one to the queue
+        await serviceBusProvider.GetDeltaSyncExecutionFromQueue(syncExecution.SyncType);
+
         syncExecution.LastSyncDateTime = latestRun;
         await serviceBusProvider.SendDeltaSyncExecutionToQueue(syncExecution);
     }

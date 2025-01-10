@@ -153,7 +153,7 @@ public static class HostBuilderConfiguration
             async (response, timespan, retryAttempt, context) =>
             {
                 logger
-                .LogInformation("Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previuos request was responded with {StatusCode}",
+                .LogWarning("Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previuos request was responded with {StatusCode}",
                 retryAttempt, requestType, timespan.TotalSeconds, response.Result?.StatusCode);
                 await Task.CompletedTask;
             });
