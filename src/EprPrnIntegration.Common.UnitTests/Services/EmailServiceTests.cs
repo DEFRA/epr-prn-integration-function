@@ -33,7 +33,7 @@ public class EmailServiceTests
             PernTemplateId = "pernTemplateId",
             NpwdEmailTemplateId = "npwdEmailTemplateId",
             NpwdValidationErrorsTemplateId = "npwdValidationErrorsTemplateId",
-            NpwdReconciliationEmailTemplateId = "npwdReconciliationTemplateId",
+            NpwdReconcileIssuedPrnsTemplateId = "npwdReconcileIssuedPrnsTemplateId",
             NpwdEmail = "npwd@email.com"
         };
             
@@ -239,13 +239,7 @@ public class EmailServiceTests
         // Arrange
         var mockStream = new MemoryStream(Encoding.UTF8.GetBytes("Sample CSV Content"));
         var reportDate = new DateTime(2025, 1, 1);
-
-        var expectedFileName = $"error_events{DateTime.UtcNow.ToShortDateString()}.csv";
         var expectedResponse = new EmailNotificationResponse { id = "responseId" };
-
-        var mockFileUpload = NotificationClient.PrepareUpload(
-            Encoding.UTF8.GetBytes("Sample CSV Content"),
-            expectedFileName);
 
         _mockNotificationClient.Setup(client => client.SendEmail(
                 It.Is<string>(email => email == _messagingConfig.NpwdEmail),
@@ -254,6 +248,7 @@ public class EmailServiceTests
                     parameters.ContainsKey("emailAddress") &&
                     parameters.ContainsKey("reportDate") &&
                     parameters.ContainsKey("link_to_file") &&
+                    parameters["emailAddress"].Equals(_messagingConfig.NpwdEmail) &&
                     parameters["reportDate"].Equals(reportDate)),
                 null, null, null))
             .Returns(expectedResponse);
@@ -296,20 +291,15 @@ public class EmailServiceTests
     }
 
     [Fact]
-    public void SendReconciliationEmailToNpwd_SendsEmailWithAttachment_Successfully()
+    public void SendIssuedPrnsReconciliationEmailToNpwd_SendsEmailWithAttachment_Successfully()
     {
         // Arrange
         var reportDate = new DateTime(2025, 12, 1);
-        var expectedFileName = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
         var expectedResponse = new EmailNotificationResponse { id = "responseId" };
-
-        var fileUpload = NotificationClient.PrepareUpload(
-            Encoding.UTF8.GetBytes("Sample CSV Content"),
-            expectedFileName);
 
         _mockNotificationClient.Setup(client => client.SendEmail(
                 It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-                It.Is<string>(template => template == _messagingConfig.NpwdReconciliationEmailTemplateId),
+                It.Is<string>(template => template == _messagingConfig.NpwdReconcileIssuedPrnsTemplateId),
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("report_date") &&
                     parameters.ContainsKey("report_count") &&
@@ -318,12 +308,12 @@ public class EmailServiceTests
             .Returns(expectedResponse);
 
         // Act
-        _emailService.SendReconciliationEmailToNpwd(reportDate, 0, "Sample CSV Content");
+        _emailService.SendIssuedPrnsReconciliationEmailToNpwd(reportDate, 0, "Sample CSV Content");
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(
             It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-            It.Is<string>(template => template == _messagingConfig.NpwdReconciliationEmailTemplateId),
+            It.Is<string>(template => template == _messagingConfig.NpwdReconcileIssuedPrnsTemplateId),
             It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
 
         _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Reconciliation email sent to NPWD"))), Times.Once);

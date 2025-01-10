@@ -11,10 +11,10 @@ using System.Text;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class NpwdReconciliationReportFunction(
+public class EmailNpwdIssuedPrnsReconciliationFunction(
     IEmailService _emailService,
     IOptions<FeatureManagementConfiguration> _featureConfig,
-    ILogger<NpwdReconciliationReportFunction> _logger
+    ILogger<EmailNpwdIssuedPrnsReconciliationFunction> _logger
 )
 {
     // for querying Application Insights
@@ -23,17 +23,17 @@ public class NpwdReconciliationReportFunction(
     private const string report_Date = "reportDate";
     private const string org_Name = "orgName";
 
-    [Function("NpwdReconciliationReport")]
-    public async Task Run([TimerTrigger("%NpwdReconciliationReportTrigger%")] TimerInfo myTimer)
+    [Function("EmailNpwdIssuedPrnsReconciliation")]
+    public async Task Run([TimerTrigger("%EmailNpwdIssuedPrnsReconciliationTrigger%")] TimerInfo myTimer)
     {
         var isOn = _featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
-            _logger.LogInformation("NpwdReconciliationReport function is disabled by feature flag");
+            _logger.LogInformation("EmailNpwdIssuedPrnsReconciliation function is disabled by feature flag");
             return;
         }
 
-        _logger.LogInformation("NpwdReconciliationReport function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        _logger.LogInformation("EmailNpwdIssuedPrnsReconciliation function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
         try
         {
@@ -53,11 +53,11 @@ public class NpwdReconciliationReportFunction(
             }
 
             // send reconciliation email with link to csv file
-            _emailService.SendReconciliationEmailToNpwd(DateTime.UtcNow, rowCount, sb.ToString());
+            _emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, rowCount, sb.ToString());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed running NpwdReconciliationReport");
+            _logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationFunction");
         }
 
     }

@@ -115,10 +115,10 @@ public class EmailService : IEmailService
         }
     }
 
-    public void SendReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
+    public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
     {
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
-        var templateId = _messagingConfig.NpwdReconciliationEmailTemplateId;
+        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
         string filename = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
 
         Dictionary<string, object> messagePersonalisation = new Dictionary<string, object>
