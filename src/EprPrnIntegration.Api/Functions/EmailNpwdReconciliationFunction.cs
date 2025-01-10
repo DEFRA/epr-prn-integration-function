@@ -1,8 +1,7 @@
-using Azure.Identity;
-using Azure.Monitor.Query;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -13,8 +12,8 @@ namespace EprPrnIntegration.Api.Functions;
 
 public class EmailNpwdReconciliationFunction(
     IEmailService _emailService,
+    IAppInsightsService _appInsightsService,
     IOptions<FeatureManagementConfiguration> _featureConfig,
-    IOptions<AppInsightsConfig> _appInsightsConfig,
     ILogger<EmailNpwdReconciliationFunction> _logger
 )
 {
@@ -42,73 +41,49 @@ public class EmailNpwdReconciliationFunction(
     {
         _logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        int rowCount = 0;
-        StringBuilder sb = new StringBuilder();
+        string csv = string.Empty;
+        List<ReconcileIssuedPrn> prns = new List<ReconcileIssuedPrn>();
 
         try
         {
             // retrieve custom events from Application Insights
-            var customLogs = await GetCustomEventLogsLast24hrsAsync();
+            prns = await _appInsightsService.GetIssuedPrnCustomEventLogsLast24hrsAsync();
 
             // generate csv
-            if (customLogs != null)
-            {
-                foreach (Azure.Monitor.Query.Models.LogsTable? table in customLogs.Value.AllTables)
-                {
-                    rowCount += TransformCustomEventLogToCsv(sb, table);
-                }
-            }
+            csv = TransformPrnsToCsv(prns);
 
             // send reconciliation email with link to csv file
-            _emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, rowCount, sb.ToString());
+            _emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, prns.Count, csv);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationFunction");
+            _logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationAsync");
         }
     }
 
-    public async Task<Azure.Response<Azure.Monitor.Query.Models.LogsQueryResult>> GetCustomEventLogsLast24hrsAsync()
+    public static string TransformPrnsToCsv(List<ReconcileIssuedPrn> prns)
     {
-        LogsQueryClient client = new LogsQueryClient(new DefaultAzureCredential());
-        string resourceId = _appInsightsConfig.Value.ResourceId;
-        
-        string query = @$"customEvents
-                            | where name in ('{CustomEvents.IssuedPrn}')
-                            | extend prn = parse_json(customDimensions)
-                            | extend {prn_Number} = prn['{CustomEventFields.PrnNumber}'], 
-                                {status} = prn['{CustomEventFields.IncomingStatus}'], 
-                                {report_Date} = prn['{CustomEventFields.Date}'], 
-                                {org_Name} = prn['{CustomEventFields.OrganisationName}']
-                            | project {prn_Number}, {status}, {report_Date}, {org_Name}";
+        StringBuilder sb = new StringBuilder();
 
-        // Run the query on the Application Insights resource
-        return await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(1)));
-
-    }
-
-    private static int TransformCustomEventLogToCsv(StringBuilder sb, Azure.Monitor.Query.Models.LogsTable? table)
-    {
         // header
         sb.Append(CustomEventFields.PrnNumber).Append(',');
         sb.Append(CustomEventFields.IncomingStatus).Append(',');
         sb.Append(CustomEventFields.Date).Append(',');
         sb.AppendLine(CustomEventFields.OrganisationName);
 
-        if (table == null)
-            return 0;
+        if (prns == null || prns.Count == 0)
+            return sb.ToString();
 
-        foreach (var row in table.Rows)
+        foreach (var prn in prns)
         {
-            sb.Append(row[prn_Number]).Append(',');
-            sb.Append(row[status]).Append(',');
-            sb.Append(row[report_Date]).Append(',');
-
-            string org = row[org_Name].ToString() ?? string.Empty;
-            sb.Append(org.CleanCsvString()).AppendLine();
+            sb.Append(prn.PrnNumber).Append(',');
+            sb.Append(prn.PrnStatus).Append(',');
+            sb.Append(prn.UploadedDate).Append(',');
+            sb.Append(prn.OrganisationName.CleanCsvString()).AppendLine();
         }
 
-        return table.Rows.Count;
+        return sb.ToString();
+
     }
 
 }

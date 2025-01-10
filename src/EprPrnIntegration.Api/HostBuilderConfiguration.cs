@@ -53,6 +53,7 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IAppInsightsService, AppInsightsService>();
 
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
@@ -79,7 +80,7 @@ public static class HostBuilderConfiguration
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
-        
+
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
         {
