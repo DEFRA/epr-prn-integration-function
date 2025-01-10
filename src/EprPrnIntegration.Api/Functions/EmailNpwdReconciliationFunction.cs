@@ -11,10 +11,11 @@ using System.Text;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class EmailNpwdIssuedPrnsReconciliationFunction(
+public class EmailNpwdReconciliationFunction(
     IEmailService _emailService,
     IOptions<FeatureManagementConfiguration> _featureConfig,
-    ILogger<EmailNpwdIssuedPrnsReconciliationFunction> _logger
+    IOptions<AppInsightsConfig> _appInsightsConfig,
+    ILogger<EmailNpwdReconciliationFunction> _logger
 )
 {
     // for querying Application Insights
@@ -23,23 +24,29 @@ public class EmailNpwdIssuedPrnsReconciliationFunction(
     private const string report_Date = "reportDate";
     private const string org_Name = "orgName";
 
-    [Function("EmailNpwdIssuedPrnsReconciliation")]
-    public async Task Run([TimerTrigger("%EmailNpwdIssuedPrnsReconciliationTrigger%")] TimerInfo myTimer)
+    [Function("EmailNpwdReconciliation")]
+    public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
         var isOn = _featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
-            _logger.LogInformation("EmailNpwdIssuedPrnsReconciliation function is disabled by feature flag");
+            _logger.LogInformation("EmailNpwdReconciliation function is disabled by feature flag");
             return;
         }
 
-        _logger.LogInformation("EmailNpwdIssuedPrnsReconciliation function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        await EmailNpwdIssuedPrnsReconciliationAsync();
+
+    }
+
+    public async Task EmailNpwdIssuedPrnsReconciliationAsync()
+    {
+        _logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+
+        int rowCount = 0;
+        StringBuilder sb = new StringBuilder();
 
         try
         {
-            int rowCount = 0;
-            StringBuilder sb = new StringBuilder();
-
             // retrieve custom events from Application Insights
             var customLogs = await GetCustomEventLogsLast24hrsAsync();
 
@@ -59,13 +66,12 @@ public class EmailNpwdIssuedPrnsReconciliationFunction(
         {
             _logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationFunction");
         }
-
     }
 
     public async Task<Azure.Response<Azure.Monitor.Query.Models.LogsQueryResult>> GetCustomEventLogsLast24hrsAsync()
     {
         LogsQueryClient client = new LogsQueryClient(new DefaultAzureCredential());
-        string resourceId = @"/subscriptions/b680e2ba-654e-4e1b-93d7-c8cb2a01409e/resourceGroups/Eviden/providers/microsoft.insights/components/readinglogsfromappinsights";
+        string resourceId = _appInsightsConfig.Value.ResourceId;
         
         string query = @$"customEvents
                             | where name in ('{CustomEvents.IssuedPrn}')
