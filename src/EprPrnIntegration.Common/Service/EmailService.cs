@@ -144,8 +144,7 @@ public class EmailService : IEmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
-
+            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
         }
     }
 }

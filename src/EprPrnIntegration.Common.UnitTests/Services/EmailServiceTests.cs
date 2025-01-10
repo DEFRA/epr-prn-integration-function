@@ -294,7 +294,6 @@ public class EmailServiceTests
     public void SendIssuedPrnsReconciliationEmailToNpwd_SendsEmailWithAttachment_Successfully()
     {
         // Arrange
-        var reportDate = new DateTime(2025, 12, 1);
         var expectedResponse = new EmailNotificationResponse { id = "responseId" };
 
         _mockNotificationClient.Setup(client => client.SendEmail(
@@ -308,7 +307,7 @@ public class EmailServiceTests
             .Returns(expectedResponse);
 
         // Act
-        _emailService.SendIssuedPrnsReconciliationEmailToNpwd(reportDate, 0, "Sample CSV Content");
+        _emailService.SendIssuedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 0, "Sample CSV Content");
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(
@@ -318,5 +317,26 @@ public class EmailServiceTests
 
         _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Reconciliation email sent to NPWD"))), Times.Once);
 
+    }
+
+    [Fact]
+    public void SendIssuedPrnsReconciliationEmailToNpwd_LogsError_WhenSendEmailFails()
+    {
+        // Arrange
+        _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, object>>(),
+                null, null, null))
+            .Throws(new Exception("Error sending email"));
+
+        // Act
+        _emailService.SendIssuedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 0, "Sample CSV Content");
+
+        // Assert
+        _mockLogger.VerifyLog(logger =>
+                logger.LogError(It.IsAny<Exception>(),
+                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"))),
+            Times.Once);
     }
 }
