@@ -53,8 +53,8 @@ public static class HostBuilderConfiguration
         services.AddTransient<NpwdOAuthMiddleware>();
         
         // Add HttpClients
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>();
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd).AddHttpMessageHandler<NpwdOAuthMiddleware>();
+        services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>();
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);

@@ -1,25 +1,24 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using Microsoft.Extensions.Logging;
-using EprPrnIntegration.Common.Service;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
 [ExcludeFromCodeCoverage]
-public class DefraApisAuthorisationHandler : DelegatingHandler
+public class PrnServiceAuthorisationHandler : DelegatingHandler
 {
     private readonly TokenRequestContext _tokenRequestContext;
     private readonly DefaultAzureCredential? _credentials;
 
-    public DefraApisAuthorisationHandler(IConfigurationService configurationService, ILogger<DefraApisAuthorisationHandler> logger)
+    public PrnServiceAuthorisationHandler(IOptions<Configuration.Service> config)
     {
-        //if (!string.IsNullOrEmpty(options.Value.ClientId))
-        //{
-        //    _tokenRequestContext = new TokenRequestContext([options.Value.ClientId]);
-        //    _credentials = new DefaultAzureCredential();
-        //}
+        if (!string.IsNullOrEmpty(config.Value.ClientId))
+        {
+            _tokenRequestContext = new TokenRequestContext([config.Value.ClientId]);
+            _credentials = new DefaultAzureCredential();
+        }
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
