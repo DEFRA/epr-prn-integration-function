@@ -1,4 +1,4 @@
-{
+{FetchNpwdIssuedPrnsFunction
   "IsEncrypted": false,
   "Values": {
     "FeatureManagement:RunIntegration": true, // feature flag
@@ -12,16 +12,12 @@
     "UpdatePrnsTrigger": "0 0 18 * * 1-5",
     "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
-    "UpdatePrnsTrigger": "0 0 18 * * 1-5",
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
-    "NpwdApiBaseUrl": "https://fat.npwd.org.uk/",
-    "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
     "PrnsContext": "https://fat.npwd.org.uk/odata/PRNs/$delta",
     "Service:Url": "https://devrwdwebwa7407.azurewebsites.net/",
     "Service:EndPointName": "api/organisations",
     "Service:PrnBaseUrl": "https://devrwdwebwa7418.azurewebsites.net/",
     "Service:PrnEndPointName": "api/v1/prn",
-    "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
     "ServiceBus:FullyQualifiedNamespace": "DEVRWDINFSB1402.servicebus.windows.net",
     "ServiceBus:FetchPrnQueueName": "defra.epr.npwd.integration.fetchprn.dev7",
     "ServiceBus:ErrorPrnQueue": "defra.epr.npwd.integration.errorqueue.dev7",
@@ -33,9 +29,11 @@
     "MessagingConfig:PrnTemplateId": "a43a573c-3367-4aa2-b9ac-6b347ce8bf32",
     "MessagingConfig:PERNTemplateId": "24925202-125b-4b85-b54a-9f3100301eb4",
     "MessagingConfig:NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
-    "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
+    "MessagingConfig:NpwdEmail": "stephen.williamson.external@atos.net",
+    "MessagingConfig:NpwdValidationErrorsTemplateId": "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef",
+    "MessagingConfig:NpwdReconciliationEmailTemplateId": "07b38a02-8291-4235-9140-b2ee467a5f35",
     "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
     "ApiCallsRetryConfig:MaxAttempts": 3,
-    "MessagingConfig:NpwdValidationErrorsTemplateId": "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef"
+    "NpwdReconciliationReportTrigger": "0 0 18 * * 1-5"
   }
 }
