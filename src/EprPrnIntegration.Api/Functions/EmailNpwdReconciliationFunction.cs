@@ -17,12 +17,6 @@ public class EmailNpwdReconciliationFunction(
     ILogger<EmailNpwdReconciliationFunction> _logger
 )
 {
-    // for querying Application Insights
-    private const string prn_Number = "prnNumber";
-    private const string status = "status";
-    private const string report_Date = "reportDate";
-    private const string org_Name = "orgName";
-
     [Function("EmailNpwdReconciliation")]
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
