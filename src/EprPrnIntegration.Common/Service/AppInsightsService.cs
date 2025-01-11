@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Common.Service;
 
+[ExcludeFromCodeCoverage(Justification = "Azure Default Credentials and LogsQueryClient are difficult to Mock")]
 public class AppInsightsService : IAppInsightsService
 {
     private readonly IOptions<AppInsightsConfig> _appInsightsConfig;
@@ -16,7 +17,6 @@ public class AppInsightsService : IAppInsightsService
         _appInsightsConfig = appInsightsConfig;
     }
 
-    [ExcludeFromCodeCoverage(Justification = "Azure Default Credentials and LogsQueryClient are difficult to Mock")]
     public async Task<List<ReconcileIssuedPrn>> GetIssuedPrnCustomEventLogsLast24hrsAsync()
     {
         var prns = new List<ReconcileIssuedPrn>();
