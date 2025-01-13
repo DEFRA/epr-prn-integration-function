@@ -35,7 +35,7 @@ namespace EprPrnIntegration.Common.RESTServices
             ArgumentNullException.ThrowIfNullOrWhiteSpace(endPointName);
 
             _httpClient = httpClientFactory.CreateClient(httpClientName);
-            _httpClient.DefaultRequestHeaders.Add(Common.Constants.HttpHeaderNames.Accept, "application/json");
+            _httpClient.DefaultRequestHeaders.Add(Constants.HttpHeaderNames.Accept, "application/json");
 
             if (_baseUrl.EndsWith('/'))
                 _baseUrl = _baseUrl.TrimEnd('/');
