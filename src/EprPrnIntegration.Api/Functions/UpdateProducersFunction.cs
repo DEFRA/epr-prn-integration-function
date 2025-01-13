@@ -111,7 +111,7 @@ public class UpdateProducersFunction(
         {
             logger.LogError(ex,
                 "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
-            throw ex;
+            throw;
         }
     }
 }
