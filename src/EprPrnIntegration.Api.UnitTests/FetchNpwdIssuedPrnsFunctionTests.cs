@@ -18,6 +18,7 @@ using EprPrnIntegration.Api.Models;
 using System.Text.Json;
 using EprPrnIntegration.Common.Constants;
 using FluentAssertions;
+using EprPrnIntegration.Api.Functions;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -117,7 +118,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task Run_NoPrnsFetched_LogsWarningAndReturns()
+        public async Task Run_NoPrnsFetched_LogsWarning()
         {
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
                            .ReturnsAsync(new List<NpwdPrn>());
@@ -134,7 +135,6 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.IsAny<string>()), Times.Once);
-            _mockServiceBusProvider.Verify(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()), Times.Never);
             _mockLogger.VerifyLog(x => x.LogWarning(It.Is<string>(s => s.Contains("No Prns Exists"))));
         }
 
@@ -153,6 +153,26 @@ namespace EprPrnIntegration.Api.UnitTests
             var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed Get Prns from npwd"))), Times.Once);
             Assert.Equal("Error fetching PRNs", ex.Message);
+            _mockEmailService.Verify(email => email.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Never);
+        }
+
+        [Theory]
+        [InlineData(System.Net.HttpStatusCode.InternalServerError)]
+        [InlineData(System.Net.HttpStatusCode.RequestTimeout)]
+        [InlineData(System.Net.HttpStatusCode.GatewayTimeout)]
+        public async Task Run_FetchPrnsSend_EmailToNpwd_When_ServerSide_Error_Occurs(System.Net.HttpStatusCode statusCode)
+        {
+            var exception = new HttpRequestException("Error fetching PRNs", null, statusCode);
+            _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+                           .ThrowsAsync(exception);
+
+            var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
+            _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
+            _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+            _mockEmailService.Verify(email => email.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -245,7 +265,7 @@ namespace EprPrnIntegration.Api.UnitTests
                              .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             var producerEmailsTask = Task.FromResult(_fixture.CreateMany<PersonEmail>().ToList());
-            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(producerEmailsTask);
 
             // Act
@@ -354,7 +374,7 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
-        public async Task ProcessIssuedPrnsAsync_ExceptionDuringProcessing_AddsMessageBackToQueue()
+        public async Task ProcessIssuedPrnsAsync_ExceptionDuringProcessing_AddsMessageBackToErrorQueue()
         {
             // Arrange
             var npwdPrn = _fixture.Create<NpwdPrn>();
@@ -378,7 +398,7 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.ProcessIssuedPrnsAsync();
 
             // Assert
-            _mockServiceBusProvider.Verify(provider => provider.SendMessageBackToFetchPrnQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
+            _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
         }
 
@@ -509,7 +529,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 It.Is<Dictionary<string, string>>(
                     data => data["PRN Number"] == "No PRN Number" &&
                     data["PRN Number"] == "No PRN Number" &&
-                    data["Organisaton Name"] == "Blank Organisation Name"
+                    data["Organisation Name"] == "Blank Organisation Name"
 
                     )), Times.Once);
         }

@@ -59,6 +59,6 @@ public class PrnService : BaseHttpService, IPrnService
     public async Task SavePrn(SavePrnDetailsRequest request)
     {
         _logger.LogInformation($"Saving PRN with id {request.EvidenceNo}" );
-        await Post($"prn/prn-details", request, CancellationToken.None);
+        await Post($"/prn-details", request, CancellationToken.None);
     }
 }

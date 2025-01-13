@@ -28,8 +28,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             // Setting up the configuration mock
             var serviceConfig = new Configuration.Service
             {
-                Url = "http://localhost:5000/",
-                EndPointName = "api/organisations"
+                AccountBaseUrl = "http://localhost:5000/",
+                AccountEndPointName = "api/organisations"
             };
             _configMock = new Mock<IOptions<Configuration.Service>>();
             _configMock.Setup(c => c.Value).Returns(serviceConfig);
@@ -71,9 +71,9 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
         {
             // Arrange
             var organisationId = "12345";
-
+            var entityTypeCode = "CS";
             // Act
-            var result = await _organisationService.GetPersonEmailsAsync(organisationId, CancellationToken.None);
+            var result = await _organisationService.GetPersonEmailsAsync(organisationId, entityTypeCode, CancellationToken.None);
 
             // Assert
             Assert.NotNull(result);

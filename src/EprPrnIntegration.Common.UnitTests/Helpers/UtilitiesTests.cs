@@ -7,6 +7,7 @@ using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using System.Text;
 
 namespace EprPrnIntegration.Common.UnitTests.Helpers;
 
@@ -42,7 +43,7 @@ public class UtilitiesTests
         var defaultLastRunDate = "2024-01-01";
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultLastRunDate);
 
-        _serviceBusProviderMock.Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync((DeltaSyncExecution)null);
 
         // Act
@@ -65,7 +66,7 @@ public class UtilitiesTests
             LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
         };
 
-        _serviceBusProviderMock.Setup(provider => provider.ReceiveDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync(expectedExecution);
 
         // Act
@@ -108,5 +109,80 @@ public class UtilitiesTests
         });
 
         _mockTelemetryChannel.Verify(t => t.Send(It.IsAny<ITelemetry>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateErrorEventsCsvStreamAsync_ShouldReturnValidCsvStream()
+    {
+        // Arrange
+        var errorEvents = new List<ErrorEvent>
+        {
+            new ErrorEvent
+            {
+                PrnNumber = "12345",
+                IncomingStatus = "Active",
+                Date = "01/07/2025",
+                OrganisationName = "Example Org",
+                ErrorComments = "Sample error message"
+            },
+            new ErrorEvent
+            {
+                PrnNumber = "67890",
+                IncomingStatus = "Inactive",
+                Date = "02/07/2025",
+                OrganisationName = "Another Org",
+                ErrorComments = "Another sample message"
+            }
+        };
+
+        // Act
+        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+
+        // Assert
+        csvStream.Position = 0; // Ensure the stream is at the beginning for reading
+        using var reader = new StreamReader(csvStream);
+        var csvContent = await reader.ReadToEndAsync();
+
+        var expectedCsv = new StringBuilder()
+            .AppendLine("PRN Number,Incoming Status,Date,Organisation Name,Error Comments")
+            .AppendLine("12345,Active,01/07/2025,Example Org,Sample error message")
+            .AppendLine("67890,Inactive,02/07/2025,Another Org,Another sample message")
+            .ToString();
+
+        Assert.Equal(expectedCsv, csvContent);
+    }
+
+    [Fact]
+    public async Task CreateErrorEventsCsvStreamAsync_ShouldHandleEmptyList()
+    {
+        // Arrange
+        var errorEvents = new List<ErrorEvent>();
+
+        // Act
+        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+
+        // Assert
+        csvStream.Position = 0;
+        using var reader = new StreamReader(csvStream);
+        var csvContent = await reader.ReadToEndAsync();
+
+        Assert.Empty(csvContent); // The CSV should be empty for an empty list
+    }
+
+    [Fact]
+    public async Task CreateErrorEventsCsvStreamAsync_ShouldHandleNullList()
+    {
+        // Arrange
+        List<ErrorEvent> errorEvents = null;
+
+        // Act
+        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+
+        // Assert
+        csvStream.Position = 0;
+        using var reader = new StreamReader(csvStream);
+        var csvContent = await reader.ReadToEndAsync();
+
+        Assert.Empty(csvContent); // The CSV should be empty for a null list
     }
 }

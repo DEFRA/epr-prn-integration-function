@@ -14,11 +14,9 @@ using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
-using Azure.Core;
-using Azure.Messaging;
-using EprPrnIntegration.Common.Models.Npwd;
+using System.Net;
 
-namespace EprPrnIntegration.Api
+namespace EprPrnIntegration.Api.Functions
 {
     public class FetchNpwdIssuedPrnsFunction
     {
@@ -74,13 +72,18 @@ namespace EprPrnIntegration.Api
                 if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
                 {
                     _logger.LogWarning($"No Prns Exists in npwd for filter {filter}");
-                    return;
                 }
-                _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns.Count, filter);
+                _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns!.Count, filter);
             }
             catch (HttpRequestException ex)
             {
                 _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
+
+                if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    _emailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
+                }
+
                 throw;
             }
             catch (Exception ex)
@@ -119,7 +122,6 @@ namespace EprPrnIntegration.Api
 
         internal async Task ProcessIssuedPrnsAsync()
         {
-            var errorList = new List<Dictionary<string, string>>();
             while (true)
             {
                 var messages = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
@@ -130,7 +132,8 @@ namespace EprPrnIntegration.Api
                     break;
                 }
 
-                string evidenceNo = string.Empty;
+                var evidenceNo = string.Empty;
+                var validatedErrorMessages = new List<Dictionary<string, string>>();
                 foreach (var message in messages)
                 {
                     try
@@ -156,7 +159,7 @@ namespace EprPrnIntegration.Api
                             catch (Exception ex)
                             {
                                 _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                                await _serviceBusProvider.SendMessageBackToFetchPrnQueue(message, evidenceNo);
+                                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                                 continue;
                             }
                         }
@@ -167,8 +170,9 @@ namespace EprPrnIntegration.Api
 
                             var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                             var eventData = CreateCustomEvent(messageContent, errorMessages);
-                            errorList.Add(eventData);
                             _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
+
+                            validatedErrorMessages.Add(eventData);
                         }
                     }
                     catch (Exception ex)
@@ -177,15 +181,8 @@ namespace EprPrnIntegration.Api
                         throw;
                     }
                 }
-            }
 
-            if (errorList.Any())
-            {
-                _logger.LogInformation("Sending error summary email to NPWD.");
-
-                _emailService.SendErrorSummaryEmail(errorList);
-
-                _logger.LogInformation("Sent error summary emai to NPWD");
+                await SendErrorFetchedPrnEmail(validatedErrorMessages);
             }
         }
 
@@ -202,15 +199,15 @@ namespace EprPrnIntegration.Api
         {
             Dictionary<string, string> eventData = new()
             {
-                { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
-                { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
+                { CustomEventFields.PrnNumber, npwdPrn?.EvidenceNo ?? "No PRN Number" },
+                { CustomEventFields.IncomingStatus, npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                { CustomEventFields.OrganisationName, npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
             };
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                eventData.Add("Error Comments", errorMessage);
+                eventData.Add(CustomEventFields.ErrorComments, errorMessage);
             }
 
             return eventData;
@@ -219,7 +216,7 @@ namespace EprPrnIntegration.Api
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
             // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, CancellationToken.None);
+            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
             _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
             var producers = new List<ProducerEmail>();
@@ -235,7 +232,7 @@ namespace EprPrnIntegration.Api
                     PrnNumber = request.EvidenceNo!,
                     Material = request.EvidenceMaterial!,
                     Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                    IsPrn = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
+                    IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
                 };
                 producers.Add(producerEmail);
             }
@@ -244,6 +241,25 @@ namespace EprPrnIntegration.Api
             _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
 
             _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
+        }
+
+        private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
+        {
+            if (validatedErrorMessages.Any())
+            {
+                var dateTimeNow = DateTime.UtcNow;
+                var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                {
+                    PrnNumber = kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number"),
+                    IncomingStatus = kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status"),
+                    Date = kv.GetValueOrDefault(CustomEventFields.Date, dateTimeNow.ToString()),
+                    OrganisationName = kv.GetValueOrDefault(CustomEventFields.OrganisationName, "Blank Organisation Name"),
+                    ErrorComments = kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)
+                }).ToList();
+
+                var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+                _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+            }
         }
     }
 }

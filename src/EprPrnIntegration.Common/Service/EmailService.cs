@@ -3,9 +3,9 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Notify.Client;
 using Notify.Interfaces;
-using Notify.Models;
-using System.Text;
+using System.Diagnostics;
 
 namespace EprPrnIntegration.Common.Service;
 
@@ -14,6 +14,7 @@ public class EmailService : IEmailService
     private readonly MessagingConfig _messagingConfig;
     private readonly INotificationClient _notificationClient;
     private readonly ILogger<EmailService> _logger;
+    private const string ExceptionLogMessageGeneric = "GOV UK NOTIFY ERROR. Method: SendEmail: {emailAddress} Template: {templateId}";
 
     public EmailService(INotificationClient notificationClient, IOptions<MessagingConfig> messagingConfig, ILogger<EmailService> logger)
     {
@@ -21,189 +22,12 @@ public class EmailService : IEmailService
         _messagingConfig = messagingConfig.Value;
         _logger = logger;
     }
-    public void SendErrorSummaryEmailNew(List<Dictionary<string, string>> errorList1)
-    {
-        try
-        {
-            // Sample error list, replace with actual input
-            var errorList = new List<Dictionary<string, string>>
-        {
-            new Dictionary<string, string>
-            {
-                { "PRN Number", "123456" },
-                { "Incoming Status", "Pending" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisation Name", "Org A" },
-                { "Error Comments", "Error Comments1" }
-            },
-            new Dictionary<string, string>
-            {
-                { "PRN Number", "789012" },
-                { "Incoming Status", "Completed" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisation Name", "Org B" },
-                { "Error Comments", "Error Comments2" }
-            },
-            new Dictionary<string, string>
-            {
-                { "PRN Number", "345678" },
-                { "Incoming Status", "Failed" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisation Name", "Org C" },
-                { "Error Comments", "Error Comments3" }
-            }
-        };
-
-            // Build an HTML table for the email    
-            var errorTable = new StringBuilder();
-            errorTable.Append("<table border='1' style='border-collapse:collapse;width:100%;'>");
-            errorTable.Append("<thead><tr>");
-
-            // Add table headers (assumes all dictionaries have the same keys)
-            foreach (var header in errorList[0].Keys)
-            {
-                errorTable.Append($"<th style='padding:8px;text-align:left;background-color:#f2f2f2;'>{header}</th>");
-            }
-
-            errorTable.Append("</tr></thead>");
-            errorTable.Append("<tbody>");
-
-            // Add rows for each error
-            foreach (var error in errorList)
-            {
-                errorTable.Append("<tr>");
-                foreach (var value in error.Values)
-                {
-                    errorTable.Append($"<td style='padding:8px;'>{value}</td>");
-                }
-                errorTable.Append("</tr>");
-            }
-
-            errorTable.Append("</tbody></table>");
-
-            // Email parameters
-            var parameters = new Dictionary<string, object>
-        {
-            { "emailAddress", _messagingConfig.NpwdSupportEmail! },
-            { "ApplicationName", "PRN" },
-            { "OperationId", "ops1" },
-            { "ErrorMessage", errorTable.ToString() }
-        };
-
-            // Send the email
-            var response = _notificationClient.SendEmail(
-                _messagingConfig.NpwdSupportEmail,
-                _messagingConfig.ErrorMessagesTemplateId,
-                parameters
-                //,isHtml: true
-            );
-
-            string message = "Error Scenarios Email sent to NPWD support.";
-            _logger.LogInformation(message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, Constants.Values.ExceptionLogMessage, "", _messagingConfig.ErrorMessagesTemplateId);
-        }
-    }
-
-
-    //var parameters = new Dictionary<string, object>
-    //                    {
-    //                        { "emailAddress", _messagingConfig.NpwdSupportEmail! },
-    //                        { "ApplicationName", "PRN" },
-    //                        { "OperationId", "ops1" },
-    //                        { "ErrorMessage", errorList.ToString() },
-    //                    };
-    //var response = _notificationClient.SendEmail(_messagingConfig.ErrorMessagesTemplateId!, _messagingConfig.ErrorMessagesTemplateId, parameters);
-    //string message = $"Error Scenarios Email sent to NPWD support.";
-    //_logger.LogInformation(message);
-    // Construct the formatted error messages as a string
-
-    public void SendErrorSummaryEmail(List<Dictionary<string, string>> errorList1)
-    {
-        try
-        {
-            var errorList = new List<Dictionary<string, string>>
-                {
-                    new Dictionary<string, string>
-                    {
-                        { "PRN Number", "123456" },
-                        { "Incoming Status", "Pending" },
-                        { "Date", DateTime.UtcNow.ToString() },
-                        { "Organisaton Name", "Org A" },
-                        {"Error Comments", "Error Comments1" }
-                    },
-                    new Dictionary<string, string>
-                    {
-                        { "PRN Number", "789012" },
-                        { "Incoming Status", "Completed" },
-                        { "Date", DateTime.UtcNow.ToString() },
-                        { "Organisaton Name", "Org B" },
-                        {"Error Comments", "Error Comments2" }
-                    },
-                    new Dictionary<string, string>
-                    {
-                        { "PRN Number", "345678" },
-                        { "Incoming Status", "Failed" },
-                        { "Date", DateTime.UtcNow.ToString() },
-                        { "Organisaton Name", "Org C" },
-                        {"Error Comments", "Error Comments3" }
-                    },
-                    new Dictionary<string, string>
-                    {
-                        { "PRN Number", "901234" },
-                        { "Incoming Status", "In Progress" },
-                        { "Date", DateTime.UtcNow.ToString() },
-                        { "Organisaton Name", "Org D" },
-                        {"Error Comments", "Error Comments4" }
-                    },
-                    new Dictionary<string, string>
-                    {
-                        { "PRN Number", "567890" },
-                        { "Incoming Status", "Not Started" },
-                        { "Date", DateTime.UtcNow.ToString() },
-                        { "Organisaton Name", "Org E" },
-                        {"Error Comments", "Error Comments5" }
-                    }
-                };
-
-            var errorMessages = new StringBuilder();
-
-            foreach (var error in errorList)
-            {
-                errorMessages.AppendLine(); // Add a blank line between each error block
-                foreach (var kvp in error)
-                {
-                    errorMessages.AppendLine($"{kvp.Key}: {kvp.Value}");
-                }
-
-            }
-
-            var parameters = new Dictionary<string, object>
-                            {
-                                { "emailAddress", _messagingConfig.NpwdSupportEmail! },
-                                { "ApplicationName", "PRN" },
-                                { "OperationId", "ops1" },
-                                { "ErrorMessage", errorMessages.ToString() }
-                            };
-
-            var response = _notificationClient.SendEmail(_messagingConfig.NpwdSupportEmail, _messagingConfig.ErrorMessagesTemplateId, parameters);
-            string message = $"Error Scenarios Email sent to NPWD support.";
-            _logger.LogInformation(message);
-
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, Constants.Values.ExceptionLogMessage, "", _messagingConfig.ErrorMessagesTemplateId);
-        }
-    }
 
     public void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId)
     {
         foreach (var producer in producerEmails)
         {
-            var templateId = producer.IsPrn ? _messagingConfig.PrnTemplateId : _messagingConfig.PernTemplateId;
+            var templateId = producer.IsExporter ? _messagingConfig.PernTemplateId : _messagingConfig.PrnTemplateId;
             var parameters = new Dictionary<string, object>
                                 {
                                     { "emailAddress", producer.EmailAddress },
@@ -227,6 +51,101 @@ public class EmailService : IEmailService
             {
                 _logger.LogError(ex, Constants.Values.ExceptionLogMessage, organisationId, templateId);
             }
+        }
+    }
+
+    public void SendErrorEmailToNpwd(string errorMessage)
+    {
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdEmailTemplateId;
+        var operationId = Activity.Current?.RootId ?? string.Empty;
+
+        var parameters = new Dictionary<string, object>
+        {
+                                    { "emailAddress", npwdEmailAddress! },
+                                    { "ApplicationName", Constants.Constants.ApplicationName },
+                                    { "OperationId", operationId },
+                                    { "ErrorMessage", errorMessage },
+                                };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
+
+            string message = $"Email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
+            _logger.LogInformation(message);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
+        }
+    }
+
+    public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
+    {
+        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
+
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
+
+        attachmentStream.Position = 0;
+
+        using var memoryStream = new MemoryStream();
+        attachmentStream.CopyTo(memoryStream);
+        var fileBytes = memoryStream.ToArray();
+        var fileUpload = NotificationClient.PrepareUpload(fileBytes, $"error_events{DateTime.UtcNow.ToShortDateString()}.csv");
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "emailAddress", npwdEmailAddress! },
+            { "reportDate", reportDate! },
+            { "link_to_file", fileUpload }
+        };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
+
+            var message = $"Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.";
+            _logger.LogInformation(message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
+        }
+    }
+
+    public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
+    {
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
+        string filename = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
+
+        Dictionary<string, object> messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "report_date", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "report_count", reportCount
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, messagePersonalisation);
+
+            string message = $"Reconciliation email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
+            _logger.LogInformation(message);
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
         }
     }
 }

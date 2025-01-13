@@ -1,4 +1,5 @@
 using AutoFixture;
+using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -7,6 +8,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,6 +28,7 @@ public class UpdateProducersFunctionTests
     private readonly Mock<IUtilities> _utilitiesMock = new();
     private readonly Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig = new();
     private readonly Fixture _fixture = new();
+    private readonly Mock<IEmailService> _emailServiceMock = new();
 
     private readonly UpdateProducersFunction function;
 
@@ -39,7 +42,7 @@ public class UpdateProducersFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         function = new UpdateProducersFunction(_commonDataServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object);
+            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object, _emailServiceMock.Object);
     }
 
     [Fact]
@@ -133,7 +136,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await Assert.ThrowsAsync<Exception>(() => function.Run(null));
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -309,5 +312,86 @@ public class UpdateProducersFunctionTests
                 data => data["Organization name"] == updatedProducers[0].OrganisationName
                 && data["Organisation ID"] == updatedProducers[0].OrganisationId
                 && data["Address"] == updatedProducers[0].OrganisationAddress)), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_ValidStartHour_FetchAndUpdatesProducers_HandlesNpwdClientErrorsCorrectly()
+    {
+        // Arrange
+        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+
+        _organisationServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Throws<Exception>();
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatedProducers,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });        
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _organisationServiceMock.Verify(
+            service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+            Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("An error was encountered on attempting to call NPWD API ")),
+            It.IsAny<Exception>(),
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task FetchAndUpdatesProducers_Sendemail_When_Error_Occurs(HttpStatusCode statusCode)
+    {
+        // Arrange      
+        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+
+        _organisationServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _npwdClientMock.Setup(x => x.Patch(It.IsAny<ProducerDelta?>(), It.IsAny<string>()))
+           .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatedProducers,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        // Act
+        await function.Run(null);
+
+        // Assert
+        _organisationServiceMock.Verify(
+            service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+            Times.Once);
+
+       _emailServiceMock.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
     }
 }

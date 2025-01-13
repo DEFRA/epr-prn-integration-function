@@ -1,7 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -63,23 +62,17 @@ namespace EprPrnIntegration.Common.Service
         {
             try
             {
-                var existingMessage = await ReceiveDeltaSyncExecutionFromQueue(deltaSyncExecution.SyncType);
+                var queueName = GetDeltaSyncQueueName(deltaSyncExecution.SyncType);
 
-                logger.LogInformation(
-                    existingMessage != null
-                        ? "SendDeltaSyncExecutionToQueue - Updated existing message for SyncType: {SyncType} in the queue"
-                        : "SendDeltaSyncExecutionToQueue - Created new message for SyncType: {SyncType} in the queue",
-                    deltaSyncExecution.SyncType);
-
-                await using var sender = serviceBusClient.CreateSender(config.Value.DeltaSyncQueueName);
-                var executionMessage = System.Text.Json.JsonSerializer.Serialize(deltaSyncExecution);
+                await using var sender = serviceBusClient.CreateSender(queueName);
+                var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
                     ContentType = "application/json"
                 };
                 
                 await sender.SendMessageAsync(message);
-                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {queue}", config.Value.DeltaSyncQueueName);
+                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {queue}", queueName);
             }
             catch (Exception ex)
             {
@@ -87,52 +80,33 @@ namespace EprPrnIntegration.Common.Service
                 throw;
             }
         }
-
-        /// <summary>
-        /// This is the Receiver for the messages in the delta sync queue
-        /// </summary>
-        /// <param name="syncType"></param>
-        /// <returns></returns>
-        public async Task<DeltaSyncExecution?> ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
+        
+        public async Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
         {
+            var queueName = GetDeltaSyncQueueName(syncType);
             try
             {
-                await using var receiver = serviceBusClient.CreateReceiver(config.Value.DeltaSyncQueueName);
+                await using var receiver = serviceBusClient.CreateReceiver(queueName);
 
-                var messages = await receiver.ReceiveMessagesAsync(maxMessages: 5, maxWaitTime: TimeSpan.FromSeconds(10));
-
-                if (messages == null || !messages.Any())
+                var message = await receiver.ReceiveMessageAsync(maxWaitTime: TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                
+                if (message == null)
                 {
-                    logger.LogInformation("No messages received from the queue: {queue}", config.Value.DeltaSyncQueueName);
+                    logger.LogInformation("No message received from the queue: {queue}", queueName);
                     return null;
                 }
-               
-                foreach (var message in messages)
-                {
-                    try
-                    {
-                        var deltaSync = System.Text.Json.JsonSerializer.Deserialize<DeltaSyncExecution>(message.Body.ToString());
 
-                        if (deltaSync != null && deltaSync.SyncType == syncType)
-                        {
-                            await receiver.CompleteMessageAsync(message);
-                            return deltaSync;
-                        }
+                var deltaSync = DeserializeMessage<DeltaSyncExecution>(message.Body.ToString());
 
-                        await receiver.AbandonMessageAsync(message);
-                    }
-                    catch (Exception deserializationEx)
-                    {
-                        logger.LogError("Error deserializing message: {exception}", deserializationEx);
-                        await receiver.AbandonMessageAsync(message);
-                    }
-                }
+                await (deltaSync == null
+                    ? receiver.AbandonMessageAsync(message)
+                    : receiver.CompleteMessageAsync(message));
 
-                return null;
+                return deltaSync;
             }
             catch (Exception ex)
             {
-                logger.LogError("ReceiveDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
+                logger.LogError("GetDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
                 throw;
             }
         }
@@ -144,7 +118,7 @@ namespace EprPrnIntegration.Common.Service
                 await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
 
                 // Continue receiving messages until the queue is empty or we have processed the relevant range
-                var messages = await receiver.ReceiveMessagesAsync(maxMessages: 10, config.Value.MaxWaitTime); //TODO: maxMessages change to int.MaxValue after testing
+                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds?? 1));
 
                 return messages;
             }
@@ -154,8 +128,8 @@ namespace EprPrnIntegration.Common.Service
                 throw;
             }
         }
-
-            public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
+        
+        public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
             {
                 try
                 {
@@ -213,6 +187,28 @@ namespace EprPrnIntegration.Common.Service
             catch (Exception ex)
             {
                 logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
+            }
+        }
+
+        private string GetDeltaSyncQueueName(NpwdDeltaSyncType syncType) =>
+            syncType switch
+            {
+                NpwdDeltaSyncType.UpdatedProducers => config.Value.UpdateProducerDeltaSyncQueueName,
+                NpwdDeltaSyncType.UpdatePrns => config.Value.UpdatePrnDeltaSyncQueueName,
+                NpwdDeltaSyncType.FetchNpwdIssuedPrns => config.Value.FetchPrnDeltaSyncQueueName,
+                _ => throw new ArgumentOutOfRangeException(nameof(syncType), syncType, null)
+            };
+
+        private T? DeserializeMessage<T>(string messageBody)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<T>(messageBody);
+            }
+            catch (JsonException ex)
+            {
+                logger.LogError(ex, "Failed to deserialize message body: {MessageBody}", messageBody);
+                return default;
             }
         }
     }

@@ -10,7 +10,7 @@ namespace EprPrnIntegration.Common.Service
         Task<IEnumerable<ServiceBusReceivedMessage>> ReceiveFetchedNpwdPrnsFromQueue();
         Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
         Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecutions);
-        Task<DeltaSyncExecution?> ReceiveDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType);
+        Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType);
         Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
     }
 }
