@@ -3,8 +3,6 @@
     public static class HttpClientNames
     {
         public const string Npwd = "NpwdClient";
-        public const string Prn = "PrnClient";
-
     }
 
     public static class HttpHeaderNames

@@ -51,13 +51,15 @@ public static class HostBuilderConfiguration
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
+        services.AddTransient<PrnServiceAuthorisationHandler>();
         
         // Add HttpClients
         services.AddHttpClient(Common.Constants.HttpClientNames.Npwd).AddHttpMessageHandler<NpwdOAuthMiddleware>();
-        services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>();
+        services.AddHttpClient<HttpClient>().AddHttpMessageHandler<PrnServiceAuthorisationHandler>();
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
+
         // Configure Azure Key Vault
         ConfigureKeyVault(configuration);
     }
