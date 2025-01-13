@@ -30,11 +30,10 @@ namespace EprPrnIntegration.Common.RESTServices
             // Initialize _baseUrl in the constructor
             _baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? throw new ArgumentNullException(nameof(baseUrl)) : baseUrl;
 
-            ArgumentNullException.ThrowIfNull(httpClientFactory);
-            ArgumentNullException.ThrowIfNull(httpClientName);
+            ArgumentNullException.ThrowIfNull(httpClientFactory);            
             ArgumentNullException.ThrowIfNullOrWhiteSpace(endPointName);
 
-            _httpClient = httpClientFactory.CreateClient(httpClientName);
+            _httpClient = string.IsNullOrWhiteSpace(httpClientName) ? httpClientFactory.CreateClient() : httpClientFactory.CreateClient(httpClientName);
             _httpClient.DefaultRequestHeaders.Add(Constants.HttpHeaderNames.Accept, "application/json");
 
             if (_baseUrl.EndsWith('/'))
