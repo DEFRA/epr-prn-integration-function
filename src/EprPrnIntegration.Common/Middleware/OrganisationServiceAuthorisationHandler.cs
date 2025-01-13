@@ -7,19 +7,19 @@ using Microsoft.Extensions.Options;
 namespace EprPrnIntegration.Common.Middleware;
 
 [ExcludeFromCodeCoverage]
-public class PrnServiceAuthorisationHandler : DelegatingHandler
+public class OrganisationServiceAuthorisationHandler : DelegatingHandler
 {
     private readonly TokenRequestContext _tokenRequestContext;    
     private readonly DefaultAzureCredential? _credentials;
 
-    public PrnServiceAuthorisationHandler(IOptions<Configuration.Service> config)
+    public OrganisationServiceAuthorisationHandler(IOptions<Configuration.Service> config)
     {
-        if (string.IsNullOrEmpty(config.Value.PrnClientId))
+        if (string.IsNullOrEmpty(config.Value.AccountClientId))
         {
             return;
         }
 
-        _tokenRequestContext = new TokenRequestContext([config.Value.PrnClientId]);
+        _tokenRequestContext = new TokenRequestContext([config.Value.AccountClientId]);
         _credentials = new DefaultAzureCredential();
     }
 
