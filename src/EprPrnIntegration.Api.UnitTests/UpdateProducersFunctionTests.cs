@@ -318,9 +318,9 @@ public class UpdateProducersFunctionTests
     public async Task Run_ValidStartHour_FetchAndUpdatesProducers_HandlesNpwdClientErrorsCorrectly()
     {
         // Arrange
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+        var updatedProducers = new List<UpdatedProducersResponse> { new() };
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
@@ -341,7 +341,7 @@ public class UpdateProducersFunctionTests
         await function.Run(null);
 
         // Assert
-        _organisationServiceMock.Verify(
+        _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
@@ -363,12 +363,12 @@ public class UpdateProducersFunctionTests
     public async Task FetchAndUpdatesProducers_Sendemail_When_Error_Occurs(HttpStatusCode statusCode)
     {
         // Arrange      
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+        var updatedProducers = new List<UpdatedProducersResponse> { new() };
 
-        _organisationServiceMock
-            .Setup(service =>
-                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(updatedProducers);
+        _commonDataServiceMock
+             .Setup(service =>
+                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock.Setup(x => x.Patch(It.IsAny<ProducerDelta?>(), It.IsAny<string>()))
            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
@@ -385,7 +385,7 @@ public class UpdateProducersFunctionTests
         await function.Run(null);
 
         // Assert
-        _organisationServiceMock.Verify(
+        _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
