@@ -135,7 +135,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await Assert.ThrowsAsync<Exception>(() => function.Run(null));
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
