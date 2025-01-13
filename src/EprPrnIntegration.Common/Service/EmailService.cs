@@ -2,9 +2,9 @@
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
-using Notify.Client;
 
 namespace EprPrnIntegration.Common.Service;
 
@@ -108,6 +108,39 @@ public class EmailService : IEmailService
 
             var message = $"Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.";
             _logger.LogInformation(message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
+        }
+    }
+
+    public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
+    {
+        var npwdEmailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
+        string filename = string.Format("issuedprns_{0:yyyyMMdd}.csv", reportDate);
+
+        Dictionary<string, object> messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "report_date", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "report_count", reportCount
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        try
+        {
+            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, messagePersonalisation);
+
+            string message = $"Reconciliation email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
+            _logger.LogInformation(message);
+
         }
         catch (Exception ex)
         {

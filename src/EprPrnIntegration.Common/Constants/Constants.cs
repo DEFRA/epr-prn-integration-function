@@ -54,4 +54,13 @@
         public const string UpdateProducer = "UpdateProducer";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
     }
+
+    public static class CustomEventFields
+    {
+        public const string PrnNumber = "PRN Number";
+        public const string IncomingStatus = "Incoming Status";
+        public const string Date = "Date";
+        public const string OrganisationName = "Organisation Name";
+        public const string ErrorComments = "Error Comments";
+    }
 }
