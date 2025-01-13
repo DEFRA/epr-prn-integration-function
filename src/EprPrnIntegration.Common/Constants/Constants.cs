@@ -13,10 +13,14 @@
     public static class HttpClientNames
     {
         public const string Npwd = "NpwdClient";
+        public const string Prn = "PrnClient";
+        public const string Organisation = "OrganisationClient";
+        public const string Account = "AccountClient";
     }
 
     public static class HttpHeaderNames
     {
+        public const string Accept = "Accept";
         public const string Bearer = "Bearer";
     }
 
