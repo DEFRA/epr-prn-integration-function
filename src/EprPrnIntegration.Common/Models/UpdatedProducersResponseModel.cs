@@ -25,4 +25,14 @@ public class UpdatedProducersResponseModel
     public bool IsDeleted { get; set; }
     public int? ProducerTypeId { get; set; }
     public string ExternalId { get; set; }
+
+    public string OrganisationAddress => string.Join(", ", new[] {
+                SubBuildingName,
+                BuildingNumber,
+                BuildingName,
+                Street,
+                Town,
+                County,
+                Postcode,
+            }.Where(s => !string.IsNullOrWhiteSpace(s)));
 }

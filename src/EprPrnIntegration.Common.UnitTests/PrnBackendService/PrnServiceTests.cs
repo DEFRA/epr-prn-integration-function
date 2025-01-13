@@ -141,7 +141,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
 
-            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(),It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
+            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(), It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
         }
 
         [Fact]
@@ -149,11 +149,72 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
         {
             var updatedPrns = _fixture.Build<UpdatedPrnsResponseModel>().
                 With(p => p.EvidenceStatusCode, "EV-ACCEP").CreateMany();
-    
+
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
             _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
+        }
+
+        // New tests for SavePrn method
+
+        [Fact]
+        public async Task SavePrn_ShouldCallServiceWithCorrectRequest()
+        {
+            // Arrange
+            var request = new SavePrnDetailsRequest
+            {
+                EvidenceNo = "1234",
+                EvidenceStatusCode = Enums.EprnStatus.ACCEPTED,
+                StatusDate = DateTime.Now
+            };
+            var sut = CreatePrnService();
+
+            // Act
+            await sut.SavePrn(request);
+
+            // Assert
+            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Saving PRN with id 1234"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task SavePrn_ShouldLogInformation_WhenSavingPrn()
+        {
+            // Arrange
+            var request = new SavePrnDetailsRequest
+            {
+                EvidenceNo = "1234",
+                EvidenceStatusCode = Enums.EprnStatus.ACCEPTED,
+                StatusDate = DateTime.Now
+            };
+            var sut = CreatePrnService();
+
+            // Act
+            await sut.SavePrn(request);
+
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Saving PRN with id 1234")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task SavePrn_ShouldThrowException_WhenPostFails()
+        {
+            // Arrange
+            var request = new SavePrnDetailsRequest
+            {
+                EvidenceNo = "1234",
+                EvidenceStatusCode = Enums.EprnStatus.ACCEPTED,
+                StatusDate = DateTime.Now
+            };
+            var sut = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
         }
     }
 }
