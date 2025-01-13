@@ -43,6 +43,7 @@ public class UpdateProducersFunction(
         logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
+
         if (updatedEprProducers == null || !updatedEprProducers.Any())
         {
             logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
@@ -110,7 +111,7 @@ public class UpdateProducersFunction(
         {
             logger.LogError(ex,
                 "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
-            return null;
+            throw ex;
         }
     }
 }
