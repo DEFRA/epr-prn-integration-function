@@ -22,6 +22,9 @@ public class PrnServiceAuthorisationHandler : DelegatingHandler
         if (!string.IsNullOrEmpty(config.Value.AccountClientId))
             clientIds.Add(config.Value.AccountClientId);
 
+        if (clientIds.Count == 0)
+            return;
+
         _tokenRequestContext = new TokenRequestContext(clientIds.ToArray());
         _credentials = new DefaultAzureCredential();
     }
