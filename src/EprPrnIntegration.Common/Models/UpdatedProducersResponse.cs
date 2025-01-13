@@ -18,8 +18,7 @@ namespace EprPrnIntegration.Common.Models
         public string? Country { get; set; }
         public string? Postcode { get; set; }
         public string? PEPRID { get; set; }
-        //To include below based on the fields being added to the stored proc
-        //statusCode & statusDesc
+        public string? Status { get; set; }
 
         public string OrganisationAddress => string.Join(", ", new[] {
                 AddressLine1,

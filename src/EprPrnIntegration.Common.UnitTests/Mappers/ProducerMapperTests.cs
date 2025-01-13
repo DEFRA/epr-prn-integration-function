@@ -64,6 +64,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                     County = "County A",
                     Country = "Country A",
                     Postcode = "12345",
+                    Status ="DR Registered",
+                    OrganisationType =  "DR"
                 }
             };
 
@@ -81,35 +83,175 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Equal("SubBuilding A", producer.AddressLine1);
             Assert.Equal("Building A", producer.AddressLine2);
             Assert.Equal("12345", producer.Postcode);
+            Assert.Equal("PR-REGISTERED", producer.StatusCode);
+            Assert.Equal("Registered", producer.StatusDesc);
         }
 
-        //[Fact]
-        //public void MapToDelta_IsComplianceSchemeFalse_SetsEntityTypeCorrectly()
-        //{
-        //    // Arrange
-        //    var updatedProducers = new List<UpdatedProducersResponse>
-        //    {
-        //        new UpdatedProducersResponse
-        //        {
-                    
-        //            ProducerName = "Producer B",
-        //            IsComplianceScheme = false
-        //        }
-        //    };
+        [Fact]
+        public void GetStatusCode_DRRegisteredAndDR_ReturnsPRRegistered()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                 new UpdatedProducersResponse
+                {
+                    Status = "DR Registered",
+                    OrganisationType = "DR"
+                }
+            };
 
-        //    // Act
-        //    var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-REGISTERED", producer.StatusCode);
+        }
 
-        //    // Assert
-        //    Assert.NotNull(result);
-        //    Assert.NotNull(result.Context);
-        //    Assert.Equal("https://fat.npwd.org.uk/odata/Producers/$delta", result.Context);
-        //    Assert.Single(result.Value);
+        [Fact]
+        public void GetStatusCode_DRDeletedAndDR_ReturnsPRCancelled()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "DR Deleted",
+                    OrganisationType = "DR"
+                }
+            };
 
-        //    var producer = result.Value[0];
-        //    Assert.Equal("Producer B", producer.ProducerName);
-        //    Assert.Equal("DR", producer.EntityTypeCode);
-        //    Assert.Equal("Direct Registrant", producer.EntityTypeName);
-        //}
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-CANCELLED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_CSDeletedAndDR_ReturnsPRCancelled()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "CSO Deleted",
+                    OrganisationType = "DR"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-CANCELLED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_DRMovedToCSAndCSM_ReturnsPRRegistered()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "DR Moved to CS",
+                    OrganisationType = "CSM"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-REGISTERED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_NotAMemberOfCSAndDR_ReturnsPRRegistered()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+            {
+                Status = "Not a Member of CS",
+                OrganisationType = "DR"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-REGISTERED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_CSAddedAndS_ReturnsPRRegistered()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "CS Added",
+                    OrganisationType = "S"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-REGISTERED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_CSDeletedAndS_ReturnsPRCancelled()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "CS Deleted",
+                    OrganisationType = "S"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal("PR-CANCELLED", producer.StatusCode);
+        }
+
+        [Fact]
+        public void GetStatusCode_UnmatchedStatusAndOrganisationType_ReturnsEmpty()
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    Status = "Some Unmatched Status",
+                    OrganisationType = "Some Organisation Type"
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal(string.Empty, producer.StatusCode);
+        }
     }
 }
