@@ -38,7 +38,7 @@
     "NpwdIntegration:Scope": "",
     "NpwdIntegration:AccessTokenUrl": "",
     "NpwdIntegration:Authority": "",
-    "EmailNpwdReconciliationTrigger": "0 * * * * 1-5",
-    "AppInsightsConfig:ResourceId": "/subscriptions/8f549c59-2438-4495-b571-705081e497e4/resourceGroups/DEVRWDINFRG1401/providers/Microsoft.Insights/components/DEVRWDINFAI1401"
+    "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
+    "AppInsightsConfig:ResourceId": ""
   }
 }
