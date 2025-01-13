@@ -5,12 +5,14 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
 
-namespace EprPrnIntegration.Api;
+namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateProducersFunction(
     IOrganisationService organisationService,
@@ -18,7 +20,8 @@ public class UpdateProducersFunction(
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
     IUtilities utilities,
-    IOptions<FeatureManagementConfiguration> featureConfig)
+    IOptions<FeatureManagementConfiguration> featureConfig,
+    IEmailService emailService)
 {
     [Function("UpdateProducersList")]
     public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
@@ -48,22 +51,52 @@ public class UpdateProducersFunction(
         }
 
         var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
-        var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-        if (pEprApiResponse.IsSuccessStatusCode)
+        try
         {
-            logger.LogInformation(
-                "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
-                toDate);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
 
-            await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+            if (pEprApiResponse.IsSuccessStatusCode)
+            {
+                logger.LogInformation(
+                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
+                    toDate);
+
+                await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                LogCustomEvents(updatedEprProducers);
+            }
+            else
+            {
+                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
+                logger.LogError(
+                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
+                    pEprApiResponse.StatusCode, responseBody);
+
+                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                }
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-            logger.LogError(
-                "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                pEprApiResponse.StatusCode, responseBody);
+            logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}");
+        }
+    }
+
+    private void LogCustomEvents(List<UpdatedProducersResponseModel> updatedEprProducers)
+    {
+        foreach (var producer in updatedEprProducers)
+        {
+            Dictionary<string, string> eventData = new()
+                {
+                    { "Organization name", producer.ProducerName },
+                    { "Organisation ID", producer.ReferenceNumber.ToString() },
+                    { "Date",DateTime.UtcNow.ToString() },
+                    { "Address",producer.OrganisationAddress},
+                };
+
+            utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
         }
     }
 

@@ -7,15 +7,22 @@ using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Configuration;
+using Notify.Client;
+using Notify.Interfaces;
+using Polly;
+using Polly.Extensions.Http;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 namespace EprPrnIntegration.Api;
 
@@ -37,38 +44,60 @@ public static class HostBuilderConfiguration
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        // Add HttpClient
-        services.AddHttpClient();
-
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddSingleton<IConfigurationService, ConfigurationService>();
+        services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
+        services.AddScoped<IEmailService, EmailService>();
+
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            MessagingConfig messagingConfig = new();
+            configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
+
+            return new NotificationClient(messagingConfig.ApiKey);
+        });
 
         // Add middleware
         services.AddTransient<NpwdOAuthMiddleware>();
         services.AddTransient<PrnServiceAuthorisationHandler>();
         
+        // Add retry resilience policy
+        ApiCallsRetryConfig apiCallsRetryConfig = new();
+        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
+
         // Add HttpClients
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd).AddHttpMessageHandler<NpwdOAuthMiddleware>();
         services.AddHttpClient<HttpClient>().AddHttpMessageHandler<PrnServiceAuthorisationHandler>();
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd )
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .AddPolicyHandler((services, request) =>
+            GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
+        
 
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
+        
+        // Add the Notification Client
+        services.AddSingleton<INotificationClient>(provider =>
+        {
+            var apiKey = configuration.GetValue<string>("MessagingConfig:ApiKey");
+            return new NotificationClient(apiKey);
+        });
 
-        // Configure Azure Key Vault
-        ConfigureKeyVault(configuration);
+        services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
     }
-
 
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
+        services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
+        services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
         return services;
     }
@@ -104,14 +133,31 @@ public static class HostBuilderConfiguration
         }
         return services;
     }
-
-    private static void ConfigureKeyVault(IConfiguration configuration)
+    public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(ILogger logger,int retryCount, double sleepDuration, string requestType)
     {
-        var keyVaultUrl = configuration.GetValue<string?>(Common.Constants.ConfigSettingKeys.KeyVaultUrl);
-
-        if (string.IsNullOrWhiteSpace(keyVaultUrl))
-        {
-            throw new ConfigurationErrorsException(Common.Constants.ConfigSettingKeys.KeyVaultUrl);
-        }
+        return HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(retryCount, (retryAttempt,res,ctx) =>
+            {
+                if (res.Result != null)
+                {
+                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant() == "retry-after");
+                    int retryAfter = 0;
+                    if (res.Result.StatusCode == HttpStatusCode.TooManyRequests && retryAfterHeader.Value != null && retryAfterHeader.Value.Any())
+                    {
+                        retryAfter = int.Parse(retryAfterHeader.Value.First());
+                        return TimeSpan.FromSeconds(retryAfter);
+                    }
+                }
+                return TimeSpan.FromSeconds(sleepDuration);
+            }, 
+            async (response, timespan, retryAttempt, context) =>
+            {
+                logger
+                .LogWarning("Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previuos request was responded with {StatusCode}",
+                retryAttempt, requestType, timespan.TotalSeconds, response.Result?.StatusCode);
+                await Task.CompletedTask;
+            });
     }
 }

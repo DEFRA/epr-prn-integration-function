@@ -2,28 +2,29 @@
 using System.Net.Http.Headers;
 using Microsoft.Identity.Client;
 using Microsoft.Extensions.Logging;
-using EprPrnIntegration.Common.Service;
+using Microsoft.Extensions.Options;
+using EprPrnIntegration.Common.Configuration;
 
 namespace EprPrnIntegration.Common.Middleware;
 
 [ExcludeFromCodeCoverage]
 public class NpwdOAuthMiddleware : DelegatingHandler
 {
-    private readonly IConfigurationService _configurationService;
+    private readonly NpwdIntegrationConfiguration _npwdIntegrationConfig;
     private readonly IConfidentialClientApplication _confidentialClientApplication;
     private readonly ILogger<NpwdOAuthMiddleware> _logger;
     private string? _accessToken;
 
-    public NpwdOAuthMiddleware(IConfigurationService configurationService, ILogger<NpwdOAuthMiddleware> logger)
+    public NpwdOAuthMiddleware(IOptions<NpwdIntegrationConfiguration> npwdConfig, ILogger<NpwdOAuthMiddleware> logger)
     {
         _logger = logger;
-        _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
+        _npwdIntegrationConfig = npwdConfig.Value;
 
         try
         {
-            _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(_configurationService.NpwdClientId)
-                .WithClientSecret(_configurationService.NpwdClientSecret)
-                .WithAuthority(_configurationService.NpwdAuthority)
+            _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(_npwdIntegrationConfig.ClientId)
+                .WithClientSecret(_npwdIntegrationConfig.ClientSecret)
+                .WithAuthority(_npwdIntegrationConfig.Authority)
                 .Build();
         }
         catch (Exception ex)
@@ -39,10 +40,10 @@ public class NpwdOAuthMiddleware : DelegatingHandler
         {
             if (string.IsNullOrEmpty(_accessToken))
             {
-                var result = await _confidentialClientApplication.AcquireTokenForClient([_configurationService.NpwdScope])
+                var result = await _confidentialClientApplication.AcquireTokenForClient([_npwdIntegrationConfig.Scope])
                     .WithExtraQueryParameters(new Dictionary<string, string>()
                     {
-                        {"resource", _configurationService.NpwdAccessTokenUrl! },
+                        {"resource", _npwdIntegrationConfig.AccessTokenUrl },
                     })
                     .ExecuteAsync(cancellationToken);
                 
