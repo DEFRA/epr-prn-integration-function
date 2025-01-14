@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Client;
@@ -14,7 +15,7 @@ public class EmailService : IEmailService
     private readonly INotificationClient _notificationClient;
     private readonly ILogger<EmailService> _logger;
     private const string ExceptionLogMessageGeneric = "GOV UK NOTIFY ERROR. Method: SendEmail: {emailAddress} Template: {templateId}";
-    
+
     public EmailService(INotificationClient notificationClient, IOptions<MessagingConfig> messagingConfig, ILogger<EmailService> logger)
     {
         _notificationClient = notificationClient;

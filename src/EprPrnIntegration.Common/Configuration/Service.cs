@@ -12,4 +12,6 @@ public class Service
     public int? Retries { get; set; }
     public string? PrnBaseUrl { get; set; }
     public string? PrnEndPointName { get; set; }
+    public string? CommonDataServiceBaseUrl { get; set; }
+    public string? CommonDataServiceEndPointName { get; set; }
 }
