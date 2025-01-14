@@ -26,7 +26,7 @@ public class UpdateProducersFunction(
     [Function("UpdateProducersList")]
     public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
-        var isOn = featureConfig.Value.RunIntegration ?? false;
+        var isOn = featureConfig.Value.RunUpdateProducers ?? false;
         if (!isOn)
         {
             logger.LogInformation("UpdateProducersList function is disabled by feature flag");
@@ -110,7 +110,7 @@ public class UpdateProducersFunction(
         {
             logger.LogError(ex,
                 "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
-            return null;
+            throw;
         }
     }
 }
