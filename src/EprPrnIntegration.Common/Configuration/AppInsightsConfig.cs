@@ -7,5 +7,5 @@ public class AppInsightsConfig
 {
     public const string SectionName = "AppInsightsConfig";
 
-    public string ResourceId { get; set; }
+    public string ResourceId { get; set; } = default!;
 }

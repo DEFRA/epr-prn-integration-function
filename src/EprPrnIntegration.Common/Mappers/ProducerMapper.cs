@@ -25,14 +25,15 @@ namespace EprPrnIntegration.Common.Mappers
                 { "PR-NOTREGISTERED", "Not Registered" }
             };
 
+            var producersContext = configuration["ProducersContext"] ?? string.Empty;
             if (updatedEprProducers == null || !updatedEprProducers.Any())
             {
-                return new ProducerDelta { Context = configuration["ProducersContext"], Value = new List<Producer>() };
+                return new ProducerDelta { Context = producersContext, Value = new List<Producer>() };
             }
 
             return new ProducerDelta
             {
-                Context = configuration["ProducersContext"],
+                Context = producersContext,
                 Value = updatedEprProducers.Select(eprProducer =>
                 {
                     var entityTypeCode = GetEntityTypeCode(eprProducer);

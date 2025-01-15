@@ -9,14 +9,15 @@ public static class PrnMapper
     public static PrnDelta Map(
         List<UpdatedPrnsResponseModel> updatedPrns, IConfiguration configuration)
     {
+        string prnsContext = configuration["PrnsContext"] ?? string.Empty;
         if (updatedPrns == null || !updatedPrns.Any())
         {
-            return new PrnDelta { Context = configuration["PrnsContext"], Value = [] };
+            return new PrnDelta { Context = prnsContext, Value = [] };
         }
 
         return new PrnDelta
         {
-            Context = configuration["PrnsContext"],
+            Context = prnsContext,
             Value = updatedPrns.Select(eprProducer => new UpdatedPrnsResponseModel
             {
                 EvidenceNo = eprProducer.EvidenceNo,
