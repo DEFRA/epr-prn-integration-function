@@ -36,8 +36,9 @@ namespace EprPrnIntegration.Common.Mappers
                 Context = producersContext,
                 Value = updatedEprProducers.Select(eprProducer =>
                 {
-                    var entityTypeCode = GetEntityTypeCode(eprProducer);
-                    var statusCode = GetStatusCode(eprProducer);
+                    var codes = GetCodes(eprProducer.Status, eprProducer.OrganisationType);
+                    var entityTypeCode = codes.EntityTypeCode;
+                    var statusCode = codes.StatusCode;
 
                     return new Producer
                     {
@@ -60,55 +61,50 @@ namespace EprPrnIntegration.Common.Mappers
             };
         }
 
-        private static string GetStatusCode(UpdatedProducersResponse eprProducer)
+        private static (string StatusCode, string EntityTypeCode) GetCodes(string? status, string? orgType)
         {
-            return GetCode(eprProducer, isStatusCode: true);
-        }
-
-        private static string GetEntityTypeCode(UpdatedProducersResponse eprProducer)
-        {
-            return GetCode(eprProducer, isStatusCode: false);
-        }
-
-        private static string GetCode(UpdatedProducersResponse eprProducer, bool isStatusCode)
-        {
-            // DR Registered
-            if (eprProducer.Status == "DR Registered" && eprProducer.OrganisationType == "DR")
+            if (string.IsNullOrEmpty(status) || string.IsNullOrEmpty(orgType))
             {
-                return isStatusCode ? "PR-REGISTERED" : "DR";
+                return (string.Empty, string.Empty);
+            }
+
+            // DR Registered
+            if (status == "DR Registered" && orgType == "DR")
+            {
+                return ("PR-REGISTERED", "DR");
             }
 
             // DR Deleted or CSO Deleted
-            else if ((eprProducer.Status == "DR Deleted" || eprProducer.Status == "CSO Deleted") && eprProducer.OrganisationType == "DR")
+            if ((status == "DR Deleted" || status == "CSO Deleted") && orgType == "DR")
             {
-                return isStatusCode ? "PR-CANCELLED" : "DR";
+                return ("PR-CANCELLED", "DR");
             }
 
             // DR Moved to CS
-            else if (eprProducer.Status == "DR Moved to CS" && eprProducer.OrganisationType == "CSM")
+            if (status == "DR Moved to CS" && orgType == "CSM")
             {
-                return isStatusCode ? "PR-REGISTERED" : "CSM";
+                return("PR-REGISTERED", "CSM");
             }
 
             // Not a Member of CS
-            else if (eprProducer.Status == "Not a Member of CS" && eprProducer.OrganisationType == "DR")
+            if (status == "Not a Member of CS" && orgType == "DR")
             {
-                return isStatusCode ? "PR-REGISTERED" : "DR";
+                return ("PR-REGISTERED", "DR");
             }
 
             // CS Added
-            else if (eprProducer.Status == "CS Added" && eprProducer.OrganisationType == "S")
+            if (status == "CS Added" && orgType == "S")
             {
-                return isStatusCode ? "PR-REGISTERED" : "CS";
+                return ("PR-REGISTERED", "CS");
             }
 
             // CS Deleted
-            else if (eprProducer.Status == "CS Deleted" && eprProducer.OrganisationType == "S")
+            if (status == "CS Deleted" && orgType == "S")
             {
-                return isStatusCode ? "PR-CANCELLED" : "CS";
+                return ("PR-CANCELLED", "CS");
             }
 
-            return string.Empty;
+            return (string.Empty, string.Empty);
         }
     }
 }
