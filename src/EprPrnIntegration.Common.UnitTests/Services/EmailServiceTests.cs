@@ -226,11 +226,8 @@ public class EmailServiceTests
     [Fact]
     public void SendErrorFetchedPrnEmail_ShouldThrowArgumentNullException_WhenStreamIsNull()
     {
-        // Arrange
-        Stream nullStream = null;
-
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(nullStream, DateTime.UtcNow));
+        Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(null!, DateTime.UtcNow));
     }
 
     [Fact]

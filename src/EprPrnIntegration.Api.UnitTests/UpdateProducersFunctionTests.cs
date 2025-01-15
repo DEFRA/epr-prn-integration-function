@@ -7,7 +7,6 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -69,7 +68,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(
@@ -105,7 +104,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -136,7 +135,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await Assert.ThrowsAsync<Exception>(() => function.Run(null));
+        await Assert.ThrowsAsync<Exception>(() => function.Run(null!));
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -181,7 +180,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -206,7 +205,7 @@ public class UpdateProducersFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
@@ -245,7 +244,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(deltaSyncExecution);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _utilitiesMock.Verify(
@@ -281,7 +280,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _commonDataServiceMock.Verify(service =>
@@ -338,7 +337,7 @@ public class UpdateProducersFunctionTests
             });        
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(
@@ -382,7 +381,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(

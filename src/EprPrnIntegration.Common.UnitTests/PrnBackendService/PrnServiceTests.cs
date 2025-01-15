@@ -8,7 +8,6 @@ using EprPrnIntegration.Common.UnitTests.Helpers;
 using EprPrnIntegration.Common.Exceptions;
 using Microsoft.Extensions.Logging;
 using AutoFixture;
-using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 {
@@ -95,9 +94,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated PRN's.")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -196,9 +195,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Saving PRN with id 1234")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Saving PRN with id 1234")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
