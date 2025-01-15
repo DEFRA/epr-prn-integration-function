@@ -8,7 +8,7 @@ public class ReconcileUpdatedPrnsResponseModel
     public string PrnNumber { get; set; } = null!;
 
     [JsonPropertyName("StatusName")]
-    public string PrnStatus { get; set; } = null!;
+    public string StatusName { get; set; } = null!;
 
     [JsonPropertyName("UpdatedOn")]
     public string UpdatedOn { get; set; } = null!;

@@ -1,17 +1,15 @@
-﻿using Moq;
-using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
-using System.Text.Json;
-using EprPrnIntegration.Common.UnitTests.Helpers;
+﻿using AutoFixture;
 using EprPrnIntegration.Common.Exceptions;
-using Microsoft.Extensions.Logging;
-using AutoFixture;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
-using FluentAssertions;
+using EprPrnIntegration.Common.UnitTests.Helpers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using System.Text.Json;
 
-namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
+namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
     public class PrnServiceTests
     {
@@ -157,8 +155,6 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
         }
 
-        // New tests for SavePrn method
-
         [Fact]
         public async Task SavePrn_ShouldCallServiceWithCorrectRequest()
         {
@@ -216,6 +212,95 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             // Act & Assert
             await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
+        }
+
+        [Fact]
+        public async Task GetReconsolidatedUpdatedPrns_ShouldReturnCorrectData()
+        {
+            // Arrange
+            var mockData = new List<ReconcileUpdatedPrnsResponseModel>
+    {
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "001",
+            StatusName = "Approved",
+            UpdatedOn = "2024-12-04T15:57:02",
+            OrganisationName = "Company A"
+        },
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "002",
+            StatusName = "Rejected",
+            UpdatedOn = "2024-12-03T23:51:02",
+            OrganisationName = "Company B"
+        }
+    };
+
+            var mockDataJson = JsonSerializer.Serialize(mockData);
+            var sut = CreatePrnService(mockDataJson);
+
+            // Act
+            var result = await sut.GetReconsolidatedUpdatedPrns();
+
+            // Assert
+            Assert.NotEmpty(result);
+            Assert.Equal("001", result[0].PrnNumber);
+            Assert.Equal("Approved", result[0].StatusName);
+            Assert.Equal("002", result[1].PrnNumber);
+            Assert.Equal("Rejected", result[1].StatusName);
+        }
+
+        [Fact]
+        public async Task GetReconsolidatedUpdatedPrns_ShouldReturnEmptyList_WhenNoDataExists()
+        {
+            // Arrange
+            var sut = CreatePrnService("[]");
+
+            // Act
+            var result = await sut.GetReconsolidatedUpdatedPrns();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetReconsolidatedUpdatedPrns_ShouldLogInformation()
+        {
+            // Arrange
+            var mockData = new List<ReconcileUpdatedPrnsResponseModel>
+    {
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "001",
+            StatusName = "Approved",
+            UpdatedOn = "2024-12-04T15:57:02",
+            OrganisationName = "Company A"
+        }
+    };
+
+            var mockDataJson = JsonSerializer.Serialize(mockData);
+            var sut = CreatePrnService(mockDataJson);
+
+            // Act
+            await sut.GetReconsolidatedUpdatedPrns();
+
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting reconsolidated updated PRN's.")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetReconsolidatedUpdatedPrns_ShouldThrowException_WhenApiFails()
+        {
+            // Arrange
+            var sut = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ResponseCodeException>(() => sut.GetReconsolidatedUpdatedPrns());
         }
     }
 }

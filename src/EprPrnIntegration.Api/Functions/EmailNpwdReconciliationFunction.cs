@@ -47,7 +47,7 @@ public class EmailNpwdReconciliationFunction(
             var csvData = new Dictionary<string, List<string>>
             {
                 { CustomEventFields.PrnNumber, updatedPrns.Select(x => x.PrnNumber).ToList() },
-                { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.PrnStatus).ToList() },
+                { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.StatusName).ToList() },
                 { CustomEventFields.Date, updatedPrns.Select(x => x.UpdatedOn).ToList() },
                 { CustomEventFields.OrganisationName, updatedPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
             };

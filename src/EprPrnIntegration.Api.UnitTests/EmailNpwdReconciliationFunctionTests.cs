@@ -193,14 +193,14 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var updatedPrns = new List<ReconcileUpdatedPrnsResponseModel>
         {
-            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN1", PrnStatus = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" },
-            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN2", PrnStatus = "REJECTED", UpdatedOn = "11/01/2025", OrganisationName = "Company B" }
+            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN1", StatusName = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" },
+            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN2", StatusName = "REJECTED", UpdatedOn = "11/01/2025", OrganisationName = "Company B" }
         };
 
         var csvData = new Dictionary<string, List<string>>
         {
             { CustomEventFields.PrnNumber, updatedPrns.Select(x => x.PrnNumber).ToList() },
-            { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.PrnStatus).ToList() },
+            { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.StatusName).ToList() },
             { CustomEventFields.Date, updatedPrns.Select(x => x.UpdatedOn).ToList() },
             { CustomEventFields.OrganisationName, updatedPrns.Select(x => x.OrganisationName).ToList() },
         };
@@ -275,7 +275,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         var updatedPrns = new List<ReconcileUpdatedPrnsResponseModel>
         {
-            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN1", PrnStatus = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" }
+            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN1", StatusName = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" }
         };
 
         var issuedPrns = new List<ReconcileIssuedPrn>
