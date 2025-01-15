@@ -14,4 +14,5 @@ public class MessagingConfig
     public string? ApiKey { get; set; }
     public string? NpwdValidationErrorsTemplateId { get; set; }
     public string? NpwdReconcileIssuedPrnsTemplateId { get; set; }
+    public string? NpwdReconcileUpdatedPrnsTemplateId { get; set; }
 }

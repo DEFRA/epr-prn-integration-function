@@ -19,6 +19,7 @@ using System.Text.Json;
 using EprPrnIntegration.Common.Constants;
 using FluentAssertions;
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.UnitTests
 {

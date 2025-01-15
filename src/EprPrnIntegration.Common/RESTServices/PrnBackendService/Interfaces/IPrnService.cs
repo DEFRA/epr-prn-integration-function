@@ -1,6 +1,6 @@
 ﻿using EprPrnIntegration.Common.Models;
 
-namespace EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+namespace EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 public interface IPrnService
 {
@@ -8,4 +8,5 @@ public interface IPrnService
          CancellationToken cancellationToken);
     Task InsertPeprNpwdSyncPrns(IEnumerable<UpdatedPrnsResponseModel> syncedPrns);
     Task SavePrn(SavePrnDetailsRequest request);
+    Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconsolidatedUpdatedPrns();
 }

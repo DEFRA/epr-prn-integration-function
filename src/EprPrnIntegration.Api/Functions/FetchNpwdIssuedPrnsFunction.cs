@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions
 {
@@ -248,17 +249,18 @@ namespace EprPrnIntegration.Api.Functions
             if (validatedErrorMessages.Any())
             {
                 var dateTimeNow = DateTime.UtcNow;
-                var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                var csvData = new Dictionary<string, List<string>>
                 {
-                    PrnNumber = kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number"),
-                    IncomingStatus = kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status"),
-                    Date = kv.GetValueOrDefault(CustomEventFields.Date, dateTimeNow.ToString()),
-                    OrganisationName = kv.GetValueOrDefault(CustomEventFields.OrganisationName, "Blank Organisation Name"),
-                    ErrorComments = kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)
-                }).ToList();
+                    { CustomEventFields.PrnNumber, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number")).ToList() },
+                    { CustomEventFields.IncomingStatus, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status")).ToList() },
+                    { CustomEventFields.Date, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.Date, dateTimeNow.ToString())).ToList() },
+                    { CustomEventFields.OrganisationName, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.OrganisationName, "Blank Organisation Name")).ToList() },
+                    { CustomEventFields.ErrorComments, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)).ToList() }
+                };
 
-                var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
-                _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+                var csvContent = _utilities.CreateCsvContent(csvData);
+
+                _emailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
             }
         }
     }

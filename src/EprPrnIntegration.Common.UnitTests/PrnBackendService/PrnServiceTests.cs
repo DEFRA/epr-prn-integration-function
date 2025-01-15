@@ -8,6 +8,7 @@ using EprPrnIntegration.Common.UnitTests.Helpers;
 using EprPrnIntegration.Common.Exceptions;
 using Microsoft.Extensions.Logging;
 using AutoFixture;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.PrnBackendService

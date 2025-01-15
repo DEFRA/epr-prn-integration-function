@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;

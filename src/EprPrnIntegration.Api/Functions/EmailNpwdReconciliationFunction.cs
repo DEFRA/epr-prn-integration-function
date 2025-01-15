@@ -7,77 +7,83 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions;
 
 public class EmailNpwdReconciliationFunction(
-    IEmailService _emailService,
-    IAppInsightsService _appInsightsService,
-    IOptions<FeatureManagementConfiguration> _featureConfig,
-    ILogger<EmailNpwdReconciliationFunction> _logger
-)
+    IEmailService emailService,
+    IAppInsightsService appInsightsService,
+    IOptions<FeatureManagementConfiguration> featureConfig,
+    ILogger<EmailNpwdReconciliationFunction> logger,
+    IUtilities utilities,
+    IPrnService prnService)
 {
     [Function("EmailNpwdReconciliation")]
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
-        var isOn = _featureConfig.Value.RunIntegration ?? false;
+        var isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
         {
-            _logger.LogInformation("EmailNpwdReconciliation function is disabled by feature flag");
+            logger.LogInformation("EmailNpwdReconciliation function is disabled by feature flag");
             return;
         }
 
-        await EmailNpwdIssuedPrnsReconciliationAsync();
+        var issuedPrnEmailTask = EmailNpwdIssuedPrnsReconciliationAsync();
+        var updatedPrnEmailTask = EmailUpdatedPrnReconciliationAsync();
 
+        // Execute tasks concurrently, ensuring one task can continue even if the other fails
+        await Task.WhenAll(issuedPrnEmailTask, updatedPrnEmailTask);
+    }
+
+    public async Task EmailUpdatedPrnReconciliationAsync()
+    {
+        logger.LogInformation("EmailUpdatedPrnReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+
+        try
+        {
+            var updatedPrns = await prnService.GetReconsolidatedUpdatedPrns();
+            var csvData = new Dictionary<string, List<string>>
+            {
+                { CustomEventFields.PrnNumber, updatedPrns.Select(x => x.PrnNumber).ToList() },
+                { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.PrnStatus).ToList() },
+                { CustomEventFields.Date, updatedPrns.Select(x => x.UpdatedOn).ToList() },
+                { CustomEventFields.OrganisationName, updatedPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
+            };
+
+            var csvContent = utilities.CreateCsvContent(csvData);
+
+            emailService.SendUpdatedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed running EmailUpdatedPrnReconciliationAsync");
+        }
     }
 
     public async Task EmailNpwdIssuedPrnsReconciliationAsync()
     {
-        _logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
-
-        string csv = string.Empty;
-        List<ReconcileIssuedPrn> prns = new List<ReconcileIssuedPrn>();
+        logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
         try
         {
-            // retrieve custom events from Application Insights
-            prns = await _appInsightsService.GetIssuedPrnCustomEventLogsLast24hrsAsync();
+            var prns = await appInsightsService.GetIssuedPrnCustomEventLogsLast24hrsAsync();
+            var csvData = new Dictionary<string, List<string>>
+            {
+                { CustomEventFields.PrnNumber, prns.Select(x => x.PrnNumber).ToList() },
+                { CustomEventFields.IncomingStatus, prns.Select(x => x.PrnStatus).ToList() },
+                { CustomEventFields.Date, prns.Select(x => x.UploadedDate).ToList() },
+                { CustomEventFields.OrganisationName, prns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
+            };
 
-            // generate csv
-            csv = TransformPrnsToCsv(prns);
+            var csvContent = utilities.CreateCsvContent(csvData);
 
-            // send reconciliation email with link to csv file
-            _emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, prns.Count, csv);
+            emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, prns.Count, csvContent);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationAsync");
+            logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationAsync");
         }
     }
-
-    public static string TransformPrnsToCsv(List<ReconcileIssuedPrn> prns)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        // header
-        sb.Append(CustomEventFields.PrnNumber).Append(',');
-        sb.Append(CustomEventFields.IncomingStatus).Append(',');
-        sb.Append(CustomEventFields.Date).Append(',');
-        sb.AppendLine(CustomEventFields.OrganisationName);
-
-        if (prns == null || prns.Count == 0)
-            return sb.ToString();
-
-        foreach (var prn in prns)
-        {
-            sb.Append(prn.PrnNumber).Append(',');
-            sb.Append(prn.PrnStatus).Append(',');
-            sb.Append(prn.UploadedDate).Append(',');
-            sb.Append(prn.OrganisationName.CleanCsvString()).AppendLine();
-        }
-
-        return sb.ToString();
-
-    }
-
 }

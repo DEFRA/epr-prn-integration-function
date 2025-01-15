@@ -1,12 +1,12 @@
 ﻿using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
-namespace EprPrnIntegration.Common.RESTServices.BackendAccountService;
+namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
 public class PrnService : BaseHttpService, IPrnService
 {
@@ -60,5 +60,15 @@ public class PrnService : BaseHttpService, IPrnService
     {
         _logger.LogInformation($"Saving PRN with id {request.EvidenceNo}" );
         await Post($"/prn-details", request, CancellationToken.None);
+    }
+
+    public async Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconsolidatedUpdatedPrns()
+    {
+        var nowDateTime = DateTime.UtcNow;
+        var fromDate = nowDateTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+        var toDate = nowDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+        _logger.LogInformation("Getting reconsolidated updated PRN's.");
+        return await Get<List<ReconcileUpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
+            CancellationToken.None, false);
     }
 }

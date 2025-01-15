@@ -112,77 +112,95 @@ public class UtilitiesTests
     }
 
     [Fact]
-    public async Task CreateErrorEventsCsvStreamAsync_ShouldReturnValidCsvStream()
+    public void CreateCsvContent_GeneratesCorrectCsv_ForValidData()
     {
         // Arrange
-        var errorEvents = new List<ErrorEvent>
+        var data = new Dictionary<string, List<string>>
         {
-            new ErrorEvent
-            {
-                PrnNumber = "12345",
-                IncomingStatus = "Active",
-                Date = "01/07/2025",
-                OrganisationName = "Example Org",
-                ErrorComments = "Sample error message"
-            },
-            new ErrorEvent
-            {
-                PrnNumber = "67890",
-                IncomingStatus = "Inactive",
-                Date = "02/07/2025",
-                OrganisationName = "Another Org",
-                ErrorComments = "Another sample message"
-            }
+            { "Column1", ["Value1", "Value2"] },
+            { "Column2", ["ValueA", "ValueB"] }
         };
 
+        var expectedCsv = "Column1,Column2\nValue1,ValueA\nValue2,ValueB\n";
+
         // Act
-        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+        var result = _utilities.CreateCsvContent(data);
+
+        // Normalize line endings for comparison
+        var normalizedResult = result.Replace("\r\n", "\n");
+        var normalizedExpected = expectedCsv.Replace("\r\n", "\n");
 
         // Assert
-        csvStream.Position = 0; // Ensure the stream is at the beginning for reading
-        using var reader = new StreamReader(csvStream);
-        var csvContent = await reader.ReadToEndAsync();
-
-        var expectedCsv = new StringBuilder()
-            .AppendLine("PRN Number,Incoming Status,Date,Organisation Name,Error Comments")
-            .AppendLine("12345,Active,01/07/2025,Example Org,Sample error message")
-            .AppendLine("67890,Inactive,02/07/2025,Another Org,Another sample message")
-            .ToString();
-
-        Assert.Equal(expectedCsv, csvContent);
+        Assert.Equal(normalizedExpected, normalizedResult);
     }
 
     [Fact]
-    public async Task CreateErrorEventsCsvStreamAsync_ShouldHandleEmptyList()
+    public void CreateCsvContent_HandlesEmptyValuesCorrectly()
     {
         // Arrange
-        var errorEvents = new List<ErrorEvent>();
+        var data = new Dictionary<string, List<string>>
+        {
+            { "Column1", ["Value1", "Value2", "Value3"] },
+            { "Column2", ["ValueA"] }
+        };
+
+        var expectedCsv = "Column1,Column2\nValue1,ValueA\nValue2,\nValue3,\n";
 
         // Act
-        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+        var result = _utilities.CreateCsvContent(data);
+
+        // Normalize line endings for comparison
+        var normalizedResult = result.Replace("\r\n", "\n");
+        var normalizedExpected = expectedCsv.Replace("\r\n", "\n");
 
         // Assert
-        csvStream.Position = 0;
-        using var reader = new StreamReader(csvStream);
-        var csvContent = await reader.ReadToEndAsync();
-
-        Assert.Empty(csvContent); // The CSV should be empty for an empty list
+        Assert.Equal(normalizedExpected, normalizedResult);
     }
 
     [Fact]
-    public async Task CreateErrorEventsCsvStreamAsync_ShouldHandleNullList()
+    public void CreateCsvContent_ReturnsHeaderOnly_WhenDataIsEmpty()
     {
         // Arrange
-        List<ErrorEvent> errorEvents = null;
+        var data = new Dictionary<string, List<string>>
+        {
+            { "Column1", [] },
+            { "Column2", [] }
+        };
+
+        var expectedCsv = "Column1,Column2\n";
 
         // Act
-        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+        var result = _utilities.CreateCsvContent(data);
+
+        // Normalize line endings for comparison
+        var normalizedResult = result.Replace("\r\n", "\n");
+        var normalizedExpected = expectedCsv.Replace("\r\n", "\n");
 
         // Assert
-        csvStream.Position = 0;
-        using var reader = new StreamReader(csvStream);
-        var csvContent = await reader.ReadToEndAsync();
-
-        Assert.Empty(csvContent); // The CSV should be empty for a null list
+        Assert.Equal(normalizedExpected, normalizedResult);
     }
+
+    [Fact]
+    public void CreateCsvContent_HandlesSpecialCharactersCorrectly()
+    {
+        // Arrange
+        var data = new Dictionary<string, List<string>>
+        {
+            { "Column1", ["Value1", "Value, with, commas"] },
+            { "Column2", ["ValueA", "\"QuotedValue\""] }
+        };
+
+        var expectedCsv = "Column1,Column2\nValue1,ValueA\n\"Value, with, commas\",\"\"\"QuotedValue\"\"\"\n";
+
+        // Act
+        var result = _utilities.CreateCsvContent(data);
+
+        // Normalize line endings for comparison
+        var normalizedResult = result.Replace("\r\n", "\n");
+        var normalizedExpected = expectedCsv.Replace("\r\n", "\n");
+
+        // Assert
+        Assert.Equal(normalizedExpected, normalizedResult);
+    }
+
 }

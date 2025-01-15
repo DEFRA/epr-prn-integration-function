@@ -8,5 +8,5 @@ public interface IUtilities
     Task<DeltaSyncExecution> GetDeltaSyncExecution(NpwdDeltaSyncType syncType);
     Task SetDeltaSyncExecution(DeltaSyncExecution syncExecution, DateTime latestRun);
     void AddCustomEvent(string eventName, IDictionary<string, string> eventData);
-    Task<Stream> CreateErrorEventsCsvStreamAsync(List<ErrorEvent> errorEvents);
+    string CreateCsvContent(Dictionary<string, List<string>> data);
 }

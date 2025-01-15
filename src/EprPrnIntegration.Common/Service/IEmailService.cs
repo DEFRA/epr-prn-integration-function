@@ -6,7 +6,7 @@ public interface IEmailService
 {
     void SendErrorEmailToNpwd(string errorMessage);
     void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId);
-    void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate);
+    void SendValidationErrorPrnEmail(string csvData, DateTime reportDate);
 
 
     /// <summary>
@@ -16,5 +16,5 @@ public interface IEmailService
     /// <param name="reportCount">Number of PRNs</param>
     /// <param name="reportCsv">Individual PRN details in comma separated list</param>
     void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv);
-
+    void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv);
 }
