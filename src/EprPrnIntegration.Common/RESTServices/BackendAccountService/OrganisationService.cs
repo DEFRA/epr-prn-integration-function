@@ -19,7 +19,9 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         IOptions<Configuration.Service> config)
         : base(httpContextAccessor, httpClientFactory,
             config.Value.AccountBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceBaseUrlMissing),
-            config.Value.AccountEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceEndPointNameMissing), logger)
+            config.Value.AccountEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceEndPointNameMissing), 
+            logger,
+            HttpClientNames.Organisation)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
