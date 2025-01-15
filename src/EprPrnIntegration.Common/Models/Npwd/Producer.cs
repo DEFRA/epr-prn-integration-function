@@ -45,4 +45,9 @@ public class Producer
 
     [JsonPropertyName("ProducerName")]
     public string ProducerName { get; set; }
+
+    [JsonPropertyName("StatusCode")]
+    public string StatusCode { get; set; }
+    [JsonPropertyName("StatusDesc")]
+    public string StatusDesc { get; set; }
 }

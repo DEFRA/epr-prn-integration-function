@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Client;
