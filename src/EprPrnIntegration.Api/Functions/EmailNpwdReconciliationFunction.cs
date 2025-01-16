@@ -20,10 +20,10 @@ public class EmailNpwdReconciliationFunction(
     [Function("EmailNpwdReconciliation")]
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
-        var isOn = _featureConfig.Value.RunIntegration ?? false;
+        var isOn = _featureConfig.Value.RunReconciliation ?? false;
         if (!isOn)
         {
-            _logger.LogInformation("EmailNpwdReconciliation function is disabled by feature flag");
+            _logger.LogInformation("EmailNpwdReconciliation function(s) disabled by feature flag");
             return;
         }
 
