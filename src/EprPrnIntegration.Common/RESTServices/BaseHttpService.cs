@@ -217,7 +217,7 @@ namespace EprPrnIntegration.Common.RESTServices
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogError("API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
                         response.StatusCode, responseBody);
 

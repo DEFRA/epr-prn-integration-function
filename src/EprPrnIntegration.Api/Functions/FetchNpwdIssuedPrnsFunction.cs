@@ -197,7 +197,7 @@ namespace EprPrnIntegration.Api.Functions
             }
         }
 
-        private Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
+        private static Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
         {
             Dictionary<string, string> eventData = new()
             {
@@ -247,7 +247,7 @@ namespace EprPrnIntegration.Api.Functions
 
         private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
         {
-            if (validatedErrorMessages.Any())
+            if (validatedErrorMessages.Count > 0)
             {
                 var dateTimeNow = DateTime.UtcNow;
                 var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent

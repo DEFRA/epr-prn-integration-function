@@ -84,7 +84,7 @@ public class EmailService : IEmailService
 
     public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
     {
-        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
+        ArgumentNullException.ThrowIfNull(attachmentStream);
 
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;

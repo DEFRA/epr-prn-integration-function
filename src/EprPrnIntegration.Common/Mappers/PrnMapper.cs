@@ -10,7 +10,7 @@ public static class PrnMapper
         List<UpdatedPrnsResponseModel> updatedPrns, IConfiguration configuration)
     {
         string prnsContext = configuration["PrnsContext"] ?? string.Empty;
-        if (updatedPrns == null || !updatedPrns.Any())
+        if (updatedPrns == null || updatedPrns.Count.Equals(0))
         {
             return new PrnDelta { Context = prnsContext, Value = [] };
         }
