@@ -140,7 +140,12 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
 
-            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(), It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Insert of sync data failed with ex:")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -152,7 +157,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
+            _loggerMock.VerifyLog(l => l.LogInformation("Sync data inserted"));
         }
 
         // New tests for SavePrn method
@@ -173,7 +178,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             await sut.SavePrn(request);
 
             // Assert
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Saving PRN with id 1234"))), Times.Once);
+            _loggerMock.VerifyLog(l => l.LogInformation("Saving PRN with id 1234"), Times.Once);
         }
 
         [Fact]

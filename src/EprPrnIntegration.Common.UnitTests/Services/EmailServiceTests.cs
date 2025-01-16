@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Notify.Client;
 using Notify.Interfaces;
 using Notify.Models.Responses;
 using System.Text;
@@ -83,7 +82,7 @@ public class EmailServiceTests
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
-        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to John Doe with email address producer1@example.com and the responseid is responseId"))), Times.Once);
+        _mockLogger.VerifyLog(logger => logger.LogInformation("Email sent to John Doe with email address producer1@example.com and the responseid is responseId."), Times.Once);
     }
 
     [Fact]
@@ -333,7 +332,7 @@ public class EmailServiceTests
         // Assert
         _mockLogger.VerifyLog(logger =>
                 logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"))),
+                    $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"),
             Times.Once);
     }
 }
