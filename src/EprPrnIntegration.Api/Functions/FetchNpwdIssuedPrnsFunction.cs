@@ -67,7 +67,7 @@ namespace EprPrnIntegration.Api.Functions
                 filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
 
-            var npwdIssuedPrns = new List<NpwdPrn>();
+            List<NpwdPrn> npwdIssuedPrns;
             try
             {
                 npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);

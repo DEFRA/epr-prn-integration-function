@@ -45,7 +45,7 @@ public class EmailServiceTests
     }
 
     private EmailService CreateEmailService() =>
-        new EmailService(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
+        new(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
 
     [Fact]
     public void SendEmailsToProducers_SuccessfullySendsEmails_LogsInformation()
@@ -53,8 +53,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
                 LastName = "Doe",
@@ -91,8 +90,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer2@example.com",
                 FirstName = "Jane",
                 LastName = "Smith",
@@ -125,8 +123,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer3@example.com",
                 FirstName = "Mark",
                 LastName = "Taylor",
@@ -159,8 +156,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer4@example.com",
                 FirstName = "Sarah",
                 LastName = "Johnson",

@@ -28,7 +28,7 @@ namespace EprPrnIntegration.Common.Mappers
             var producersContext = configuration["ProducersContext"] ?? string.Empty;
             if (updatedEprProducers == null || updatedEprProducers.Count.Equals(0))
             {
-                return new ProducerDelta { Context = producersContext, Value = new List<Producer>() };
+                return new ProducerDelta { Context = producersContext, Value = [] };
             }
 
             return new ProducerDelta

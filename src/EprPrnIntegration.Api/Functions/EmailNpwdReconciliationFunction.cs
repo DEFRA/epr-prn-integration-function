@@ -35,8 +35,8 @@ public class EmailNpwdReconciliationFunction(
     {
         _logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        string csv = string.Empty;
-        List<ReconcileIssuedPrn> prns = new List<ReconcileIssuedPrn>();
+        string csv;
+        List<ReconcileIssuedPrn> prns;
 
         try
         {
@@ -57,7 +57,7 @@ public class EmailNpwdReconciliationFunction(
 
     public static string TransformPrnsToCsv(List<ReconcileIssuedPrn> prns)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         // header
         sb.Append(CustomEventFields.PrnNumber).Append(',');
