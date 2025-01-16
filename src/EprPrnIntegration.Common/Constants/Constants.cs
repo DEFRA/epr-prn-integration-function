@@ -42,8 +42,8 @@
 
     public static class NpwdApiPath
     {
-        public const string UpdateProducers = "odata/producers";
-        public const string UpdatePrns = "odata/PRNs";
+        public const string Producers = "odata/producers";
+        public const string Prns = "odata/PRNs";
     }
 
     public static class ExporterCodePrefixes

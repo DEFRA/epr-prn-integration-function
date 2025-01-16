@@ -44,7 +44,7 @@ public class NpwdClient(
         if (baseAddress.EndsWith('/'))
             baseAddress = baseAddress.TrimEnd('/');
 
-        var requestUrl = $"{baseAddress}/oData/PRNs?$filter={filter}";
+        var requestUrl = $"{baseAddress}/{Constants.NpwdApiPath.Prns}?$filter={filter}";
         List<NpwdPrn> issuedPrns = [];
         while(!string.IsNullOrEmpty(requestUrl))
         {

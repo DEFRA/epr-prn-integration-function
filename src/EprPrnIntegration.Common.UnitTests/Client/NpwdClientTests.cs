@@ -72,7 +72,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             };
 
             // Act
-            var response = await _npwdClient.Patch(updatedProducers, NpwdApiPath.UpdateProducers);
+            var response = await _npwdClient.Patch(updatedProducers, NpwdApiPath.Producers);
 
             // Assert
             Assert.NotNull(response);
@@ -107,7 +107,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
             // Act
-            var response = await _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers);
+            var response = await _npwdClient.Patch(new List<Producer>(), NpwdApiPath.Producers);
 
             // Assert
             Assert.NotNull(response);
@@ -127,7 +127,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
             // Act & Assert
-            await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.Patch(new List<Producer>(), NpwdApiPath.UpdateProducers));
+            await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.Patch(new List<Producer>(), NpwdApiPath.Producers));
         }
 
         [Fact]
@@ -154,14 +154,14 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             var baseUrl = "http://localhost/";
 
             //Respnse witth next link
-            npwdGetIssuedPrnsResponse.NextLink = $"{baseUrl}oData/PRNs?$filter={filter}";
+            npwdGetIssuedPrnsResponse.NextLink = $"{baseUrl}{NpwdApiPath.Prns}?$filter={filter}";
             var jsonResponse1 = JsonConvert.SerializeObject(npwdGetIssuedPrnsResponse);
 
             //Repsone with next null
             npwdGetIssuedPrnsResponse.NextLink = null;
             var jsonReponse2 = JsonConvert.SerializeObject(npwdGetIssuedPrnsResponse);
 
-            var expectedRequestUri = new Uri($"{baseUrl}oData/PRNs?$filter={filter}");
+            var expectedRequestUri = new Uri($"{baseUrl}{NpwdApiPath.Prns}?$filter={filter}");
 
             // Arrange
             _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
