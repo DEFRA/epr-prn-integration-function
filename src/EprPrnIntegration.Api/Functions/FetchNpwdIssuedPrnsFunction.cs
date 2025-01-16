@@ -98,7 +98,7 @@ namespace EprPrnIntegration.Api.Functions
 
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
-                await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                await _utilities.SetDeltaSyncExecution(deltaRun!, toDate);
                 LogCustomEvents(npwdIssuedPrns);
             }
             catch (Exception ex)
@@ -228,7 +228,7 @@ namespace EprPrnIntegration.Api.Functions
                     FirstName = producer.FirstName,
                     LastName = producer.LastName,
                     NameOfExporterReprocessor = request.ReprocessorAgency!,
-                    NameOfProducerComplianceScheme = request.IssuedToOrgName,
+                    NameOfProducerComplianceScheme = request.IssuedToOrgName ?? string.Empty,
                     PrnNumber = request.EvidenceNo!,
                     Material = request.EvidenceMaterial!,
                     Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
