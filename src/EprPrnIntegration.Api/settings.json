@@ -2,6 +2,7 @@
   "IsEncrypted": false,
   "Values": {
     "FeatureManagement:RunIntegration": true, // feature flag
+    "FeatureManagement:RunUpdateProducers": false, // feature flag
     "FeatureManagement:RunReconciliation": false, // feature flag
     "DefaultLastRunDate": "2024-01-01",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
