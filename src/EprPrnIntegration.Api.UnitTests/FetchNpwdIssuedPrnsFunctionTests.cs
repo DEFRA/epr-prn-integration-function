@@ -478,7 +478,7 @@ namespace EprPrnIntegration.Api.UnitTests
 
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
 
-            _mockConfiguration.Setup(config => config["DefaultLastRunDate"]).Returns(defaultLastRunDate.ToString("O"));
+            _mockConfiguration.Setup(config => config["DefaultLastRunDate"]).Returns(defaultLastRunDate.ToString("yyyy-MM-dd"));
 
             // Act
             await _function.Run(new TimerInfo());
