@@ -29,7 +29,7 @@
     "MessagingConfig:ApiKey": "",
     "MessagingConfig:PrnTemplateId": "a43a573c-3367-4aa2-b9ac-6b347ce8bf32",
     "MessagingConfig:PERNTemplateId": "24925202-125b-4b85-b54a-9f3100301eb4",
-    "MessagingConfig:ErrorMessagesTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25"
+    "MessagingConfig:ErrorMessagesTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "MessagingConfig:NpwdEmailTemplateId": "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25",
     "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
     "MessagingConfig:NpwdValidationErrorsTemplateId": "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef",
@@ -43,6 +43,9 @@
     "NpwdIntegration:AccessTokenUrl": "",
     "NpwdIntegration:Authority": "",
     "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
-    "AppInsightsConfig:ResourceId": ""
+    "AppInsightsConfig:ResourceId": "",
+    "Service__AccountClientId": "",
+    "Service__PrnClientId":  "",
+    "Service__CommonDataClientId": ""
   }
 }

@@ -14,6 +14,7 @@ public class Service
     public string? PrnEndPointName { get; set; }
     public string? AccountClientId { get; set; }
     public string? PrnClientId { get; set; }
+    public string? CommonDataClientId { get; set; }
     public string? CommonDataServiceBaseUrl { get; set; }
     public string? CommonDataServiceEndPointName { get; set; }
 }

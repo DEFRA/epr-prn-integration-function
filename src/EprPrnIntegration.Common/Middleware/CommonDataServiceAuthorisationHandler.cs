@@ -14,12 +14,12 @@ public class CommonDataServiceAuthorisationHandler : DelegatingHandler
 
     public CommonDataServiceAuthorisationHandler(IOptions<Configuration.Service> config)
     {
-        if (string.IsNullOrEmpty(config.Value.AccountClientId))
+        if (string.IsNullOrEmpty(config.Value.CommonDataClientId))
         {
             return;
         }
 
-        _tokenRequestContext = new TokenRequestContext([config.Value.AccountClientId]);
+        _tokenRequestContext = new TokenRequestContext([config.Value.CommonDataClientId]);
         _credentials = new DefaultAzureCredential();
     }
 
