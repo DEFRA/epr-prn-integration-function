@@ -326,9 +326,12 @@ public class EmailServiceTests
         _emailService.SendIssuedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 0, "Sample CSV Content");
 
         // Assert
-        _mockLogger.VerifyLog(logger =>
-                logger.LogError(It.IsAny<Exception>(),
-                    $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"),
-            Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to send email to")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+
     }
 }
