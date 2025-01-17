@@ -65,7 +65,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         try
         {
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.Prns);
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {

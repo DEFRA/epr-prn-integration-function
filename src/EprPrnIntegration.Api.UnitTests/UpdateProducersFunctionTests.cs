@@ -57,7 +57,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         _utilitiesMock
@@ -75,7 +75,7 @@ public class UpdateProducersFunctionTests
         _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
@@ -169,7 +169,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(responseMessage);
 
         _utilitiesMock
@@ -230,7 +230,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Mock DeltaSyncExecution
@@ -277,7 +277,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
@@ -301,7 +301,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync([updatedProducers[0]]);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
@@ -326,7 +326,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .Throws<Exception>();
 
         _utilitiesMock
@@ -345,7 +345,7 @@ public class UpdateProducersFunctionTests
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
 
         _loggerMock.Verify(logger => logger.Log(
@@ -389,7 +389,7 @@ public class UpdateProducersFunctionTests
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
 
        _emailServiceMock.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);

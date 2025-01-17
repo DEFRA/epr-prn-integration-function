@@ -54,7 +54,7 @@ public class UpdateProducersFunction(
 
         try
         {
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.UpdateProducers);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.Producers);
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
@@ -80,7 +80,7 @@ public class UpdateProducersFunction(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.UpdateProducers}");
+            logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.Producers}");
         }
     }
 
