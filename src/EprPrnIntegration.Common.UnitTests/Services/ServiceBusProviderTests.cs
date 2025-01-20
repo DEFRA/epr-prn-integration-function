@@ -563,8 +563,13 @@ public class ServiceBusProviderTests
             msg.To == receivedMessage.To &&
             msg.ApplicationProperties.SequenceEqual(receivedMessage.ApplicationProperties)), It.IsAny<CancellationToken>()), Times.Once);
 
-        _loggerMock.VerifyLog(logger => logger.LogInformation(
-            "Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidenceNo), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains($"Message with EvidenceNo: {evidenceNo} sent to error queue.")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -587,8 +592,13 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, evidenceNo);
 
         // Assert
-        _loggerMock.VerifyLog(logger => logger.LogError(
-            "Failed to send message to error queue with exception: {ExceptionMessage}",
-            "ServiceBus exception"), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) =>
+                state.ToString().Contains("Failed to send message to error queue with exception: ServiceBus exception")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 }

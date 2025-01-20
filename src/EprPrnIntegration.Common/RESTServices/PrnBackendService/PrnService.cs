@@ -1,12 +1,12 @@
 ﻿using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
-namespace EprPrnIntegration.Common.RESTServices.BackendAccountService;
+namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
 public class PrnService : BaseHttpService, IPrnService
 {
@@ -55,12 +55,25 @@ public class PrnService : BaseHttpService, IPrnService
             _logger.LogError(ex, "Insert of sync data failed with ex: {exceptionMessage} with sync prns: {npwdUpdatedPrns}"
                 , ex.Message,JsonSerializer.Serialize(npwdUpdatedPrns));
         }
-        
     }
 
     public async Task SavePrn(SavePrnDetailsRequest request)
     {
         _logger.LogInformation("Saving PRN with id {EvidenceNo}", request.EvidenceNo);
         await Post($"/prn-details", request, CancellationToken.None);
+    }
+
+    public async Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconciledUpdatedPrns()
+    {
+        var nowDateTime = DateTime.UtcNow;
+        var fromDate = nowDateTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+        var toDate = nowDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+     
+        _logger.LogInformation("Getting Reconciled updated PRN's for date range from {FromDate} to {ToDate}", fromDate, toDate);
+
+        var reconciledPrns = await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}", 
+            CancellationToken.None, false);
+
+        return reconciledPrns ??= [];
     }
 }

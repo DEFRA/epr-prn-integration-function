@@ -4,10 +4,10 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using global::EprPrnIntegration.Common.Client;
-using global::EprPrnIntegration.Common.Models;
-using global::EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.Client;
+using EprPrnIntegration.Common.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -202,14 +202,13 @@ public class UpdatePrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
         _loggerMock.Verify(logger => logger.Log(
-                It.IsAny<LogLevel>(),
-                It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once());
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdatePrnsList function is disabled by feature flag")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]

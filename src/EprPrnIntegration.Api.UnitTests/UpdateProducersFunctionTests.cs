@@ -209,11 +209,11 @@ public class UpdateProducersFunctionTests
         await function.Run(null!);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
         _loggerMock.Verify(logger => logger.Log(
                   It.IsAny<LogLevel>(),
                   It.IsAny<EventId>(),
-                  It.IsAny<It.IsAnyType>(),
+                  It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdateProducersList function is disabled by feature flag")),
+
                   It.IsAny<Exception>(),
                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
               Times.Once());

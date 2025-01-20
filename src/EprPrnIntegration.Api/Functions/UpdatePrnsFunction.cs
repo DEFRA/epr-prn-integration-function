@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions;
 

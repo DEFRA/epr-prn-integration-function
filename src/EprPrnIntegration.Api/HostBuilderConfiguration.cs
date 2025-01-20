@@ -25,6 +25,8 @@ using Polly;
 using Polly.Extensions.Http;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api;
 
