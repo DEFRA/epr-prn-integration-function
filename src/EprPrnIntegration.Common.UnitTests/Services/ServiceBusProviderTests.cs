@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json;
+﻿using System.Text.Json;
 using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
@@ -70,8 +69,13 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Exactly(2));
 
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Length > 0),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Exactly(2));
     }
 
     [Fact]
@@ -121,7 +125,13 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -147,7 +157,13 @@ public class ServiceBusProviderTests
 
         // Assert: Ensure that SendMessageAsync was called with the correct message
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("SendDeltaSyncExecutionToQueue - A message has been published to the queue"))), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendDeltaSyncExecutionToQueue - A message has been published to the queue:")),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -168,7 +184,13 @@ public class ServiceBusProviderTests
 
         // Act & Assert: Ensure that an exception is thrown and error is logged
         await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaSyncExecution));
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("SendDeltaSyncExecutionToQueue failed to add message on Queue with exception"))), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendDeltaSyncExecutionToQueue failed to add message on Queue with exception:")),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -183,7 +205,12 @@ public class ServiceBusProviderTests
 
         // Assert
         Assert.Null(result);
-        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("No message received from the queue"))), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("No message received from the queue")),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -239,7 +266,14 @@ public class ServiceBusProviderTests
 
         // Assert
         Assert.Null(result);
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to deserialize message body:"))), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+           It.IsAny<EventId>(),
+           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to deserialize message body:")),
+           It.IsAny<Exception>(),
+           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+
         _serviceBusReceiverMock.Verify(
             receiver => receiver.AbandonMessageAsync(It.IsAny<ServiceBusReceivedMessage>(),
                 It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -255,7 +289,13 @@ public class ServiceBusProviderTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers));
         Assert.Equal("Service bus connection error", exception.Message);
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GetDeltaSyncExecutionFromQueue failed with exception"))), Times.Once);
+
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("GetDeltaSyncExecutionFromQueue failed with exception:")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -282,7 +322,12 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _serviceBusSenderMock.Verify(r => r.CreateMessageBatchAsync(default), Times.Exactly(2));
 
-        _loggerMock.VerifyLog(l => l.LogError(It.Is<string>(s => s.Contains("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception"))), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -299,7 +344,13 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+     
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -366,7 +417,12 @@ public class ServiceBusProviderTests
         await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage, "EvidenceNo"));
 
         // Assert
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to send message back to FetchPrnQueue with exception:")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -389,7 +445,12 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Message with EvidenceNo:")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -439,7 +500,12 @@ public class ServiceBusProviderTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue());
         Assert.Equal("Service bus connection error", exception.Message);
-        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to receive messages from queue with exception"))), Times.Once);
+        _loggerMock.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to receive messages from queue with exception")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]

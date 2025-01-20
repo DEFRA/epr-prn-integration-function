@@ -44,7 +44,7 @@ public class UtilitiesTests
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultLastRunDate);
 
         _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
-            .ReturnsAsync((DeltaSyncExecution)null);
+            .ReturnsAsync((DeltaSyncExecution?)null);
 
         // Act
         var result = await _utilities.GetDeltaSyncExecution(syncType);

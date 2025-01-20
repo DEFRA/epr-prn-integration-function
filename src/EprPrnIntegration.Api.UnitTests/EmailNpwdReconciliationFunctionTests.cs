@@ -85,7 +85,7 @@ public class EmailNpwdReconciliationFunctionTests
     {
         // Arrange
         var prns = new List<ReconcileIssuedPrn>();
-        prns = new List<ReconcileIssuedPrn> { new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" } };
+        prns = [new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" }];
 
         _mockAppInsightsService.Setup(x => x.GetIssuedPrnCustomEventLogsLast24hrsAsync()).ReturnsAsync(prns);  
 

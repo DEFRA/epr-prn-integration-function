@@ -217,7 +217,7 @@ namespace EprPrnIntegration.Common.RESTServices
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogError("API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
                         response.StatusCode, responseBody);
 
@@ -227,12 +227,12 @@ namespace EprPrnIntegration.Common.RESTServices
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, $"HTTP request failed {_httpClient.BaseAddress}. Exception: {ex.Message}");
+                _logger.LogError(ex, "HTTP request failed {BaseAddress}. Exception: {Message}", _httpClient.BaseAddress, ex.Message);
                 throw new ServiceException($"Error occurred while sending HTTP request  {_httpClient.BaseAddress}.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Unexpected error occurred during HTTP request {_httpClient.BaseAddress}.");
+                _logger.LogError(ex, "Unexpected error occurred during HTTP request {BaseAddress}.", _httpClient.BaseAddress);
                 throw new ServiceException($"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.", ex);
             }
         }

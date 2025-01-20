@@ -16,6 +16,7 @@ using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Constants;
 using System.Net;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
+using System.Globalization;
 
 namespace EprPrnIntegration.Api.Functions
 {
@@ -61,12 +62,13 @@ namespace EprPrnIntegration.Api.Functions
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
             var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
-            if (deltaRun != null && DateTime.TryParse(_configuration["DefaultLastRunDate"], out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
+            if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
+                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
             {
                 filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
 
-            var npwdIssuedPrns = new List<NpwdPrn>();
+            List<NpwdPrn> npwdIssuedPrns;
             try
             {
                 npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);
@@ -99,7 +101,7 @@ namespace EprPrnIntegration.Api.Functions
 
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
 
-                await _utilities.SetDeltaSyncExecution(deltaRun, toDate);
+                await _utilities.SetDeltaSyncExecution(deltaRun!, toDate);
                 LogCustomEvents(npwdIssuedPrns);
             }
             catch (Exception ex)
@@ -196,7 +198,7 @@ namespace EprPrnIntegration.Api.Functions
             }
         }
 
-        private Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
+        private static Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
         {
             Dictionary<string, string> eventData = new()
             {
@@ -229,7 +231,7 @@ namespace EprPrnIntegration.Api.Functions
                     FirstName = producer.FirstName,
                     LastName = producer.LastName,
                     NameOfExporterReprocessor = request.ReprocessorAgency!,
-                    NameOfProducerComplianceScheme = request.IssuedToOrgName,
+                    NameOfProducerComplianceScheme = request.IssuedToOrgName ?? string.Empty,
                     PrnNumber = request.EvidenceNo!,
                     Material = request.EvidenceMaterial!,
                     Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
@@ -246,7 +248,7 @@ namespace EprPrnIntegration.Api.Functions
 
         private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
         {
-            if (validatedErrorMessages.Any())
+            if (validatedErrorMessages.Count > 0)
             {
                 var dateTimeNow = DateTime.UtcNow;
                 var csvData = new Dictionary<string, List<string>>

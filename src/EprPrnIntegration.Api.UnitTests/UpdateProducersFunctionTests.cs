@@ -7,7 +7,6 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -58,7 +57,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         _utilitiesMock
@@ -70,13 +69,13 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
@@ -106,7 +105,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -137,7 +136,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await Assert.ThrowsAsync<Exception>(() => function.Run(null));
+        await Assert.ThrowsAsync<Exception>(() => function.Run(null!));
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -170,7 +169,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(responseMessage);
 
         _utilitiesMock
@@ -182,7 +181,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -207,7 +206,7 @@ public class UpdateProducersFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
@@ -231,7 +230,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Mock DeltaSyncExecution
@@ -246,7 +245,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(deltaSyncExecution);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _utilitiesMock.Verify(
@@ -278,11 +277,11 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _commonDataServiceMock.Verify(service =>
@@ -302,7 +301,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync([updatedProducers[0]]);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
@@ -327,7 +326,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers))
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
             .Throws<Exception>();
 
         _utilitiesMock
@@ -339,14 +338,14 @@ public class UpdateProducersFunctionTests
             });        
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
 
         _loggerMock.Verify(logger => logger.Log(
@@ -383,14 +382,14 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.UpdateProducers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once);
 
        _emailServiceMock.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);

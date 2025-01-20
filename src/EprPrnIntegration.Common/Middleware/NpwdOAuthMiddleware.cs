@@ -29,7 +29,7 @@ public class NpwdOAuthMiddleware : DelegatingHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(exception: ex, message: ex.Message);
+            _logger.LogError(ex, "NpwdOAuthMiddleware failed");
             throw new TypeInitializationException(fullTypeName: $"Failed to initialize {nameof(NpwdOAuthMiddleware)}", innerException: ex);
         }
     }
@@ -56,7 +56,7 @@ public class NpwdOAuthMiddleware : DelegatingHandler
         }
         catch(Exception ex)
         {
-            _logger.LogError(message: ex.Message, exception: ex);
+            _logger.LogError(ex, "SendAsync failed");
             return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError);
         }
     }

@@ -26,7 +26,7 @@ public class AppInsightsService : IAppInsightsService
         const string report_Date = "reportDate";
         const string org_Name = "orgName";
 
-        LogsQueryClient client = new LogsQueryClient(new DefaultAzureCredential());
+        LogsQueryClient client = new(new DefaultAzureCredential());
         string resourceId = _appInsightsConfig.Value.ResourceId;
 
         string query = @$"customEvents
@@ -47,11 +47,13 @@ public class AppInsightsService : IAppInsightsService
             {
                 foreach (var row in table.Rows)
                 {
-                    var prn = new ReconcileIssuedPrn();
-                    prn.PrnNumber = row[prn_Number]?.ToString() ?? string.Empty;
-                    prn.PrnStatus = row[status]?.ToString() ?? string.Empty;
-                    prn.UploadedDate = row[report_Date]?.ToString() ?? string.Empty;
-                    prn.OrganisationName = row[org_Name]?.ToString() ?? string.Empty;
+                    var prn = new ReconcileIssuedPrn
+                    {
+                        PrnNumber = row[prn_Number]?.ToString() ?? string.Empty,
+                        PrnStatus = row[status]?.ToString() ?? string.Empty,
+                        UploadedDate = row[report_Date]?.ToString() ?? string.Empty,
+                        OrganisationName = row[org_Name]?.ToString() ?? string.Empty
+                    };
 
                     prns.Add(prn);
                 }

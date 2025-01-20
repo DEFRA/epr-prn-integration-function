@@ -47,7 +47,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         {
             updatedEprPrns =
                 await prnService.GetUpdatedPrns(fromDate, toDate, new CancellationToken());
-            if (updatedEprPrns == null || !updatedEprPrns.Any())
+            if (updatedEprPrns == null || updatedEprPrns.Count.Equals(0))
             {
                 logger.LogWarning(
                     $"No updated Prns are retrieved from common database form time period {fromDate} to {toDate}.");
@@ -66,7 +66,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         try
         {
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.UpdatePrns);
+            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.Prns);
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
