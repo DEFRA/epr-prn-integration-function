@@ -70,19 +70,7 @@ public static class HostBuilderConfiguration
         });
 
         // Add middleware
-        services.AddTransient<NpwdOAuthMiddleware>();
-
-        // Add retry resilience policy
-        ApiCallsRetryConfig apiCallsRetryConfig = new();
-        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
-
-        // Add HttpClients
-        services.AddHttpClient();
-        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd )
-            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
-            .AddPolicyHandler((services, request) =>
-            GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
-
+        services.AddHttpClients(configuration);
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
 
@@ -94,6 +82,32 @@ public static class HostBuilderConfiguration
         });
 
         services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
+    }
+
+    public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddTransient<NpwdOAuthMiddleware>();
+        services.AddTransient<PrnServiceAuthorisationHandler>();
+        services.AddTransient<OrganisationServiceAuthorisationHandler>();
+
+        // Add retry resilience policy
+        ApiCallsRetryConfig apiCallsRetryConfig = new();
+        configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<IPrnService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Prn));
+        
+        services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
+        .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<IOrganisationService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Organisation));
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
+            .AddHttpMessageHandler<NpwdOAuthMiddleware>()
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
+
+        return services;
     }
 
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)

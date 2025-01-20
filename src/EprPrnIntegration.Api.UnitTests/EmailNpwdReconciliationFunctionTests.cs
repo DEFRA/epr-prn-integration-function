@@ -50,7 +50,8 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var config = new FeatureManagementConfiguration
         {
-            RunIntegration = false
+            RunIntegration = true,
+            RunReconciliation = false
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
@@ -58,7 +59,7 @@ public class EmailNpwdReconciliationFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdReconciliation function is disabled by feature flag"))));
+        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdReconciliation function(s) disabled by feature flag"))));
     }
 
     [Fact]
@@ -67,7 +68,8 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var config = new FeatureManagementConfiguration
         {
-            RunIntegration = true
+            RunIntegration = false,
+            RunReconciliation = true
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
@@ -270,7 +272,7 @@ public class EmailNpwdReconciliationFunctionTests
     public async Task Run_Executes_Both_Tasks_Concurrently()
     {
         // Arrange
-        var config = new FeatureManagementConfiguration { RunIntegration = true };
+        var config = new FeatureManagementConfiguration { RunIntegration = true, RunReconciliation = true};
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         var updatedPrns = new List<ReconcileUpdatedPrnsResponseModel>
@@ -318,7 +320,7 @@ public class EmailNpwdReconciliationFunctionTests
     public async Task Run_Handles_Exception_From_One_Task()
     {
         // Arrange
-        var config = new FeatureManagementConfiguration { RunIntegration = true };
+        var config = new FeatureManagementConfiguration { RunIntegration = true, RunReconciliation = true};
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         var issuedPrns = new List<ReconcileIssuedPrn>

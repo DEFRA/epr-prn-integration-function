@@ -8,4 +8,8 @@ public class FeatureManagementConfiguration
     public const string SectionName = "FeatureManagement";
 
     public bool? RunIntegration { get; set; }
+
+    public bool? RunUpdateProducers { get; set; }
+
+    public bool? RunReconciliation { get; set; }
 }

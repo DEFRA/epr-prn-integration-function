@@ -37,7 +37,8 @@ public class UpdateProducersFunctionTests
         // Turn the feature flag on
         var config = new FeatureManagementConfiguration
         {
-            RunIntegration = true
+            RunIntegration = false,
+            RunUpdateProducers = true
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
