@@ -46,5 +46,9 @@
     "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
     "AppInsightsConfig:ResourceId": "",
     "MessagingConfig:NpwdReconcileUpdatedPrnsTemplateId": "a1b81df4-560e-4034-a3cc-282d00ee2959"
+    "AppInsightsConfig:ResourceId": "",
+    "Service__AccountClientId": "",
+    "Service__PrnClientId":  "",
+    "Service__CommonDataClientId": ""
   }
 }

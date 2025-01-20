@@ -16,6 +16,7 @@
         public const string Prn = "PrnClient";
         public const string Organisation = "OrganisationClient";
         public const string Account = "AccountClient";
+        public const string CommonData = "CommonDataClient";
     }
 
     public static class HttpHeaderNames
