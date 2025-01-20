@@ -8,7 +8,6 @@ using EprPrnIntegration.Common.UnitTests.Helpers;
 using EprPrnIntegration.Common.Exceptions;
 using Microsoft.Extensions.Logging;
 using AutoFixture;
-using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 {
@@ -51,8 +50,8 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
-                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
+                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
+                    new() { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -79,7 +78,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
+                new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);
@@ -95,9 +94,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated PRN's.")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -141,7 +140,12 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
 
-            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(), It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Insert of sync data failed with ex:")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -153,7 +157,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
+            _loggerMock.VerifyLog(l => l.LogInformation("Sync data inserted"));
         }
 
         // New tests for SavePrn method
@@ -174,7 +178,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             await sut.SavePrn(request);
 
             // Assert
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Saving PRN with id 1234"))), Times.Once);
+            _loggerMock.VerifyLog(l => l.LogInformation("Saving PRN with id 1234"), Times.Once);
         }
 
         [Fact]
@@ -196,9 +200,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Saving PRN with id 1234")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Saving PRN with id 1234")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]

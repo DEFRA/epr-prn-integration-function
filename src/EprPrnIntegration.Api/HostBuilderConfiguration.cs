@@ -164,7 +164,7 @@ public static class HostBuilderConfiguration
             {
                 if (res.Result != null)
                 {
-                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant() == "retry-after");
+                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.Equals("retry-after", StringComparison.InvariantCultureIgnoreCase));
                     int retryAfter = 0;
                     if (res.Result.StatusCode == HttpStatusCode.TooManyRequests && retryAfterHeader.Value != null && retryAfterHeader.Value.Any())
                     {

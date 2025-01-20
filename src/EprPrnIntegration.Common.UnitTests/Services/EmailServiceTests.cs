@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Notify.Client;
 using Notify.Interfaces;
 using Notify.Models.Responses;
 using System.Text;
@@ -46,7 +45,7 @@ public class EmailServiceTests
     }
 
     private EmailService CreateEmailService() =>
-        new EmailService(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
+        new(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
 
     [Fact]
     public void SendEmailsToProducers_SuccessfullySendsEmails_LogsInformation()
@@ -54,8 +53,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
                 LastName = "Doe",
@@ -83,7 +81,7 @@ public class EmailServiceTests
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
-        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to John Doe with email address producer1@example.com and the responseid is responseId"))), Times.Once);
+        _mockLogger.VerifyLog(logger => logger.LogInformation("Email sent to John Doe with email address producer1@example.com and the responseid is responseId."), Times.Once);
     }
 
     [Fact]
@@ -92,8 +90,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer2@example.com",
                 FirstName = "Jane",
                 LastName = "Smith",
@@ -117,7 +114,12 @@ public class EmailServiceTests
         _emailService.SendEmailsToProducers(producerEmails, organisationId);
 
         // Assert
-        _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR. Method: SendEmail"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("GOV UK NOTIFY ERROR. Method: SendEmail")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -126,8 +128,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer3@example.com",
                 FirstName = "Mark",
                 LastName = "Taylor",
@@ -160,8 +161,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer4@example.com",
                 FirstName = "Sarah",
                 LastName = "Johnson",
@@ -203,7 +203,12 @@ public class EmailServiceTests
         _emailService.SendErrorEmailToNpwd(It.IsAny<string>());
 
         // Assert
-        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("Email sent to NPWD with email address"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Email sent to NPWD with email address")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -220,17 +225,19 @@ public class EmailServiceTests
         _emailService.SendErrorEmailToNpwd(It.IsAny<string>());
 
         // Assert
-        _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GOV UK NOTIFY ERROR"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("GOV UK NOTIFY ERROR")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
     public void SendErrorFetchedPrnEmail_ShouldThrowArgumentNullException_WhenStreamIsNull()
     {
-        // Arrange
-        Stream nullStream = null;
-
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(nullStream, DateTime.UtcNow));
+        Assert.Throws<ArgumentNullException>(() => _emailService.SendValidationErrorPrnEmail(null!, DateTime.UtcNow));
     }
 
     [Fact]
@@ -262,8 +269,12 @@ public class EmailServiceTests
             It.Is<string>(template => template == _messagingConfig.NpwdValidationErrorsTemplateId),
             It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
 
-        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Email sent to NPWD"))), Times.Once);
-
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Email sent to NPWD")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -284,10 +295,12 @@ public class EmailServiceTests
         _emailService.SendValidationErrorPrnEmail(mockStream, reportDate);
 
         // Assert
-        _mockLogger.VerifyLog(logger =>
-                logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}"))),
-            Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to send email to")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -315,8 +328,12 @@ public class EmailServiceTests
             It.Is<string>(template => template == _messagingConfig.NpwdReconcileIssuedPrnsTemplateId),
             It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
 
-        _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.StartsWith("Reconciliation email sent to NPWD"))), Times.Once);
-
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Reconciliation email sent to NPWD")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 
     [Fact]
@@ -334,9 +351,11 @@ public class EmailServiceTests
         _emailService.SendIssuedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 0, "Sample CSV Content");
 
         // Assert
-        _mockLogger.VerifyLog(logger =>
-                logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"))),
-            Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to send email to")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
     }
 }

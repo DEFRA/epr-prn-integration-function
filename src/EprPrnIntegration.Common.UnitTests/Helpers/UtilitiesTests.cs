@@ -44,7 +44,7 @@ public class UtilitiesTests
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultLastRunDate);
 
         _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
-            .ReturnsAsync((DeltaSyncExecution)null);
+            .ReturnsAsync((DeltaSyncExecution?)null);
 
         // Act
         var result = await _utilities.GetDeltaSyncExecution(syncType);
@@ -172,11 +172,8 @@ public class UtilitiesTests
     [Fact]
     public async Task CreateErrorEventsCsvStreamAsync_ShouldHandleNullList()
     {
-        // Arrange
-        List<ErrorEvent> errorEvents = null;
-
         // Act
-        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+        var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(null!);
 
         // Assert
         csvStream.Position = 0;

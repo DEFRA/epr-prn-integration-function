@@ -41,7 +41,8 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var config = new FeatureManagementConfiguration
         {
-            RunIntegration = false
+            RunIntegration = true,
+            RunReconciliation = false
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
@@ -49,7 +50,7 @@ public class EmailNpwdReconciliationFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdReconciliation function is disabled by feature flag"))));
+        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdReconciliation function(s) disabled by feature flag"))));
     }
 
     [Fact]
@@ -58,7 +59,8 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var config = new FeatureManagementConfiguration
         {
-            RunIntegration = true
+            RunIntegration = false,
+            RunReconciliation = true
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
@@ -74,7 +76,7 @@ public class EmailNpwdReconciliationFunctionTests
     {
         // Arrange
         var prns = new List<ReconcileIssuedPrn>();
-        prns = new List<ReconcileIssuedPrn> { new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" } };
+        prns = [new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" }];
 
         _mockAppInsightsService.Setup(x => x.GetIssuedPrnCustomEventLogsLast24hrsAsync()).ReturnsAsync(prns);  
 
@@ -116,8 +118,8 @@ public class EmailNpwdReconciliationFunctionTests
     public void TransformPrnsToCsv_GivenRecords_ReturnsRows()
     {
         // Arrange
-        var prns = new List<ReconcileIssuedPrn>();
-        prns = new List<ReconcileIssuedPrn> { new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" } };
+        List<ReconcileIssuedPrn> prns;
+        prns = [new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" }];
 
         // Act
         string csv = EmailNpwdReconciliationFunction.TransformPrnsToCsv(prns);

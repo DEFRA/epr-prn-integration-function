@@ -20,10 +20,10 @@ public class EmailNpwdReconciliationFunction(
     [Function("EmailNpwdReconciliation")]
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
-        var isOn = _featureConfig.Value.RunIntegration ?? false;
+        var isOn = _featureConfig.Value.RunReconciliation ?? false;
         if (!isOn)
         {
-            _logger.LogInformation("EmailNpwdReconciliation function is disabled by feature flag");
+            _logger.LogInformation("EmailNpwdReconciliation function(s) disabled by feature flag");
             return;
         }
 
@@ -35,8 +35,8 @@ public class EmailNpwdReconciliationFunction(
     {
         _logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        string csv = string.Empty;
-        List<ReconcileIssuedPrn> prns = new List<ReconcileIssuedPrn>();
+        string csv;
+        List<ReconcileIssuedPrn> prns;
 
         try
         {
@@ -57,7 +57,7 @@ public class EmailNpwdReconciliationFunction(
 
     public static string TransformPrnsToCsv(List<ReconcileIssuedPrn> prns)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         // header
         sb.Append(CustomEventFields.PrnNumber).Append(',');

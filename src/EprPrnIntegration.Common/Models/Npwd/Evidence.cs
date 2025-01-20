@@ -7,76 +7,76 @@
     [ExcludeFromCodeCoverage]
     public class Evidence
     {
-        [JsonProperty("AccreditationNo")]
+        [JsonProperty(nameof(AccreditationNo))]
         public string? AccreditationNo { get; set; }
 
-        [JsonProperty("AccreditationYear")]
+        [JsonProperty(nameof(AccreditationYear))]
         public int AccreditationYear { get; set; }
 
-        [JsonProperty("CancelledDate")]
+        [JsonProperty(nameof(CancelledDate))]
         public DateTime CancelledDate { get; set; }
 
-        [JsonProperty("DecemberWaste")]
+        [JsonProperty(nameof(DecemberWaste))]
         public bool DecemberWaste { get; set; }
 
-        [JsonProperty("EvidenceMaterial")]
+        [JsonProperty(nameof(EvidenceMaterial))]
         public string? EvidenceMaterial { get; set; }
 
-        [JsonProperty("EvidenceNo")]
+        [JsonProperty(nameof(EvidenceNo))]
         public string? EvidenceNo { get; set; }
 
-        [JsonProperty("EvidenceStatusCode")]
+        [JsonProperty(nameof(EvidenceStatusCode))]
         public string? EvidenceStatusCode { get; set; }
 
-        [JsonProperty("EvidenceStatusDesc")]
+        [JsonProperty(nameof(EvidenceStatusDesc))]
         public string? EvidenceStatusDesc { get; set; }
 
-        [JsonProperty("EvidenceTonnes")]
+        [JsonProperty(nameof(EvidenceTonnes))]
         public double EvidenceTonnes { get; set; }
 
-        [JsonProperty("IssueDate")]
+        [JsonProperty(nameof(IssueDate))]
         public DateTime IssueDate { get; set; }
 
-        [JsonProperty("IssuedByNPWDCode")]
+        [JsonProperty(nameof(IssuedByNPWDCode))]
         public string? IssuedByNPWDCode { get; set; }
 
-        [JsonProperty("IssuedByOrgName")]
+        [JsonProperty(nameof(IssuedByOrgName))]
         public string? IssuedByOrgName { get; set; }
 
-        [JsonProperty("IssuedToEPRCode")]
+        [JsonProperty(nameof(IssuedToEPRCode))]
         public string? IssuedToEPRCode { get; set; }
 
-        [JsonProperty("IssuedToEPRId")]
+        [JsonProperty(nameof(IssuedToEPRId))]
         public string? IssuedToEPRId { get; set; }
 
-        [JsonProperty("IssuedToNPWDCode")]
+        [JsonProperty(nameof(IssuedToNPWDCode))]
         public string? IssuedToNPWDCode { get; set; }
 
-        [JsonProperty("IssuedToOrgName")]
+        [JsonProperty(nameof(IssuedToOrgName))]
         public string? IssuedToOrgName { get; set; }
 
-        [JsonProperty("IssuerNotes")]
+        [JsonProperty(nameof(IssuerNotes))]
         public string? IssuerNotes { get; set; }
 
-        [JsonProperty("MaterialOperationCode")]
+        [JsonProperty(nameof(MaterialOperationCode))]
         public string? MaterialOperationCode { get; set; }
 
-        [JsonProperty("ModifiedOn")]
+        [JsonProperty(nameof(ModifiedOn))]
         public DateTime ModifiedOn { get; set; }
 
-        [JsonProperty("PRNSignatory")]
+        [JsonProperty(nameof(PRNSignatory))]
         public string? PRNSignatory { get; set; }
 
-        [JsonProperty("ProducerAgency")]
+        [JsonProperty(nameof(ProducerAgency))]
         public string? ProducerAgency { get; set; }
 
-        [JsonProperty("RecoveryProcessCode")]
+        [JsonProperty(nameof(RecoveryProcessCode))]
         public string? RecoveryProcessCode { get; set; }
 
-        [JsonProperty("ReprocessorAgency")]
+        [JsonProperty(nameof(ReprocessorAgency))]
         public string? ReprocessorAgency { get; set; }
 
-        [JsonProperty("StatusDate")]
+        [JsonProperty(nameof(StatusDate))]
         public DateTime StatusDate { get; set; }
     }
 

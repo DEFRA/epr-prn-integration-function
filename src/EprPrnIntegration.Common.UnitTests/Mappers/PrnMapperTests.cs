@@ -18,11 +18,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void Map_NullInput_ReturnsEmptyPrnDelta()
         {
-            // Arrange
-            List<UpdatedPrnsResponseModel> updatedPrns = null;
-
             // Act
-            var result = PrnMapper.Map(updatedPrns, _configurationMock.Object);
+            var result = PrnMapper.Map(null!, _configurationMock.Object);
 
             // Assert
             Assert.NotNull(result);
