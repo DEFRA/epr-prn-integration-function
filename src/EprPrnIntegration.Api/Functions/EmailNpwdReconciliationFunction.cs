@@ -1,14 +1,11 @@
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
-using EprPrnIntegration.Common.Models.Npwd;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
-using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -43,7 +40,7 @@ public class EmailNpwdReconciliationFunction(
 
         try
         {
-            var updatedPrns = await prnService.GetReconsolidatedUpdatedPrns();
+            var updatedPrns = await prnService.GetReconciledUpdatedPrns();
             var csvData = new Dictionary<string, List<string>>
             {
                 { CustomEventFields.PrnNumber, updatedPrns.Select(x => x.PrnNumber).ToList() },

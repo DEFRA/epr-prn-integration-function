@@ -208,7 +208,7 @@ public class EmailNpwdReconciliationFunctionTests
         var csvContent = "Mock CSV Content";
 
         _mockPrnService
-            .Setup(service => service.GetReconsolidatedUpdatedPrns())
+            .Setup(service => service.GetReconciledUpdatedPrns())
             .ReturnsAsync(updatedPrns);
 
         _mockUtilities
@@ -233,7 +233,7 @@ public class EmailNpwdReconciliationFunctionTests
         var updatedPrns = new List<ReconcileUpdatedPrnsResponseModel>();
 
         _mockPrnService
-            .Setup(service => service.GetReconsolidatedUpdatedPrns())
+            .Setup(service => service.GetReconciledUpdatedPrns())
             .ReturnsAsync(updatedPrns);
 
         // Act
@@ -252,7 +252,7 @@ public class EmailNpwdReconciliationFunctionTests
     {
         // Arrange
         _mockPrnService
-            .Setup(service => service.GetReconsolidatedUpdatedPrns())
+            .Setup(service => service.GetReconciledUpdatedPrns())
             .ThrowsAsync(new Exception("Mock exception"));
 
         // Act
@@ -286,7 +286,7 @@ public class EmailNpwdReconciliationFunctionTests
         var csvContent = "Mock CSV Content";
 
         _mockPrnService
-            .Setup(service => service.GetReconsolidatedUpdatedPrns())
+            .Setup(service => service.GetReconciledUpdatedPrns())
             .ReturnsAsync(updatedPrns);
 
         _mockAppInsightsService
@@ -329,7 +329,7 @@ public class EmailNpwdReconciliationFunctionTests
         var csvContent = "Mock CSV Content";
 
         _mockPrnService
-            .Setup(service => service.GetReconsolidatedUpdatedPrns())
+            .Setup(service => service.GetReconciledUpdatedPrns())
             .ThrowsAsync(new Exception("Mock exception from Updated PRNs"));
 
         _mockAppInsightsService

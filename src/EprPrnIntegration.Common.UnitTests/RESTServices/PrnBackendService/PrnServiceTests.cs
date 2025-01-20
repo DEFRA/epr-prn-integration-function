@@ -215,7 +215,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         }
 
         [Fact]
-        public async Task GetReconsolidatedUpdatedPrns_ShouldReturnCorrectData()
+        public async Task GetReconciledUpdatedPrns_ShouldReturnCorrectData()
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
@@ -240,7 +240,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var sut = CreatePrnService(mockDataJson);
 
             // Act
-            var result = await sut.GetReconsolidatedUpdatedPrns();
+            var result = await sut.GetReconciledUpdatedPrns();
 
             // Assert
             Assert.NotEmpty(result);
@@ -251,20 +251,20 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         }
 
         [Fact]
-        public async Task GetReconsolidatedUpdatedPrns_ShouldReturnEmptyList_WhenNoDataExists()
+        public async Task GetReconciledUpdatedPrns_ShouldReturnEmptyList_WhenNoDataExists()
         {
             // Arrange
             var sut = CreatePrnService("[]");
 
             // Act
-            var result = await sut.GetReconsolidatedUpdatedPrns();
+            var result = await sut.GetReconciledUpdatedPrns();
 
             // Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public async Task GetReconsolidatedUpdatedPrns_ShouldLogInformation()
+        public async Task GetReconciledUpdatedPrns_ShouldLogInformation()
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
@@ -282,25 +282,25 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var sut = CreatePrnService(mockDataJson);
 
             // Act
-            await sut.GetReconsolidatedUpdatedPrns();
+            await sut.GetReconciledUpdatedPrns();
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting reconsolidated updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting Reconciled updated PRN's.")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetReconsolidatedUpdatedPrns_ShouldThrowException_WhenApiFails()
+        public async Task GetReconciledUpdatedPrns_ShouldThrowException_WhenApiFails()
         {
             // Arrange
             var sut = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ResponseCodeException>(() => sut.GetReconsolidatedUpdatedPrns());
+            await Assert.ThrowsAsync<ResponseCodeException>(() => sut.GetReconciledUpdatedPrns());
         }
     }
 }

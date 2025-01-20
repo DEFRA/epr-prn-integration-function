@@ -8,5 +8,5 @@ public interface IPrnService
          CancellationToken cancellationToken);
     Task InsertPeprNpwdSyncPrns(IEnumerable<UpdatedPrnsResponseModel> syncedPrns);
     Task SavePrn(SavePrnDetailsRequest request);
-    Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconsolidatedUpdatedPrns();
+    Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconciledUpdatedPrns();
 }

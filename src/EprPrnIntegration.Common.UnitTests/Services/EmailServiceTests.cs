@@ -222,7 +222,7 @@ public class EmailServiceTests
     }
 
     [Fact]
-    public void SendValidationErrorPrnEmail_SendsEmailWithAttachment_Successfully2()
+    public void SendValidationErrorPrnEmail_SendsEmailWithAttachment_Successfully()
     {
         // Arrange
         var csvData = "Sample CSV Content";
@@ -259,8 +259,7 @@ public class EmailServiceTests
         var csvData = "Sample CSV Content";
         var reportDate = new DateTime(2025, 1, 1);
         var expectedTemplateId = _messagingConfig.NpwdValidationErrorsTemplateId;
-        var expectedFilename = $"error_events{DateTime.UtcNow.ToShortDateString()}.csv";
-        var mockLinkToFile = "https://mock-link-to-file";
+        var exceptionMessage = "Error sending email";
 
         _mockNotificationClient.Setup(client => client.SendEmail(
                 It.IsAny<string>(),
@@ -270,12 +269,16 @@ public class EmailServiceTests
             .Throws(new Exception("Error sending email"));
 
         // Act
-        _emailService.SendValidationErrorPrnEmail(csvData, reportDate);
+        var exception = Assert.Throws<Exception>(() =>
+            _emailService.SendValidationErrorPrnEmail(csvData, reportDate));
 
         // Assert
+        Assert.Equal(exceptionMessage, exception.Message);
+
         _mockLogger.VerifyLog(logger =>
                 logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}"))),
+                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}")),
+                    It.IsAny<object[]>()),
             Times.Once);
     }
 
@@ -312,20 +315,29 @@ public class EmailServiceTests
     public void SendIssuedPrnsReconciliationEmailToNpwd_LogsError_WhenSendEmailFails()
     {
         // Arrange
-        _mockNotificationClient.Setup(client => client.SendEmail(
+        var exceptionMessage = "Error sending email";
+        _mockNotificationClient
+            .Setup(client => client.SendEmail(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<Dictionary<string, object>>(),
                 null, null, null))
-            .Throws(new Exception("Error sending email"));
+            .Throws(new Exception(exceptionMessage));
 
         // Act
-        _emailService.SendIssuedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 0, "Sample CSV Content");
+        var exception = Assert.Throws<Exception>(() =>
+            _emailService.SendIssuedPrnsReconciliationEmailToNpwd(
+                new DateTime(2025, 12, 1),
+                0,
+                "Sample CSV Content"));
 
         // Assert
+        Assert.Equal(exceptionMessage, exception.Message);
+
         _mockLogger.VerifyLog(logger =>
                 logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}"))),
+                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}")),
+                    It.IsAny<object[]>()),
             Times.Once);
     }
 
@@ -361,20 +373,28 @@ public class EmailServiceTests
     public void SendUpdatedPrnsReconciliationEmailToNpwd_LogsError_WhenSendEmailFails()
     {
         // Arrange
-        _mockNotificationClient.Setup(client => client.SendEmail(
+        var exceptionMessage = "Error sending email";
+        _mockNotificationClient
+            .Setup(client => client.SendEmail(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<Dictionary<string, object>>(),
                 null, null, null))
-            .Throws(new Exception("Error sending email"));
+            .Throws(new Exception(exceptionMessage));
 
         // Act
-        _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content");
+        var exception = Assert.Throws<Exception>(() =>
+            _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(
+                new DateTime(2025, 12, 1),
+                "Sample CSV Content"));
 
         // Assert
+        Assert.Equal(exceptionMessage, exception.Message);
+
         _mockLogger.VerifyLog(logger =>
                 logger.LogError(It.IsAny<Exception>(),
-                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedPrnsTemplateId}"))),
+                    It.Is<string>(s => s.Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedPrnsTemplateId}")),
+                    It.IsAny<object[]>()),
             Times.Once);
     }
 }

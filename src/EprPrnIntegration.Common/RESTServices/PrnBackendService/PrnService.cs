@@ -62,13 +62,13 @@ public class PrnService : BaseHttpService, IPrnService
         await Post($"/prn-details", request, CancellationToken.None);
     }
 
-    public async Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconsolidatedUpdatedPrns()
+    public async Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconciledUpdatedPrns()
     {
         var nowDateTime = DateTime.UtcNow;
         var fromDate = nowDateTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         var toDate = nowDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        _logger.LogInformation("Getting reconsolidated updated PRN's.");
-        return await Get<List<ReconcileUpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
+        _logger.LogInformation("Getting Reconciled updated PRN's.");
+        return await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}",
             CancellationToken.None, false);
     }
 }

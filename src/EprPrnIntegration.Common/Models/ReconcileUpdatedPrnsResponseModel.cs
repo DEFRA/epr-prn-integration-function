@@ -1,18 +1,18 @@
-﻿using System.Text.Json.Serialization;
+﻿using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Common.Models;
 
 public class ReconcileUpdatedPrnsResponseModel
 {
-    [JsonPropertyName("PrnNumber")]
+    [JsonProperty("PrnNumber")]
     public string PrnNumber { get; set; } = null!;
 
-    [JsonPropertyName("StatusName")]
+    [JsonProperty("StatusName")]
     public string StatusName { get; set; } = null!;
 
-    [JsonPropertyName("UpdatedOn")]
+    [JsonProperty("UpdatedOn")]
     public string UpdatedOn { get; set; } = null!;
 
-    [JsonPropertyName("OrganisationName")]
+    [JsonProperty("OrganisationName")]
     public string OrganisationName { get; set; } = null!;
 }

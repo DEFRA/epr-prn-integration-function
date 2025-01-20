@@ -1,6 +1,5 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Client;
@@ -80,6 +79,7 @@ public class EmailService(
     {
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
         var filename = $"error_events{DateTime.UtcNow.ToShortDateString()}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
 
         var parameters = new Dictionary<string, object>
         {
@@ -87,9 +87,9 @@ public class EmailService(
             { "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(csvData), filename) }
         };
 
-        var (isEmailSent, emailAddress, responseId) = SendNpwdEmail(parameters, templateId);
+        var responseId = SendNpwdEmail(parameters, templateId, emailAddress);
 
-        if (isEmailSent)
+        if (!string.IsNullOrWhiteSpace(responseId))
         {
             var message = $"Validation Error email sent to NPWD with email address {emailAddress} and the response ID is {responseId}.";
             logger.LogInformation(message);
@@ -100,6 +100,7 @@ public class EmailService(
     {
         var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
         var filename = $"issuedprns_{reportDate:yyyyMMdd}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
@@ -114,9 +115,9 @@ public class EmailService(
             }
         };
 
-        var (isEmailSent, emailAddress, responseId) = SendNpwdEmail(messagePersonalisation, templateId);
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
         
-        if(isEmailSent)
+        if(!string.IsNullOrWhiteSpace(responseId))
         {
             var message = $"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
             logger.LogInformation(message);
@@ -127,6 +128,7 @@ public class EmailService(
     {
         var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
         var filename = $"updatedprns_{reportDate:yyyyMMdd}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
@@ -138,30 +140,25 @@ public class EmailService(
             }
         };
 
-        var (isEmailSent, emailAddress, responseId) = SendNpwdEmail(messagePersonalisation, templateId);
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
 
-        if (isEmailSent)
+        if (!string.IsNullOrWhiteSpace(responseId))
         {
-            var message = $"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
-            logger.LogInformation(message);
+            logger.LogInformation($"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.");
         }
     }
 
-    private (bool isEmailSent, string? emailAddress, string? responseId) SendNpwdEmail(Dictionary<string, object> data, string templateId)
+    private string SendNpwdEmail(Dictionary<string, object> data, string templateId, string emailAddress)
     {
-        var isEmailSent = false;
-        var npwdEmailAddress = _messagingConfig.NpwdEmail;
-
         try
         {
-            var response = notificationClient.SendEmail(npwdEmailAddress, templateId, data);
-            return (true, npwdEmailAddress, response.id);
+            var response = notificationClient.SendEmail(emailAddress, templateId, data);
+            return response.id;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
+            logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", emailAddress, templateId);
+            throw;
         }
-
-        return (isEmailSent, npwdEmailAddress, string.Empty);
     }
 }
