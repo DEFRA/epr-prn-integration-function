@@ -121,7 +121,7 @@ namespace EprPrnIntegration.Api.UnitTests
         public async Task Run_NoPrnsFetched_LogsWarning()
         {
             _mockNpwdClient.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
-                           .ReturnsAsync(new List<NpwdPrn>());
+                           .ReturnsAsync([]);
 
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .Returns(Task.CompletedTask);
@@ -238,7 +238,7 @@ namespace EprPrnIntegration.Api.UnitTests
         {
             // Arrange
             _mockServiceBusProvider.Setup(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage>());
+                .ReturnsAsync([]);
 
             // Act
             await _function.ProcessIssuedPrnsAsync();
@@ -258,7 +258,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
 
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
@@ -294,7 +294,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
 
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
@@ -322,7 +322,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
 
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
@@ -352,7 +352,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
 
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
@@ -384,7 +384,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                             .ReturnsAsync(new FluentValidation.Results.ValidationResult());
@@ -413,7 +413,7 @@ namespace EprPrnIntegration.Api.UnitTests
             );
 
             _mockServiceBusProvider.SetupSequence(provider => provider.ReceiveFetchedNpwdPrnsFromQueue())
-                .ReturnsAsync(new List<ServiceBusReceivedMessage> { message })
+                .ReturnsAsync([message])
                 .ReturnsAsync([]);
 
             _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
@@ -478,7 +478,7 @@ namespace EprPrnIntegration.Api.UnitTests
 
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
 
-            _mockConfiguration.Setup(config => config["DefaultLastRunDate"]).Returns(defaultLastRunDate.ToString("O"));
+            _mockConfiguration.Setup(config => config["DefaultLastRunDate"]).Returns(defaultLastRunDate.ToString("yyyy-MM-dd"));
 
             // Act
             await _function.Run(new TimerInfo());

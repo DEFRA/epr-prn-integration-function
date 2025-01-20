@@ -4,6 +4,7 @@ using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
+using System.Globalization;
 
 namespace EprPrnIntegration.Common.Helpers;
 
@@ -20,10 +21,12 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
             await serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaMessage);
             return deltaMessage;
         }
-        
+
+        DateTime.TryParseExact(configuration["DefaultLastRunDate"], "yyyy-MM-dd",
+                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime lastSyncDateTime);
         return new DeltaSyncExecution
         {
-            LastSyncDateTime = DateTime.Parse(configuration["DefaultLastRunDate"]),
+            LastSyncDateTime = lastSyncDateTime,
             SyncType = syncType
         };
     }

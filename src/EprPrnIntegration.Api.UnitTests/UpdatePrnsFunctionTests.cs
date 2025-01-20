@@ -77,7 +77,7 @@ public class UpdatePrnsFunctionTests
             .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -107,7 +107,7 @@ public class UpdatePrnsFunctionTests
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -137,7 +137,7 @@ public class UpdatePrnsFunctionTests
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -170,7 +170,7 @@ public class UpdatePrnsFunctionTests
             .ThrowsAsync(new Exception("Service error"));
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -243,7 +243,7 @@ public class UpdatePrnsFunctionTests
             .ReturnsAsync(deltaSyncExecution);
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _mockUtilities.Verify(
@@ -273,7 +273,7 @@ public class UpdatePrnsFunctionTests
             });
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _mockPrnService.Verify(service =>
@@ -350,7 +350,7 @@ public class UpdatePrnsFunctionTests
             
 
         // Act
-        await _function.Run(null);
+        await _function.Run(null!);
 
         // Assert
         _emailService.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);

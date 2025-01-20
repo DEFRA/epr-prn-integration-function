@@ -76,7 +76,7 @@ public class EmailNpwdReconciliationFunctionTests
     {
         // Arrange
         var prns = new List<ReconcileIssuedPrn>();
-        prns = new List<ReconcileIssuedPrn> { new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" } };
+        prns = [new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" }];
 
         _mockAppInsightsService.Setup(x => x.GetIssuedPrnCustomEventLogsLast24hrsAsync()).ReturnsAsync(prns);  
 
@@ -118,8 +118,8 @@ public class EmailNpwdReconciliationFunctionTests
     public void TransformPrnsToCsv_GivenRecords_ReturnsRows()
     {
         // Arrange
-        var prns = new List<ReconcileIssuedPrn>();
-        prns = new List<ReconcileIssuedPrn> { new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" } };
+        List<ReconcileIssuedPrn> prns;
+        prns = [new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "10/01/2025", OrganisationName = "Sainsburys" }];
 
         // Act
         string csv = EmailNpwdReconciliationFunction.TransformPrnsToCsv(prns);

@@ -1,6 +1,5 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notify.Client;
@@ -43,9 +42,7 @@ public class EmailService : IEmailService
             try
             {
                 var response = _notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
-                string message = $"Email sent to {producer.FirstName} {producer.LastName} with email address {producer.EmailAddress} and the responseid is {response.id}.";
-                _logger.LogInformation(message);
-
+                _logger.LogInformation("Email sent to {FirstName} {LastName} with email address {EmailAddress} and the responseid is {Id}.", producer.FirstName, producer.LastName, producer.EmailAddress, response.id);
             }
             catch (Exception ex)
             {
@@ -71,10 +68,7 @@ public class EmailService : IEmailService
         try
         {
             var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
-
-            string message = $"Email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
-            _logger.LogInformation(message);
-
+            _logger.LogInformation("Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.", npwdEmailAddress, response.id);
         }
         catch (Exception ex)
         {
@@ -84,7 +78,7 @@ public class EmailService : IEmailService
 
     public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
     {
-        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
+        ArgumentNullException.ThrowIfNull(attachmentStream);
 
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
@@ -106,9 +100,7 @@ public class EmailService : IEmailService
         try
         {
             var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
-
-            var message = $"Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.";
-            _logger.LogInformation(message);
+            _logger.LogInformation("Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.", npwdEmailAddress, response.id);
         }
         catch (Exception ex)
         {
@@ -138,10 +130,7 @@ public class EmailService : IEmailService
         try
         {
             var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, messagePersonalisation);
-
-            string message = $"Reconciliation email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
-            _logger.LogInformation(message);
-
+            _logger.LogInformation("Reconciliation email sent to NPWD with email address {EmailAddress} and the responseid is {Id}.", npwdEmailAddress, response.id);
         }
         catch (Exception ex)
         {

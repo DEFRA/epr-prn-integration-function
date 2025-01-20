@@ -18,11 +18,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void MapToDelta_NullInput_ReturnsEmptyProducerDelta()
         {
-            // Arrange
-            List<UpdatedProducersResponse> updatedProducers = null;
-
             // Act
-            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+            var result = ProducerMapper.Map(null!, _configurationMock.Object);
 
             // Assert
             Assert.NotNull(result);
