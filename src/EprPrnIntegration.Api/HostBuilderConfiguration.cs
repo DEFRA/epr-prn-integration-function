@@ -87,6 +87,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<NpwdOAuthMiddleware>();
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
+        services.AddTransient<CommonDataServiceAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -99,6 +100,10 @@ public static class HostBuilderConfiguration
         services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
         .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IOrganisationService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Organisation));
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.CommonData).AddHttpMessageHandler<CommonDataServiceAuthorisationHandler>()
+        .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<ICommonDataService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.CommonData));
 
         services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>()

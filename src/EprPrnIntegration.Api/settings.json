@@ -44,6 +44,9 @@
     "NpwdIntegration:AccessTokenUrl": "",
     "NpwdIntegration:Authority": "",
     "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
-    "AppInsightsConfig:ResourceId": ""
+    "AppInsightsConfig:ResourceId": "",
+    "Service__AccountClientId": "",
+    "Service__PrnClientId":  "",
+    "Service__CommonDataClientId": ""
   }
 }
