@@ -202,14 +202,13 @@ public class UpdatePrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag"))));
         _loggerMock.Verify(logger => logger.Log(
-                It.IsAny<LogLevel>(),
-                It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once());
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdatePrnsList function is disabled by feature flag")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]

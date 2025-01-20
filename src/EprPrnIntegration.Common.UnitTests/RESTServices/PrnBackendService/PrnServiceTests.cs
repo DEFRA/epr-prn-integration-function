@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Text.Json;
-using AutoFixture;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
@@ -158,7 +157,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
-            _loggerMock.VerifyLog(l => l.LogInformation("Sync data inserted"));
+            _loggerMock.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Sync data inserted")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -177,7 +182,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             await sut.SavePrn(request);
 
             // Assert
-            _loggerMock.VerifyLog(l => l.LogInformation("Saving PRN with id 1234"), Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Saving PRN with id 1234")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]

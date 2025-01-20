@@ -89,7 +89,13 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.Run(new TimerInfo());
 
             // Assert
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag"))));
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("FetchNpwdIssuedPrnsFunction function is disabled by feature flag")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -113,9 +119,29 @@ namespace EprPrnIntegration.Api.UnitTests
             // Assert
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.IsAny<string>()), Times.Once);
             _mockServiceBusProvider.Verify(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()), Times.Once);
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("function started"))));
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("Prns Pushed into Message"))));
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("function Completed"))));
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("function started")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
+
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Prns Pushed into Message")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
+
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("function Completed")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -136,7 +162,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.IsAny<string>()), Times.Once);
-            _mockLogger.VerifyLog(x => x.LogWarning(It.Is<string>(s => s.Contains("No Prns Exists"))));
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().StartsWith("No Prns Exists")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -152,9 +184,16 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
-            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed Get Prns from npwd"))), Times.Once);
             Assert.Equal("Error fetching PRNs", ex.Message);
+            
             _mockEmailService.Verify(email => email.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Never);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed Get Prns from npwd")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Theory]
@@ -185,8 +224,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<InvalidCastException>(() => _function.Run(new TimerInfo()));
-            _mockLogger.VerifyLog(logger => logger.LogError(It.IsAny<InvalidCastException>(),
-                It.Is<string>(s => s.Contains("Failed Get Prns method for filter"))), Times.Once);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed Get Prns method for filter")),
+                It.IsAny<InvalidCastException>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
             Assert.Equal("Invalid cast", ex.Message);
         }
 
@@ -211,8 +255,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Act & Assert
             var ex = await Assert.ThrowsAsync<Exception>(() => _function.Run(new TimerInfo()));
-            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed pushing issued prns in message queue"))), Times.Once);
-            Assert.Equal("Error pushing to queue", ex.Message);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed pushing issued prns in message queue")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once); Assert.Equal("Error pushing to queue", ex.Message);
         }
 
         [Fact]
@@ -231,7 +280,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
-            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed fetching prns from the queue"))), Times.Once);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed fetching prns from the queue")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -245,7 +300,13 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.ProcessIssuedPrnsAsync();
 
             // Assert
-            _mockLogger.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("No messages found in the queue"))), Times.Once);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("No messages found in the queue")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -309,7 +370,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
-            _mockLogger.VerifyLog(logger => logger.LogWarning(It.Is<string>(s => s.Contains("Validation failed for message Id"))), Times.Once);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Warning),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Validation failed for message Id")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -400,7 +467,13 @@ namespace EprPrnIntegration.Api.UnitTests
 
             // Assert
             _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
-            _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Error processing message Id")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -425,7 +498,7 @@ namespace EprPrnIntegration.Api.UnitTests
             try
             {
                 await _function.ProcessIssuedPrnsAsync();
-                _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.StartsWith("Unexpected Error processing message Id"))), Times.Once);
+                _mockLogger.Verify(logger => logger.LogError(It.Is<string>(s => s.StartsWith("Unexpected Error processing message Id"))), Times.Once);
             }
             catch (Exception) {
                 rethrowsException = true;
@@ -463,8 +536,21 @@ namespace EprPrnIntegration.Api.UnitTests
             // Assert
             var expectedFilter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
             _mockNpwdClient.Verify(client => client.GetIssuedPrns(It.Is<string>(filter => filter == expectedFilter)), Times.Once);
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("function started"))));
-            _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("Prns Pushed into Message"))));
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("function started")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ));
+
+            _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Prns Pushed into Message")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ));
         }
 
         [Fact]

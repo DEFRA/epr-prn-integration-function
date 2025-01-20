@@ -59,7 +59,13 @@ public class EmailNpwdReconciliationFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdReconciliation function(s) disabled by feature flag"))));
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().StartsWith("EmailNpwdReconciliation function(s) disabled by feature flag")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -77,7 +83,13 @@ public class EmailNpwdReconciliationFunctionTests
         await _function.Run(new TimerInfo());
 
         // Assert
-        _mockLogger.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.StartsWith("EmailNpwdIssuedPrnsReconciliationAsync function executed"))));
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().StartsWith("EmailNpwdIssuedPrnsReconciliationAsync function executed")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -107,7 +119,14 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(x => x.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), 1, It.IsAny<string>()), Times.Never);
-        _mockLogger.VerifyLog(x => x.LogError(It.Is<string>(s => s.StartsWith("Failed running EmailNpwdIssuedPrnsReconciliationAsync"))));
+
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().StartsWith("Failed running EmailNpwdIssuedPrnsReconciliationAsync")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -145,8 +164,13 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), prns.Count, csvContent), Times.Once);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -165,9 +189,14 @@ public class EmailNpwdReconciliationFunctionTests
         // Assert
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), 0, It.IsAny<string>()), Times.Once);
-
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed"))), Times.Once);
+        
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
     }
 
     [Fact]
@@ -185,8 +214,13 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogError(It.IsAny<Exception>(), It.Is<string>(s => s.Contains("Failed running EmailNpwdIssuedPrnsReconciliationAsync"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed running EmailNpwdIssuedPrnsReconciliationAsync")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
     }
 
     [Fact]
@@ -224,8 +258,13 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailUpdatedPrnReconciliationAsync function executed"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailUpdatedPrnReconciliationAsync function executed")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
     }
 
     [Fact]
@@ -245,8 +284,13 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Once);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailUpdatedPrnReconciliationAsync function executed"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailUpdatedPrnReconciliationAsync function executed")), 
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true) 
+        ), Times.Once);
     }
 
     [Fact]
@@ -264,8 +308,13 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogError(It.IsAny<Exception>(), It.Is<string>(s => s.Contains("Failed running EmailUpdatedPrnReconciliationAsync"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed running EmailUpdatedPrnReconciliationAsync")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -309,11 +358,21 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), issuedPrns.Count, csvContent), Times.Once);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailUpdatedPrnReconciliationAsync function executed"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailUpdatedPrnReconciliationAsync function executed")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogInformation(It.Is<string>(s => s.Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 
     [Fact]
@@ -352,7 +411,12 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
 
-        _mockLogger.VerifyLog(logger =>
-            logger.LogError(It.Is<Exception>(ex => ex.Message.Contains("Mock exception from Updated PRNs")), It.Is<string>(s => s.Contains("Failed running EmailUpdatedPrnReconciliationAsync"))), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed running EmailUpdatedPrnReconciliationAsync")),
+            It.Is<Exception>(ex => ex.Message.Contains("Mock exception from Updated PRNs")),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
     }
 }
