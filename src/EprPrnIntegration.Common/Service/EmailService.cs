@@ -127,7 +127,7 @@ public class EmailService(
     public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv)
     {
         var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
-        var filename = $"updatedprns_{reportDate:yyyyMMdd}.csv";
+        var filename = $"reconciledprns_{reportDate:yyyyMMdd}.csv";
         var emailAddress = _messagingConfig.NpwdEmail;
 
         var messagePersonalisation = new Dictionary<string, object>

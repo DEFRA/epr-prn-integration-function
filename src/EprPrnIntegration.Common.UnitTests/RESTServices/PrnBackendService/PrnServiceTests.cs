@@ -294,7 +294,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting Reconciled updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting Reconciled updated PRN's")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
         }

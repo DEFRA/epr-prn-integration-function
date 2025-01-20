@@ -55,7 +55,6 @@ public class PrnService : BaseHttpService, IPrnService
             _logger.LogError(ex, "Insert of sync data failed with ex: {exceptionMessage} with sync prns: {npwdUpdatedPrns}"
                 , ex.Message,JsonSerializer.Serialize(npwdUpdatedPrns));
         }
-        
     }
 
     public async Task SavePrn(SavePrnDetailsRequest request)
@@ -69,8 +68,12 @@ public class PrnService : BaseHttpService, IPrnService
         var nowDateTime = DateTime.UtcNow;
         var fromDate = nowDateTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
         var toDate = nowDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        _logger.LogInformation("Getting Reconciled updated PRN's.");
-        return await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}",
+     
+        _logger.LogInformation("Getting Reconciled updated PRN's for date range from {FromDate} to {ToDate}", fromDate, toDate);
+
+        var reconciledPrns = await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}", 
             CancellationToken.None, false);
+
+        return reconciledPrns ??= [];
     }
 }

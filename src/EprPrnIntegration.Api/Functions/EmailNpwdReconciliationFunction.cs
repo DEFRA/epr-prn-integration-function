@@ -40,13 +40,14 @@ public class EmailNpwdReconciliationFunction(
 
         try
         {
-            var updatedPrns = await prnService.GetReconciledUpdatedPrns();
+            var reconciledPrns = await prnService.GetReconciledUpdatedPrns();
+
             var csvData = new Dictionary<string, List<string>>
             {
-                { CustomEventFields.PrnNumber, updatedPrns.Select(x => x.PrnNumber).ToList() },
-                { CustomEventFields.IncomingStatus, updatedPrns.Select(x => x.StatusName).ToList() },
-                { CustomEventFields.Date, updatedPrns.Select(x => x.UpdatedOn).ToList() },
-                { CustomEventFields.OrganisationName, updatedPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
+                { CustomEventFields.PrnNumber, reconciledPrns.Select(x => x.PrnNumber).ToList() },
+                { CustomEventFields.IncomingStatus, reconciledPrns.Select(x => x.StatusName).ToList() },
+                { CustomEventFields.Date, reconciledPrns.Select(x => x.UpdatedOn).ToList() },
+                { CustomEventFields.OrganisationName, reconciledPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
             };
 
             var csvContent = utilities.CreateCsvContent(csvData);
@@ -66,6 +67,7 @@ public class EmailNpwdReconciliationFunction(
         try
         {
             var prns = await appInsightsService.GetIssuedPrnCustomEventLogsLast24hrsAsync();
+
             var csvData = new Dictionary<string, List<string>>
             {
                 { CustomEventFields.PrnNumber, prns.Select(x => x.PrnNumber).ToList() },
