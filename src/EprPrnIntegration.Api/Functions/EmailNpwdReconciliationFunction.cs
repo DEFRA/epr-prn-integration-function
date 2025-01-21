@@ -90,7 +90,7 @@ public class EmailNpwdReconciliationFunction(
 
     public async Task EmailNpwdUpdatedOrganisationsAsync()
     {
-        logger.LogInformation("{FunctionName} function executed at: {ExecutionDateTime}", nameof(EmailUpdatedOrganisationsAsync), DateTime.UtcNow);
+        logger.LogInformation("{FunctionName} function executed at: {ExecutionDateTime}", nameof(EmailNpwdUpdatedOrganisationsAsync), DateTime.UtcNow);
 
         try
         {
@@ -109,7 +109,7 @@ public class EmailNpwdReconciliationFunction(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed running {FunctionName}", nameof(EmailUpdatedOrganisationsAsync));
+            logger.LogError(ex, "Failed running {FunctionName}", nameof(EmailNpwdUpdatedOrganisationsAsync));
         }
     }
 }
