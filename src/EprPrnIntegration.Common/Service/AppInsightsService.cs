@@ -60,4 +60,47 @@ public class AppInsightsService : IAppInsightsService
 
         return prns;
     }
+
+    public async Task<List<UpdatedOrganisationReconciliationSummary>> GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync()
+    {
+        var orgs = new List<UpdatedOrganisationReconciliationSummary>();
+
+        const string organisationName = "organisationName";
+        const string organisationId = "organisationId";
+        const string organisationAddress = "organisationAddress";        
+
+        var client = new LogsQueryClient(new DefaultAzureCredential());
+        string resourceId = _appInsightsConfig.Value.ResourceId;
+
+        string query = @$"customEvents
+                            | where name in ('{CustomEvents.UpdatedOrganisation}')
+                            | extend org = parse_json(customDimensions)
+                            | extend {organisationName} = org['{CustomEventFields.OrganisationName}'], 
+                                {organisationId} = org['{CustomEventFields.OrganisationId}'], 
+                                {organisationAddress} = org['{CustomEventFields.OrganisationAddress}']
+                            | project {organisationName}, {organisationId}, {organisationAddress}";
+
+        // run the query on the Application Insights resource
+        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(1)));
+
+        if (customLogs != null)
+        {
+            foreach (Azure.Monitor.Query.Models.LogsTable? table in customLogs.Value.AllTables)
+            {
+                foreach (var row in table.Rows)
+                {
+                    UpdatedOrganisationReconciliationSummary org = new()
+                    {
+                        Name = row[organisationName]?.ToString() ?? string.Empty,
+                        Id = row[organisationId]?.ToString() ?? string.Empty,
+                        Address = row[organisationAddress]?.ToString() ?? string.Empty
+                    };
+
+                    orgs.Add(org);
+                }
+            }
+        }
+
+        return orgs;
+    }
 }

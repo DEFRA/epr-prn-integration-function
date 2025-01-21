@@ -17,4 +17,5 @@ public interface IEmailService
     /// <param name="reportCsv">Individual PRN details in comma separated list</param>
     void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv);
     void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv);
+    void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv);
 }
