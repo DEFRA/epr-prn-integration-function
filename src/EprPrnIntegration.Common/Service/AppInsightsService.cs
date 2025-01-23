@@ -69,6 +69,7 @@ public class AppInsightsService : IAppInsightsService
         const string organisationId = "OrganisationId";
         const string organisationAddress = "OrganisationAddress";
         const string updatedDate = "UpdatedDate";
+        var queryPeriod = TimeSpan.FromDays(1);
 
         var client = new LogsQueryClient(new DefaultAzureCredential());
         string resourceId = _appInsightsConfig.Value.ResourceId;
@@ -83,7 +84,7 @@ public class AppInsightsService : IAppInsightsService
                             | project {organisationName}, {organisationId}, {organisationAddress}, {updatedDate}";
 
         // run the query on the Application Insights resource
-        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(90)));
+        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(queryPeriod));
 
         if (customLogs != null)
         {
