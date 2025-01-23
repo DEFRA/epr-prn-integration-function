@@ -65,23 +65,25 @@ public class AppInsightsService : IAppInsightsService
     {
         var orgs = new List<UpdatedOrganisationReconciliationSummary>();
 
-        const string organisationName = "organisationName";
-        const string organisationId = "organisationId";
-        const string organisationAddress = "organisationAddress";        
+        const string organisationName = "OrganisationName";
+        const string organisationId = "OrganisationId";
+        const string organisationAddress = "OrganisationAddress";
+        const string updatedDate = "UpdatedDate";
 
         var client = new LogsQueryClient(new DefaultAzureCredential());
         string resourceId = _appInsightsConfig.Value.ResourceId;
 
         string query = @$"customEvents
-                            | where name in ('{CustomEvents.UpdatedOrganisation}')
+                            | where name in ('{CustomEvents.UpdateOrganisation}')
                             | extend org = parse_json(customDimensions)
                             | extend {organisationName} = org['{CustomEventFields.OrganisationName}'], 
                                 {organisationId} = org['{CustomEventFields.OrganisationId}'], 
-                                {organisationAddress} = org['{CustomEventFields.OrganisationAddress}']
-                            | project {organisationName}, {organisationId}, {organisationAddress}";
+                                {organisationAddress} = org['{CustomEventFields.OrganisationAddress}'],
+                                {updatedDate} = org['{CustomEventFields.Date}']
+                            | project {organisationName}, {organisationId}, {organisationAddress}, {updatedDate}";
 
         // run the query on the Application Insights resource
-        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(1)));
+        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(90)));
 
         if (customLogs != null)
         {
@@ -93,7 +95,8 @@ public class AppInsightsService : IAppInsightsService
                     {
                         Name = row[organisationName]?.ToString() ?? string.Empty,
                         Id = row[organisationId]?.ToString() ?? string.Empty,
-                        Address = row[organisationAddress]?.ToString() ?? string.Empty
+                        Address = row[organisationAddress]?.ToString() ?? string.Empty,
+                        Date = row[updatedDate]?.ToString() ?? string.Empty,
                     };
 
                     orgs.Add(org);

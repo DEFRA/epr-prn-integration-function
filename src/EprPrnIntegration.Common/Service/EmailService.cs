@@ -149,13 +149,13 @@ public class EmailService(
 
     public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv)
     {
-        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
+        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;          
         var filename = $"updatedorganisations_{reportDate:yyyyMMdd}.csv";
 
         var messagePersonalisation = new Dictionary<string, object>
         {
             {
-                "date", reportDate.ToString("dd/MM/yyyy")
+                "UpdatedDate", reportDate.ToString("dd/MM/yyyy")
             },
             {
                 "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)

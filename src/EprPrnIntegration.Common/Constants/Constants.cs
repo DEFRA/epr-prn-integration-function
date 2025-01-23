@@ -53,7 +53,7 @@
         public const string IssuedPrn = "IssuedPrn";
         public const string UpdateProducer = "UpdateProducer";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
-        public const string UpdatedOrganisation = "UpdatedOrganisation";
+        public const string UpdateOrganisation = "UpdateProducer";
     }
 
     public static class CustomEventFields
@@ -61,9 +61,9 @@
         public const string PrnNumber = "PRN Number";
         public const string IncomingStatus = "Incoming Status";
         public const string Date = "Date";
-        public const string OrganisationName = "Organisation Name";
-        public const string OrganisationId = "Organisation Id";
-        public const string OrganisationAddress = "Organisation Address";
+        public const string OrganisationName = "Organization name";
+        public const string OrganisationId = "Organisation ID";
+        public const string OrganisationAddress = "Address";
         public const string ErrorComments = "Error Comments";
     }
 }

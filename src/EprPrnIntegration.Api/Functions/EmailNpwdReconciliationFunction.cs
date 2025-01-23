@@ -20,7 +20,7 @@ public class EmailNpwdReconciliationFunction(
     IUtilities utilities,
     IPrnService prnService)
 {
-    [Function("EmailNpwdReconciliation")]
+    [Function("EmailNpwdReconciliation")]    
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
         var isOn = featureConfig.Value.RunIntegration ?? false;
@@ -100,7 +100,8 @@ public class EmailNpwdReconciliationFunction(
             {
                 { CustomEventFields.OrganisationId, updatedOrgs.Select(x => x.Id ?? string.Empty).ToList() },
                 { CustomEventFields.OrganisationName, updatedOrgs.Select(x => x.Name ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },                
+                { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },
+                { CustomEventFields.Date, updatedOrgs.Select(x => x.Date ?? string.Empty).ToList() },
             };
 
             var csvContent = utilities.CreateCsvContent(csvData);
