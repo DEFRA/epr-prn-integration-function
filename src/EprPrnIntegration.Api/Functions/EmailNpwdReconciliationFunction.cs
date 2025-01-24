@@ -95,6 +95,9 @@ public class EmailNpwdReconciliationFunction(
         {
             var updatedOrgs = await appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync();
 
+            logger.LogInformation("Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}", 
+                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs?.Count ?? 0, DateTime.UtcNow);
+
             var csvData = new Dictionary<string, List<string>>
             {
                 { CustomEventFields.OrganisationId, updatedOrgs.Select(x => x.Id ?? string.Empty).ToList() },
