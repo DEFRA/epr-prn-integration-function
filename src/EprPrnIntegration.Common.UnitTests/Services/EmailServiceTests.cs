@@ -481,7 +481,7 @@ public class EmailServiceTests
                 It.Is<string>(email => email == _messagingConfig.NpwdEmail),
                 It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId),
                 It.Is<Dictionary<string, object>>(parameters =>
-                    parameters.ContainsKey("report_date") &&
+                    parameters.ContainsKey("UpdatedDate") &&
                     parameters.ContainsKey("link_to_file")),
                 null, null, null))
             .Returns(expectedResponse);
