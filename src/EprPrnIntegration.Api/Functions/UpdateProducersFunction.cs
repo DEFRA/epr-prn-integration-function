@@ -90,10 +90,10 @@ public class UpdateProducersFunction(
         {
             Dictionary<string, string> eventData = new()
                 {
-                    { "Organization name", producer.OrganisationName! },
-                    { "Organisation ID", producer.OrganisationId! },
-                    { "Date",DateTime.UtcNow.ToString() },
-                    { "Address",producer.OrganisationAddress},
+                    { CustomEventFields.OrganisationName, producer.OrganisationName! },
+                    { CustomEventFields.OrganisationId, producer.OrganisationId! },
+                    { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                    { CustomEventFields.OrganisationAddress, producer.OrganisationAddress},
                 };
 
             utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
