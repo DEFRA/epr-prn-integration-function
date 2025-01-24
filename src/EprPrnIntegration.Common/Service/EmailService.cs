@@ -148,6 +148,31 @@ public class EmailService(
         }
     }
 
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv)
+    {
+        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
+        var emailAddress = _messagingConfig.NpwdEmail;
+        var filename = $"updatedorganisations_{reportDate:yyyyMMdd}.csv";
+
+        var messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "UpdatedDate", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
+
+        if (!string.IsNullOrWhiteSpace(responseId))
+        {
+            var message = $"Updated organisations reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
+            logger.LogInformation(message);
+        }
+    }
+
     private string SendNpwdEmail(Dictionary<string, object> data, string templateId, string emailAddress)
     {
         try

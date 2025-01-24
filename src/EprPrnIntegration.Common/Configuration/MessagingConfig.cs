@@ -16,4 +16,5 @@ public class MessagingConfig
     public string? NpwdValidationErrorsTemplateId { get; set; }
     public string? NpwdReconcileIssuedPrnsTemplateId { get; set; }
     public string? NpwdReconcileUpdatedPrnsTemplateId { get; set; }
+    public string? NpwdReconcileUpdatedOrganisationsTemplateId { get; set; }
 }

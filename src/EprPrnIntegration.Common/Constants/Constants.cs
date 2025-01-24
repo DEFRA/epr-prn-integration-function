@@ -58,6 +58,7 @@
         public const string IssuedPrn = "IssuedPrn";
         public const string UpdateProducer = "UpdateProducer";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
+        public const string UpdateOrganisation = "UpdateProducer";
     }
 
     public static class CustomEventFields
@@ -66,6 +67,8 @@
         public const string IncomingStatus = "Incoming Status";
         public const string Date = "Date";
         public const string OrganisationName = "Organisation Name";
+        public const string OrganisationId = "Organisation ID";
+        public const string OrganisationAddress = "Address";
         public const string ErrorComments = "Error Comments";
     }
 }
