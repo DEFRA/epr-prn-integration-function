@@ -309,9 +309,9 @@ public class UpdateProducersFunctionTests
 
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
             It.Is<Dictionary<string, string>>(
-                data => data["Organization name"] == updatedProducers[0].OrganisationName
-                && data["Organisation ID"] == updatedProducers[0].OrganisationId
-                && data["Address"] == updatedProducers[0].OrganisationAddress)), Times.Once);
+                data => data[CustomEventFields.OrganisationName] == updatedProducers[0].OrganisationName
+                && data[CustomEventFields.OrganisationId] == updatedProducers[0].OrganisationId
+                && data[CustomEventFields.OrganisationAddress] == updatedProducers[0].OrganisationAddress)), Times.Once);
     }
 
     [Fact]
