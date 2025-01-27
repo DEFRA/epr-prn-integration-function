@@ -58,6 +58,7 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
+
         public async Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecution)
         {
             try
@@ -209,6 +210,48 @@ namespace EprPrnIntegration.Common.Service
             {
                 logger.LogError(ex, "Failed to deserialize message body: {MessageBody}", messageBody);
                 return default;
+            }
+        }
+
+        public async Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler)
+        {
+            try
+            {
+                var validationFaliledPrns = new List<T>();
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+
+                while (true)
+                {
+                    var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    if (!messages.Any())
+                    {
+                        logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
+                        break;
+                    }
+                    foreach (var message in messages)
+                    {
+                        try
+                        {
+                            var validationFailedPrns = await messageHandler(message)!;
+                            if (validationFailedPrns != null)
+                            {
+                                validationFaliledPrns.Add(validationFailedPrns);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            logger.LogError("Failed to process message with id: {MessageId}", message.MessageId);
+                            continue;
+                        }
+                        
+                    }
+                }
+                return validationFaliledPrns;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Failed to receive messages from queue with exception: {ExceptionMessage}", ex.Message);
+                throw;
             }
         }
     }

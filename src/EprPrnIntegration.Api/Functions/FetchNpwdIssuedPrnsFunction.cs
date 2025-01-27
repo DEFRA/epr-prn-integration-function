@@ -17,6 +17,7 @@ using EprPrnIntegration.Common.Constants;
 using System.Net;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using System.Globalization;
+using EprPrnIntegration.Common.Models.Queues;
 
 namespace EprPrnIntegration.Api.Functions
 {
@@ -50,24 +51,50 @@ namespace EprPrnIntegration.Api.Functions
         [Function("FetchNpwdIssuedPrnsFunction")]
         public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
         {
-            bool isOn = _featureConfig.Value.RunIntegration ?? false;
-            if (!isOn)
-            {
-                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
+            if (!IsFeatureEnabled())
                 return;
-            }
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
-            var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
-            if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
-                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
-            {
-                filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
-            }
 
+            string filter = GetFilterToFetchPrns(deltaRun, toDate);
+
+            var npwdIssuedPrns = await FetchPrns(filter);
+
+            await PushPrnsToQueueAndLogEvents(npwdIssuedPrns);
+
+            await _utilities.SetDeltaSyncExecution(deltaRun!, toDate);
+
+            var validationFailedPrns = await _serviceBusProvider.ProcessFetchedPrns(ProcessFetchedPrn);
+            
+            if(validationFailedPrns != null && validationFailedPrns.Count != 0)
+            {
+                SendErrorFetchedPrnEmail(validationFailedPrns);
+            }
+            _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+        }
+
+        private async Task PushPrnsToQueueAndLogEvents(List<NpwdPrn> npwdIssuedPrns)
+        {
+            try
+            {
+                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+
+                _logger.LogInformation("Issued Prns Pushed into Message Queue");
+
+                LogCustomEvents(npwdIssuedPrns);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed pushing issued prns in message queue with exception: {ex}", ex);
+                throw;
+            }
+        }
+
+        private async Task<List<NpwdPrn>> FetchPrns(string filter)
+        {
             List<NpwdPrn> npwdIssuedPrns;
             try
             {
@@ -95,97 +122,78 @@ namespace EprPrnIntegration.Api.Functions
                 throw;
             }
 
-            try
-            {
-                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
-
-                _logger.LogInformation("Issued Prns Pushed into Message Queue");
-
-                await _utilities.SetDeltaSyncExecution(deltaRun!, toDate);
-                LogCustomEvents(npwdIssuedPrns);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed pushing issued prns in message queue with exception: {ex}", ex);
-                throw;
-            }
-
-            try
-            {
-                await ProcessIssuedPrnsAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed fetching prns from the queue with exception: {ex}", ex);
-                throw;
-            }
-
-            _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+            return npwdIssuedPrns;
         }
 
-        internal async Task ProcessIssuedPrnsAsync()
+        private string GetFilterToFetchPrns(DeltaSyncExecution deltaRun, DateTime toDate)
         {
-            while (true)
+            var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
+            if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
+                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
             {
-                var messages = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
+                filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
+            }
 
-                if (!messages.Any())
-                {
-                    _logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
-                    break;
-                }
+            return filter;
+        }
 
-                var evidenceNo = string.Empty;
-                var validatedErrorMessages = new List<Dictionary<string, string>>();
-                foreach (var message in messages)
+        private bool IsFeatureEnabled()
+        {
+            bool isOn = _featureConfig.Value.RunIntegration ?? false;
+            if (!isOn)
+            {
+                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
+            }
+            return isOn;
+        }
+
+        internal async Task<Dictionary<string, string>?> ProcessFetchedPrn(ServiceBusReceivedMessage message)
+        {
+            var evidenceNo = string.Empty;
+            try
+            {
+                var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
+                _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
+                evidenceNo = messageContent?.EvidenceNo ?? "Missing";
+
+                // prns sourced from NPWD must pass validation
+                var validationResult = await _validator.ValidateAsync(messageContent!);
+                if (validationResult.IsValid)
                 {
                     try
                     {
-                        var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
-                        _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
-                        evidenceNo = messageContent?.EvidenceNo ?? "Missing";
+                        _logger.LogInformation("Validation passed for message Id: {MessageId}. Processing the PRN.", message.MessageId);
 
-                        // prns sourced from NPWD must pass validation
-                        var validationResult = await _validator.ValidateAsync(messageContent!);
-                        if (validationResult.IsValid)
-                        {
-                            try
-                            {
-                                _logger.LogInformation("Validation passed for message Id: {MessageId}. Processing the PRN.", message.MessageId);
-
-                                // Save to PRN DB
-                                var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(messageContent!);
-                                await _prnService.SavePrn(request);
-                                _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
-                                await SendEmailToProducers(message, messageContent, request);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
-                            await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
-
-                            var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
-                            var eventData = CreateCustomEvent(messageContent, errorMessages);
-                            _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
-
-                            validatedErrorMessages.Add(eventData);
-                        }
+                        // Save to PRN DB
+                        var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(messageContent!);
+                        await _prnService.SavePrn(request);
+                        _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
+                        await SendEmailToProducers(message, messageContent, request);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}.", message.MessageId);
-                        throw;
+                        _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
+                        await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     }
                 }
+                else
+                {
+                    _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
+                    await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
 
-                await SendErrorFetchedPrnEmail(validatedErrorMessages);
+                    var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+                    var eventData = CreateCustomEvent(messageContent, errorMessages);
+                    _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
+
+                    return eventData;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}.", message.MessageId);
+                throw;
             }
         }
 
@@ -246,12 +254,14 @@ namespace EprPrnIntegration.Api.Functions
             _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
         }
 
-        private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
+        private void SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
         {
-            if (validatedErrorMessages.Count > 0)
+            try
             {
-                var dateTimeNow = DateTime.UtcNow;
-                var csvData = new Dictionary<string, List<string>>
+                if (validatedErrorMessages.Count > 0)
+                {
+                    var dateTimeNow = DateTime.UtcNow;
+                    var csvData = new Dictionary<string, List<string>>
                 {
                     { CustomEventFields.PrnNumber, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number")).ToList() },
                     { CustomEventFields.IncomingStatus, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status")).ToList() },
@@ -260,9 +270,15 @@ namespace EprPrnIntegration.Api.Functions
                     { CustomEventFields.ErrorComments, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)).ToList() }
                 };
 
-                var csvContent = _utilities.CreateCsvContent(csvData);
+                    var csvContent = _utilities.CreateCsvContent(csvData);
 
-                _emailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
+                    _emailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "Failed sending validationfailed error mail to npwd");
             }
         }
     }

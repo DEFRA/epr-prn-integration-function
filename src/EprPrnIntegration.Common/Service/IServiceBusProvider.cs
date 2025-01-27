@@ -12,5 +12,6 @@ namespace EprPrnIntegration.Common.Service
         Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecution);
         Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType);
         Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
+        Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler);
     }
 }
