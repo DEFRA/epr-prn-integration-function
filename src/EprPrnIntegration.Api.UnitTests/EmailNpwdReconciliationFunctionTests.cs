@@ -10,7 +10,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.Drawing;
 using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
@@ -319,7 +318,7 @@ public class EmailNpwdReconciliationFunctionTests
     }
 
     [Fact]
-    public async Task Run_Executes_All_Tasks_Concurrently()
+    public async Task Run_Executes_All_Tasks()
     {
         // Arrange
         var config = new FeatureManagementConfiguration { RunIntegration = true, RunReconciliation = true};

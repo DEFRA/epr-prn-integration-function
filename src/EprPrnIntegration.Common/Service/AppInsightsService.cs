@@ -78,7 +78,7 @@ public class AppInsightsService : IAppInsightsService
         string resourceId = _appInsightsConfig.Value.ResourceId;
 
         string query = @$"customEvents
-                            | where name in ('{CustomEvents.UpdateOrganisation}')
+                            | where name in ('{CustomEvents.UpdateProducer}')
                             | extend org = parse_json(customDimensions)
                             | extend {organisationName} = org['{CustomEventFields.OrganisationName}'], 
                                 {organisationId} = org['{CustomEventFields.OrganisationId}'], 
