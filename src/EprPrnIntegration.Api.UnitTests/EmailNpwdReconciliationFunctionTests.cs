@@ -318,7 +318,7 @@ public class EmailNpwdReconciliationFunctionTests
     }
 
     [Fact]
-    public async Task Run_Executes_Both_Tasks_Concurrently()
+    public async Task Run_Executes_All_Tasks()
     {
         // Arrange
         var config = new FeatureManagementConfiguration { RunIntegration = true, RunReconciliation = true};
@@ -334,6 +334,11 @@ public class EmailNpwdReconciliationFunctionTests
             new ReconcileIssuedPrn { PrnNumber = "PRN2", PrnStatus = "ACCEPTED", UploadedDate = "11/01/2025", OrganisationName = "Company B" }
         };
 
+        var updatedOrganisations = new List<UpdatedOrganisationReconciliationSummary>
+        {
+            new() { Id = "asa-23jasd-232-123900", Name = "Gen Test Ltd", Date = "13/01/2025", Address= "233 Henz Boulevard, Milton Keynes MK9 1AA"}
+        };
+
         var csvContent = "Mock CSV Content";
 
         _mockPrnService
@@ -343,6 +348,10 @@ public class EmailNpwdReconciliationFunctionTests
         _mockAppInsightsService
             .Setup(service => service.GetIssuedPrnCustomEventLogsLast24hrsAsync())
             .ReturnsAsync(issuedPrns);
+
+        _mockAppInsightsService
+             .Setup(service => service.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync())
+             .ReturnsAsync(updatedOrganisations);
 
         _mockUtilities
             .Setup(utilities => utilities.CreateCsvContent(It.IsAny<Dictionary<string, List<string>>>()))
@@ -358,6 +367,9 @@ public class EmailNpwdReconciliationFunctionTests
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), issuedPrns.Count, csvContent), Times.Once);
 
+        _mockEmailService.Verify(service =>
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
@@ -370,6 +382,14 @@ public class EmailNpwdReconciliationFunctionTests
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdIssuedPrnsReconciliationAsync function executed")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
+
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdUpdatedOrganisationsAsync function executed")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -397,6 +417,10 @@ public class EmailNpwdReconciliationFunctionTests
             .Setup(service => service.GetIssuedPrnCustomEventLogsLast24hrsAsync())
             .ReturnsAsync(issuedPrns);
 
+        _mockAppInsightsService
+            .Setup(service => service.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync())
+            .ReturnsAsync(new List<UpdatedOrganisationReconciliationSummary>());
+
         _mockUtilities
             .Setup(utilities => utilities.CreateCsvContent(It.IsAny<Dictionary<string, List<string>>>()))
             .Returns(csvContent);
@@ -418,5 +442,99 @@ public class EmailNpwdReconciliationFunctionTests
             It.Is<Exception>(ex => ex.Message.Contains("Mock exception from Updated PRNs")),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
+    }
+
+    [Fact]
+    public async Task EmailNpwdUpdatedOrganisationsAsync_Sends_Email_Successfully()
+    {
+        // Arrange
+        var updatedOrgs = new List<UpdatedOrganisationReconciliationSummary>
+        {
+            new() { Id = "asd-90-909asd-2323", Name = "Gen Test 1 Ltd", Date = "10/01/2025", Address = "122 Ashwood Park, London SE1 5AA" },
+            new() { Id = "aa-22-333-asda2", Name = "Gen Test 2 Ltd", Date = "11/01/2025", Address = "2331 Wide Lane North, Glasgow GL1 2AA" }
+        };
+
+        var csvData = new Dictionary<string, List<string>>
+        {
+            { CustomEventFields.OrganisationId, updatedOrgs.Select(x => x.Id ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationName, updatedOrgs.Select(x => x.Name ?? string.Empty).ToList() },
+            { CustomEventFields.Date, updatedOrgs.Select(x => x.Date ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },
+        };
+
+        var csvContent = "Mock CSV Content";
+
+        _mockAppInsightsService
+            .Setup(service => service.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync())
+            .ReturnsAsync(updatedOrgs);
+
+        _mockUtilities
+            .Setup(utilities => utilities.CreateCsvContent(It.IsAny<Dictionary<string, List<string>>>()))
+            .Returns(csvContent);
+
+        // Act
+        await _function.EmailNpwdUpdatedOrganisationsAsync();
+
+        // Assert
+        _mockEmailService.Verify(service =>
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdUpdatedOrganisationsAsync function executed")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EmailNpwdUpdatedOrganisationsAsync_Handles_EmptyOrganisationList()
+    {
+        // Arrange
+        var updatedOrgs = new List<UpdatedOrganisationReconciliationSummary>();
+
+        _mockAppInsightsService
+            .Setup(service => service.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync())
+            .ReturnsAsync(updatedOrgs);
+
+        // Act
+        await _function.EmailNpwdUpdatedOrganisationsAsync();
+
+        // Assert
+        _mockEmailService.Verify(service =>
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Once);
+
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("EmailNpwdUpdatedOrganisationsAsync function executed")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task EmailNpwdUpdatedOrganisationsAsync_Logs_Error_On_Exception()
+    {
+        // Arrange
+        _mockAppInsightsService
+            .Setup(service => service.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync())
+            .ThrowsAsync(new Exception("Mock exception"));
+
+        // Act
+        await _function.EmailNpwdUpdatedOrganisationsAsync();
+
+        // Assert
+        _mockEmailService.Verify(service =>
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
+
+        _mockLogger.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Failed running EmailNpwdUpdatedOrganisationsAsync")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)),
+            Times.Once);
     }
 }

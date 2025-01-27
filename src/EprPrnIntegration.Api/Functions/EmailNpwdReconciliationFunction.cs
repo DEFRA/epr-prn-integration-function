@@ -29,9 +29,10 @@ public class EmailNpwdReconciliationFunction(
 
         var issuedPrnEmailTask = EmailNpwdIssuedPrnsReconciliationAsync();
         var updatedPrnEmailTask = EmailUpdatedPrnReconciliationAsync();
+        var updatedOrganisationsEmailTask = EmailNpwdUpdatedOrganisationsAsync();
 
         // Execute tasks concurrently, ensuring one task can continue even if the other fails
-        await Task.WhenAll(issuedPrnEmailTask, updatedPrnEmailTask);
+        await Task.WhenAll(issuedPrnEmailTask, updatedPrnEmailTask, updatedOrganisationsEmailTask);
     }
 
     public async Task EmailUpdatedPrnReconciliationAsync()
@@ -83,6 +84,35 @@ public class EmailNpwdReconciliationFunction(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed running EmailNpwdIssuedPrnsReconciliationAsync");
+        }
+    }
+
+    public async Task EmailNpwdUpdatedOrganisationsAsync()
+    {
+        logger.LogInformation("{FunctionName} function executed at: {ExecutionDateTime}", nameof(EmailNpwdUpdatedOrganisationsAsync), DateTime.UtcNow);
+
+        try
+        {
+            var updatedOrgs = await appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync();
+
+            logger.LogInformation("Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}", 
+                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs?.Count ?? 0, DateTime.UtcNow);
+
+            var csvData = new Dictionary<string, List<string>>
+            {
+                { CustomEventFields.OrganisationId, updatedOrgs.Select(x => x.Id ?? string.Empty).ToList() },
+                { CustomEventFields.OrganisationName, updatedOrgs.Select(x => x.Name ?? string.Empty).ToList() },
+                { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },
+                { CustomEventFields.Date, updatedOrgs.Select(x => x.Date ?? string.Empty).ToList() },
+            };
+
+            var csvContent = utilities.CreateCsvContent(csvData);
+
+            emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed running {FunctionName}", nameof(EmailNpwdUpdatedOrganisationsAsync));
         }
     }
 }

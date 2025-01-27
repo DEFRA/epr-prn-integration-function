@@ -35,6 +35,7 @@
     "MessagingConfig:NpwdEmail": "npwd.support@solution7.co.uk",
     "MessagingConfig:NpwdValidationErrorsTemplateId": "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef",
     "MessagingConfig:NpwdReconcileIssuedPrnsTemplateId": "3f28cb69-4703-46c6-902f-9350aaeebc87",
+    "MessagingConfig:NpwdReconcileUpdatedOrganisationsTemplateId": "07e89bba-7f0e-47f3-a96d-9fbcd923f9ee",
     "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
     "ApiCallsRetryConfig:MaxAttempts": 3,
     "NpwdIntegration:BaseUrl": "https://fat.npwd.org.uk/",
@@ -45,10 +46,10 @@
     "NpwdIntegration:Authority": "",
     "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
     "AppInsightsConfig:ResourceId": "",
-    "MessagingConfig:NpwdReconcileUpdatedPrnsTemplateId": "a1b81df4-560e-4034-a3cc-282d00ee2959"
+    "MessagingConfig:NpwdReconcileUpdatedPrnsTemplateId": "a1b81df4-560e-4034-a3cc-282d00ee2959",
     "AppInsightsConfig:ResourceId": "",
     "Service__AccountClientId": "",
-    "Service__PrnClientId":  "",
+    "Service__PrnClientId": "",
     "Service__CommonDataClientId": ""
   }
 }

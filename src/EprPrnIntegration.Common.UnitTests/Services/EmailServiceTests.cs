@@ -32,7 +32,8 @@ public class EmailServiceTests
             NpwdEmailTemplateId = "npwdEmailTemplateId",
             NpwdValidationErrorsTemplateId = "npwdValidationErrorsTemplateId",
             NpwdReconcileIssuedPrnsTemplateId = "npwdReconcileIssuedPrnsTemplateId",
-            NpwdEmail = "npwd@email.com"
+            NpwdEmail = "npwd@email.com",
+            NpwdReconcileUpdatedOrganisationsTemplateId = "npwdReconcileUpdatedOrganisationTemplateId",
         };
             
         // Setup the mock IOptions<MessagingConfig> to return the proper MessagingConfig
@@ -463,6 +464,76 @@ public class EmailServiceTests
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((state, type) =>
                         state.ToString().StartsWith($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedPrnsTemplateId}")),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd_SendsEmailWithAttachment_Successfully()
+    {
+        // Arrange
+        var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+
+        _mockNotificationClient.Setup(client => client.SendEmail(
+                It.Is<string>(email => email == _messagingConfig.NpwdEmail),
+                It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId),
+                It.Is<Dictionary<string, object>>(parameters =>
+                    parameters.ContainsKey("UpdatedDate") &&
+                    parameters.ContainsKey("link_to_file")),
+                null, null, null))
+            .Returns(expectedResponse);
+
+        // Act
+        _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content");
+
+        // Assert
+        _mockNotificationClient.Verify(client => client.SendEmail(
+            It.Is<string>(email => email == _messagingConfig.NpwdEmail),
+            It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId),
+            It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
+
+        _mockLogger.Verify(logger =>
+                logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((state, type) =>
+                        state.ToString().Contains("Updated organisations reconciliation email sent to NPWD")),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd_LogsError_WhenSendEmailFails()
+    {
+        // Arrange
+        var exceptionMessage = "Error sending email";
+        _mockNotificationClient
+            .Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, object>>(),
+                null, null, null))
+            .Throws(new Exception(exceptionMessage));
+
+        // Act
+        var exception = Assert.Throws<Exception>(() =>
+            _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content"));
+
+        // Assert
+        Assert.Equal(exceptionMessage, exception.Message);
+
+        _mockLogger.Verify(logger =>
+                logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((state, type) =>
+                        state.ToString().Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId}")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
