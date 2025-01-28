@@ -190,6 +190,48 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
+        public async Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler)
+        {
+            var invalidPrns = new List<T>();
+
+            try
+            {
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+
+                while (true)
+                {
+                    var messages = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    if (!messages.Any())
+                    {
+                        logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
+                        break;
+                    }
+                    foreach (var message in messages)
+                    {
+                        try
+                        {
+                            var validationFailedPrn = await messageHandler(message)!;
+                            if (validationFailedPrn != null)
+                            {
+                                invalidPrns.Add(validationFailedPrn);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Failed to process message with id: {MessageId}", message.MessageId);
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to receive messages from queue: {QueueName}", config.Value.FetchPrnQueueName);
+            }
+
+            return invalidPrns;
+        }
+
         private string GetDeltaSyncQueueName(NpwdDeltaSyncType syncType) =>
             syncType switch
             {
