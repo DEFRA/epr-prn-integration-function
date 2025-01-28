@@ -58,6 +58,8 @@ namespace EprPrnIntegration.Api.Functions
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
 
+            _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this excecution",deltaRun.LastSyncDateTime,toDate);
+
             string filter = GetFilterToFetchPrns(deltaRun, toDate);
 
             var npwdIssuedPrns = await FetchPrns(filter);
@@ -97,6 +99,7 @@ namespace EprPrnIntegration.Api.Functions
                 {
                     filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
                 }
+                _logger.LogInformation("Filter for fetching prns from npwd: {filter}", filter);
                 return filter;
             }
 
@@ -181,12 +184,11 @@ namespace EprPrnIntegration.Api.Functions
                 else
                 {
                     _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
-                    await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
-
                     var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                     var eventData = CreateCustomEvent(messageContent, errorMessages);
                     _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
 
+                    await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     return eventData;
                 }
                 return null;
@@ -228,50 +230,65 @@ namespace EprPrnIntegration.Api.Functions
 
         private async Task SendEmailToProducers(ServiceBusReceivedMessage message, NpwdPrn? messageContent, SavePrnDetailsRequest request)
         {
-            // Get list of producers
-            var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
-            _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
-
-            var producers = new List<ProducerEmail>();
-            foreach (var producer in producerEmails)
+            try
             {
-                var producerEmail = new ProducerEmail
+                // Get list of producers
+                var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
+                _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
+
+                var producers = new List<ProducerEmail>();
+                foreach (var producer in producerEmails)
                 {
-                    EmailAddress = producer.Email,
-                    FirstName = producer.FirstName,
-                    LastName = producer.LastName,
-                    NameOfExporterReprocessor = request.ReprocessorAgency!,
-                    NameOfProducerComplianceScheme = request.IssuedToOrgName,
-                    PrnNumber = request.EvidenceNo!,
-                    Material = request.EvidenceMaterial!,
-                    Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                    IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
-                };
-                producers.Add(producerEmail);
+                    var producerEmail = new ProducerEmail
+                    {
+                        EmailAddress = producer.Email,
+                        FirstName = producer.FirstName,
+                        LastName = producer.LastName,
+                        NameOfExporterReprocessor = request.ReprocessorAgency!,
+                        NameOfProducerComplianceScheme = request.IssuedToOrgName,
+                        PrnNumber = request.EvidenceNo!,
+                        Material = request.EvidenceMaterial!,
+                        Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
+                        IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
+                    };
+                    producers.Add(producerEmail);
+                }
+
+                _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
+                _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
+
+                _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
             }
-
-            _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
-            _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
-
-            _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email notification for issued prn: {prnNo} and EprId: {EPRId}", messageContent?.EvidenceNo,messageContent?.IssuedToEPRId);
+            }
+            
         }
 
         private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
         {
-            if (validatedErrorMessages.Any())
+            try
             {
-                var dateTimeNow = DateTime.UtcNow;
-                var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                if (validatedErrorMessages.Any())
                 {
-                    PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
-                    IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
-                    Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
-                    OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
-                    ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
-                }).ToList();
+                    var dateTimeNow = DateTime.UtcNow;
+                    var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
+                    {
+                        PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
+                        IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
+                        Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
+                        OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
+                        ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
+                    }).ToList();
 
-                var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
-                _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+                    var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
+                    _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while sending email for validation failed Prns");
             }
         }
     }
