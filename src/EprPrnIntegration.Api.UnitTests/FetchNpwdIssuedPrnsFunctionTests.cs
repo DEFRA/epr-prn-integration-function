@@ -394,6 +394,25 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task ProcessFetchedPrn_LogsErrorAndThrows_WhenFailedDuring_PrnsDeserialze()
+        {
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize("npwdPrn")),
+                messageId: "message-id"
+            );
+
+            await Assert.ThrowsAnyAsync<Exception>(async () => await _function.ProcessFetchedPrn(message));
+
+            _mockLogger.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Unexpected error while processing message Id:")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+            _mockServiceBusProvider.Verify(p => p.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
         public async Task Run_UsesDefaultFilterIfLastSyncDateIsBeforeDefaultLastRunDate()
         {
             // Arrange
