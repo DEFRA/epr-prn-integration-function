@@ -18,6 +18,7 @@ using System.Text.Json;
 using EprPrnIntegration.Common.Constants;
 using FluentAssertions;
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Api.Models;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -363,6 +364,59 @@ namespace EprPrnIntegration.Api.UnitTests
             // Assert
             _mockServiceBusProvider.Verify(provider => provider.SendMessageToErrorQueue(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<string>()), Times.Once);
             _mockLogger.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Error processing message Id"))), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessFetchedPrn_LogsErrorWhen_ErrorWhileSendingMail_ToProducers()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Returns(Task.CompletedTask);
+
+            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Error while getting Producers"));
+
+            // Act
+            await _function.ProcessFetchedPrn(message);
+
+            _mockLogger.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to send email notification for issued prn:")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessFetchedPrn_SendMails_ToProducers()
+        {
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Returns(Task.CompletedTask);
+
+            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(_fixture.CreateMany<PersonEmail>().ToList());
+
+            // Act
+            await _function.ProcessFetchedPrn(message);
+
+            _mockEmailService.Verify(m => m.SendEmailsToProducers(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
