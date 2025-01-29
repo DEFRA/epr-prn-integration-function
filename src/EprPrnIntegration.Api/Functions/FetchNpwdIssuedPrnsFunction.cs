@@ -58,9 +58,9 @@ namespace EprPrnIntegration.Api.Functions
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
             var toDate = DateTime.UtcNow;
 
-            _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this excecution",deltaRun.LastSyncDateTime,toDate);
+            _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this execution", deltaRun.LastSyncDateTime, toDate);
 
-            string filter = GetFilterToFetchPrns(deltaRun, toDate);
+            var filter = GetFilterToFetchPrns(deltaRun, toDate);
 
             var npwdIssuedPrns = await FetchPrns(filter);
 
@@ -79,77 +79,6 @@ namespace EprPrnIntegration.Api.Functions
 
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
 
-            // check feature flag is enabled
-            bool IsFeatureEnabled()
-            {
-                bool isOn = _featureConfig.Value.RunIntegration ?? false;
-                if (!isOn)
-                {
-                    _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
-                }
-                return isOn;
-            }
-
-            // get query string filter for NPWD endpoint
-            string GetFilterToFetchPrns(DeltaSyncExecution deltaRun, DateTime toDate)
-            {
-                var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
-                if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
-                           CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
-                {
-                    filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
-                }
-                _logger.LogInformation("Filter for fetching prns from npwd: {filter}", filter);
-                return filter;
-            }
-
-            // get Prns from NPWD
-            async Task<List<NpwdPrn>> FetchPrns(string filter)
-            {
-                List<NpwdPrn> npwdIssuedPrns;
-                try
-                {
-                    npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);
-                    if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
-                    {
-                        _logger.LogWarning($"No Prns Exists in npwd for filter {filter}");
-                    }
-                    _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns!.Count, filter);
-                }
-                catch (HttpRequestException ex)
-                {
-                    _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
-
-                    if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
-                    {
-                        _emailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
-                    }
-
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Failed Get Prns method for filter {filter} with exception {ex}", filter, ex.Message);
-                    throw;
-                }
-
-                return npwdIssuedPrns;
-            }
-
-            // place Prn message into a queue to await processing
-            async Task PushPrnsToInputQueue(List<NpwdPrn> npwdIssuedPrns)
-            {
-                try
-                {
-                    await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
-                    _logger.LogInformation("Issued Prns Pushed into Message Queue");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("Failed pushing issued prns in message queue with exception: {ex}", ex);
-                    throw;
-                }
-            }
         }
 
         internal async Task<Dictionary<string, string>?> ProcessFetchedPrn(ServiceBusReceivedMessage message)
@@ -291,5 +220,81 @@ namespace EprPrnIntegration.Api.Functions
                 _logger.LogError(ex, "Error while sending email for validation failed Prns");
             }
         }
+
+        // check feature flag is enabled
+        private bool IsFeatureEnabled()
+        {
+            bool isOn = _featureConfig.Value.RunIntegration ?? false;
+            if (!isOn)
+            {
+                _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
+            }
+            return isOn;
+        }
+
+        // get query string filter for NPWD endpoint
+        private string GetFilterToFetchPrns(DeltaSyncExecution deltaRun, DateTime toDate)
+        {
+            var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
+            if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
+                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
+            {
+                filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
+            }
+            _logger.LogInformation("Filter for fetching prns from npwd: {filter}", filter);
+            return filter;
+        }
+
+        // get Prns from NPWD
+        private async Task<List<NpwdPrn>> FetchPrns(string filter)
+        {
+            List<NpwdPrn> npwdIssuedPrns;
+            try
+            {
+                npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);
+                if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
+                {
+                    _logger.LogWarning($"No Prns Exists in npwd for filter {filter}");
+                }
+                else
+                {
+                    _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns!.Count, filter);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
+
+                if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
+                {
+                    _emailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
+                }
+
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed Get Prns method for filter {filter} with exception {ex}", filter, ex.Message);
+                throw;
+            }
+
+            return npwdIssuedPrns;
+        }
+
+        // place Prn message into a queue to await processing
+        private async Task PushPrnsToInputQueue(List<NpwdPrn> npwdIssuedPrns)
+        {
+            try
+            {
+                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+                _logger.LogInformation("Issued Prns Pushed into Message Queue");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed pushing issued prns in message queue with exception: {ex}", ex);
+                throw;
+            }
+        }
+
     }
 }
