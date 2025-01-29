@@ -256,7 +256,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent, updatedPrns.Count), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
@@ -282,7 +282,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Once);
+            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>(), updatedPrns.Count), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
@@ -306,7 +306,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
+            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
 
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
@@ -326,12 +326,12 @@ public class EmailNpwdReconciliationFunctionTests
 
         var updatedPrns = new List<ReconcileUpdatedPrnsResponseModel>
         {
-            new ReconcileUpdatedPrnsResponseModel { PrnNumber = "PRN1", StatusName = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" }
+            new() { PrnNumber = "PRN1", StatusName = "APPROVED", UpdatedOn = "10/01/2025", OrganisationName = "Company A" }
         };
 
         var issuedPrns = new List<ReconcileIssuedPrn>
         {
-            new ReconcileIssuedPrn { PrnNumber = "PRN2", PrnStatus = "ACCEPTED", UploadedDate = "11/01/2025", OrganisationName = "Company B" }
+            new() { PrnNumber = "PRN2", PrnStatus = "ACCEPTED", UploadedDate = "11/01/2025", OrganisationName = "Company B" }
         };
 
         var updatedOrganisations = new List<UpdatedOrganisationReconciliationSummary>
@@ -362,7 +362,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent, updatedPrns.Count), Times.Once);
 
         _mockEmailService.Verify(service =>
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), issuedPrns.Count, csvContent), Times.Once);
@@ -404,7 +404,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         var issuedPrns = new List<ReconcileIssuedPrn>
         {
-            new ReconcileIssuedPrn { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "11/01/2025", OrganisationName = "Company B" }
+            new() { PrnNumber = "PRN1", PrnStatus = "ACCEPTED", UploadedDate = "11/01/2025", OrganisationName = "Company B" }
         };
 
         var csvContent = "Mock CSV Content";
@@ -433,7 +433,7 @@ public class EmailNpwdReconciliationFunctionTests
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), issuedPrns.Count, csvContent), Times.Once);
 
         _mockEmailService.Verify(service =>
-            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
+            service.SendUpdatedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
 
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),

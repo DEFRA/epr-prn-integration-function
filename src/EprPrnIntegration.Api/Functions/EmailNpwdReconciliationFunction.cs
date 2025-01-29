@@ -53,7 +53,7 @@ public class EmailNpwdReconciliationFunction(
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
-            emailService.SendUpdatedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent);
+            emailService.SendUpdatedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent, reconciledPrns.Count);
         }
         catch (Exception ex)
         {

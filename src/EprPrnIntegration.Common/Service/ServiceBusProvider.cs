@@ -111,56 +111,6 @@ namespace EprPrnIntegration.Common.Service
             }
         }
 
-        public async Task<IEnumerable<ServiceBusReceivedMessage>> ReceiveFetchedNpwdPrnsFromQueue()
-        {
-            try
-            {
-                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
-
-                // Continue receiving messages until the queue is empty or we have processed the relevant range
-                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds?? 1));
-
-                return messages;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError("Failed to receive messages from queue with exception: {ExceptionMessage}", ex.Message);
-                throw;
-            }
-        }
-        
-        public async Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
-            {
-                try
-                {
-                    await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
-
-                    var retryMessage = new ServiceBusMessage(receivedMessage.Body)
-                    {
-                        ContentType = receivedMessage.ContentType,
-                        MessageId = receivedMessage.MessageId,
-                        CorrelationId = receivedMessage.CorrelationId,
-                        Subject = receivedMessage.Subject,
-                        To = receivedMessage.To
-                    };
-
-                    // Copy over the application properties to ensure message state is preserved.
-                    foreach (var property in receivedMessage.ApplicationProperties)
-                    {
-                        retryMessage.ApplicationProperties.Add(property.Key, property.Value);
-                    }
-
-                    // Send the message back to the FetchPrnQueue.
-                    await sender.SendMessageAsync(retryMessage);
-                    logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent back to the FetchPrnQueue.", evidenceNo);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError("Failed to send message back to FetchPrnQueue with exception: {ExceptionMessage}", ex.Message);
-                    throw;
-                }
-            }
-
         public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
         {
             try
@@ -188,6 +138,48 @@ namespace EprPrnIntegration.Common.Service
             {
                 logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
             }
+        }
+
+        public async Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler)
+        {
+            var invalidPrns = new List<T>();
+
+            try
+            {
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+
+                while (true)
+                {
+                    var messages = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    if (!messages.Any())
+                    {
+                        logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
+                        break;
+                    }
+                    foreach (var message in messages)
+                    {
+                        try
+                        {
+                            var validationFailedPrn = await messageHandler(message)!;
+                            if (validationFailedPrn != null)
+                            {
+                                invalidPrns.Add(validationFailedPrn);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Failed to process message with id: {MessageId}", message.MessageId);
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to receive messages from queue: {QueueName}", config.Value.FetchPrnQueueName);
+            }
+
+            return invalidPrns;
         }
 
         private string GetDeltaSyncQueueName(NpwdDeltaSyncType syncType) =>

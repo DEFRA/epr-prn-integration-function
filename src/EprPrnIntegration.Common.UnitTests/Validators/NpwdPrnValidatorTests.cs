@@ -92,12 +92,26 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         }
 
         [Theory]
-        //[InlineData("OrganisationId")]
+        [InlineData("OrganisationId")]
         [InlineData("05be0802-19ac-4c80-b99d-6452577bf93d")]
         public async Task IssuedEPRId_Should_Have_Error_When_Not_Guid_Or_Invalid_Guid(string? npwdEprId)
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssuedToEPRId = npwdEprId;
+
+            var result = await _sut.TestValidateAsync(npwdPrn);
+            result.ShouldHaveValidationErrorFor(x => x.IssuedToEPRId);
+        }
+
+        [Fact]
+        public async Task IssuedEPRId_Should_Have_Error_When_OrganisationServiceThrowExceptionGuid()
+        {
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var orgId = Guid.NewGuid();
+            npwdPrn.IssuedToEPRId = orgId.ToString();
+
+            _mockOrganisationService.Setup(service => service.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception());
 
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.IssuedToEPRId);
