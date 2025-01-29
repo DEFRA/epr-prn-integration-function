@@ -368,7 +368,7 @@ public class EmailNpwdReconciliationFunctionTests
             service.SendIssuedPrnsReconciliationEmailToNpwd(It.IsAny<DateTime>(), issuedPrns.Count, csvContent), Times.Once);
 
         _mockEmailService.Verify(service =>
-            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), updatedOrganisations.Count, csvContent), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
@@ -477,7 +477,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), csvContent), Times.Once);
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), updatedOrgs.Count, csvContent), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
@@ -503,7 +503,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Once);
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), updatedOrgs.Count, It.IsAny<string>()), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
@@ -527,7 +527,7 @@ public class EmailNpwdReconciliationFunctionTests
 
         // Assert
         _mockEmailService.Verify(service =>
-            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), It.IsAny<string>()), Times.Never);
+            service.SendUpdatedOrganisationsReconciliationEmailToNpwd(It.IsAny<DateTime>(), 0, It.IsAny<string>()), Times.Never);
 
         _mockLogger.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
