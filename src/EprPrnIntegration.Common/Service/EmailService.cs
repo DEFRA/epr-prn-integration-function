@@ -124,7 +124,7 @@ public class EmailService(
         }
     }
 
-    public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv)
+    public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv, int rowCount)
     {
         var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
         var filename = $"reconciledprns_{reportDate:yyyyMMdd}.csv";
@@ -137,6 +137,9 @@ public class EmailService(
             },
             {
                 "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            },
+            {
+                "row_count", rowCount
             }
         };
 
