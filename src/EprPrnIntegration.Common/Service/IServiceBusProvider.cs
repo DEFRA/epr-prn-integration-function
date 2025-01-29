@@ -7,10 +7,9 @@ namespace EprPrnIntegration.Common.Service
     public interface IServiceBusProvider
     {
         Task SendFetchedNpwdPrnsToQueue(List<NpwdPrn> prns);
-        Task<IEnumerable<ServiceBusReceivedMessage>> ReceiveFetchedNpwdPrnsFromQueue();
         Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
         Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecutions);
         Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType);
-        Task SendMessageBackToFetchPrnQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
+        Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler);
     }
 }
