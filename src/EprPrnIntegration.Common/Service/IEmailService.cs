@@ -16,7 +16,14 @@ public interface IEmailService
     /// <param name="reportCount">Number of PRNs</param>
     /// <param name="reportCsv">Individual PRN details in comma separated list</param>
     void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv);
-    void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv);
+
+    /// <summary>
+    /// Send Updated PRNs status reconciliation email
+    /// </summary>
+    /// <param name="reportDate"></param>
+    /// <param name="reportCsv"></param>
+    /// <param name="rowCount"></param>
+    void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv, int rowCount);
 
     /// <summary>
     /// Inform NPWD about organisations updated

@@ -414,7 +414,7 @@ public class EmailServiceTests
             .Returns(expectedResponse);
 
         // Act
-        _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content");
+        _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content", 2);
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(
@@ -453,7 +453,8 @@ public class EmailServiceTests
         var exception = Assert.Throws<Exception>(() =>
             _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(
                 new DateTime(2025, 12, 1),
-                "Sample CSV Content"));
+                "Sample CSV Content",
+                2));
 
         // Assert
         Assert.Equal(exceptionMessage, exception.Message);
