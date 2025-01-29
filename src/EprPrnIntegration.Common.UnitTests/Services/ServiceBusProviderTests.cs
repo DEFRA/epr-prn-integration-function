@@ -3,7 +3,6 @@ using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
 using FluentAssertions;
@@ -69,17 +68,12 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Exactly(2));
 
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Length > 0),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Exactly(2));
     }
 
     [Fact]
-    public async Task SendFetchedPrnsToQueueAsync_SendBatchAndCreateNewAndAddMessage()
+    public async Task SendFetchedPrnsToQueue_SendBatchAndCreateNewAndAddMessage()
     {
         // Arrange
         var npwdPrns = _fixture.CreateMany<NpwdPrn>(10).ToList();
@@ -87,7 +81,7 @@ public class ServiceBusProviderTests
         List<ServiceBusMessage> messageList1 = [];
         List<ServiceBusMessage> messageList2 = [];
         ServiceBusMessageBatch messageBatch1 = ServiceBusModelFactory.ServiceBusMessageBatch(
-            batchSizeBytes: 10 * 1024 *1024,
+            batchSizeBytes: 10 * 1024 * 1024,
             batchMessageStore: messageList1,
             batchOptions: new CreateMessageBatchOptions(),
             tryAddCallback: _ => messageList1.Count < messageCountThreshold);
@@ -112,7 +106,7 @@ public class ServiceBusProviderTests
     }
 
     [Fact]
-    public async Task SendApprovedSubmissionsToQueueAsync_ShouldThrowError_WHenClientFails()
+    public async Task SendFetchedPrnsToQueue_ShouldThrowError_WHenClientFails()
     {
         // Arrange
         var npwdPrns = _fixture.CreateMany<NpwdPrn>().ToList();
@@ -125,13 +119,51 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+    }
 
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+    [Fact]
+    public async Task SendFetchedNpwdPrnsToQueue_MessageTooLarge_Warns()
+    {
+        // Arrange
+        var npwdPrns = _fixture.CreateMany<NpwdPrn>(10).ToList();
+        int messageCountThreshold = 1;
+        List<ServiceBusMessage> messageList = [new ServiceBusMessage()];
+
+        ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
+            batchSizeBytes: 500,
+            batchMessageStore: messageList,
+            batchOptions: new CreateMessageBatchOptions(),
+            tryAddCallback: _ => messageList.Count < messageCountThreshold);
+
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
+        // Act
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns));
+
+        // Assert
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
+        _serviceBusSenderMock.Verify(r => r.CreateMessageBatchAsync(default), Times.Exactly(2));
+
+        _loggerMock.VerifyLog(l => l.LogError(It.Is<string>(s => s.Contains("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendFetchedNpwdPrnsToQueue_ShouldThrowError_WhenClientFails()
+    {
+        // Arrange
+        var npwdPrns = _fixture.CreateMany<NpwdPrn>().ToList();
+
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("ServiceBus error"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns));
+
+        // Assert
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -157,13 +189,7 @@ public class ServiceBusProviderTests
 
         // Assert: Ensure that SendMessageAsync was called with the correct message
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendDeltaSyncExecutionToQueue - A message has been published to the queue:")),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("SendDeltaSyncExecutionToQueue - A message has been published to the queue"))), Times.Once);
     }
 
     [Fact]
@@ -184,13 +210,7 @@ public class ServiceBusProviderTests
 
         // Act & Assert: Ensure that an exception is thrown and error is logged
         await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaSyncExecution));
-
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendDeltaSyncExecutionToQueue failed to add message on Queue with exception:")),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("SendDeltaSyncExecutionToQueue failed to add message on Queue with exception"))), Times.Once);
     }
 
     [Fact]
@@ -198,19 +218,14 @@ public class ServiceBusProviderTests
     {
         // Arrange
         _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ServiceBusReceivedMessage?) null);
+            .ReturnsAsync((ServiceBusReceivedMessage?)null);
 
         // Act
         var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
 
         // Assert
         Assert.Null(result);
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("No message received from the queue")),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogInformation(It.Is<string>(s => s.Contains("No message received from the queue"))), Times.Once);
     }
 
     [Fact]
@@ -266,14 +281,7 @@ public class ServiceBusProviderTests
 
         // Assert
         Assert.Null(result);
-
-        _loggerMock.Verify(logger => logger.Log(
-           It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-           It.IsAny<EventId>(),
-           It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to deserialize message body:")),
-           It.IsAny<Exception>(),
-           It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-
+        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to deserialize message body:"))), Times.Once);
         _serviceBusReceiverMock.Verify(
             receiver => receiver.AbandonMessageAsync(It.IsAny<ServiceBusReceivedMessage>(),
                 It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -289,223 +297,7 @@ public class ServiceBusProviderTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers));
         Assert.Equal("Service bus connection error", exception.Message);
-
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("GetDeltaSyncExecutionFromQueue failed with exception:")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendFetchedNpwdPrnsToQueue_MessageTooLarge_Warns()
-    {
-        // Arrange
-        var npwdPrns = _fixture.CreateMany<NpwdPrn>(10).ToList();
-        int messageCountThreshold = 1;
-        List<ServiceBusMessage> messageList = [new ServiceBusMessage()];
-
-        ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
-            batchSizeBytes: 500,
-            batchMessageStore: messageList,
-            batchOptions: new CreateMessageBatchOptions(),
-            tryAddCallback: _ => messageList.Count < messageCountThreshold);
-
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-
-        // Act
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns));
-
-        // Assert
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _serviceBusSenderMock.Verify(r => r.CreateMessageBatchAsync(default), Times.Exactly(2));
-
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendFetchedNpwdPrnsToQueue_ShouldThrowError_WhenClientFails()
-    {
-        // Arrange
-        var npwdPrns = _fixture.CreateMany<NpwdPrn>().ToList();
-
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("ServiceBus error"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns));
-
-        // Assert
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-     
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception:")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendMessageBackToFetchPrnQueue_ShouldSendRetryMessage()
-    {
-        // Arrange
-        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
-            body: new BinaryData(Newtonsoft.Json.JsonConvert.SerializeObject(_fixture.Create<Evidence>())),
-            messageId: _fixture.Create<string>(),
-            correlationId: _fixture.Create<string>(),
-            contentType: "application/json",
-            subject: "subject",
-            to: "receiver"
-        );
-
-        var serviceBusMessage = new ServiceBusMessage(receivedMessage.Body)
-        {
-            ContentType = receivedMessage.ContentType,
-            MessageId = receivedMessage.MessageId,
-            CorrelationId = receivedMessage.CorrelationId,
-            Subject = receivedMessage.Subject,
-            To = receivedMessage.To
-        };
-
-        foreach (var property in receivedMessage.ApplicationProperties)
-        {
-            serviceBusMessage.ApplicationProperties.Add(property.Key, property.Value);
-        }
-
-        _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default)).Returns(Task.CompletedTask);
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-
-        // Act
-        await _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage, "EvidenceNo");
-
-        // Assert
-        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.Is<ServiceBusMessage>(msg =>
-            msg.Body.ToString() == serviceBusMessage.Body.ToString() &&
-            msg.ContentType == serviceBusMessage.ContentType &&
-            msg.MessageId == serviceBusMessage.MessageId &&
-            msg.CorrelationId == serviceBusMessage.CorrelationId &&
-            msg.Subject == serviceBusMessage.Subject &&
-            msg.To == serviceBusMessage.To &&
-            msg.ApplicationProperties.SequenceEqual(serviceBusMessage.ApplicationProperties)), default), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendMessageBackToFetchPrnQueue_Failure_LogsError()
-    {
-        // Arrange
-        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
-            body: new BinaryData(Newtonsoft.Json.JsonConvert.SerializeObject(_fixture.Create<Evidence>())),
-            messageId: _fixture.Create<string>(),
-            correlationId: _fixture.Create<string>(),
-            contentType: "application/json",
-            subject: "subject",
-            to: "receiver"
-        );
-
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("ServiceBus error"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.SendMessageBackToFetchPrnQueue(receivedMessage, "EvidenceNo"));
-
-        // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to send message back to FetchPrnQueue with exception:")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task SendMessageToErrorQueue_Success()
-    {
-        // Arrange
-        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
-            body: new BinaryData(Newtonsoft.Json.JsonConvert.SerializeObject(_fixture.Create<Evidence>())),
-            messageId: _fixture.Create<string>(),
-            correlationId: _fixture.Create<string>(),
-            contentType: "application/json",
-            subject: "subject",
-            to: "receiver"
-        );
-
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-
-        // Act
-        await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, "EvidenceNo");
-
-        // Assert
-        _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Message with EvidenceNo:")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task ReceiveFetchedNpwdPrnsFromQueue_NoMessages_ReturnsEmptyList()
-    {
-        // Arrange
-        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<ServiceBusReceivedMessage>());
-
-        // Act
-        var result = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
-
-        // Assert
-        Assert.Empty(result);
-    }
-
-    [Fact]
-    public async Task ReceiveFetchedNpwdPrnsFromQueue_MessagesFound_ReturnsDeserializedList()
-    {
-        // Arrange
-        var npwdPrns = _fixture.CreateMany<NpwdPrn>(3).ToList();
-        var messages = npwdPrns.Select(prn => ServiceBusModelFactory.ServiceBusReceivedMessage(
-            new BinaryData(JsonSerializer.Serialize(npwdPrns)))).ToList();
-        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(messages);
-
-        _serviceBusReceiverMock.Setup(receiver => receiver.CompleteMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue();
-
-        // Assert
-        Assert.Equal(npwdPrns.Count, result.Count());
-    }
-
-    [Fact]
-    public async Task ReceiveFetchedNpwdPrnsFromQueue_ExceptionThrown_LogsErrorAndRethrows()
-    {
-        // Arrange
-        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Service bus connection error"));
-
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<Exception>(() => _serviceBusProvider.ReceiveFetchedNpwdPrnsFromQueue());
-        Assert.Equal("Service bus connection error", exception.Message);
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().StartsWith("Failed to receive messages from queue with exception")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("GetDeltaSyncExecutionFromQueue failed with exception"))), Times.Once);
     }
 
     [Fact]
@@ -531,6 +323,29 @@ public class ServiceBusProviderTests
         updatedProducersQueue.Should().Be(expectedUpdatedProducersQueue);
         updatePrnsQueue.Should().Be(expectedUpdatePrnsQueue);
         fetchNpwdIssuedPrnsQueue.Should().Be(expectedFetchNpwdIssuedPrnsQueue);
+    }
+
+    [Fact]
+    public async Task SendMessageToErrorQueue_Success()
+    {
+        // Arrange
+        var receivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+            body: new BinaryData(Newtonsoft.Json.JsonConvert.SerializeObject(_fixture.Create<Common.Models.Npwd.Evidence>())),
+            messageId: _fixture.Create<string>(),
+            correlationId: _fixture.Create<string>(),
+            contentType: "application/json",
+            subject: "subject",
+            to: "receiver"
+        );
+
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
+        // Act
+        await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, "EvidenceNo");
+
+        // Assert
+        _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -563,13 +378,8 @@ public class ServiceBusProviderTests
             msg.To == receivedMessage.To &&
             msg.ApplicationProperties.SequenceEqual(receivedMessage.ApplicationProperties)), It.IsAny<CancellationToken>()), Times.Once);
 
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains($"Message with EvidenceNo: {evidenceNo} sent to error queue.")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
-        ), Times.Once);
+        _loggerMock.VerifyLog(logger => logger.LogInformation(
+            "Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidenceNo), Times.Once);
     }
 
     [Fact]
@@ -592,13 +402,127 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendMessageToErrorQueue(receivedMessage, evidenceNo);
 
         // Assert
+        _loggerMock.VerifyLog(logger => logger.LogError(
+            "Failed to send message to error queue with exception: {ExceptionMessage}",
+            "ServiceBus exception"), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessFetchedPrns_ShouldNotCallHandlerAndBreakLoop_WhenNoMessagesFoundInQueue()
+    {
+        int handlerCallCount = 0;
+        var handler = (ServiceBusReceivedMessage message) => { handlerCallCount++; return Task.FromResult<string?>(null); };
+
+        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        await _serviceBusProvider.ProcessFetchedPrns(handler);
+        _loggerMock.VerifyLog(logger => logger.LogInformation("No messages found in the queue. Exiting the processing loop."), Times.Once);
+        handlerCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ProcessFetchedPrns_ShouldCallHandlerAndBreakLoop_WhenMessagesFoundInQueue()
+    {
+        int handlerCallCount = 0;
+        var handler = (ServiceBusReceivedMessage message) => { handlerCallCount++; return Task.FromResult<string?>(null); };
+
+        var npwdPrns = _fixture.CreateMany<NpwdPrn>(3).ToList();
+        var messages = npwdPrns.Select(prn => ServiceBusModelFactory.ServiceBusReceivedMessage(
+            new BinaryData(JsonSerializer.Serialize(npwdPrns)))).ToList();
+
+        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+        _serviceBusReceiverMock.SetupSequence(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(messages)
+            .ReturnsAsync([]);
+
+        await _serviceBusProvider.ProcessFetchedPrns(handler);
+        _loggerMock.VerifyLog(logger => logger.LogInformation("No messages found in the queue. Exiting the processing loop."), Times.Once);
+
+        handlerCallCount.Should().Be(3);
+
+        _serviceBusClientMock.Verify(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>()), Times.Once);
+        _serviceBusReceiverMock.Verify(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ProcessFetchedPrns_ShoulReturnListOfReturnsOfHandler()
+    {
+        int handlerCallCount = 0;
+        var handler = (ServiceBusReceivedMessage message) =>
+        {
+            handlerCallCount++;
+            if (handlerCallCount % 2 == 0)
+                return Task.FromResult<string?>(message.Body.ToString());
+            else
+                return Task.FromResult<string?>(null);
+        };
+
+        var npwdPrns = _fixture.CreateMany<NpwdPrn>(3).ToList();
+        var messages = npwdPrns.Select(prn => ServiceBusModelFactory.ServiceBusReceivedMessage(
+            new BinaryData(JsonSerializer.Serialize(npwdPrns)))).ToList();
+
+        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+        _serviceBusReceiverMock.SetupSequence(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(messages)
+            .ReturnsAsync([]);
+
+        var response = await _serviceBusProvider.ProcessFetchedPrns(handler);
+
+        _loggerMock.VerifyLog(logger => logger.LogInformation("No messages found in the queue. Exiting the processing loop."), Times.Once);
+
+        handlerCallCount.Should().Be(3);
+
+        _serviceBusClientMock.Verify(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>()), Times.Once);
+        _serviceBusReceiverMock.Verify(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        response.Should().NotBeNull();
+        response.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task ProcessFetchedPrns_ShouldLogError_WhenMessageHandlerThrowsException()
+    {
+        var handler = (ServiceBusReceivedMessage message) => { return Task.FromException<string?>(new NotImplementedException()); };
+
+        var npwdPrns = _fixture.CreateMany<NpwdPrn>(3).ToList();
+        var messages = npwdPrns.Select(prn => ServiceBusModelFactory.ServiceBusReceivedMessage(
+            new BinaryData(JsonSerializer.Serialize(npwdPrns)))).ToList();
+
+        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>())).Returns(_serviceBusReceiverMock.Object);
+        _serviceBusReceiverMock.SetupSequence(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(messages)
+            .ReturnsAsync([]);
+
+        await _serviceBusProvider.ProcessFetchedPrns(handler);
+
+        _loggerMock.VerifyLog(logger => logger.LogInformation("No messages found in the queue. Exiting the processing loop."), Times.Once);
+
+        _serviceBusClientMock.Verify(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>()), Times.Once);
+        _serviceBusReceiverMock.Verify(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) =>
-                state.ToString().Contains("Failed to send message to error queue with exception: ServiceBus exception")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
-        ), Times.Once);
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to process message with id:")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(3));
+
+    }
+
+    [Fact]
+    public async Task ProcessFetchedPrns_ShouldLogError_WhenReceiverFails()
+    {
+        var handler = (ServiceBusReceivedMessage message) => { return Task.FromResult<string?>(null); };
+        // Arrange
+        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>(), It.IsAny<ServiceBusReceiverOptions>()))
+            .Throws(new Exception("Receiver exception"));
+
+        await _serviceBusProvider.ProcessFetchedPrns(handler);
+        _loggerMock.Verify(logger => logger.Log(
+        LogLevel.Error,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Failed to receive messages from queue:")),
+        It.IsAny<Exception>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+
     }
 }
