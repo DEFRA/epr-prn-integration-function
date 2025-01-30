@@ -108,7 +108,8 @@ public class EmailNpwdReconciliationFunction(
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
-            emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent);
+            var dataRowsCount = updatedOrgs?.Count ?? 0;
+            emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime.UtcNow, dataRowsCount, csvContent);
         }
         catch (Exception ex)
         {

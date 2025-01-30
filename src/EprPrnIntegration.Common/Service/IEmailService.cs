@@ -30,5 +30,5 @@ public interface IEmailService
     /// </summary>
     /// <param name="reportDate">The date up until organisations were updated</param>
     /// <param name="reportCsv">Updated organisations data in CSV formatted string</param>
-    void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv);
+    void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, int reportDataRowsCount, string reportCsv);
 }

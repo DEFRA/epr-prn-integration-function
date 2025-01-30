@@ -151,7 +151,7 @@ public class EmailService(
         }
     }
 
-    public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv)
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, int reportDataRowsCount, string reportCsv)
     {
         var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
         var emailAddress = _messagingConfig.NpwdEmail;
@@ -161,6 +161,9 @@ public class EmailService(
         {
             {
                 "UpdatedDate", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "RowCount", reportDataRowsCount
             },
             {
                 "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)

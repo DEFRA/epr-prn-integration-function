@@ -483,12 +483,13 @@ public class EmailServiceTests
                 It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId),
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("UpdatedDate") &&
+                    parameters.ContainsKey("RowCount") &&
                     parameters.ContainsKey("link_to_file")),
                 null, null, null))
             .Returns(expectedResponse);
 
         // Act
-        _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content");
+        _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), 1, "Sample CSV Content");
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(
@@ -524,7 +525,7 @@ public class EmailServiceTests
 
         // Act
         var exception = Assert.Throws<Exception>(() =>
-            _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content"));
+            _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(new DateTime(2025, 12, 1),0, "Sample CSV Content"));
 
         // Assert
         Assert.Equal(exceptionMessage, exception.Message);
