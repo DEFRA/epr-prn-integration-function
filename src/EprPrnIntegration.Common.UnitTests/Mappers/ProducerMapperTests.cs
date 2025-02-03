@@ -62,7 +62,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                     Country = "Country A",
                     Postcode = "12345",
                     Status ="DR Registered",
-                    OrganisationType =  "DR"
+                    OrganisationType =  "DR",
+                    BusinessCountry = "Northern Ireland"
                 }
             };
 
@@ -82,6 +83,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Equal("12345", producer.Postcode);
             Assert.Equal("PR-REGISTERED", producer.StatusCode);
             Assert.Equal("Registered", producer.StatusDesc);
+            Assert.Equal("Northern Ireland Environment Agency", producer.Agency);
         }
 
         [Fact]
@@ -102,6 +104,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Assert
             var producer = result.Value[0];
             Assert.Equal("PR-REGISTERED", producer.StatusCode);
+            Assert.Equal("Environment Agency", producer.Agency);
         }
 
         [Fact]
