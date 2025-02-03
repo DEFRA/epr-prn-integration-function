@@ -121,7 +121,7 @@ namespace EprPrnIntegration.Common.Mappers
                 case "Scotland":
                     return "Scottish Environment Protection Agency";
                 default:
-                    return "Environment Agency";
+                    return string.Empty;
             }
         }
     }

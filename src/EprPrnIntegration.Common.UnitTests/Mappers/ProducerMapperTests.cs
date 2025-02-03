@@ -104,7 +104,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Assert
             var producer = result.Value[0];
             Assert.Equal("PR-REGISTERED", producer.StatusCode);
-            Assert.Equal("Environment Agency", producer.Agency);
+            Assert.Equal(string.Empty, producer.Agency);
         }
 
         [Fact]
