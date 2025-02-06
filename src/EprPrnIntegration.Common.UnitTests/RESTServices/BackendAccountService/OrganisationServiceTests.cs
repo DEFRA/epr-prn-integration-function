@@ -35,10 +35,10 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             _configMock.Setup(c => c.Value).Returns(serviceConfig);
 
             // Create a mock HttpClient
-            var httpClient = new HttpClient(new FakeHttpMessageHandler(new List<PersonEmail>
-                                {
-                                    new PersonEmail { FirstName="Test", LastName="User", Email = "test@example.com" }
-                                }));
+            var httpClient = new HttpClient(new FakeHttpMessageHandler(
+                                [
+                                    new() { FirstName="Test", LastName="User", Email = "test@example.com" }
+                                ]));
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
@@ -204,12 +204,6 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 statusCode: HttpStatusCode.OK));
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
-
-            var organisationService = new OrganisationService(
-                _httpContextAccessorMock.Object,
-                httpClientFactoryMock,
-                _loggerMock.Object,
-                _configMock.Object);
 
             // Act
             bool result = await _organisationService.DoesProducerOrComplianceSchemeExistAsync(organisationId, "CS", CancellationToken.None);

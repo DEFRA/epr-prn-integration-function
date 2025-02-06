@@ -4,7 +4,7 @@ using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +15,7 @@ using System.Net;
 namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateProducersFunction(
-    IOrganisationService organisationService,
+    ICommonDataService commonDataService,
     INpwdClient npwdClient,
     ILogger<UpdateProducersFunction> logger,
     IConfiguration configuration,
@@ -43,7 +43,7 @@ public class UpdateProducersFunction(
         logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
-        if (updatedEprProducers == null || !updatedEprProducers.Any())
+        if (updatedEprProducers == null || updatedEprProducers.Count.Equals(0))
         {
             logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
             await utilities.SetDeltaSyncExecution(deltaRun, toDate);
@@ -84,27 +84,27 @@ public class UpdateProducersFunction(
         }
     }
 
-    private void LogCustomEvents(List<UpdatedProducersResponseModel> updatedEprProducers)
+    private void LogCustomEvents(List<UpdatedProducersResponse> updatedEprProducers)
     {
         foreach (var producer in updatedEprProducers)
         {
             Dictionary<string, string> eventData = new()
                 {
-                    { "Organization name", producer.ProducerName },
-                    { "Organisation ID", producer.ReferenceNumber.ToString() },
-                    { "Date",DateTime.UtcNow.ToString() },
-                    { "Address",producer.OrganisationAddress},
+                    { CustomEventFields.OrganisationName, producer.OrganisationName! },
+                    { CustomEventFields.OrganisationId, producer.OrganisationId! },
+                    { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                    { CustomEventFields.OrganisationAddress, producer.OrganisationAddress},
                 };
 
             utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
         }
     }
 
-    private async Task<List<UpdatedProducersResponseModel>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
     {
         try
         {
-            return await organisationService.GetUpdatedProducers(fromDate, toDate, new CancellationToken());
+            return await commonDataService.GetUpdatedProducers(fromDate, toDate, new CancellationToken());
         }
         catch (Exception ex)
         {

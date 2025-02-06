@@ -2,25 +2,19 @@
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
-using Notify.Client;
 
 namespace EprPrnIntegration.Common.Service;
 
-public class EmailService : IEmailService
+public class EmailService(
+    INotificationClient notificationClient,
+    IOptions<MessagingConfig> messagingConfig,
+    ILogger<EmailService> logger) : IEmailService
 {
-    private readonly MessagingConfig _messagingConfig;
-    private readonly INotificationClient _notificationClient;
-    private readonly ILogger<EmailService> _logger;
+    private readonly MessagingConfig _messagingConfig = messagingConfig.Value;
     private const string ExceptionLogMessageGeneric = "GOV UK NOTIFY ERROR. Method: SendEmail: {emailAddress} Template: {templateId}";
-    
-    public EmailService(INotificationClient notificationClient, IOptions<MessagingConfig> messagingConfig, ILogger<EmailService> logger)
-    {
-        _notificationClient = notificationClient;
-        _messagingConfig = messagingConfig.Value;
-        _logger = logger;
-    }
 
     public void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId)
     {
@@ -41,14 +35,14 @@ public class EmailService : IEmailService
 
             try
             {
-                var response = _notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
+                var response = notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
                 string message = $"Email sent to {producer.FirstName} {producer.LastName} with email address {producer.EmailAddress} and the responseid is {response.id}.";
-                _logger.LogInformation(message);
+                logger.LogInformation(message);
 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, Constants.Values.ExceptionLogMessage, organisationId, templateId);
+                logger.LogError(ex, Constants.Values.ExceptionLogMessage, organisationId, templateId);
             }
         }
     }
@@ -69,49 +63,133 @@ public class EmailService : IEmailService
 
         try
         {
-            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
+            var response = notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
 
             string message = $"Email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
-            _logger.LogInformation(message);
+            logger.LogInformation(message);
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
+            logger.LogError(ex, ExceptionLogMessageGeneric, npwdEmailAddress, templateId);
         }
     }
 
-    public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
+    public void SendValidationErrorPrnEmail(string csvData, DateTime reportDate)
     {
-        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
-
-        var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
+        var filename = $"error_events{DateTime.UtcNow.ToShortDateString()}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
 
-        attachmentStream.Position = 0;
-
-        using var memoryStream = new MemoryStream();
-        attachmentStream.CopyTo(memoryStream);
-        var fileBytes = memoryStream.ToArray();
-        var fileUpload = NotificationClient.PrepareUpload(fileBytes, $"error_events{DateTime.UtcNow.ToShortDateString()}.csv");
-        
         var parameters = new Dictionary<string, object>
         {
-            { "emailAddress", npwdEmailAddress! },
             { "reportDate", reportDate! },
-            { "link_to_file", fileUpload }
+            { "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(csvData), filename) }
         };
 
+        var responseId = SendNpwdEmail(parameters, templateId, emailAddress);
+
+        if (!string.IsNullOrWhiteSpace(responseId))
+        {
+            var message = $"Validation Error email sent to NPWD with email address {emailAddress} and the response ID is {responseId}.";
+            logger.LogInformation(message);
+        }
+    }
+
+    public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
+    {
+        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
+        var filename = $"issuedprns_{reportDate:yyyyMMdd}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
+
+        var messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "report_date", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "report_count", reportCount
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
+        
+        if(!string.IsNullOrWhiteSpace(responseId))
+        {
+            var message = $"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
+            logger.LogInformation(message);
+        }
+    }
+
+    public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv, int rowCount)
+    {
+        var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
+        var filename = $"reconciledprns_{reportDate:yyyyMMdd}.csv";
+        var emailAddress = _messagingConfig.NpwdEmail;
+
+        var messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "date", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            },
+            {
+                "row_count", rowCount
+            }
+        };
+
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
+
+        if (!string.IsNullOrWhiteSpace(responseId))
+        {
+            logger.LogInformation($"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.");
+        }
+    }
+
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, int reportDataRowsCount, string reportCsv)
+    {
+        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
+        var emailAddress = _messagingConfig.NpwdEmail;
+        var filename = $"updatedorganisations_{reportDate:yyyyMMdd}.csv";
+
+        var messagePersonalisation = new Dictionary<string, object>
+        {
+            {
+                "UpdatedDate", reportDate.ToString("dd/MM/yyyy")
+            },
+            {
+                "RowCount", reportDataRowsCount
+            },
+            {
+                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
+            }
+        };
+
+        var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
+
+        if (!string.IsNullOrWhiteSpace(responseId))
+        {
+            var message = $"Updated organisations reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
+            logger.LogInformation(message);
+        }
+    }
+
+    private string SendNpwdEmail(Dictionary<string, object> data, string templateId, string emailAddress)
+    {
         try
         {
-            var response = _notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
-
-            var message = $"Email sent to NPWD with email address {npwdEmailAddress} and the response ID is {response.id}.";
-            _logger.LogInformation(message);
+            var response = notificationClient.SendEmail(emailAddress, templateId, data);
+            return response.id;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", npwdEmailAddress, templateId);
+            logger.LogError(ex, "Failed to send email to {EmailAddress} using template ID {TemplateId}", emailAddress, templateId);
+            throw;
         }
     }
 }

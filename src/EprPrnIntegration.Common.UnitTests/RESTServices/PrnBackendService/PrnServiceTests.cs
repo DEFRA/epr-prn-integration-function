@@ -1,16 +1,15 @@
-﻿using Moq;
-using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
-using System.Text.Json;
-using EprPrnIntegration.Common.UnitTests.Helpers;
+﻿using AutoFixture;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService;
+using EprPrnIntegration.Common.UnitTests.Helpers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using AutoFixture;
-using FluentAssertions;
+using Microsoft.Extensions.Options;
+using Moq;
+using System.Text.Json;
 
-namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
+namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
     public class PrnServiceTests
     {
@@ -51,8 +50,8 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
-                    new UpdatedPrnsResponseModel { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
+                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
+                    new() { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -79,7 +78,7 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
+                new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);
@@ -95,9 +94,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated PRN's.")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -141,7 +140,12 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
 
-            _loggerMock.VerifyLog(l => l.LogError(It.IsAny<InvalidDataException>(), It.Is<string>(s => s.Contains("Insert of sync data failed with ex:"))));
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Insert of sync data failed with ex:")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -153,10 +157,14 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             var sut = CreatePrnService("", System.Net.HttpStatusCode.OK);
 
             await sut.InsertPeprNpwdSyncPrns(updatedPrns);
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Sync data inserted"))));
+            _loggerMock.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Sync data inserted")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
-
-        // New tests for SavePrn method
 
         [Fact]
         public async Task SavePrn_ShouldCallServiceWithCorrectRequest()
@@ -174,7 +182,13 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             await sut.SavePrn(request);
 
             // Assert
-            _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(s => s.Contains("Saving PRN with id 1234"))), Times.Once);
+            _loggerMock.Verify(logger => logger.Log(
+                It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Saving PRN with id 1234")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+            ), Times.Once);
         }
 
         [Fact]
@@ -196,9 +210,9 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Saving PRN with id 1234")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Saving PRN with id 1234")),
                 null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
 
         [Fact]
@@ -215,6 +229,95 @@ namespace EprPrnIntegration.Common.UnitTests.PrnBackendService
 
             // Act & Assert
             await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
+        }
+
+        [Fact]
+        public async Task GetReconciledUpdatedPrns_ShouldReturnCorrectData()
+        {
+            // Arrange
+            var mockData = new List<ReconcileUpdatedPrnsResponseModel>
+    {
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "001",
+            StatusName = "Approved",
+            UpdatedOn = "2024-12-04T15:57:02",
+            OrganisationName = "Company A"
+        },
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "002",
+            StatusName = "Rejected",
+            UpdatedOn = "2024-12-03T23:51:02",
+            OrganisationName = "Company B"
+        }
+    };
+
+            var mockDataJson = JsonSerializer.Serialize(mockData);
+            var sut = CreatePrnService(mockDataJson);
+
+            // Act
+            var result = await sut.GetReconciledUpdatedPrns();
+
+            // Assert
+            Assert.NotEmpty(result);
+            Assert.Equal("001", result[0].PrnNumber);
+            Assert.Equal("Approved", result[0].StatusName);
+            Assert.Equal("002", result[1].PrnNumber);
+            Assert.Equal("Rejected", result[1].StatusName);
+        }
+
+        [Fact]
+        public async Task GetReconciledUpdatedPrns_ShouldReturnEmptyList_WhenNoDataExists()
+        {
+            // Arrange
+            var sut = CreatePrnService("[]");
+
+            // Act
+            var result = await sut.GetReconciledUpdatedPrns();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetReconciledUpdatedPrns_ShouldLogInformation()
+        {
+            // Arrange
+            var mockData = new List<ReconcileUpdatedPrnsResponseModel>
+    {
+        new ReconcileUpdatedPrnsResponseModel
+        {
+            PrnNumber = "001",
+            StatusName = "Approved",
+            UpdatedOn = "2024-12-04T15:57:02",
+            OrganisationName = "Company A"
+        }
+    };
+
+            var mockDataJson = JsonSerializer.Serialize(mockData);
+            var sut = CreatePrnService(mockDataJson);
+
+            // Act
+            await sut.GetReconciledUpdatedPrns();
+
+            // Assert
+            _loggerMock.Verify(logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting Reconciled updated PRN's")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetReconciledUpdatedPrns_ShouldThrowException_WhenApiFails()
+        {
+            // Arrange
+            var sut = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ResponseCodeException>(() => sut.GetReconciledUpdatedPrns());
         }
     }
 }

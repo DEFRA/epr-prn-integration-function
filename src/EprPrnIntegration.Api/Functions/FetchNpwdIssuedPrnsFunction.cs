@@ -17,6 +17,7 @@ using EprPrnIntegration.Common.Constants;
 using System.Net;
 using EprPrnIntegration.Common.Models.Queues;
 using System.Globalization;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions
 {
@@ -139,19 +140,19 @@ namespace EprPrnIntegration.Api.Functions
             }
         }
 
-        private Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
+        private static Dictionary<string, string> CreateCustomEvent(NpwdPrn? npwdPrn, string errorMessage = "")
         {
             Dictionary<string, string> eventData = new()
             {
-                { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
-                { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
-                { "Date", DateTime.UtcNow.ToString() },
-                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
+                { CustomEventFields.PrnNumber, npwdPrn?.EvidenceNo ?? "No PRN Number" },
+                { CustomEventFields.IncomingStatus, npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
+                { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                { CustomEventFields.OrganisationName, npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
             };
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                eventData.Add("Error Comments", errorMessage);
+                eventData.Add(CustomEventFields.ErrorComments, errorMessage);
             }
 
             return eventData;
@@ -199,20 +200,21 @@ namespace EprPrnIntegration.Api.Functions
         {
             try
             {
-                if (validatedErrorMessages.Any())
+                if (validatedErrorMessages.Count > 0)
                 {
                     var dateTimeNow = DateTime.UtcNow;
-                    var errorEvents = validatedErrorMessages.Select(kv => new ErrorEvent
-                    {
-                        PrnNumber = kv.GetValueOrDefault("PRN Number", "No PRN Number"),
-                        IncomingStatus = kv.GetValueOrDefault("Incoming Status", "Blank Incoming Status"),
-                        Date = kv.GetValueOrDefault("Date", dateTimeNow.ToString()),
-                        OrganisationName = kv.GetValueOrDefault("Organisation Name", "Blank Organisation Name"),
-                        ErrorComments = kv.GetValueOrDefault("Error Comments", string.Empty)
-                    }).ToList();
+                    var csvData = new Dictionary<string, List<string>>
+                {
+                    { CustomEventFields.PrnNumber, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.PrnNumber, "No PRN Number")).ToList() },
+                    { CustomEventFields.IncomingStatus, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.IncomingStatus, "Blank Incoming Status")).ToList() },
+                    { CustomEventFields.Date, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.Date, dateTimeNow.ToString())).ToList() },
+                    { CustomEventFields.OrganisationName, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.OrganisationName, "Blank Organisation Name")).ToList() },
+                    { CustomEventFields.ErrorComments, validatedErrorMessages.Select(kv => kv.GetValueOrDefault(CustomEventFields.ErrorComments, string.Empty)).ToList() }
+                };
 
-                    var csvStream = await _utilities.CreateErrorEventsCsvStreamAsync(errorEvents);
-                    _emailService.SendValidationErrorPrnEmail(csvStream, dateTimeNow);
+                    var csvContent = _utilities.CreateCsvContent(csvData);
+
+                    _emailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
                 }
             }
             catch (Exception ex)

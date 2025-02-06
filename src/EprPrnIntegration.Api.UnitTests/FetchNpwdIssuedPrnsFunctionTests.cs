@@ -19,6 +19,7 @@ using EprPrnIntegration.Common.Constants;
 using FluentAssertions;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.Models;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.UnitTests
 {
@@ -235,7 +236,7 @@ namespace EprPrnIntegration.Api.UnitTests
                                                         }]);
             await _function.Run(new TimerInfo());
 
-            _mockEmailService.Verify(e => e.SendValidationErrorPrnEmail(It.IsAny<Stream>(), It.IsAny<DateTime>()), Times.Once);
+            _mockEmailService.Verify(e => e.SendValidationErrorPrnEmail(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
 
         }
 
@@ -250,7 +251,7 @@ namespace EprPrnIntegration.Api.UnitTests
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = DateTime.Parse("2022-01-01T00:00:00Z"), SyncType = NpwdDeltaSyncType.UpdatePrns };
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>())).ReturnsAsync(deltaSyncExecution);
             _mockPrnUtilities.Setup(utils => utils.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-            _mockEmailService.Setup(e => e.SendValidationErrorPrnEmail(It.IsAny<Stream>(), It.IsAny<DateTime>())).Throws(new Exception("Error"));
+            _mockEmailService.Setup(e => e.SendValidationErrorPrnEmail(It.IsAny<string>(), It.IsAny<DateTime>())).Throws(new Exception("Error"));
             _mockServiceBusProvider.Setup(provider => provider.ProcessFetchedPrns(It.IsAny<Func<ServiceBusReceivedMessage, Task<Dictionary<string, string>?>>>()))
                                    .ReturnsAsync([new Dictionary<string, string>
                                                         {
@@ -561,11 +562,12 @@ namespace EprPrnIntegration.Api.UnitTests
             // Act
             await _function.Run(new TimerInfo());
 
-            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(It.Is<string>(s => s == CustomEvents.IssuedPrn),
+            _mockPrnUtilities.Verify(provider => provider.AddCustomEvent(
+                It.Is<string>(s => s == CustomEvents.IssuedPrn),
                 It.Is<Dictionary<string, string>>(
                     data => data["PRN Number"] == "No PRN Number" &&
                     data["PRN Number"] == "No PRN Number" &&
-                    data["Organisaton Name"] == "Blank Organisation Name"
+                    data["Organisation Name"] == "Blank Organisation Name"
 
                     )), Times.Once);
         }

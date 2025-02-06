@@ -121,7 +121,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
         {
             // Arrange
             _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
-            _npwdConfig.BaseUrl = null;
+            _npwdConfig.BaseUrl = null!;
 
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 

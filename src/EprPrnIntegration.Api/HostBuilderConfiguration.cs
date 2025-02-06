@@ -6,6 +6,8 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.CommonService;
+using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
@@ -23,6 +25,8 @@ using Polly;
 using Polly.Extensions.Http;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api;
 
@@ -46,6 +50,7 @@ public static class HostBuilderConfiguration
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
+        services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
@@ -53,6 +58,7 @@ public static class HostBuilderConfiguration
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IAppInsightsService, AppInsightsService>();
 
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
@@ -67,7 +73,7 @@ public static class HostBuilderConfiguration
         services.AddHttpClients(configuration);
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
-        
+
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
         {
@@ -83,6 +89,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<NpwdOAuthMiddleware>();
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
+        services.AddTransient<CommonDataServiceAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -95,6 +102,10 @@ public static class HostBuilderConfiguration
         services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
         .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IOrganisationService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Organisation));
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.CommonData).AddHttpMessageHandler<CommonDataServiceAuthorisationHandler>()
+        .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<ICommonDataService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.CommonData));
 
         services.AddHttpClient(Common.Constants.HttpClientNames.Npwd)
             .AddHttpMessageHandler<NpwdOAuthMiddleware>()
@@ -111,6 +122,7 @@ public static class HostBuilderConfiguration
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
+        services.Configure<AppInsightsConfig>(configuration.GetSection(AppInsightsConfig.SectionName));
         return services;
     }
 
@@ -154,7 +166,7 @@ public static class HostBuilderConfiguration
             {
                 if (res.Result != null)
                 {
-                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.ToLowerInvariant() == "retry-after");
+                    var retryAfterHeader = res.Result.Headers.FirstOrDefault(h => h.Key.Equals("retry-after", StringComparison.InvariantCultureIgnoreCase));
                     int retryAfter = 0;
                     if (res.Result.StatusCode == HttpStatusCode.TooManyRequests && retryAfterHeader.Value != null && retryAfterHeader.Value.Any())
                     {

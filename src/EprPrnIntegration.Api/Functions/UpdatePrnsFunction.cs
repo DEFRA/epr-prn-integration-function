@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -46,7 +47,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         {
             updatedEprPrns =
                 await prnService.GetUpdatedPrns(fromDate, toDate, new CancellationToken());
-            if (updatedEprPrns == null || !updatedEprPrns.Any())
+            if (updatedEprPrns == null || updatedEprPrns.Count.Equals(0))
             {
                 logger.LogWarning(
                     $"No updated Prns are retrieved from common database form time period {fromDate} to {toDate}.");

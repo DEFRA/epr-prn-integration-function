@@ -9,8 +9,12 @@ public class MessagingConfig
 
     public string? PrnTemplateId { get; set; }
     public string? PernTemplateId { get; set; }
+    public string? ErrorMessagesTemplateId { get; set; }
     public string? NpwdEmailTemplateId { get; set; }
     public string? NpwdEmail { get; set; }
     public string? ApiKey { get; set; }
     public string? NpwdValidationErrorsTemplateId { get; set; }
+    public string? NpwdReconcileIssuedPrnsTemplateId { get; set; }
+    public string? NpwdReconcileUpdatedPrnsTemplateId { get; set; }
+    public string? NpwdReconcileUpdatedOrganisationsTemplateId { get; set; }
 }

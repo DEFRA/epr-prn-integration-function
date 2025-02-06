@@ -63,7 +63,7 @@ public class StreamWriterExtensionsTests
         using var writer = new StreamWriter(new MemoryStream());
 
         // Act
-        await writer.WriteCsvCellAsync(null);
+        await writer.WriteCsvCellAsync(null!);
         await writer.FlushAsync();
 
         // Assert

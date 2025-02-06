@@ -14,9 +14,9 @@ public class NpwdClient(
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.Npwd);
 
-    public async Task<HttpResponseMessage> Patch<T>(T dataModel, string path)
+    public async Task<HttpResponseMessage> Patch<T>(T updatedProducers, string updatePath)
     {
-        var data = JsonConvert.SerializeObject(dataModel);
+        var data = JsonConvert.SerializeObject(updatedProducers);
         var requestContent = new StringContent(data, Encoding.UTF8, "application/json");
 
         var baseAddress = npwdIntegrationConfig.Value.BaseUrl;
@@ -27,7 +27,7 @@ public class NpwdClient(
 
         _httpClient.BaseAddress = new Uri(baseAddress!);
 
-        var response = await _httpClient.PatchAsync(path, requestContent);
+        var response = await _httpClient.PatchAsync(updatePath, requestContent);
         return response;
     }
 

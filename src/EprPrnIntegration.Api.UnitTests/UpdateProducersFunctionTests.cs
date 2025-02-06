@@ -7,7 +7,6 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -15,12 +14,13 @@ using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
 using Xunit;
+using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
 public class UpdateProducersFunctionTests
 {
-    private readonly Mock<IOrganisationService> _organisationServiceMock = new();
+    private readonly Mock<ICommonDataService> _commonDataServiceMock = new();
     private readonly Mock<INpwdClient> _npwdClientMock = new();
     private readonly Mock<ILogger<UpdateProducersFunction>> _loggerMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
@@ -41,7 +41,7 @@ public class UpdateProducersFunctionTests
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
-        function = new UpdateProducersFunction(_organisationServiceMock.Object, _npwdClientMock.Object,
+        function = new UpdateProducersFunction(_commonDataServiceMock.Object, _npwdClientMock.Object,
             _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object, _emailServiceMock.Object);
     }
 
@@ -49,9 +49,9 @@ public class UpdateProducersFunctionTests
     public async Task Run_ValidStartHour_FetchesAndUpdatesProducers()
     {
         // Arrange
-        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>().ToList();
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
@@ -69,10 +69,10 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
-        _organisationServiceMock.Verify(
+        _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
         _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
@@ -91,10 +91,10 @@ public class UpdateProducersFunctionTests
         // Arrange
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedProducersResponseModel>());
+            .ReturnsAsync(new List<UpdatedProducersResponse>());
 
         _utilitiesMock
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
@@ -105,7 +105,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -122,7 +122,7 @@ public class UpdateProducersFunctionTests
         // Arrange
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Fetch error"));
@@ -136,7 +136,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await Assert.ThrowsAsync<Exception>(() => function.Run(null));
+        await Assert.ThrowsAsync<Exception>(() => function.Run(null!));
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -152,7 +152,7 @@ public class UpdateProducersFunctionTests
     {
         // Arrange
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new UpdatedProducersResponseModel() };
+        var updatedProducers = new List<UpdatedProducersResponse> { new UpdatedProducersResponse() };
 
         var responseBody =
             "[{\"error\":{\"code\":\"400 BadRequest\",\"message\":\"The EPRCode field is required.\",\"details\":{\"targetField\":\"EPRCode\",\"targetRecordId\":\"2498a75c-9659-4e7f-b86f-eada60d0e72c\"}}}]";
@@ -163,7 +163,7 @@ public class UpdateProducersFunctionTests
             Content = new StringContent(responseBody)
         };
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
@@ -181,7 +181,7 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _loggerMock.Verify(logger => logger.Log(
@@ -206,14 +206,14 @@ public class UpdateProducersFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
-        _loggerMock.VerifyLog(x => x.LogInformation(It.Is<string>(s => s.Contains("UpdateProducersList function is disabled by feature flag"))));
         _loggerMock.Verify(logger => logger.Log(
                   It.IsAny<LogLevel>(),
                   It.IsAny<EventId>(),
-                  It.IsAny<It.IsAnyType>(),
+                  It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdateProducersList function is disabled by feature flag")),
+
                   It.IsAny<Exception>(),
                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
               Times.Once());
@@ -223,9 +223,9 @@ public class UpdateProducersFunctionTests
     public async Task Run_SendsDeltaSyncExecutionToQueue()
     {
         // Arrange
-        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>().ToList();
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
 
@@ -245,7 +245,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(deltaSyncExecution);
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
         _utilitiesMock.Verify(
@@ -259,7 +259,7 @@ public class UpdateProducersFunctionTests
     {
         // Arrange
         var defaultDatetime = "2024-01-01";
-        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>().ToList();
 
         var defaultDeltaSync = new DeltaSyncExecution
         {
@@ -271,7 +271,7 @@ public class UpdateProducersFunctionTests
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
             .ReturnsAsync(defaultDeltaSync);
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
@@ -281,10 +281,10 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
-        _organisationServiceMock.Verify(service =>
+        _commonDataServiceMock.Verify(service =>
             service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -292,10 +292,10 @@ public class UpdateProducersFunctionTests
     public async Task Run_AddCustomEventForUpdateProducers()
     {
         // Arrange
-        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponseModel>().ToList();
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>().ToList();
         _utilitiesMock.Setup(u => u.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers)).ReturnsAsync(_fixture.Create<DeltaSyncExecution>());
         
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync([updatedProducers[0]]);
@@ -309,18 +309,18 @@ public class UpdateProducersFunctionTests
 
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
             It.Is<Dictionary<string, string>>(
-                data => data["Organization name"] == updatedProducers[0].ProducerName
-                && data["Organisation ID"] == updatedProducers[0].ReferenceNumber.ToString()
-                && data["Address"] == updatedProducers[0].OrganisationAddress)), Times.Once);
+                data => data[CustomEventFields.OrganisationName] == updatedProducers[0].OrganisationName
+                && data[CustomEventFields.OrganisationId] == updatedProducers[0].OrganisationId
+                && data[CustomEventFields.OrganisationAddress] == updatedProducers[0].OrganisationAddress)), Times.Once);
     }
 
     [Fact]
     public async Task Run_ValidStartHour_FetchAndUpdatesProducers_HandlesNpwdClientErrorsCorrectly()
     {
         // Arrange
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+        var updatedProducers = new List<UpdatedProducersResponse> { new() };
 
-        _organisationServiceMock
+        _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(updatedProducers);
@@ -338,10 +338,10 @@ public class UpdateProducersFunctionTests
             });        
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
-        _organisationServiceMock.Verify(
+        _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
@@ -363,12 +363,12 @@ public class UpdateProducersFunctionTests
     public async Task FetchAndUpdatesProducers_Sendemail_When_Error_Occurs(HttpStatusCode statusCode)
     {
         // Arrange      
-        var updatedProducers = new List<UpdatedProducersResponseModel> { new() };
+        var updatedProducers = new List<UpdatedProducersResponse> { new() };
 
-        _organisationServiceMock
-            .Setup(service =>
-                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(updatedProducers);
+        _commonDataServiceMock
+             .Setup(service =>
+                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock.Setup(x => x.Patch(It.IsAny<ProducerDelta?>(), It.IsAny<string>()))
            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
@@ -382,10 +382,10 @@ public class UpdateProducersFunctionTests
             });
 
         // Act
-        await function.Run(null);
+        await function.Run(null!);
 
         // Assert
-        _organisationServiceMock.Verify(
+        _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
