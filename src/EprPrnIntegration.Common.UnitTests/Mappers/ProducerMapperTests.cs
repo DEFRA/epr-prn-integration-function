@@ -52,8 +52,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("CSO Deleted", "DR", "PR-CANCELLED", "")]
         [InlineData("DR Moved to CS", "CSM", "PR-REGISTERED", "")]
         [InlineData("Not a Member of CS", "DR", "PR-REGISTERED", "")]
-        [InlineData("CS Added", "S", "PR-REGISTERED", "")]
-        [InlineData("CS Deleted", "S", "PR-CANCELLED", "")]
+        [InlineData("CS Added", "S", "CSR-REGISTERED", "")]
+        [InlineData("CS Deleted", "S", "CSR-CANCELLED", "")]
         [InlineData("Some Unmatched Status", "Some Organisation Type", "", "")]
         public void MapToDelta_MapsCorrectStatusCode(string status, string orgType, string expectedStatusCode, string expectedAgency)
         {
