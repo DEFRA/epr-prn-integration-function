@@ -58,6 +58,7 @@ namespace EprPrnIntegration.Common.Mappers
                         EPRId = eprProducer.PEPRID ?? string.Empty,
                         EPRCode = eprProducer.OrganisationId ?? string.Empty,
                         ProducerName = eprProducer.OrganisationName ?? string.Empty,
+                        Agency = GetAgencyByCountry(eprProducer.BusinessCountry ?? string.Empty)
                     };
                 }).ToList()
             };
@@ -107,6 +108,23 @@ namespace EprPrnIntegration.Common.Mappers
             }
 
             return (string.Empty, string.Empty);
+        }
+
+        private static string GetAgencyByCountry(string businessCountry)
+        {
+            switch (businessCountry)
+            {
+                case "England":
+                    return "Environment Agency";
+                case "Northern Ireland":
+                    return "Northern Ireland Environment Agency";
+                case "Wales":
+                    return "Natural Resources Wales";
+                case "Scotland":
+                    return "Scottish Environment Protection Agency";
+                default:
+                    return string.Empty;
+            }
         }
     }
 }
