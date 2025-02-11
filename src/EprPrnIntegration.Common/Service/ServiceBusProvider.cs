@@ -88,19 +88,21 @@ namespace EprPrnIntegration.Common.Service
             {
                 await using var receiver = serviceBusClient.CreateReceiver(queueName);
 
-                var message = await receiver.ReceiveMessageAsync(maxWaitTime: TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
-                
-                if (message == null)
+                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+
+                if (messages == null || messages.Count == 0)
                 {
                     logger.LogInformation("No message received from the queue: {queue}", queueName);
                     return null;
                 }
 
-                var deltaSync = DeserializeMessage<DeltaSyncExecution>(message.Body.ToString());
+                var latestMessage = messages.OrderByDescending(m => m.SequenceNumber).First();
+                var deltaSync = DeserializeMessage<DeltaSyncExecution>(latestMessage.Body.ToString());
 
-                await (deltaSync == null
-                    ? receiver.AbandonMessageAsync(message)
-                    : receiver.CompleteMessageAsync(message));
+                foreach (var message in messages)
+                {
+                    await receiver.CompleteMessageAsync(message);
+                }
 
                 return deltaSync;
             }
