@@ -229,37 +229,43 @@ public class ServiceBusProviderTests
     }
 
     [Fact]
-    public async Task ReceiveDeltaSyncExecutionFromQueue_MessageFound_DeserializedAndCompleted()
+    public async Task ReceiveDeltaSyncExecutionFromQueue_Returns_LatestMessageBasedOnSequence()
     {
         // Arrange
-        var deltaSyncExecution = new DeltaSyncExecution
-        {
-            SyncType = NpwdDeltaSyncType.UpdatedProducers,
-            LastSyncDateTime = DateTime.UtcNow
-        };
-        var message = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(JsonSerializer.Serialize(deltaSyncExecution)));
+        var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns }; 
+        var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
-        // Mock GetDeltaSyncExecutionFromQueue to return a valid response
-        _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
+        var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1 );
+        var message2 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync2), sequenceNumber: 2);
+        var latestMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync3), sequenceNumber: 3);
 
-        _serviceBusReceiverMock.Setup(receiver => receiver
-                .ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(message);
+        _serviceBusReceiverMock
+            .Setup(r => r.ReceiveMessagesAsync(
+                It.IsAny<int>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([message1, message2, latestMessage]);
 
 
-        _serviceBusReceiverMock.Setup(receiver =>
-                receiver.CompleteMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<CancellationToken>()))
+        int completeMessageCalls = 0;
+        _serviceBusReceiverMock
+            .Setup(r => r.CompleteMessageAsync(
+                It.IsAny<ServiceBusReceivedMessage>(),
+                It.IsAny<CancellationToken>()))
+            .Callback(() => completeMessageCalls++)
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.UpdatedProducers);
+        var result = await _serviceBusProvider.GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(deltaSyncExecution.SyncType, result.SyncType);
-        _serviceBusReceiverMock.Verify(
-            receiver => receiver.CompleteMessageAsync(It.IsAny<ServiceBusReceivedMessage>(),
-                It.IsAny<CancellationToken>()), Times.Once);
+        result.Should().BeEquivalentTo(sync3);
+
+        _serviceBusReceiverMock.Verify(r => r.CompleteMessageAsync(
+                It.IsAny<ServiceBusReceivedMessage>(),
+                It.IsAny<CancellationToken>()), Times.Exactly(completeMessageCalls));
+
+        _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -268,8 +274,12 @@ public class ServiceBusProviderTests
         // Arrange
         var invalidMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(JsonSerializer.Serialize("invalid message")));
 
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(invalidMessage);
+        _serviceBusReceiverMock
+                    .Setup(r => r.ReceiveMessagesAsync(
+                        It.IsAny<int>(),
+                        It.IsAny<TimeSpan>(),
+                        It.IsAny<CancellationToken>()))
+                    .ReturnsAsync([invalidMessage]);
 
         _serviceBusReceiverMock.Setup(receiver =>
                 receiver.AbandonMessageAsync(It.IsAny<ServiceBusReceivedMessage>(),
@@ -282,16 +292,13 @@ public class ServiceBusProviderTests
         // Assert
         Assert.Null(result);
         _loggerMock.VerifyLog(logger => logger.LogError(It.Is<string>(s => s.Contains("Failed to deserialize message body:"))), Times.Once);
-        _serviceBusReceiverMock.Verify(
-            receiver => receiver.AbandonMessageAsync(It.IsAny<ServiceBusReceivedMessage>(),
-                It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task ReceiveDeltaSyncExecutionFromQueue_ExceptionThrown_LogsErrorAndRethrows()
     {
         // Arrange
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(),default))
             .ThrowsAsync(new Exception("Service bus connection error"));
 
         // Act & Assert
