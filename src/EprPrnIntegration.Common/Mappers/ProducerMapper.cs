@@ -22,7 +22,9 @@ namespace EprPrnIntegration.Common.Mappers
                 { "PR-CLOSED", "Closed" },
                 { "PR-REGISTERED", "Registered" },
                 { "PR-CANCELLED", "Cancelled" },
-                { "PR-NOTREGISTERED", "Not Registered" }
+                { "PR-NOTREGISTERED", "Not Registered" },
+                { "CSR-REGISTERED", "Registered" },
+                { "CSR-CANCELLED", "Cancelled" }
             };
 
             var producersContext = configuration["ProducersContext"] ?? string.Empty;
@@ -95,13 +97,13 @@ namespace EprPrnIntegration.Common.Mappers
             // CS Added
             if (status == "CS Added" && orgType == "S")
             {
-                return ("PR-REGISTERED", "CS");
+                return ("CSR-REGISTERED", "CS");
             }
 
             // CS Deleted
             if (status == "CS Deleted" && orgType == "S")
             {
-                return ("PR-CANCELLED", "CS");
+                return ("CSR-CANCELLED", "CS");
             }
 
             return (string.Empty, string.Empty);
