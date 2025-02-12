@@ -247,7 +247,6 @@ public class ServiceBusProviderTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([message1, message2, latestMessage]);
 
-
         int completeMessageCalls = 0;
         _serviceBusReceiverMock
             .Setup(r => r.CompleteMessageAsync(
