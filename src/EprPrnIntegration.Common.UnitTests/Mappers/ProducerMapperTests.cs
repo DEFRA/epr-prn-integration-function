@@ -112,5 +112,30 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Equal("PR-REGISTERED", producer.StatusCode);
             Assert.Equal("Registered", producer.StatusDesc);
         }
+
+        [Theory]
+        [InlineData("England", "Environment Agency")]
+        [InlineData("Northern Ireland", "Northern Ireland Environment Agency")]
+        [InlineData("Wales", "Natural Resources Wales")]
+        [InlineData("Scotland", "Scottish Environment Protection Agency")]
+        [InlineData("Unknown Country", "")]
+        public void GetAgencyByCountry_ReturnsCorrectAgency(string businessCountry, string expectedAgency)
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    BusinessCountry = businessCountry
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal(expectedAgency, producer.Agency);
+        }
     }
 }
