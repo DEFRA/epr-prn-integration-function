@@ -47,15 +47,15 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("DR Registered", "DR", "PR-REGISTERED", "")]
-        [InlineData("DR Deleted", "DR", "PR-CANCELLED", "")]
-        [InlineData("CSO Deleted", "DR", "PR-CANCELLED", "")]
-        [InlineData("DR Moved to CS", "CSM", "PR-REGISTERED", "")]
-        [InlineData("Not a Member of CS", "DR", "PR-REGISTERED", "")]
-        [InlineData("CS Added", "S", "PR-REGISTERED", "")]
-        [InlineData("CS Deleted", "S", "PR-CANCELLED", "")]
-        [InlineData("Some Unmatched Status", "Some Organisation Type", "", "")]
-        public void MapToDelta_MapsCorrectStatusCode(string status, string orgType, string expectedStatusCode, string expectedAgency)
+        [InlineData("DR Registered", "DR", "PR-REGISTERED")]
+        [InlineData("DR Deleted", "DR", "PR-CANCELLED")]
+        [InlineData("CSO Deleted", "DR", "PR-CANCELLED")]
+        [InlineData("DR Moved to CS", "CSM", "PR-REGISTERED")]
+        [InlineData("Not a Member of CS", "DR", "PR-REGISTERED")]
+        [InlineData("CS Added", "S", "CSR-REGISTERED")]
+        [InlineData("CS Deleted", "S", "CSR-CANCELLED")]
+        [InlineData("Some Unmatched Status", "Some Organisation Type", "")]
+        public void MapToDelta_MapsCorrectStatusCode(string status, string orgType, string expectedStatusCode)
         {
             // Arrange
             var updatedProducers = new List<UpdatedProducersResponse>
@@ -111,6 +111,31 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             Assert.Equal("12345", producer.Postcode);
             Assert.Equal("PR-REGISTERED", producer.StatusCode);
             Assert.Equal("Registered", producer.StatusDesc);
+        }
+
+        [Theory]
+        [InlineData("England", "Environment Agency")]
+        [InlineData("Northern Ireland", "Northern Ireland Environment Agency")]
+        [InlineData("Wales", "Natural Resources Wales")]
+        [InlineData("Scotland", "Scottish Environment Protection Agency")]
+        [InlineData("Unknown Country", "")]
+        public void GetAgencyByCountry_ReturnsCorrectAgency(string businessCountry, string expectedAgency)
+        {
+            // Arrange
+            var updatedProducers = new List<UpdatedProducersResponse>
+            {
+                new UpdatedProducersResponse
+                {
+                    BusinessCountry = businessCountry
+                }
+            };
+
+            // Act
+            var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
+
+            // Assert
+            var producer = result.Value[0];
+            Assert.Equal(expectedAgency, producer.Agency);
         }
     }
 }

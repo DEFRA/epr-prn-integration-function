@@ -19,6 +19,7 @@ namespace EprPrnIntegration.Common.Models
         public string? Postcode { get; set; }
         public string? PEPRID { get; set; }
         public string? Status { get; set; }
+        public string? BusinessCountry { get; set; }
 
         public string OrganisationAddress => string.Join(", ", new[] {
                 AddressLine1,

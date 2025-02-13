@@ -22,7 +22,9 @@ namespace EprPrnIntegration.Common.Mappers
                 { "PR-CLOSED", "Closed" },
                 { "PR-REGISTERED", "Registered" },
                 { "PR-CANCELLED", "Cancelled" },
-                { "PR-NOTREGISTERED", "Not Registered" }
+                { "PR-NOTREGISTERED", "Not Registered" },
+                { "CSR-REGISTERED", "Registered" },
+                { "CSR-CANCELLED", "Cancelled" }
             };
 
             var producersContext = configuration["ProducersContext"] ?? string.Empty;
@@ -56,6 +58,7 @@ namespace EprPrnIntegration.Common.Mappers
                         EPRId = eprProducer.PEPRID ?? string.Empty,
                         EPRCode = eprProducer.OrganisationId ?? string.Empty,
                         ProducerName = eprProducer.OrganisationName ?? string.Empty,
+                        Agency = GetAgencyByCountry(eprProducer.BusinessCountry ?? string.Empty)
                     };
                 }).ToList()
             };
@@ -95,16 +98,33 @@ namespace EprPrnIntegration.Common.Mappers
             // CS Added
             if (status == "CS Added" && orgType == "S")
             {
-                return ("PR-REGISTERED", "CS");
+                return ("CSR-REGISTERED", "CS");
             }
 
             // CS Deleted
             if (status == "CS Deleted" && orgType == "S")
             {
-                return ("PR-CANCELLED", "CS");
+                return ("CSR-CANCELLED", "CS");
             }
 
             return (string.Empty, string.Empty);
+        }
+
+        private static string GetAgencyByCountry(string businessCountry)
+        {
+            switch (businessCountry)
+            {
+                case "England":
+                    return "Environment Agency";
+                case "Northern Ireland":
+                    return "Northern Ireland Environment Agency";
+                case "Wales":
+                    return "Natural Resources Wales";
+                case "Scotland":
+                    return "Scottish Environment Protection Agency";
+                default:
+                    return string.Empty;
+            }
         }
     }
 }
