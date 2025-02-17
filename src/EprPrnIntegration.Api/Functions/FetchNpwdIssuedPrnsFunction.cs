@@ -56,7 +56,7 @@ namespace EprPrnIntegration.Api.Functions
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
-            var toDate = DateTime.UtcNow;
+            var toDate = _utilities.OffsetDateTimeWithLag(DateTime.UtcNow, _configuration["FetchNpwdPrnsPollingLagSeconds"]) ;
 
             _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this execution", deltaRun.LastSyncDateTime, toDate);
 

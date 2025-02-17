@@ -72,4 +72,22 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
         stream.Position = 0;
         return stream;
     }
+
+    /// <inheritdoc/>
+    public DateTime OffsetDateTimeWithLag(DateTime theDate, string? configSeconds)
+    {
+        const int fifteenSeconds = 15;
+        int lagSeconds;
+
+        if (int.TryParse(configSeconds, out lagSeconds))
+        {
+            lagSeconds = lagSeconds >= 0 ? lagSeconds : fifteenSeconds;
+        }
+        else
+        {
+            lagSeconds = fifteenSeconds;
+        }
+
+        return theDate.Subtract(TimeSpan.FromSeconds(lagSeconds));
+    }
 }

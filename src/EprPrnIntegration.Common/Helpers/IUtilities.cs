@@ -9,4 +9,13 @@ public interface IUtilities
     Task SetDeltaSyncExecution(DeltaSyncExecution syncExecution, DateTime latestRun);
     void AddCustomEvent(string eventName, IDictionary<string, string> eventData);
     Task<Stream> CreateErrorEventsCsvStreamAsync(List<ErrorEvent> errorEvents);
+
+    /// <summary>
+    /// So happens the NPWD server date time is out of sync with the Epr server date time
+    /// Rollback the current date time to avoid skipping over Prns on NPWD
+    /// </summary>
+    /// <param name="theDate">The date and time to poll up to.</param>
+    /// <param name="configSeconds">The lag to offset the polling date.</param>
+    /// <returns>Current date and time set back a configurable number of seconds.</returns>
+    DateTime OffsetDateTimeWithLag(DateTime theDate, string? configSeconds);
 }

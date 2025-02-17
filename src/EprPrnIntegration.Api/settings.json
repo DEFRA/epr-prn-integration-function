@@ -37,6 +37,7 @@
     "NpwdIntegration:ClientSecret": "",
     "NpwdIntegration:Scope": "",
     "NpwdIntegration:AccessTokenUrl": "",
-    "NpwdIntegration:Authority": ""
+    "NpwdIntegration:Authority": "",
+    "FetchNpwdPrnsPollingLagSeconds": "15"
   }
 }
