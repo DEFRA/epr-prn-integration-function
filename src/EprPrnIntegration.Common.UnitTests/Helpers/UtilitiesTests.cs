@@ -196,7 +196,7 @@ public class UtilitiesTests
     {
         // Arrange
         DateTime expectedDateTime = DateTime.UtcNow;
-        DateTime pollingDateTime = expectedDateTime.AddSeconds(15);
+        DateTime pollingDateTime = expectedDateTime.AddSeconds(60);
 
         // Act
         DateTime actualDateTime = _utilities.OffsetDateTimeWithLag(pollingDateTime, configSeconds);

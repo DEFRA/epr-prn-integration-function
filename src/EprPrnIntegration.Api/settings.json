@@ -38,6 +38,6 @@
     "NpwdIntegration:Scope": "",
     "NpwdIntegration:AccessTokenUrl": "",
     "NpwdIntegration:Authority": "",
-    "FetchNpwdPrnsPollingLagSeconds": "15"
+    "FetchNpwdPrnsPollingLagSeconds": "60"
   }
 }

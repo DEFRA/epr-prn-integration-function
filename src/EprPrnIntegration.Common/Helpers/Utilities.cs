@@ -76,16 +76,16 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
     /// <inheritdoc/>
     public DateTime OffsetDateTimeWithLag(DateTime theDate, string? configSeconds)
     {
-        const int fifteenSeconds = 15;
+        const int sixtySeconds = 60;
         int lagSeconds;
 
         if (int.TryParse(configSeconds, out lagSeconds))
         {
-            lagSeconds = lagSeconds >= 0 ? lagSeconds : fifteenSeconds;
+            lagSeconds = lagSeconds >= 0 ? lagSeconds : sixtySeconds;
         }
         else
         {
-            lagSeconds = fifteenSeconds;
+            lagSeconds = sixtySeconds;
         }
 
         return theDate.Subtract(TimeSpan.FromSeconds(lagSeconds));
