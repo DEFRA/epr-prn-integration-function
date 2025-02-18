@@ -56,7 +56,13 @@ namespace EprPrnIntegration.Api.Functions
             _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
 
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
-            var toDate = DateTime.UtcNow;
+
+            var now = DateTime.UtcNow;
+            var toDate = _utilities.OffsetDateTimeWithLag(now, _configuration["FetchNpwdPrnsPollingLagSeconds"]);
+            if (!toDate.Equals(now))
+            {
+                _logger.LogInformation("Upper date range {Now} rolled back to {ToDate}", now, toDate);
+            }
 
             _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this execution", deltaRun.LastSyncDateTime, toDate);
 
