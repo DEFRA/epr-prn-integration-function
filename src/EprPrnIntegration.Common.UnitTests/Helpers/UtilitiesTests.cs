@@ -2,6 +2,7 @@
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
+using FluentAssertions;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -201,6 +202,40 @@ public class UtilitiesTests
 
         // Assert
         Assert.Equal(normalizedExpected, normalizedResult);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("11223344556677889900")]
+    [InlineData("Not an integer")]
+    [InlineData("-1")]
+    public void OffsetDateTimeWithLag_WhenMisconfigured_ShouldReturnDefault(string configSeconds)
+    {
+        // Arrange
+        DateTime expectedDateTime = DateTime.UtcNow;
+        DateTime pollingDateTime = expectedDateTime.AddSeconds(60);
+
+        // Act
+        DateTime actualDateTime = _utilities.OffsetDateTimeWithLag(pollingDateTime, configSeconds);
+
+        // Assert
+        expectedDateTime.Should().Be(actualDateTime);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(10)]
+    public void OffsetDateTimeWithLag_WhenConfigured_ShouldReturnAdjsutedDateTime(int seconds)
+    {
+        // Arrange
+        DateTime expectedDateTime = DateTime.UtcNow;
+        DateTime pollingDateTime = expectedDateTime.AddSeconds(seconds);
+
+        // Act
+        DateTime actualDateTime = _utilities.OffsetDateTimeWithLag(pollingDateTime, seconds.ToString());
+
+        // Assert
+        expectedDateTime.Should().Be(actualDateTime);
     }
 
 }

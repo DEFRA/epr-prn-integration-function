@@ -49,6 +49,7 @@
     "MessagingConfig:NpwdReconcileUpdatedPrnsTemplateId": "a1b81df4-560e-4034-a3cc-282d00ee2959",
     "Service__AccountClientId": "",
     "Service__PrnClientId": "",
-    "Service__CommonDataClientId": ""
+    "Service__CommonDataClientId": "",
+    "FetchNpwdPrnsPollingLagSeconds": "60"
   }
 }
