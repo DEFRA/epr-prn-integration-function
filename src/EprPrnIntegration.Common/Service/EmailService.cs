@@ -83,23 +83,22 @@ public class EmailService : IEmailService
 
     public void SendValidationErrorPrnEmail(Stream attachmentStream, DateTime reportDate)
     {
-        if (attachmentStream == null) throw new ArgumentNullException(nameof(attachmentStream));
+        ArgumentNullException.ThrowIfNull(attachmentStream);
 
         var npwdEmailAddress = _messagingConfig.NpwdEmail;
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
 
-        attachmentStream.Position = 0;
+        string fileUpload;
+        using (StreamReader reader = new(attachmentStream))
+        {
+             fileUpload = reader.ReadToEnd();
+        }
 
-        using var memoryStream = new MemoryStream();
-        attachmentStream.CopyTo(memoryStream);
-        var fileBytes = memoryStream.ToArray();
-        var fileUpload = NotificationClient.PrepareUpload(fileBytes, $"error_events{DateTime.UtcNow.ToShortDateString()}.csv");
-        
         var parameters = new Dictionary<string, object>
         {
-            { "emailAddress", npwdEmailAddress! },
-            { "reportDate", reportDate! },
-            { "link_to_file", fileUpload }
+            ["emailAddress"] = npwdEmailAddress!,
+            ["reportDate"] = reportDate!,
+            ["link_to_file"] = fileUpload
         };
 
         try
