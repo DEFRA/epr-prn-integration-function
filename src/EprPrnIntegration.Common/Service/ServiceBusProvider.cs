@@ -148,7 +148,7 @@ namespace EprPrnIntegration.Common.Service
 
             try
             {
-                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.PeekLock});
 
                 while (true)
                 {
@@ -167,6 +167,7 @@ namespace EprPrnIntegration.Common.Service
                             {
                                 invalidPrns.Add(validationFailedPrn);
                             }
+                            await receiver.CompleteMessageAsync(message);
                         }
                         catch (Exception ex)
                         {

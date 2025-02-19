@@ -113,8 +113,8 @@ namespace EprPrnIntegration.Api.Functions
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                        await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                        _logger.LogError(ex, "Error processing message Id: {MessageId} and EvidenceNo {EvidenceNo}. Adding it back to the queue.", message.MessageId, evidenceNo);
+                        throw;
                     }
                 }
                 else
@@ -123,7 +123,6 @@ namespace EprPrnIntegration.Api.Functions
                     var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
                     var eventData = CreateCustomEvent(messageContent, errorMessages);
                     _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
-
                     await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     return eventData;
                 }
@@ -131,8 +130,7 @@ namespace EprPrnIntegration.Api.Functions
             }
             catch (Exception ex)
             {
-                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
-                _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}.", message.MessageId);
+                _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}. and EvidenceNo {EvidenceNo}", message.MessageId, evidenceNo);
                 throw;
             }
         }

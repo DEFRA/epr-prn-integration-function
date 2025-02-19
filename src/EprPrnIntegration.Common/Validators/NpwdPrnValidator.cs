@@ -63,14 +63,7 @@ namespace EprPrnIntegration.Common.Validators
 
             if (Guid.TryParse(npwdPrn.IssuedToEPRId, out _))
             {
-                try
-                {
-                    return await _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken());
-                }
-                catch
-                {
-                    return false;
-                }
+                return await _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken());
             }
             
             return false;
