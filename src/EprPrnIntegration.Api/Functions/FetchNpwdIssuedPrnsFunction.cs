@@ -152,7 +152,7 @@ namespace EprPrnIntegration.Api.Functions
                 { "PRN Number", npwdPrn?.EvidenceNo ?? "No PRN Number" },
                 { "Incoming Status", npwdPrn?.EvidenceStatusCode ?? "Blank Incoming Status" },
                 { "Date", DateTime.UtcNow.ToString() },
-                { "Organisaton Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
+                { "Organisation Name", npwdPrn?.IssuedToOrgName ?? "Blank Organisation Name"},
             };
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
