@@ -256,16 +256,23 @@ public class EmailServiceTests
         // Arrange
         var csvData = "Sample CSV Content";
         var reportDate = new DateTime(2025, 1, 1);
-        var mockLinkToFile = "https://mock-link-to-file";
-        var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+        var expectedResponseId = "responseId";
+        var expectedResponse = new EmailNotificationResponse { id = expectedResponseId };
 
-        _mockNotificationClient.Setup(client => client.SendEmail(
-                It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-                It.Is<string>(template => template == _messagingConfig.NpwdValidationErrorsTemplateId),
+        var expectedParameters = new Dictionary<string, object>
+        {
+            ["reportDate"] = reportDate.ToString("dd/MM/yyyy"),
+            ["link_to_file"] = It.IsAny<string>() // Any value
+        };
+
+        _mockNotificationClient
+            .Setup(client => client.SendEmail(
+                _messagingConfig.NpwdEmail,
+                _messagingConfig.NpwdValidationErrorsTemplateId,
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("reportDate") &&
                     parameters.ContainsKey("link_to_file") &&
-                    parameters["reportDate"].Equals(reportDate)),
+                    parameters["reportDate"].Equals(reportDate.ToString("dd/MM/yyyy"))),
                 null, null, null))
             .Returns(expectedResponse);
 
@@ -274,12 +281,12 @@ public class EmailServiceTests
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(
-            It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-            It.Is<string>(template => template == _messagingConfig.NpwdValidationErrorsTemplateId),
+            _messagingConfig.NpwdEmail,
+            _messagingConfig.NpwdValidationErrorsTemplateId,
             It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
 
         _mockLogger.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            LogLevel.Information,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((state, type) =>
                 state.ToString().Contains("Validation Error email sent to NPWD with email address")),
@@ -287,6 +294,7 @@ public class EmailServiceTests
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
     }
+
 
     [Fact]
     public void SendValidationErrorPrnEmail_LogsError_WhenSendEmailFails()
