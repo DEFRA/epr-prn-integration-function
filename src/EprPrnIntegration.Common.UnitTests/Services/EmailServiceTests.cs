@@ -344,7 +344,7 @@ public class EmailServiceTests
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("report_date") &&
                     parameters.ContainsKey("report_count") &&
-                    parameters.ContainsKey("link_to_file")),
+                    parameters.ContainsKey("csvData")),
                 null, null, null))
             .Returns(expectedResponse);
 
@@ -417,7 +417,7 @@ public class EmailServiceTests
                 It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId),
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("date") &&
-                    parameters.ContainsKey("link_to_file")),
+                    parameters.ContainsKey("csvData")),
                 null, null, null))
             .Returns(expectedResponse);
 
@@ -492,7 +492,7 @@ public class EmailServiceTests
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("UpdatedDate") &&
                     parameters.ContainsKey("RowCount") &&
-                    parameters.ContainsKey("link_to_file")),
+                    parameters.ContainsKey("csvData")),
                 null, null, null))
             .Returns(expectedResponse);
 

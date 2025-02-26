@@ -108,7 +108,7 @@ public class EmailService(
         {
             ["report_date"] = reportDate.ToString("dd/MM/yyyy"),
             ["report_count"] = reportCount,
-            ["link_to_file"] = reportCsv
+            ["csvData"] = reportCsv
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
@@ -130,7 +130,7 @@ public class EmailService(
         var messagePersonalisation = new Dictionary<string, object>
         {
             ["date"] = reportDate.ToString("dd/MM/yyyy"),
-            ["link_to_file"] = reportCsv,
+            ["csvData"] = reportCsv,
             ["row_count"] = rowCount
         };
 
@@ -153,7 +153,7 @@ public class EmailService(
         {
             ["UpdatedDate"] = reportDate.ToString("dd/MM/yyyy"),
             ["RowCount"] = reportDataRowsCount,
-            ["link_to_file"] = reportCsv          
+            ["csvData"] = reportCsv          
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
