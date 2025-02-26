@@ -58,7 +58,8 @@ namespace EprPrnIntegration.Common.Mappers
                         EPRId = eprProducer.PEPRID ?? string.Empty,
                         EPRCode = eprProducer.OrganisationId ?? string.Empty,
                         ProducerName = eprProducer.OrganisationName ?? string.Empty,
-                        Agency = GetAgencyByCountry(eprProducer.BusinessCountry ?? string.Empty)
+                        Agency = GetAgencyByCountry(eprProducer.BusinessCountry ?? string.Empty),
+                        TradingName = eprProducer.TradingName ?? string.Empty
                     };
                 }).ToList()
             };
