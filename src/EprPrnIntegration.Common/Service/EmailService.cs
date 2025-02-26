@@ -77,14 +77,15 @@ public class EmailService(
 
     public void SendValidationErrorPrnEmail(string csvData, DateTime reportDate)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(csvData, nameof(csvData));
+
         var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
-        var filename = $"error_events{DateTime.UtcNow.ToShortDateString()}.csv";
         var emailAddress = _messagingConfig.NpwdEmail;
 
         var parameters = new Dictionary<string, object>
         {
-            { "reportDate", reportDate! },
-            { "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(csvData), filename) }
+            ["reportDate"] = reportDate.ToString("dd/MM/yyyy"), // Ensured UK date format
+            ["link_to_file"] = csvData
         };
 
         var responseId = SendNpwdEmail(parameters, templateId, emailAddress);
@@ -98,21 +99,16 @@ public class EmailService(
 
     public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+
         var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
-        var filename = $"issuedprns_{reportDate:yyyyMMdd}.csv";
         var emailAddress = _messagingConfig.NpwdEmail;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
-            {
-                "report_date", reportDate.ToString("dd/MM/yyyy")
-            },
-            {
-                "report_count", reportCount
-            },
-            {
-                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
-            }
+            ["report_date"] = reportDate.ToString("dd/MM/yyyy"),
+            ["report_count"] = reportCount,
+            ["csvData"] = reportCsv
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
@@ -126,21 +122,16 @@ public class EmailService(
 
     public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv, int rowCount)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+
         var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
-        var filename = $"reconciledprns_{reportDate:yyyyMMdd}.csv";
         var emailAddress = _messagingConfig.NpwdEmail;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
-            {
-                "date", reportDate.ToString("dd/MM/yyyy")
-            },
-            {
-                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
-            },
-            {
-                "row_count", rowCount
-            }
+            ["date"] = reportDate.ToString("dd/MM/yyyy"),
+            ["csvData"] = reportCsv,
+            ["row_count"] = rowCount
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
@@ -153,21 +144,16 @@ public class EmailService(
 
     public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, int reportDataRowsCount, string reportCsv)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+
         var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
         var emailAddress = _messagingConfig.NpwdEmail;
-        var filename = $"updatedorganisations_{reportDate:yyyyMMdd}.csv";
 
         var messagePersonalisation = new Dictionary<string, object>
         {
-            {
-                "UpdatedDate", reportDate.ToString("dd/MM/yyyy")
-            },
-            {
-                "RowCount", reportDataRowsCount
-            },
-            {
-                "link_to_file", NotificationClient.PrepareUpload(System.Text.Encoding.UTF8.GetBytes(reportCsv), filename)
-            }
+            ["UpdatedDate"] = reportDate.ToString("dd/MM/yyyy"),
+            ["RowCount"] = reportDataRowsCount,
+            ["csvData"] = reportCsv          
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
