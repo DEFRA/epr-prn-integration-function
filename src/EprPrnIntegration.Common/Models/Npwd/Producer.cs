@@ -52,4 +52,6 @@ public class Producer
     public string StatusDesc { get; set; } = default!;
     [JsonPropertyName("Agency")]
     public string Agency { get; set; } = default!;
+    [JsonPropertyName("TradingName")]
+    public string TradingName { get; set; } = default!;
 }
