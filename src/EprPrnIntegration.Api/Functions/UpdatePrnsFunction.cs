@@ -75,9 +75,10 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
 
-                LogCustomEvents(npwdUpdatedPrns.Value);
                 // Insert sync data into common prn backend
                 await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
+
+                LogCustomEvents(npwdUpdatedPrns.Value);
             }
             else
             {
