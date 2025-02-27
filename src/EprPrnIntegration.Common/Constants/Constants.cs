@@ -64,6 +64,7 @@
     {
         public const string PrnNumber = "PRN Number";
         public const string IncomingStatus = "Incoming Status";
+        public const string OutgoingStatus = "Outgoing Status";
         public const string Date = "Date";
         public const string OrganisationName = "Organisation Name";
         public const string OrganisationId = "Organisation ID";
