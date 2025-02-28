@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
 using Xunit;
+using EprPrnIntegration.Common.Constants;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
@@ -353,5 +354,31 @@ public class UpdatePrnsFunctionTests
 
         // Assert
         _emailService.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_AddCustomEventForUpdatePrns()
+    {
+        // Arrange
+        var deltaRun = _fixture.Create<DeltaSyncExecution>();
+        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
+
+        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+            .ReturnsAsync(deltaRun);
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+            .ReturnsAsync(updatePrns);
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        // Act
+        await _function.Run(new());
+
+        _mockUtilities.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdatePrn),
+            It.Is<Dictionary<string, string>>(
+                data => data["EvidenceNo"] == updatePrns[0].EvidenceNo
+                && data["EvidenceStatusCode"] == updatePrns[0].EvidenceStatusCode
+                && data["StatusDate"] == updatePrns[0].StatusDate.GetValueOrDefault().ToUniversalTime().ToString())), Times.Once);
     }
 }

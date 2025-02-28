@@ -74,8 +74,11 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
                     $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
+
                 // Insert sync data into common prn backend
                 await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
+
+                LogCustomEvents(npwdUpdatedPrns.Value);
             }
             else
             {
@@ -94,6 +97,21 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         catch (Exception ex)
         {
             logger.LogError(ex, $"Failed to patch NpwdUpdatedPrns for {npwdUpdatedPrns?.ToString()}");
+        }
+    }
+
+    private void LogCustomEvents(IEnumerable<UpdatedPrnsResponseModel> npwdUpdatedPrns)
+    {
+        foreach (var prn in npwdUpdatedPrns)
+        {
+            Dictionary<string, string> eventData = new()
+                {
+                    { "EvidenceNo", prn.EvidenceNo },
+                    { "EvidenceStatusCode", prn.EvidenceStatusCode },
+                    { "StatusDate", prn.StatusDate.GetValueOrDefault().ToUniversalTime().ToString() }
+                };
+
+            utilities.AddCustomEvent(CustomEvents.UpdatePrn, eventData);
         }
     }
 }
