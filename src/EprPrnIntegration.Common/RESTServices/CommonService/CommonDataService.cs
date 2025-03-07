@@ -18,7 +18,8 @@ namespace EprPrnIntegration.Common.RESTServices.CommonService
             IOptions<Configuration.Service> config)
             : base(httpContextAccessor, httpClientFactory,
                 config.Value.CommonDataServiceBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.CommonDataServiceBaseUrlMissing),
-                config.Value.CommonDataServiceEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.CommonDataServiceEndPointNameMissing), logger, HttpClientNames.CommonData)
+                config.Value.CommonDataServiceEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.CommonDataServiceEndPointNameMissing), logger, HttpClientNames.CommonData,
+                config.Value.TimeoutSeconds)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

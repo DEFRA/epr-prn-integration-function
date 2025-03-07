@@ -21,7 +21,8 @@ public class OrganisationService : BaseHttpService, IOrganisationService
             config.Value.AccountBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceBaseUrlMissing),
             config.Value.AccountEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.OrganisationServiceEndPointNameMissing), 
             logger,
-            HttpClientNames.Organisation)
+            HttpClientNames.Organisation,
+            config.Value.TimeoutSeconds)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }

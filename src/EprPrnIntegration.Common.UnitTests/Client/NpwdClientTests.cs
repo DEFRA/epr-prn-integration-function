@@ -32,6 +32,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
             _npwdConfig.BaseUrl = "http://localhost";
+            _npwdConfig.TimeoutSeconds = 300;
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
             // Mock HttpMessageHandler
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
@@ -248,5 +249,42 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             await Assert.ThrowsAsync<HttpRequestException>(() => _npwdClient.GetIssuedPrns(filter));
         }
 
+        [Fact]
+        public void HttpClient_ShouldHaveConfiguredTimeout_WhenTimeoutSecondsIsSetInConfiguration()
+        {
+            // Arrange
+            var timeoutInSeconds = _npwdConfig.TimeoutSeconds;
+            _npwdConfig.BaseUrl = "http://localhost";
+            _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
+
+            var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+            httpMessageHandlerMock.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent("Success")
+                });
+
+            var httpClient = new HttpClient(httpMessageHandlerMock.Object)
+            {
+                BaseAddress = new Uri("http://localhost"),
+                Timeout = TimeSpan.FromSeconds(timeoutInSeconds)
+            };
+
+            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+                .Returns(httpClient);
+
+            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+
+            // Act
+            var client = _httpClientFactoryMock.Object.CreateClient(HttpClientNames.Npwd);
+
+            // Assert
+            client.Timeout.Should().Be(TimeSpan.FromSeconds(timeoutInSeconds));
+        }
     }
 }

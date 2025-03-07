@@ -12,4 +12,5 @@ public class NpwdIntegrationConfiguration
     public string Scope { get; set; } = null!;
     public string AccessTokenUrl { get; set; } = null!;
     public string Authority { get; set; } = null!;
+    public int TimeoutSeconds { get; set; } = 300;
 }
