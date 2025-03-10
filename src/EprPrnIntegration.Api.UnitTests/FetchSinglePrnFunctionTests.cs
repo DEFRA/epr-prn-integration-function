@@ -12,16 +12,16 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
-public class AddMissingPrnFunctionTests
+public class FetchSinglePrnFunctionTests
 {
     private readonly Mock<IServiceBusProvider> _serviceBusProviderMock = new();
     private readonly Mock<INpwdClient> _npwdClientMock = new();
     private readonly Mock<ILogger> _loggerMock = new();
-    private readonly AddMissingPrnFunction _function;
+    private readonly FetchSinglePrnFunction _function;
 
-    public AddMissingPrnFunctionTests()
+    public FetchSinglePrnFunctionTests()
     {
-        _function = new AddMissingPrnFunction(_serviceBusProviderMock.Object, _npwdClientMock.Object);
+        _function = new FetchSinglePrnFunction(_serviceBusProviderMock.Object, _npwdClientMock.Object);
     }
 
     [Fact]

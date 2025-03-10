@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class AddMissingPrnFunction(IServiceBusProvider serviceBusProvider, INpwdClient npwdClient)
+public class FetchSinglePrnFunction(IServiceBusProvider serviceBusProvider, INpwdClient npwdClient)
 {
 
     [FunctionName("AddMissingPRNFunction")]
