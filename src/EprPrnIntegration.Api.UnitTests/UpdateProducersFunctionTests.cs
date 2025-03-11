@@ -311,7 +311,12 @@ public class UpdateProducersFunctionTests
             It.Is<Dictionary<string, string>>(
                 data => data[CustomEventFields.OrganisationName] == updatedProducers[0].OrganisationName
                 && data[CustomEventFields.OrganisationId] == updatedProducers[0].OrganisationId
-                && data[CustomEventFields.OrganisationAddress] == updatedProducers[0].OrganisationAddress)), Times.Once);
+                && data[CustomEventFields.OrganisationAddress] == updatedProducers[0].OrganisationAddress
+                && data[CustomEventFields.OrganisationType] == updatedProducers[0].OrganisationType
+                && data[CustomEventFields.OrganisationStatus] == updatedProducers[0].Status
+                && data[CustomEventFields.OrganisationEprId] == updatedProducers[0].PEPRID
+                && data[CustomEventFields.OrganisationRegNo] == updatedProducers[0].CompaniesHouseNumber)
+            ), Times.Once);
     }
 
     [Fact]

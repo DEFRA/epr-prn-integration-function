@@ -94,6 +94,10 @@ public class UpdateProducersFunction(
                     { CustomEventFields.OrganisationId, producer.OrganisationId! },
                     { CustomEventFields.Date, DateTime.UtcNow.ToString() },
                     { CustomEventFields.OrganisationAddress, producer.OrganisationAddress},
+                    { CustomEventFields.OrganisationType, producer.OrganisationType ?? string.Empty },
+                    { CustomEventFields.OrganisationStatus, producer.Status ?? string.Empty },
+                    { CustomEventFields.OrganisationEprId, producer.PEPRID ?? string.Empty },
+                    { CustomEventFields.OrganisationRegNo, producer.CompaniesHouseNumber ?? string.Empty }
                 };
 
             utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
