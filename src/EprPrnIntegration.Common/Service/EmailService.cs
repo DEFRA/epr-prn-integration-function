@@ -97,6 +97,35 @@ public class EmailService(
         }
     }
 
+    public void SendCancelledPrnsNotificationEmail(List<ProducerEmail> producerEmails, string organisationId)
+    {
+        var templateId = _messagingConfig.NpwdCancelledPrnsNotificationTemplateId;
+
+        foreach (var producer in producerEmails)
+        {
+            var prnPern = producer.IsExporter ? "PERN" : "PRN";
+            var parameters = new Dictionary<string, object>
+            {
+                ["emailAddress"] = producer.EmailAddress,
+                ["nameOfExporterReprocessor"] = producer.NameOfExporterReprocessor,
+                ["prnNumber"] = producer.PrnNumber,
+                ["PrnPern"] = prnPern
+            };
+
+            try
+            {
+                var response = notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
+                string message = $"Email sent to {producer.FirstName} {producer.LastName} with email address {producer.EmailAddress} and the responseid is {response.id}.";
+                logger.LogInformation(message);
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, Constants.Values.ExceptionLogMessage, organisationId, templateId);
+            }
+        }
+    }
+
     public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
@@ -112,8 +141,8 @@ public class EmailService(
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);
-        
-        if(!string.IsNullOrWhiteSpace(responseId))
+
+        if (!string.IsNullOrWhiteSpace(responseId))
         {
             var message = $"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
             logger.LogInformation(message);
@@ -153,7 +182,7 @@ public class EmailService(
         {
             ["UpdatedDate"] = reportDate.ToString("dd/MM/yyyy"),
             ["RowCount"] = reportDataRowsCount,
-            ["csvData"] = reportCsv          
+            ["csvData"] = reportCsv
         };
 
         var responseId = SendNpwdEmail(messagePersonalisation, templateId, emailAddress);

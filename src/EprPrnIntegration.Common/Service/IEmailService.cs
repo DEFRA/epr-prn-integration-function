@@ -8,7 +8,13 @@ public interface IEmailService
     void SendEmailsToProducers(List<ProducerEmail> producerEmails, string organisationId);
     void SendValidationErrorPrnEmail(string csvData, DateTime reportDate);
 
-
+    /// <summary>
+    /// Notify cancelled PRNs
+    /// </summary>
+    /// <param name="producerEmails"></param>
+    /// <param name="organisationId"></param>
+    void SendCancelledPrnsNotificationEmail(List<ProducerEmail> producerEmails, string organisationId);
+    
     /// <summary>
     /// Inform NPWD about PRNs received
     /// </summary>
