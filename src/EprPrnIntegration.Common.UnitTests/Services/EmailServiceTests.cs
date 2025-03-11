@@ -34,6 +34,7 @@ public class EmailServiceTests
             NpwdReconcileIssuedPrnsTemplateId = "npwdReconcileIssuedPrnsTemplateId",
             NpwdEmail = "npwd@email.com",
             NpwdReconcileUpdatedOrganisationsTemplateId = "npwdReconcileUpdatedOrganisationTemplateId",
+            NpwdCancelledPrnsNotificationTemplateId = "npwdCancelledPrnsNotificationTemplateId"
         };
             
         // Setup the mock IOptions<MessagingConfig> to return the proper MessagingConfig
