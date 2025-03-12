@@ -552,8 +552,10 @@ public class EmailServiceTests
         );
     }
 
-    [Fact]
-    public void SendCancelledPrnsNotificationEmail_Successfully()    
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SendCancelledPrnsNotificationEmail_Successfully(bool isExporter)
     {
         // Arrange
         var producerEmails = new List<ProducerEmail>
@@ -563,7 +565,7 @@ public class EmailServiceTests
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
                 LastName = "Doe",
-                IsExporter = true,
+                IsExporter = isExporter,
                 PrnNumber = "12345",
                 Material = "Plastic",
                 Tonnage = 100,
@@ -595,6 +597,30 @@ public class EmailServiceTests
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
+    } 
+
+    [Fact]
+    public void SendCancelledPrnsNotificationEmail_EmptyList_DoesNotSendEmails()
+    {
+        // Arrange
+        var producerEmails = new List<ProducerEmail>();
+        var organisationId = "org123";
+
+        // Act
+        _emailService.SendCancelledPrnsNotificationEmail(producerEmails, organisationId);
+
+        // Assert
+        _mockNotificationClient.Verify(client =>
+            client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null),
+            Times.Never);
+
+        _mockLogger.Verify(logger => logger.Log(
+            It.IsAny<LogLevel>(),
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Never);
     }
 
 }
