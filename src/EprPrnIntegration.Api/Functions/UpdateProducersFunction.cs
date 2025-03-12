@@ -4,12 +4,14 @@ using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.Metrics;
 using System.Net;
 
 namespace EprPrnIntegration.Api.Functions;
@@ -24,7 +26,7 @@ public class UpdateProducersFunction(
     IEmailService emailService)
 {
     [Function("UpdateProducersList")]
-    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateProducersTrigger%", RunOnStartup = false)] TimerInfo myTimer)
     {
         var isOn = featureConfig.Value.RunUpdateProducers ?? false;
         if (!isOn)
@@ -63,7 +65,8 @@ public class UpdateProducersFunction(
                     toDate);
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
-                LogCustomEvents(updatedEprProducers);
+
+                LogCustomEvents(npwdUpdatedProducers.Value);
             }
             else
             {
@@ -84,20 +87,20 @@ public class UpdateProducersFunction(
         }
     }
 
-    private void LogCustomEvents(List<UpdatedProducersResponse> updatedEprProducers)
+    private void LogCustomEvents(IEnumerable<Producer> updatedProducers)
     {
-        foreach (var producer in updatedEprProducers)
+        foreach (var producer in updatedProducers)
         {
             Dictionary<string, string> eventData = new()
                 {
-                    { CustomEventFields.OrganisationName, producer.OrganisationName! },
-                    { CustomEventFields.OrganisationId, producer.OrganisationId! },
+                    { CustomEventFields.OrganisationName, producer.ProducerName },
+                    { CustomEventFields.OrganisationId, producer.EPRCode },
                     { CustomEventFields.Date, DateTime.UtcNow.ToString() },
-                    { CustomEventFields.OrganisationAddress, producer.OrganisationAddress},
-                    { CustomEventFields.OrganisationType, producer.OrganisationType ?? string.Empty },
-                    { CustomEventFields.OrganisationStatus, producer.Status ?? string.Empty },
-                    { CustomEventFields.OrganisationEprId, producer.PEPRID ?? string.Empty },
-                    { CustomEventFields.OrganisationRegNo, producer.CompaniesHouseNumber ?? string.Empty }
+                    { CustomEventFields.OrganisationAddress, ProducerMapper.MapAddress(producer)},
+                    { CustomEventFields.OrganisationType, producer.EntityTypeCode },
+                    { CustomEventFields.OrganisationStatus, producer.StatusCode },
+                    { CustomEventFields.OrganisationEprId, producer.EPRId },
+                    { CustomEventFields.OrganisationRegNo, producer.CompanyRegNo }
                 };
 
             utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);

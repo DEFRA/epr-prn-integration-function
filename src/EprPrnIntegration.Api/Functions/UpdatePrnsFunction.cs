@@ -23,7 +23,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
-    [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
+    [TimerTrigger("%UpdatePrnsTrigger%", RunOnStartup = false)] TimerInfo myTimer)
     {
         bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)

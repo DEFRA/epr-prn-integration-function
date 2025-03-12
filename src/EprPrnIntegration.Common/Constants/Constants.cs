@@ -70,9 +70,9 @@
         public const string OrganisationName = "Organisation Name";
         public const string OrganisationId = "Organisation ID";
         public const string OrganisationAddress = "Address";
-        public const string OrganisationType = "EntityTypeCode";
-        public const string OrganisationStatus = "StatusCode";
-        public const string OrganisationEprId = "EPRId";
+        public const string OrganisationType = "OrganisationType";
+        public const string OrganisationStatus = "Status";
+        public const string OrganisationEprId = "pEPR ID";
         public const string OrganisationRegNo = "CompanyRegNo";
         public const string ErrorComments = "Error Comments";
     }

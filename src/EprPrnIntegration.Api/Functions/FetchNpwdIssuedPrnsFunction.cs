@@ -49,7 +49,7 @@ namespace EprPrnIntegration.Api.Functions
         }
 
         [Function("FetchNpwdIssuedPrnsFunction")]
-        public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%")] TimerInfo timerInfo)
+        public async Task Run([TimerTrigger("%FetchNpwdIssuedPrns:Schedule%", RunOnStartup = false)] TimerInfo timerInfo)
         {
             if (!IsFeatureEnabled())
                 return;
