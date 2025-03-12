@@ -245,7 +245,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
         public void HttpClient_ShouldHaveConfiguredTimeout_WhenTimeoutSecondsIsSetInConfiguration()
         {
             // Arrange
-            var timeoutInSeconds = 300;
+            var timeoutInSeconds = 310;
 
             var serviceConfig = new Configuration.Service
             {

@@ -32,7 +32,7 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdConfig = _fixture.Create<NpwdIntegrationConfiguration>();
             _npwdConfig.BaseUrl = "http://localhost";
-            _npwdConfig.TimeoutSeconds = 300;
+            _npwdConfig.TimeoutSeconds = 310;
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
             // Mock HttpMessageHandler
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();

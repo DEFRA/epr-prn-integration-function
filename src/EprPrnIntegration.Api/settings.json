@@ -45,7 +45,7 @@
     "NpwdIntegration:Scope": "",
     "NpwdIntegration:AccessTokenUrl": "",
     "NpwdIntegration:Authority": "",
-    "NpwdIntegration:TimeoutSeconds ": "300",
+    "NpwdIntegration:TimeoutSeconds ": "310",
     "EmailNpwdReconciliationTrigger": "0 0 18 * * 1-5",
     "AppInsightsConfig:ResourceId": "",
     "MessagingConfig:NpwdReconcileUpdatedPrnsTemplateId": "a1b81df4-560e-4034-a3cc-282d00ee2959",
