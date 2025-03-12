@@ -165,6 +165,7 @@ public class EmailService(
         }
     }
 
+    #region Private Methods
     private string SendNpwdEmail(Dictionary<string, object> data, string templateId, string emailAddress)
     {
         try
@@ -178,4 +179,5 @@ public class EmailService(
             throw;
         }
     }
+    #endregion
 }
