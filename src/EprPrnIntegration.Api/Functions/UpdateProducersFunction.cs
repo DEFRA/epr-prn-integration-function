@@ -26,7 +26,7 @@ public class UpdateProducersFunction(
     IEmailService emailService)
 {
     [Function("UpdateProducersList")]
-    public async Task Run([TimerTrigger("%UpdateProducersTrigger%", RunOnStartup = false)] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
     {
         var isOn = featureConfig.Value.RunUpdateProducers ?? false;
         if (!isOn)

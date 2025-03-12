@@ -18,7 +18,7 @@ public class EmailNpwdReconciliationFunction(
     IPrnService prnService)
 {
     [Function("EmailNpwdReconciliation")]
-    public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%", RunOnStartup = true)] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
     {
         var isOn = featureConfig.Value.RunReconciliation ?? false;
         if (!isOn)
