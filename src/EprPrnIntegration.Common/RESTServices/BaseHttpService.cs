@@ -23,7 +23,8 @@ namespace EprPrnIntegration.Common.RESTServices
             string baseUrl,
             string endPointName,
             ILogger<BaseHttpService> logger,
-            string httpClientName = "")
+            string httpClientName = "",
+            int timeoutSeconds = 100)
         {
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
@@ -34,7 +35,9 @@ namespace EprPrnIntegration.Common.RESTServices
             ArgumentNullException.ThrowIfNullOrWhiteSpace(endPointName);
 
             _httpClient = string.IsNullOrWhiteSpace(httpClientName) ? httpClientFactory.CreateClient() : httpClientFactory.CreateClient(httpClientName);
-            
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+
             _httpClient.DefaultRequestHeaders.Add(Constants.HttpHeaderNames.Accept, "application/json");
 
             if (_baseUrl.EndsWith('/'))
