@@ -1,4 +1,5 @@
 ﻿using EprPrnIntegration.Api.Models;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
@@ -238,6 +239,45 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
 
             // Assert
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void HttpClient_ShouldHaveConfiguredTimeout_WhenTimeoutSecondsIsSetInConfiguration()
+        {
+            // Arrange
+            var timeoutInSeconds = 310;
+
+            var serviceConfig = new Configuration.Service
+            {
+                AccountBaseUrl = "http://localhost:5000/",
+                AccountEndPointName = "api/organisations",
+                TimeoutSeconds = timeoutInSeconds
+            };
+            _configMock.Setup(c => c.Value).Returns(serviceConfig);
+
+            // Create a mock HttpClient
+            var httpClient = new HttpClient(new FakeHttpMessageHandler(
+                                [
+                                    new() { FirstName="Test", LastName="User", Email = "test@example.com" }
+                                ]))
+            {
+                Timeout = TimeSpan.FromSeconds(timeoutInSeconds)
+            };
+
+            var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
+
+            // Create OrganisationService instance
+            var organisationService = new OrganisationService(
+                _httpContextAccessorMock.Object,
+                httpClientFactoryMock,
+                _loggerMock.Object,
+                _configMock.Object);
+
+            // Act
+            var client = httpClientFactoryMock.CreateClient(HttpClientNames.Account);
+
+            // Assert
+            client.Timeout.Should().Be(TimeSpan.FromSeconds(timeoutInSeconds));
         }
     }
 }

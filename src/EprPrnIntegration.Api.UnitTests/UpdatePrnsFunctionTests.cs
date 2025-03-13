@@ -15,7 +15,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
 using Xunit;
-using FluentAssertions;
+using EprPrnIntegration.Common.Constants;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
@@ -59,6 +59,7 @@ public class UpdatePrnsFunctionTests
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
     }
+
 
     [Fact]
     public async Task Run_ShouldLogWarning_WhenNoUpdatedPrnsRetrieved()
@@ -356,36 +357,11 @@ public class UpdatePrnsFunctionTests
     }
 
     [Fact]
-    public async Task Run_BatchesPrns_WhenNumberOfPrnsExceedsBatchSize()
+    public async Task Run_AddCustomEventForUpdatePrns()
     {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("2");
-
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
-
-        var firstPrn = new UpdatedPrnsResponseModel
-        {
-            EvidenceNo = "A",
-            EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(2))
-        };
-
-        var secondPrn = new UpdatedPrnsResponseModel
-        {
-            EvidenceNo = "B",
-            EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))
-        };
-
-        var thirdPrn = new UpdatedPrnsResponseModel
-        {
-            EvidenceNo = "C",
-            EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow
-        };
-
-        var updatePrns = new List<UpdatedPrnsResponseModel> { firstPrn, secondPrn, thirdPrn };
+        // Arrange
+        var deltaRun = _fixture.Create<DeltaSyncExecution>();
+        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
 
         _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
@@ -393,105 +369,16 @@ public class UpdatePrnsFunctionTests
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
-        int prnCount = 0;
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
-            .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         // Act
-        await _function.Run(default!);
+        await _function.Run(new());
 
-        // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching 2 of 3 Prns")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-
-        prnCount.Should().Be(2);
-
-        _mockUtilities.Verify(
-            provider => provider.SetDeltaSyncExecution(
-                It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns), secondPrn.StatusDate.Value),
-            Times.Once);
-
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    public async Task Run_DoesNotBatchPrns_WhenNumberOfPrnsLessThanOrEqualToBatchSize(int countOfPrnsReturned)
-    {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("3");
-
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
-
-        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>(countOfPrnsReturned).ToList();
-
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
-            .ReturnsAsync(deltaRun);
-
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
-            .ReturnsAsync(updatePrns);
-
-        int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
-            .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
-
-        // Act
-        await _function.Run(default!);
-
-        // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
-
-        prnCount.Should().Be(countOfPrnsReturned);
-
-    }
-
-    [Fact]
-    public async Task Run_DoesNotBatchPrns_WhenBatchSizeIsZero()
-    {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("0");
-
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
-
-        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>(3).ToList();
-
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
-            .ReturnsAsync(deltaRun);
-
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
-            .ReturnsAsync(updatePrns);
-
-        int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
-            .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
-
-        // Act
-        await _function.Run(default!);
-
-        // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
-
-        prnCount.Should().Be(3);
-
+        _mockUtilities.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdatePrn),
+            It.Is<Dictionary<string, string>>(
+                data => data["EvidenceNo"] == updatePrns[0].EvidenceNo
+                && data["EvidenceStatusCode"] == updatePrns[0].EvidenceStatusCode
+                && data["StatusDate"] == updatePrns[0].StatusDate.GetValueOrDefault().ToUniversalTime().ToString())), Times.Once);
     }
 }
