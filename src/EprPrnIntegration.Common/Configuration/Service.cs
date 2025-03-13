@@ -17,4 +17,5 @@ public class Service
     public string? CommonDataClientId { get; set; }
     public string? CommonDataServiceBaseUrl { get; set; }
     public string? CommonDataServiceEndPointName { get; set; }
+    public int TimeoutSeconds { get; set; } = 100;
 }
