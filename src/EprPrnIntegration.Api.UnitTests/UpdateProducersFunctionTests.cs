@@ -15,8 +15,6 @@ using Moq;
 using System.Net;
 using Xunit;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
-using EprPrnIntegration.Common.Mappers;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 namespace EprPrnIntegration.Api.UnitTests;
 

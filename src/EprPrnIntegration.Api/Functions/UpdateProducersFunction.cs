@@ -11,7 +11,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Diagnostics.Metrics;
 using System.Net;
 
 namespace EprPrnIntegration.Api.Functions;
