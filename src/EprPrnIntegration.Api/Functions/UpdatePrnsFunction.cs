@@ -72,7 +72,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
                 DateTime? newestPrnStatusDate = updatedEprPrns.Select(x => x.StatusDate).LastOrDefault();
                 if (newestPrnStatusDate.GetValueOrDefault() > DateTime.MinValue)
                 {
-                    toDate = newestPrnStatusDate.Value.ToUniversalTime();
+                    toDate = newestPrnStatusDate.GetValueOrDefault().ToUniversalTime();
                 }
             }
         }
