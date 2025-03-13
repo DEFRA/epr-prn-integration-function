@@ -450,8 +450,26 @@ public class EmailNpwdReconciliationFunctionTests
         // Arrange
         var updatedOrgs = new List<UpdatedOrganisationReconciliationSummary>
         {
-            new() { Id = "asd-90-909asd-2323", Name = "Gen Test 1 Ltd", Date = "10/01/2025", Address = "122 Ashwood Park, London SE1 5AA" },
-            new() { Id = "aa-22-333-asda2", Name = "Gen Test 2 Ltd", Date = "11/01/2025", Address = "2331 Wide Lane North, Glasgow GL1 2AA" }
+            new() { 
+                Id = "asd-90-909asd-2323",
+                Name = "Gen Test 1 Ltd", 
+                Date = "10/01/2025", 
+                Address = "122 Ashwood Park, London SE1 5AA",
+                CompanyRegNo = "ABN2233",
+                OrganisationType = "Producer",
+                PEPRId = "29023788",
+                Status = "Updated"
+            },
+            new() { 
+                Id = "aa-22-333-asda2", 
+                Name = "Gen Test 2 Ltd", 
+                Date = "11/01/2025", 
+                Address = "2331 Wide Lane North, Glasgow GL1 2AA",
+                CompanyRegNo = "DES1122",
+                OrganisationType = "Waste Management",
+                PEPRId = "1788299",
+                Status = "Updated"
+            }
         };
 
         var csvData = new Dictionary<string, List<string>>
@@ -460,6 +478,10 @@ public class EmailNpwdReconciliationFunctionTests
             { CustomEventFields.OrganisationName, updatedOrgs.Select(x => x.Name ?? string.Empty).ToList() },
             { CustomEventFields.Date, updatedOrgs.Select(x => x.Date ?? string.Empty).ToList() },
             { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationType, updatedOrgs.Select(x => x.OrganisationType ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationStatus, updatedOrgs.Select(x => x.Status ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationEprId, updatedOrgs.Select(x => x.PEPRId ?? string.Empty).ToList() },
+            { CustomEventFields.OrganisationRegNo, updatedOrgs.Select(x => x.CompanyRegNo ?? string.Empty).ToList() },
         };
 
         var csvContent = "Mock CSV Content";
