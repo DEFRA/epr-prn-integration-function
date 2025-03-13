@@ -27,6 +27,9 @@ public class NpwdClient(
 
         _httpClient.BaseAddress = new Uri(baseAddress!);
 
+        var timeout = TimeSpan.FromSeconds(npwdIntegrationConfig.Value.TimeoutSeconds);
+        _httpClient.Timeout = timeout;
+
         var response = await _httpClient.PatchAsync(updatePath, requestContent);
         return response;
     }
@@ -43,6 +46,9 @@ public class NpwdClient(
 
         if (baseAddress.EndsWith('/'))
             baseAddress = baseAddress.TrimEnd('/');
+
+        var timeout = TimeSpan.FromSeconds(npwdIntegrationConfig.Value.TimeoutSeconds);
+        _httpClient.Timeout = timeout;
 
         var requestUrl = $"{baseAddress}/{Constants.NpwdApiPath.Prns}?$filter={filter}";
         List<NpwdPrn> issuedPrns = [];
