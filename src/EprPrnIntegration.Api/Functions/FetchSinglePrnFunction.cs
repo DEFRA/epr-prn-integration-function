@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
@@ -25,22 +24,22 @@ public class FetchSinglePrnFunction(
 
         try
         {
-            var addMissingPrnRequest = await JsonSerializer.DeserializeAsync<AddMissingPrnRequest>(req.Body);
+            var fetchSinglePrnRequest = await JsonSerializer.DeserializeAsync<FetchSinglePrnRequest>(req.Body);
 
-            if (addMissingPrnRequest?.PrnNumber is null)
+            if (fetchSinglePrnRequest?.PrnNumber is null)
             {
                 return new BadRequestObjectResult("Please provide a valid PRN number.");
             }
 
-            var fetchedMissingPrn = await FetchEvidenceFromNpwd(addMissingPrnRequest.PrnNumber);
+            var fetchedMissingPrn = await FetchEvidenceFromNpwd(fetchSinglePrnRequest.PrnNumber);
             if (fetchedMissingPrn is null)
             {
-                return new NotFoundObjectResult($"{addMissingPrnRequest.PrnNumber} is not found in NPWD system.");
+                return new NotFoundObjectResult($"{fetchSinglePrnRequest.PrnNumber} is not found in NPWD system.");
             }
 
             await serviceBusProvider.SendFetchedNpwdPrnsToQueue([fetchedMissingPrn]);
 
-            return new OkObjectResult($"{addMissingPrnRequest.PrnNumber} is produced to the queue to be processed.");
+            return new OkObjectResult($"{fetchSinglePrnRequest.PrnNumber} is produced to the queue to be processed.");
         }
         catch (Exception ex)
         {
