@@ -17,7 +17,7 @@ public class FetchSinglePrnFunction(
     ILogger<FetchSinglePrnFunction> logger)
 {
 
-    [FunctionName("FetchSinglePrnFunction")]
+    [Function("FetchSinglePrnFunction")]
     public async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "prn")] HttpRequest req)
     {
