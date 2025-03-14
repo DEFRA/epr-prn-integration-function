@@ -421,6 +421,35 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task ProcessFetchedPrn_SendEmail_WhenEvidenceStatus_Is_Cancelled()
+        {   
+            // Arrange
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            npwdPrn.EvidenceStatusCode = "EV-CANCEL"; // Ensure correct status
+
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            // Mock validator to return success only when EvidenceStatusCode is "EV-CANCEL"
+            _mockValidator.Setup(x => x.ValidateAsync(It.Is<NpwdPrn>(p => p.EvidenceStatusCode == "EV-CANCEL"), It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
+            _mockPrnService.Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                           .Returns(Task.CompletedTask);
+
+            _mockOrganisationService.Setup(service => service.GetPersonEmailsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                                     .ReturnsAsync(_fixture.CreateMany<PersonEmail>().ToList());
+
+            // Act
+            await _function.ProcessFetchedPrn(message);
+
+            // Assert
+            _mockEmailService.Verify(m => m.SendCancelledPrnsNotificationEmail(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
         public async Task ProcessFetchedPrn_ExceptionDuringValidation_LogsError()
         {
             // Arrange

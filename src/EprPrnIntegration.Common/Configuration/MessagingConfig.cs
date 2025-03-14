@@ -17,4 +17,5 @@ public class MessagingConfig
     public string? NpwdReconcileIssuedPrnsTemplateId { get; set; }
     public string? NpwdReconcileUpdatedPrnsTemplateId { get; set; }
     public string? NpwdReconcileUpdatedOrganisationsTemplateId { get; set; }
+    public string? NpwdCancelledPrnsNotificationTemplateId { get; set; }
 }
