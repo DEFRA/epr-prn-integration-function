@@ -14,7 +14,7 @@ namespace EprPrnIntegration.Api.Functions;
 public class FetchSinglePrnFunction(IServiceBusProvider serviceBusProvider, INpwdClient npwdClient)
 {
 
-    [FunctionName("AddMissingPRNFunction")]
+    [FunctionName("FetchSinglePrnFunction")]
     public async Task<IActionResult> Run(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "prn")] HttpRequest req,
         ILogger log)
