@@ -11,15 +11,17 @@ using System.Text.Json;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class FetchSinglePrnFunction(IServiceBusProvider serviceBusProvider, INpwdClient npwdClient)
+public class FetchSinglePrnFunction(
+    IServiceBusProvider serviceBusProvider, 
+    INpwdClient npwdClient,
+    ILogger<FetchSinglePrnFunction> logger)
 {
 
     [FunctionName("FetchSinglePrnFunction")]
     public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "prn")] HttpRequest req,
-        ILogger log)
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "prn")] HttpRequest req)
     {
-        log.LogInformation("Processing request to add missing PRN.");
+        logger.LogInformation("Processing request to add missing PRN.");
 
         try
         {
@@ -30,7 +32,7 @@ public class FetchSinglePrnFunction(IServiceBusProvider serviceBusProvider, INpw
                 return new BadRequestObjectResult("Please provide a valid PRN number.");
             }
 
-            var fetchedMissingPrn = await FetchEvidenceFromNpwd(addMissingPrnRequest.PrnNumber, log);
+            var fetchedMissingPrn = await FetchEvidenceFromNpwd(addMissingPrnRequest.PrnNumber);
             if (fetchedMissingPrn is null)
             {
                 return new NotFoundObjectResult($"{addMissingPrnRequest.PrnNumber} is not found in NPWD system.");
@@ -42,19 +44,19 @@ public class FetchSinglePrnFunction(IServiceBusProvider serviceBusProvider, INpw
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Error processing PRN request.");
+            logger.LogError(ex, "Error processing PRN request.");
             return new StatusCodeResult((int)HttpStatusCode.InternalServerError);
         }
     }
 
-    private async Task<NpwdPrn?> FetchEvidenceFromNpwd(string prnNumber, ILogger log)
+    private async Task<NpwdPrn?> FetchEvidenceFromNpwd(string prnNumber)
     {
         var filter = $"(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR') AND evidenceNo eq '{prnNumber}'";
 
-        log.LogInformation("Fetching evidence from NPWD API with filter: {filter}", filter);
+        logger.LogInformation("Fetching evidence from NPWD API with filter: {filter}", filter);
 
         var issuedPrns = await npwdClient.GetIssuedPrns(filter);
 
-        return issuedPrns is { Count: > 0 } ? issuedPrns.FirstOrDefault() : null;
+        return issuedPrns != null && issuedPrns?.Count > 0 ? issuedPrns.FirstOrDefault() : null;
     }
 }

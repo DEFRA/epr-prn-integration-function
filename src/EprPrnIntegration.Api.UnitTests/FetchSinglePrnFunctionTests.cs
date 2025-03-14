@@ -16,12 +16,12 @@ public class FetchSinglePrnFunctionTests
 {
     private readonly Mock<IServiceBusProvider> _serviceBusProviderMock = new();
     private readonly Mock<INpwdClient> _npwdClientMock = new();
-    private readonly Mock<ILogger> _loggerMock = new();
+    private readonly Mock<ILogger<FetchSinglePrnFunction>> _loggerMock = new();
     private readonly FetchSinglePrnFunction _function;
 
     public FetchSinglePrnFunctionTests()
     {
-        _function = new FetchSinglePrnFunction(_serviceBusProviderMock.Object, _npwdClientMock.Object);
+        _function = new FetchSinglePrnFunction(_serviceBusProviderMock.Object, _npwdClientMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class FetchSinglePrnFunctionTests
         request.Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = (string?)null }));
 
         // Act
-        var result = await _function.Run(request, _loggerMock.Object);
+        var result = await _function.Run(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -51,7 +51,7 @@ public class FetchSinglePrnFunctionTests
             .ReturnsAsync(new List<NpwdPrn>());
 
         // Act
-        var result = await _function.Run(request, _loggerMock.Object);
+        var result = await _function.Run(request);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -71,7 +71,7 @@ public class FetchSinglePrnFunctionTests
             .ReturnsAsync(new List<NpwdPrn> { fetchedPrn });
 
         // Act
-        var result = await _function.Run(request, _loggerMock.Object);
+        var result = await _function.Run(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -91,7 +91,7 @@ public class FetchSinglePrnFunctionTests
             .ThrowsAsync(new Exception("Test exception"));
 
         // Act
-        var result = await _function.Run(request, _loggerMock.Object);
+        var result = await _function.Run(request);
 
         // Assert
         var statusCodeResult = Assert.IsType<StatusCodeResult>(result);
