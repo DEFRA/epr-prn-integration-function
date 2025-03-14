@@ -72,6 +72,11 @@ public class AppInsightsService : IAppInsightsService
         const string organisationId = "OrganisationId";
         const string organisationAddress = "OrganisationAddress";
         const string updatedDate = "UpdatedDate";
+        const string organisationType = "EntityTypeCode";
+        const string status = "StatusCode";
+        const string pEPRId = "EPRId";
+        const string companyRegNo = "CompanyRegNo";
+
         var queryPeriod = TimeSpan.FromDays(1);
 
         var client = new LogsQueryClient(new DefaultAzureCredential());
@@ -83,8 +88,12 @@ public class AppInsightsService : IAppInsightsService
                             | extend {organisationName} = org['{CustomEventFields.OrganisationName}'], 
                                 {organisationId} = org['{CustomEventFields.OrganisationId}'], 
                                 {organisationAddress} = org['{CustomEventFields.OrganisationAddress}'],
-                                {updatedDate} = org['{CustomEventFields.Date}']
-                            | project {organisationName}, {organisationId}, {organisationAddress}, {updatedDate}";
+                                {updatedDate} = org['{CustomEventFields.Date}'],
+                                {organisationType} = org['{CustomEventFields.OrganisationType}'],
+                                {status} = org['{CustomEventFields.OrganisationStatus}'],
+                                {pEPRId} = org['{CustomEventFields.OrganisationEprId}'],
+                                {companyRegNo} = org['{CustomEventFields.OrganisationRegNo}']
+                            | project {organisationName}, {organisationId}, {organisationAddress}, {updatedDate}, {organisationType}, {status}, {pEPRId}, {companyRegNo}";
 
         // run the query on the Application Insights resource
         var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(queryPeriod));
@@ -101,6 +110,10 @@ public class AppInsightsService : IAppInsightsService
                         Id = row[organisationId]?.ToString() ?? string.Empty,
                         Address = row[organisationAddress]?.ToString() ?? string.Empty,
                         Date = row[updatedDate]?.ToString() ?? string.Empty,
+                        OrganisationType = row[organisationType]?.ToString() ?? string.Empty,
+                        Status = row[status]?.ToString() ?? string.Empty,
+                        PEPRId = row[pEPRId]?.ToString() ?? string.Empty,
+                        CompanyRegNo = row[companyRegNo]?.ToString() ?? string.Empty,
                     };
 
                     orgs.Add(org);

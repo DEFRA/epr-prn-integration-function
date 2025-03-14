@@ -300,18 +300,33 @@ public class UpdateProducersFunctionTests
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync([updatedProducers[0]]);
 
+        IEnumerable<Producer> mappedProducers = null;
+
         _npwdClientMock
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
-            .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
+            .ReturnsAsync((ProducerDelta delta, string path) => 
+            {
+                mappedProducers = delta.Value;
+                return new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK };
+            });
 
         // Act
         await function.Run(new());
 
+        Assert.NotNull(mappedProducers);
+        var npwdSentMappedProducer = mappedProducers.FirstOrDefault();
+        Assert.NotNull(npwdSentMappedProducer);
+
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
             It.Is<Dictionary<string, string>>(
-                data => data[CustomEventFields.OrganisationName] == updatedProducers[0].OrganisationName
-                && data[CustomEventFields.OrganisationId] == updatedProducers[0].OrganisationId
-                && data[CustomEventFields.OrganisationAddress] == updatedProducers[0].OrganisationAddress)), Times.Once);
+                data => data[CustomEventFields.OrganisationName] == npwdSentMappedProducer.ProducerName
+                && data[CustomEventFields.OrganisationId] == npwdSentMappedProducer.EPRCode
+                && data[CustomEventFields.OrganisationAddress] == MapProducerAddress(npwdSentMappedProducer)
+                && data[CustomEventFields.OrganisationType] == npwdSentMappedProducer.EntityTypeCode
+                && data[CustomEventFields.OrganisationStatus] == npwdSentMappedProducer.StatusCode
+                && data[CustomEventFields.OrganisationEprId] == npwdSentMappedProducer.EPRId
+                && data[CustomEventFields.OrganisationRegNo] == npwdSentMappedProducer.CompanyRegNo)
+            ), Times.Once);
     }
 
     [Fact]
@@ -393,5 +408,22 @@ public class UpdateProducersFunctionTests
             Times.Once);
 
        _emailServiceMock.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
+    }
+
+    private static string MapProducerAddress(Producer producer)
+    {
+        if (producer == null)
+            return string.Empty;
+
+        var addressFields = new[]
+        {
+                producer.AddressLine1,
+                producer.AddressLine2,
+                producer.Town,
+                producer.County,
+                producer.Postcode,
+            };
+
+        return string.Join(", ", addressFields.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }

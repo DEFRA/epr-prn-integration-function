@@ -21,7 +21,8 @@ public class PrnService : BaseHttpService, IPrnService
             config.Value.PrnBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceBaseUrlMissing),
             config.Value.PrnEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceEndPointNameMissing), 
             logger,
-            HttpClientNames.Prn)
+            HttpClientNames.Prn,
+            config.Value.TimeoutSeconds)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
