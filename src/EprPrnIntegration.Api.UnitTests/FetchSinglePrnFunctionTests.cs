@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Client;
@@ -45,7 +46,12 @@ public class FetchSinglePrnFunctionTests
         // Arrange
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
-        request.Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = prnNumber }));
+
+        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+        var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
+        requestBodyStream.Seek(0, SeekOrigin.Begin);
+        request.Body = requestBodyStream;
+        request.ContentType = "application/json";
 
         _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
             .ReturnsAsync(new List<NpwdPrn>());
@@ -64,7 +70,12 @@ public class FetchSinglePrnFunctionTests
         // Arrange
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
-        request.Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = prnNumber }));
+        
+        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+        var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
+        requestBodyStream.Seek(0, SeekOrigin.Begin);
+        request.Body = requestBodyStream;
+        request.ContentType = "application/json";
 
         var fetchedPrn = new NpwdPrn { EvidenceNo = prnNumber };
         _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
@@ -85,7 +96,12 @@ public class FetchSinglePrnFunctionTests
         // Arrange
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
-        request.Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = prnNumber }));
+
+        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+        var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
+        requestBodyStream.Seek(0, SeekOrigin.Begin);
+        request.Body = requestBodyStream;
+        request.ContentType = "application/json";
 
         _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Test exception"));
