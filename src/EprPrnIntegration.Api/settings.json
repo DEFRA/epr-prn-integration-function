@@ -52,6 +52,7 @@
     "Service__AccountClientId": "",
     "Service__PrnClientId": "",
     "Service__CommonDataClientId": "",
-    "FetchNpwdPrnsPollingLagSeconds": "60"
+    "FetchNpwdPrnsPollingLagSeconds": "60",
+    "UpdatePrnsMaxRows": 100
   }
 }
