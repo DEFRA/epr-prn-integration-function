@@ -65,6 +65,23 @@ namespace EprPrnIntegration.Common.Mappers
             };
         }
 
+        public static string MapAddress(Producer producer)
+        {
+            if (producer == null)
+                return string.Empty;
+
+            var addressFields = new[]
+            {
+                producer.AddressLine1,
+                producer.AddressLine2,
+                producer.Town,
+                producer.County,
+                producer.Postcode,
+            };
+
+            return string.Join(", ", addressFields.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+
         private static (string StatusCode, string EntityTypeCode) GetCodes(string? status, string? orgType)
         {
             if (string.IsNullOrEmpty(status) || string.IsNullOrEmpty(orgType))
@@ -87,7 +104,7 @@ namespace EprPrnIntegration.Common.Mappers
             // DR Moved to CS
             if (status == "DR Moved to CS" && orgType == "CSM")
             {
-                return("PR-REGISTERED", "CSM");
+                return ("PR-REGISTERED", "CSM");
             }
 
             // Not a Member of CS
