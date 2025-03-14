@@ -1,5 +1,7 @@
-﻿using EprPrnIntegration.Common.Mappers;
+﻿using AutoFixture;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
@@ -8,6 +10,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
     public class ProducerMapperTests
     {
         private readonly Mock<IConfiguration> _configurationMock;
+        private readonly Fixture _fixture = new();
 
         public ProducerMapperTests()
         {
@@ -170,6 +173,35 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             var producer = result.Value[0];
 
             Assert.Equal("CAR COLSTON FILLING STATION LTD", producer.TradingName);
+        }
+
+        [Fact]
+        public void MapAddress_NullInput_ReturnsEmptyString()
+        {
+            var result = ProducerMapper.MapAddress(null!);
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void MapAddress_ValidProducerInput_ReturnsCorrectAddress()
+        {
+            var input = _fixture.Create<Producer>();
+            var result = ProducerMapper.MapAddress(input);
+
+            // Assert
+            Assert.NotNull(result);
+
+            var expectedOutput = string.Join(", ", new[] { 
+                input.AddressLine1,
+                input.AddressLine2,
+                input.Town,
+                input.County,
+                input.Postcode }
+            .Where(x => !string.IsNullOrEmpty(x)));
+
+            Assert.Equal(expectedOutput, result);
         }
     }
 }
