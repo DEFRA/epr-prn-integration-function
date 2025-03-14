@@ -82,6 +82,8 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         try
         {
+            logger.LogInformation("Sending total of {PrnCount} prns to npwd for updating", updatedEprPrns.Count);
+
             var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.Prns);
 
             if (pEprApiResponse.IsSuccessStatusCode)
