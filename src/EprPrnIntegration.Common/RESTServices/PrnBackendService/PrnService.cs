@@ -21,7 +21,8 @@ public class PrnService : BaseHttpService, IPrnService
             config.Value.PrnBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceBaseUrlMissing),
             config.Value.PrnEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceEndPointNameMissing), 
             logger,
-            HttpClientNames.Prn)
+            HttpClientNames.Prn,
+            config.Value.TimeoutSeconds)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -29,8 +30,8 @@ public class PrnService : BaseHttpService, IPrnService
     public async Task<List<UpdatedPrnsResponseModel>> GetUpdatedPrns(DateTime from, DateTime to,
        CancellationToken cancellationToken)
     {
-        var fromDate = from.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        var toDate = to.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+        var fromDate = from.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+        var toDate = to.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
         _logger.LogInformation("Getting updated PRN's.");
         return await Get<List<UpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
             cancellationToken, false);
