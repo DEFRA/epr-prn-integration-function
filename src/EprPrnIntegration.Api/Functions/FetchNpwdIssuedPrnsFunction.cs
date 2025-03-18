@@ -191,8 +191,16 @@ namespace EprPrnIntegration.Api.Functions
                 }
 
                 _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
-                _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
 
+                if (messageContent.EvidenceStatusCode == "EV-CANCEL")
+                {
+                    _emailService.SendCancelledPrnsNotificationEmail(producers, messageContent!.IssuedToEPRId!);
+                }
+                else
+                {
+                    _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
+                }
+             
                 _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
             }
             catch (Exception ex)

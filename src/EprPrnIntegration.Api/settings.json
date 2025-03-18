@@ -37,6 +37,7 @@
     "MessagingConfig:NpwdValidationErrorsTemplateId": "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef",
     "MessagingConfig:NpwdReconcileIssuedPrnsTemplateId": "3f28cb69-4703-46c6-902f-9350aaeebc87",
     "MessagingConfig:NpwdReconcileUpdatedOrganisationsTemplateId": "07e89bba-7f0e-47f3-a96d-9fbcd923f9ee",
+    "MessagingConfig:NpwdCancelledPrnsNotificationTemplateId": "52ec5cdb-ab29-475e-82d5-f5841f016066",
     "ApiCallsRetryConfig:WaitTimeBetweenRetryInSecs": 30,
     "ApiCallsRetryConfig:MaxAttempts": 3,
     "NpwdIntegration:BaseUrl": "https://fat.npwd.org.uk/",
