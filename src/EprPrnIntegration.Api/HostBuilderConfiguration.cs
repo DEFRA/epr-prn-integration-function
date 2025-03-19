@@ -39,6 +39,18 @@ public static class HostBuilderConfiguration
             .ConfigureFunctionsWebApplication()
             .ConfigureServices((hostingContext, services) =>
                 ConfigureServices(hostingContext.Configuration, services))
+            .ConfigureLogging(logging =>
+            {
+                logging.Services.Configure<LoggerFilterOptions>(options =>
+                {
+                    LoggerFilterRule? defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName
+                        == "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider");
+                    if (defaultRule is not null)
+                    {
+                        options.Rules.Remove(defaultRule);
+                    }
+                });
+            })
             .Build();
     }
 
