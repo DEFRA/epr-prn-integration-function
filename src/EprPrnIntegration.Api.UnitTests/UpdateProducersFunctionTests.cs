@@ -187,7 +187,7 @@ public class UpdateProducersFunctionTests
             It.Is<It.IsAnyType>((v, t) =>
                 $"{v}".ToString()
                     .Contains(
-                        $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
+                        $"Failed to update producer batch")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -301,9 +301,9 @@ public class UpdateProducersFunctionTests
 
         _npwdClientMock
             .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
-            .ReturnsAsync((ProducerDelta delta, string path) => 
+            .ReturnsAsync((List<Producer> delta, string path) => 
             {
-                mappedProducers = delta.Value;
+                mappedProducers = delta;
                 return new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK };
             });
 
@@ -312,6 +312,7 @@ public class UpdateProducersFunctionTests
 
         Assert.NotNull(mappedProducers);
         var npwdSentMappedProducer = mappedProducers.FirstOrDefault();
+
         Assert.NotNull(npwdSentMappedProducer);
 
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
@@ -407,8 +408,6 @@ public class UpdateProducersFunctionTests
         var batchSize = 100;
         var totalProducers = 201; // should trigger 3 batches: 100 + 100 + 1
         var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(totalProducers).ToList();
-
-        _configurationMock.Setup(c => c.GetValue<int>("UpdateProducersBatchSize", It.IsAny<int>())).Returns(batchSize);
 
         _commonDataServiceMock
             .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
