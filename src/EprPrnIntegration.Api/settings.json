@@ -9,7 +9,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "HOST": "localhost",
     "Functions:Worker:HostEndpoint": "http://localhost:7071",
-    "UpdateProducersTrigger": "0 0 18 * * 1-5",
+    "UpdateProducersTrigger": "1,31 0-7 * * *", //Job should be invoked every 30 mins from 1mins pass mid night till 8 am
     "UpdatePrnsTrigger": "0 0 18 * * 1-5",
     "ProducersContext": "https://fat.npwd.org.uk/odata/Producers/$delta",
     "FetchNpwdIssuedPrns:Schedule": "0 0 18 * * 1-5",
