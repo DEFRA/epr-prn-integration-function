@@ -111,6 +111,7 @@ public class UpdateProducersFunction(
 
         for (var i = 0; i < totalCount; i += batchSize)
         {
+            var batchEnd = Math.Min(i + batchSize, totalCount);
             var producerBatch = producers.Skip(i).Take(batchSize).ToList();
 
             try
@@ -121,19 +122,19 @@ public class UpdateProducersFunction(
                 {
                     logger.LogInformation(
                         "Batch {BatchStart}-{BatchEnd} successfully updated in NPWD for time period {FromDate} to {ToDate}.",
-                        i + 1, Math.Min(i + batchSize, totalCount), fromDate, toDate);
+                        i + 1, batchEnd, fromDate, toDate);
                 }
                 else
                 {
                     var responseBody = await batchResponse.Content.ReadAsStringAsync();
                     logger.LogError(
                         "Failed to update producer batch {BatchStart}-{BatchEnd}. Status: {StatusCode}, Body: {ResponseBody}",
-                        i + 1, Math.Min(i + batchSize, totalCount), batchResponse.StatusCode, responseBody);
+                        i + 1, batchEnd, batchResponse.StatusCode, responseBody);
 
                     if (batchResponse.StatusCode >= HttpStatusCode.InternalServerError || batchResponse.StatusCode == HttpStatusCode.RequestTimeout)
                     {
                         emailService.SendErrorEmailToNpwd(
-                            $"Failed to update producer batch {i + 1}-{Math.Min(i + batchSize, totalCount)}. " +
+                            $"Failed to update producer batch {i + 1}-{batchEnd}. " +
                             $"Status: {batchResponse.StatusCode}, Body: {responseBody}");
                     }
 
@@ -144,7 +145,7 @@ public class UpdateProducersFunction(
             {
                 logger.LogError(ex,
                     "Exception while sending producer batch {BatchStart}-{BatchEnd} to NPWD.",
-                    i + 1, Math.Min(i + batchSize, totalCount));
+                    i + 1, batchEnd);
                 return false;
             }
         }
