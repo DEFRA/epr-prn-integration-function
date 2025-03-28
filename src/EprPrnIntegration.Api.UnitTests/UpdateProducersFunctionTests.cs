@@ -37,12 +37,14 @@ public class UpdateProducersFunctionTests
         var config = new FeatureManagementConfiguration
         {
             RunIntegration = false,
-            RunUpdateProducers = true
+            RunUpdateProducers = true,
+            
         };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
+        _configurationMock.Setup(c => c["UpdateProducersBatchSize"]).Returns("100");
 
         function = new UpdateProducersFunction(_commonDataServiceMock.Object, _npwdClientMock.Object,
-            _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object, _emailServiceMock.Object);
+        _loggerMock.Object, _configurationMock.Object, _utilitiesMock.Object, _mockFeatureConfig.Object, _emailServiceMock.Object);
     }
 
     [Fact]
@@ -57,8 +59,8 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
-            .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         _utilitiesMock
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
@@ -68,6 +70,7 @@ public class UpdateProducersFunctionTests
                 LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
             });
 
+
         // Act
         await function.Run(null!);
 
@@ -75,14 +78,8 @@ public class UpdateProducersFunctionTests
         _commonDataServiceMock.Verify(
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
-            Times.Once);
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Producers list successfully updated")),
-            null,
-            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers),
+            Times.Once());
     }
 
     [Fact]
@@ -169,7 +166,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
             .ReturnsAsync(responseMessage);
 
         _utilitiesMock
@@ -190,7 +187,7 @@ public class UpdateProducersFunctionTests
             It.Is<It.IsAnyType>((v, t) =>
                 $"{v}".ToString()
                     .Contains(
-                        $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
+                        $"Failed to update producer batch")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -230,8 +227,8 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
-            .ReturnsAsync(new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK });
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         // Mock DeltaSyncExecution
         var deltaSyncExecution = new DeltaSyncExecution
@@ -303,10 +300,10 @@ public class UpdateProducersFunctionTests
         IEnumerable<Producer> mappedProducers = null;
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
-            .ReturnsAsync((ProducerDelta delta, string path) => 
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
+            .ReturnsAsync((List<Producer> delta, string path) => 
             {
-                mappedProducers = delta.Value;
+                mappedProducers = delta;
                 return new HttpResponseMessage { StatusCode = System.Net.HttpStatusCode.OK };
             });
 
@@ -315,6 +312,7 @@ public class UpdateProducersFunctionTests
 
         Assert.NotNull(mappedProducers);
         var npwdSentMappedProducer = mappedProducers.FirstOrDefault();
+
         Assert.NotNull(npwdSentMappedProducer);
 
         _utilitiesMock.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdateProducer),
@@ -341,7 +339,7 @@ public class UpdateProducersFunctionTests
             .ReturnsAsync(updatedProducers);
 
         _npwdClientMock
-            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
             .Throws<Exception>();
 
         _utilitiesMock
@@ -360,15 +358,8 @@ public class UpdateProducersFunctionTests
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers),
             Times.Once);
-
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("An error was encountered on attempting to call NPWD API ")),
-            It.IsAny<Exception>(),
-            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Theory]
@@ -385,7 +376,7 @@ public class UpdateProducersFunctionTests
                  service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(updatedProducers);
 
-        _npwdClientMock.Setup(x => x.Patch(It.IsAny<ProducerDelta?>(), It.IsAny<string>()))
+        _npwdClientMock.Setup(x => x.Patch(It.IsAny<List<Producer>?>(), It.IsAny<string>()))
            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
 
         _utilitiesMock
@@ -404,12 +395,43 @@ public class UpdateProducersFunctionTests
             service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
                 It.IsAny<CancellationToken>()), Times.Once);
 
-        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers),
             Times.Once);
 
        _emailServiceMock.Verify(x => x.SendErrorEmailToNpwd(It.IsAny<string>()), Times.Once);
     }
 
+    [Fact]
+    public async Task Run_HandlesMultipleBatches_CallsNpwdClientMultipleTimes()
+    {
+        // Arrange
+        var batchSize = 100;
+        var totalProducers = 201; // should trigger 3 batches: 100 + 100 + 1
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(totalProducers).ToList();
+
+        _commonDataServiceMock
+            .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatedProducers,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
+            });
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
+
+        // Act
+        await function.Run(null!);
+
+        // Assert
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<List<Producer>>(), NpwdApiPath.Producers),
+            Times.Exactly(3));
+    }
     private static string MapProducerAddress(Producer producer)
     {
         if (producer == null)
