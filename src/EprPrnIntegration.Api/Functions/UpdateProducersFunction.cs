@@ -105,7 +105,7 @@ public class UpdateProducersFunction(
 
     private async Task<bool> SendProducersInBatchesAsync(List<Producer> producers, DateTime fromDate, DateTime toDate)
     {
-        var batchSize = configuration.GetValue<int>("UpdateProducersBatchSize", 100);
+        var batchSize = int.TryParse(configuration["UpdateProducersBatchSize"], out var batch) ? batch : 100;
     
         var totalCount = producers.Count;
 
