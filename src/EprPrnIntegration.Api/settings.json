@@ -53,6 +53,7 @@
     "Service__PrnClientId": "",
     "Service__CommonDataClientId": "",
     "FetchNpwdPrnsPollingLagSeconds": "60",
-    "UpdatePrnsMaxRows": 100
+    "UpdatePrnsMaxRows": 100,
+    "UpdateProducersBatchSize": 100
   }
 }
