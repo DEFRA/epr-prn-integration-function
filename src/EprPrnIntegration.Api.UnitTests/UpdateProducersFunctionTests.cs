@@ -440,7 +440,7 @@ public class UpdateProducersFunctionTests
         var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(10).ToList();
         var batchSize = 5;
 
-        _configurationMock.Setup(c => c["UpdatePrnsMaxRows"]).Returns(batchSize.ToString());
+        _configurationMock.Setup(c => c["UpdateProducersBatchSize"]).Returns(batchSize.ToString());
 
         // Ensure UpdatedDateTime values are distinct and sorted
         for (int i = 0; i < updatedProducers.Count; i++)

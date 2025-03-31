@@ -50,17 +50,17 @@ public class UpdateProducersFunction(
             return;
         }
 
-        if (int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows))
+        if (int.TryParse(configuration["UpdateProducersBatchSize"], out int batchSize))
         {
-            if (maxRows > 0 && maxRows < updatedEprProducers.Count)
+            if (batchSize > 0 && batchSize < updatedEprProducers.Count)
             {
-                logger.LogInformation("Batching {BatchSize} of {PrnCount} Prns", maxRows, updatedEprProducers.Count);
+                logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize, updatedEprProducers.Count);
 
-                updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).Take(maxRows).ToList();
-                var newestPrnStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
-                if (newestPrnStatusDate.GetValueOrDefault() > DateTime.MinValue)
+                updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).Take(batchSize).ToList();
+                var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
+                if (newestProducerStatusDate.GetValueOrDefault() > DateTime.MinValue)
                 {
-                    toDate = newestPrnStatusDate.GetValueOrDefault().ToUniversalTime();
+                    toDate = newestProducerStatusDate.GetValueOrDefault().ToUniversalTime();
                 }
             }
         }
