@@ -29,7 +29,7 @@ namespace EprPrnIntegration.Common.RESTServices.CommonService
             CancellationToken cancellationToken)
         {
             _logger.LogInformation("Getting updated producers list.");
-            return await Get<List<UpdatedProducersResponse>>($"get-updated-producers?from={from:yyyy-MM-ddTHH:mm:ss}&to={to:yyyy-MM-ddTHH:mm:ss}",
+            return await Get<List<UpdatedProducersResponse>>($"get-updated-producers?from={from:yyyy-MM-ddTHH:mm:ss:fff}&to={to:yyyy-MM-ddTHH:mm:ss:fff}",
                 cancellationToken, false);
         }
     }

@@ -126,7 +126,7 @@ public class UpdateProducersFunction(
     {
         try
         {
-            return await commonDataService.GetUpdatedProducers(fromDate, toDate, new CancellationToken());
+            return await commonDataService.GetUpdatedProducers(fromDate, toDate, CancellationToken.None);
         }
         catch (Exception ex)
         {
