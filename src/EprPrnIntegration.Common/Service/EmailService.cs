@@ -107,9 +107,11 @@ public class EmailService(
             var parameters = new Dictionary<string, object>
             {
                 ["emailAddress"] = producer.EmailAddress,
-                ["nameOfExporterReprocessor"] = producer.NameOfExporterReprocessor,
                 ["prnNumber"] = producer.PrnNumber,
-                ["PrnPern"] = prnPern
+                ["PrnPern"] = prnPern,
+                ["firstName"] = producer.FirstName,
+                ["lastName"] = producer.LastName,
+                ["regulatorName"] = producer.ProducerAgency
             };
 
             try
