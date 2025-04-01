@@ -64,7 +64,9 @@ public class EmailServiceTests
                 Material = "Plastic",
                 Tonnage = 100,
                 NameOfExporterReprocessor = "Exporter Ltd",
-                NameOfProducerComplianceScheme = "Compliance Scheme 1"
+                NameOfProducerComplianceScheme = "Compliance Scheme 1",
+                ProducerAgency = "EA"
+                
             }
         };
         var organisationId = "org123";
@@ -109,7 +111,8 @@ public class EmailServiceTests
                 Material = "Metal",
                 Tonnage = 200,
                 NameOfExporterReprocessor = "Exporter Inc",
-                NameOfProducerComplianceScheme = "Compliance Scheme 2"
+                NameOfProducerComplianceScheme = "Compliance Scheme 2",
+                ProducerAgency = "EA"
             }
         };
         var organisationId = "org456";
@@ -150,7 +153,8 @@ public class EmailServiceTests
                 Material = "Wood",
                 Tonnage = 150,
                 NameOfExporterReprocessor = "Exporter Corp",
-                NameOfProducerComplianceScheme = "Compliance Scheme 3"
+                NameOfProducerComplianceScheme = "Compliance Scheme 3",
+                ProducerAgency = "EA"
             }
         };
         var organisationId = "org789";
@@ -184,7 +188,8 @@ public class EmailServiceTests
                 Material = "Glass",
                 Tonnage = 50,
                 NameOfExporterReprocessor = "Exporter LLC",
-                NameOfProducerComplianceScheme = "Compliance Scheme 4"
+                NameOfProducerComplianceScheme = "Compliance Scheme 4",
+                ProducerAgency = "EA"
             }
         };
         var organisationId = "org101112";
@@ -570,7 +575,8 @@ public class EmailServiceTests
                 Material = "Plastic",
                 Tonnage = 100,
                 NameOfExporterReprocessor = "Exporter Ltd",
-                NameOfProducerComplianceScheme = "Compliance Scheme 1"
+                NameOfProducerComplianceScheme = "Compliance Scheme 1",
+                ProducerAgency = "EA"
             }
         };
         var organisationId = "org123";
@@ -639,7 +645,8 @@ public class EmailServiceTests
             Material = "Plastic",
             Tonnage = 100,
             NameOfExporterReprocessor = "Exporter Ltd",
-            NameOfProducerComplianceScheme = "Compliance Scheme 1"
+            NameOfProducerComplianceScheme = "Compliance Scheme 1",
+            ProducerAgency = "EA"
         }
     };
         var organisationId = "org123";
