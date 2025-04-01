@@ -14,5 +14,6 @@ namespace EprPrnIntegration.Api.Models
         public required string Material { get; set; }
         public decimal Tonnage { get; set; }
         public bool IsExporter { get; set; }
+        public required string ProducerAgency { get; set; }
     }
 }

@@ -185,14 +185,23 @@ namespace EprPrnIntegration.Api.Functions
                         PrnNumber = request.EvidenceNo!,
                         Material = request.EvidenceMaterial!,
                         Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                        IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
+                        IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!),
+                        ProducerAgency = request.ProducerAgency ?? string.Empty
                     };
                     producers.Add(producerEmail);
                 }
 
                 _logger.LogInformation("Sending email notifications to {ProducerCount} producers.", producers.Count);
-                _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
 
+                if (messageContent.EvidenceStatusCode == "EV-CANCEL")
+                {
+                    _emailService.SendCancelledPrnsNotificationEmail(producers, messageContent!.IssuedToEPRId!);
+                }
+                else
+                {
+                    _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
+                }
+             
                 _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
             }
             catch (Exception ex)
