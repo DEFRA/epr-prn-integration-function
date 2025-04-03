@@ -55,29 +55,12 @@ public class UpdateProducersFunction(
 
         try
         {
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.Producers);
+            var wasSuccessful = await SendProducersInBatchesAsync(npwdUpdatedProducers.Value, fromDate, toDate);
 
-            if (pEprApiResponse.IsSuccessStatusCode)
+            if (wasSuccessful)
             {
-                logger.LogInformation(
-                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
-                    toDate);
-
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
-
                 LogCustomEvents(npwdUpdatedProducers.Value);
-            }
-            else
-            {
-                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-                logger.LogError(
-                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                    pEprApiResponse.StatusCode, responseBody);
-
-                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
-                {
-                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
-                }
             }
         }
         catch (Exception ex)
@@ -118,5 +101,55 @@ public class UpdateProducersFunction(
                 "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
             throw;
         }
+    }
+
+    private async Task<bool> SendProducersInBatchesAsync(List<Producer> producers, DateTime fromDate, DateTime toDate)
+    {
+        var batchSize = int.TryParse(configuration["UpdateProducersBatchSize"], out var batch) ? batch : 100;
+    
+        var totalCount = producers.Count;
+
+        for (var i = 0; i < totalCount; i += batchSize)
+        {
+            var batchEnd = Math.Min(i + batchSize, totalCount);
+            var producerBatch = producers.Skip(i).Take(batchSize).ToList();
+
+            try
+            {
+                var batchResponse = await npwdClient.Patch(producerBatch, NpwdApiPath.Producers);
+
+                if (batchResponse.IsSuccessStatusCode)
+                {
+                    logger.LogInformation(
+                        "Batch {BatchStart}-{BatchEnd} successfully updated in NPWD for time period {FromDate} to {ToDate}.",
+                        i + 1, batchEnd, fromDate, toDate);
+                }
+                else
+                {
+                    var responseBody = await batchResponse.Content.ReadAsStringAsync();
+                    logger.LogError(
+                        "Failed to update producer batch {BatchStart}-{BatchEnd}. Status: {StatusCode}, Body: {ResponseBody}",
+                        i + 1, batchEnd, batchResponse.StatusCode, responseBody);
+
+                    if (batchResponse.StatusCode >= HttpStatusCode.InternalServerError || batchResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                    {
+                        emailService.SendErrorEmailToNpwd(
+                            $"Failed to update producer batch {i + 1}-{batchEnd}. " +
+                            $"Status: {batchResponse.StatusCode}, Body: {responseBody}");
+                    }
+
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Exception while sending producer batch {BatchStart}-{BatchEnd} to NPWD.",
+                    i + 1, batchEnd);
+                return false;
+            }
+        }
+
+        return true;
     }
 }
