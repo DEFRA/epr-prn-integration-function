@@ -475,6 +475,52 @@ public class UpdateProducersFunctionTests
         _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers), Times.Once);
     }
 
+    [Fact]
+    public async Task Run_AlwaysSetsToDate_ToNewestUpdatedDateTime()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+
+        var updatedProducers = new List<UpdatedProducersResponse>
+        {
+            new() { UpdatedDateTime = now.AddMinutes(-10) },
+            new() { UpdatedDateTime = now.AddMinutes(-5) },
+            new() { UpdatedDateTime = now } // this is the latest
+        };
+
+        _configurationMock.Setup(c => c["UpdateProducersBatchSize"]).Returns("100");
+
+        _commonDataServiceMock
+            .Setup(service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        var deltaSyncExecution = new DeltaSyncExecution
+        {
+            SyncType = NpwdDeltaSyncType.UpdatedProducers,
+            LastSyncDateTime = now.AddHours(-1)
+        };
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(deltaSyncExecution);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
+
+        DateTime? capturedToDate = null;
+        _utilitiesMock
+            .Setup(u => u.SetDeltaSyncExecution(It.IsAny<DeltaSyncExecution>(), It.IsAny<DateTime>()))
+            .Callback<DeltaSyncExecution, DateTime>((_, toDate) => capturedToDate = toDate)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await function.Run(null!);
+
+        // Assert
+        Assert.NotNull(capturedToDate);
+        Assert.Equal(now, capturedToDate.Value, TimeSpan.FromSeconds(1)); // within 1 second is acceptable due to truncation
+    }
     private static string MapProducerAddress(Producer producer)
     {
         if (producer == null)

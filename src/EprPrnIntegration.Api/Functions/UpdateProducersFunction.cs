@@ -50,19 +50,21 @@ public class UpdateProducersFunction(
             return;
         }
 
-        if (int.TryParse(configuration["UpdateProducersBatchSize"], out int batchSize))
+        updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).ToList();
+
+        if (int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize))
         {
             if (batchSize > 0 && batchSize < updatedEprProducers.Count)
             {
                 logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize, updatedEprProducers.Count);
-
-                updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).Take(batchSize).ToList();
-                var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
-                if (newestProducerStatusDate.GetValueOrDefault() > DateTime.MinValue)
-                {
-                    toDate = newestProducerStatusDate.GetValueOrDefault().ToUniversalTime();
-                }
+                updatedEprProducers = updatedEprProducers.Take(batchSize).ToList();
             }
+        }
+
+        var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
+        if (newestProducerStatusDate.GetValueOrDefault() > DateTime.MinValue)
+        {
+            toDate = newestProducerStatusDate.GetValueOrDefault().ToUniversalTime();
         }
 
         var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
