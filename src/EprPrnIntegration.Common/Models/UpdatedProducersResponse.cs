@@ -28,5 +28,7 @@ namespace EprPrnIntegration.Common.Models
                 County,
                 Postcode,
             }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        public DateTime? UpdatedDateTime { get; set; }
     }
 }

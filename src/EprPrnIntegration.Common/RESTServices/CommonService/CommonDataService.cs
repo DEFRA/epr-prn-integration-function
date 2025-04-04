@@ -28,8 +28,10 @@ namespace EprPrnIntegration.Common.RESTServices.CommonService
         public async Task<List<UpdatedProducersResponse>> GetUpdatedProducers(DateTime from, DateTime to,
             CancellationToken cancellationToken)
         {
+            var fromDate = from.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+            var toDate = to.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
             _logger.LogInformation("Getting updated producers list.");
-            return await Get<List<UpdatedProducersResponse>>($"get-updated-producers?from={from:yyyy-MM-ddTHH:mm:ss}&to={to:yyyy-MM-ddTHH:mm:ss}",
+            return await Get<List<UpdatedProducersResponse>>($"get-updated-producers?from={fromDate}&to={toDate}",
                 cancellationToken, false);
         }
     }
