@@ -152,7 +152,7 @@ namespace EprPrnIntegration.Common.Service
 
                 while (true)
                 {
-                    var messages = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    var messages = await receiver.ReceiveMessagesAsync(30, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
                     if (!messages.Any())
                     {
                         logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
