@@ -148,11 +148,11 @@ namespace EprPrnIntegration.Common.Service
 
             try
             {
-                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.PeekLock });
 
                 while (true)
                 {
-                    var messages = await receiver.ReceiveMessagesAsync(100, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    var messages = await receiver.ReceiveMessagesAsync(30, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
                     if (!messages.Any())
                     {
                         logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
@@ -167,6 +167,7 @@ namespace EprPrnIntegration.Common.Service
                             {
                                 invalidPrns.Add(validationFailedPrn);
                             }
+                            await receiver.CompleteMessageAsync(message);
                         }
                         catch (Exception ex)
                         {

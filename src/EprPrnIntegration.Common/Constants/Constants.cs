@@ -59,6 +59,7 @@
         public const string UpdateProducer = "UpdateProducer";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
         public const string UpdatePrn = "UpdatePrnOnNpwd";
+        public const string PrnInsertedIntoEpr = "PrnInsertedIntoEpr";
     }
 
     public static class CustomEventFields
