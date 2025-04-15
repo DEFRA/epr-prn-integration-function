@@ -110,8 +110,7 @@ public class EmailService(
                 ["prnNumber"] = producer.PrnNumber,
                 ["PrnPern"] = prnPern,
                 ["firstName"] = producer.FirstName,
-                ["lastName"] = producer.LastName,
-                ["regulatorName"] = producer.ProducerAgency
+                ["lastName"] = producer.LastName
             };
 
             try

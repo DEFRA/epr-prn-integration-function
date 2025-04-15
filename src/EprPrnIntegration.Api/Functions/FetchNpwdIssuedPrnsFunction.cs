@@ -185,8 +185,7 @@ namespace EprPrnIntegration.Api.Functions
                         PrnNumber = request.EvidenceNo!,
                         Material = request.EvidenceMaterial!,
                         Tonnage = Convert.ToDecimal(request.EvidenceTonnes),
-                        IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!),
-                        ProducerAgency = request.ProducerAgency ?? string.Empty
+                        IsExporter = NpwdPrnToSavePrnDetailsRequestMapper.IsExport(request.EvidenceNo!)
                     };
                     producers.Add(producerEmail);
                 }
