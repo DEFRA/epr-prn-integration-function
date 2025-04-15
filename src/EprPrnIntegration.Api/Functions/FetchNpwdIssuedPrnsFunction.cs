@@ -110,6 +110,8 @@ namespace EprPrnIntegration.Api.Functions
                         await _prnService.SavePrn(request);
                         _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
                         await SendEmailToProducers(message, messageContent, request);
+                        var eventData = CreateCustomEvent(messageContent);
+                        _utilities.AddCustomEvent(CustomEvents.InsertPrnOnEpr, eventData);
                     }
                     catch (Exception ex)
                     {
