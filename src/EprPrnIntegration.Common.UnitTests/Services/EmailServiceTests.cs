@@ -34,6 +34,7 @@ public class EmailServiceTests
             NpwdReconcileIssuedPrnsTemplateId = "npwdReconcileIssuedPrnsTemplateId",
             NpwdEmail = "npwd@email.com",
             NpwdReconcileUpdatedOrganisationsTemplateId = "npwdReconcileUpdatedOrganisationTemplateId",
+            NpwdCancelledPrnsNotificationTemplateId = "npwdCancelledPrnsNotificationTemplateId"
         };
             
         // Setup the mock IOptions<MessagingConfig> to return the proper MessagingConfig
@@ -64,6 +65,7 @@ public class EmailServiceTests
                 Tonnage = 100,
                 NameOfExporterReprocessor = "Exporter Ltd",
                 NameOfProducerComplianceScheme = "Compliance Scheme 1"
+                
             }
         };
         var organisationId = "org123";
@@ -550,4 +552,124 @@ public class EmailServiceTests
             Times.Once
         );
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SendCancelledPrnsNotificationEmail_Successfully(bool isExporter)
+    {
+        // Arrange
+        var producerEmails = new List<ProducerEmail>
+        {
+            new ProducerEmail
+            {
+                EmailAddress = "producer1@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                IsExporter = isExporter,
+                PrnNumber = "12345",
+                Material = "Plastic",
+                Tonnage = 100,
+                NameOfExporterReprocessor = "Exporter Ltd",
+                NameOfProducerComplianceScheme = "Compliance Scheme 1"
+            }
+        };
+        var organisationId = "org123";
+        var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+
+        _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+            .Returns(expectedResponse);
+
+        var emailService = CreateEmailService();
+
+        // Act
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
+
+        // Assert
+        _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) =>
+                state.ToString().Contains("Email sent to email address producer1@example.com and the responseid is responseId")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
+    } 
+
+    [Fact]
+    public void SendCancelledPrnsNotificationEmail_EmptyList_DoesNotSendEmails()
+    {
+        // Arrange
+        var producerEmails = new List<ProducerEmail>();
+        var organisationId = "org123";
+
+        // Act
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
+
+        // Assert
+        _mockNotificationClient.Verify(client =>
+            client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null),
+            Times.Never);
+
+        _mockLogger.Verify(logger => logger.Log(
+            It.IsAny<LogLevel>(),
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Never);
+    }
+
+    [Fact]
+    public void SendCancelledPrnsNotificationEmail_HandlesException_LogsError()
+    {
+        // Arrange
+        var producerEmails = new List<ProducerEmail>
+    {
+        new ProducerEmail
+        {
+            EmailAddress = "producer1@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+            IsExporter = false,
+            PrnNumber = "12345",
+            Material = "Plastic",
+            Tonnage = 100,
+            NameOfExporterReprocessor = "Exporter Ltd",
+            NameOfProducerComplianceScheme = "Compliance Scheme 1"
+        }
+    };
+        var organisationId = "org123";
+        var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+        var templateId = "template-123";
+        var expectedException = new Exception("Simulated email sending failure");
+
+        _mockNotificationClient.Setup(client => client.SendEmail(
+                It.IsAny<string>(),
+                templateId,
+                It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
+           // .Returns(expectedResponse)
+            .Throws(expectedException);
+
+        var emailService = CreateEmailService();
+
+        // Act
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
+
+        // Assert
+        _mockLogger.Verify(logger => logger.Log(
+            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, type) =>
+                state.ToString().Contains("GOV UK NOTIFY ERROR")),
+            It.IsAny<Exception>(),
+            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+        ), Times.Once);
+    }
+
+
 }
