@@ -97,7 +97,7 @@ public class EmailService(
         }
     }
 
-    public void SendCancelledPrnsNotificationEmail(List<ProducerEmail> producerEmails, string organisationId)
+    public void SendCancelledPrnsNotificationEmails(List<ProducerEmail> producerEmails, string organisationId)
     {
         var templateId = _messagingConfig.NpwdCancelledPrnsNotificationTemplateId;
 

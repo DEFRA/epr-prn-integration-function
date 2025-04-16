@@ -586,7 +586,7 @@ public class EmailServiceTests
         var emailService = CreateEmailService();
 
         // Act
-        _emailService.SendCancelledPrnsNotificationEmail(producerEmails, organisationId);
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
 
         // Assert
         _mockNotificationClient.Verify(client => client.SendEmail(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, dynamic>>(), null, null, null), Times.Once);
@@ -608,7 +608,7 @@ public class EmailServiceTests
         var organisationId = "org123";
 
         // Act
-        _emailService.SendCancelledPrnsNotificationEmail(producerEmails, organisationId);
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
 
         // Assert
         _mockNotificationClient.Verify(client =>
@@ -658,7 +658,7 @@ public class EmailServiceTests
         var emailService = CreateEmailService();
 
         // Act
-        _emailService.SendCancelledPrnsNotificationEmail(producerEmails, organisationId);
+        _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
 
         // Assert
         _mockLogger.Verify(logger => logger.Log(

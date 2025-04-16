@@ -196,7 +196,7 @@ namespace EprPrnIntegration.Api.Functions
 
                 if (messageContent.EvidenceStatusCode == "EV-CANCEL")
                 {
-                    _emailService.SendCancelledPrnsNotificationEmail(producers, messageContent!.IssuedToEPRId!);
+                    _emailService.SendCancelledPrnsNotificationEmails(producers, messageContent!.IssuedToEPRId!);
                 }
                 else
                 {

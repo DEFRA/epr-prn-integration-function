@@ -446,7 +446,7 @@ namespace EprPrnIntegration.Api.UnitTests
             await _function.ProcessFetchedPrn(message);
 
             // Assert
-            _mockEmailService.Verify(m => m.SendCancelledPrnsNotificationEmail(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()), Times.Once);
+            _mockEmailService.Verify(m => m.SendCancelledPrnsNotificationEmails(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
