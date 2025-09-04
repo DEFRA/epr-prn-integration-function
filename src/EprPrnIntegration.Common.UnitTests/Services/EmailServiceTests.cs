@@ -46,22 +46,13 @@ public class EmailServiceTests
         _emailService = new EmailService(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
     }
 
-    private EmailService CreateEmailService() =>
-        new(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
-
-    private static bool ContainsString(object obj, string value)
-    {
-        return obj?.ToString()?.Contains(value) == true;
-    }
-
     [Fact]
     public void SendEmailsToProducers_SuccessfullySendsEmails_LogsInformation()
     {
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
                 LastName = "Doe",
@@ -83,8 +74,6 @@ public class EmailServiceTests
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
             .Returns(expectedResponse);
 
-        var emailService = CreateEmailService();
-
         // Act
         _emailService.SendEmailsToProducers(producerEmails, organisationId);
 
@@ -105,8 +94,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer2@example.com",
                 FirstName = "Jane",
                 LastName = "Smith",
@@ -145,8 +133,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer3@example.com",
                 FirstName = "Mark",
                 LastName = "Taylor",
@@ -179,8 +166,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
-            {
+            new() {
                 EmailAddress = "producer4@example.com",
                 FirstName = "Sarah",
                 LastName = "Johnson",
@@ -327,7 +313,7 @@ public class EmailServiceTests
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((state, type) =>
-                        state.ToString().Contains($"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}")),
+                        ContainsString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdValidationErrorsTemplateId}")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -412,10 +398,13 @@ public class EmailServiceTests
     {
         // Arrange
         var expectedResponse = new EmailNotificationResponse { id = "responseId" };
+        
+        var npwdEmail = _messagingConfig.NpwdEmail ?? string.Empty;
+        var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId ?? string.Empty;
 
         _mockNotificationClient.Setup(client => client.SendEmail(
-                It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-                It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId),
+                It.Is<string>(email => email == npwdEmail),
+                It.Is<string>(template => template == templateId),
                 It.Is<Dictionary<string, object>>(parameters =>
                     parameters.ContainsKey("date") &&
                     parameters.ContainsKey("csvData")),
@@ -556,7 +545,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
         {
-            new ProducerEmail
+            new ()
             {
                 EmailAddress = "producer1@example.com",
                 FirstName = "John",
@@ -577,8 +566,6 @@ public class EmailServiceTests
                 It.IsAny<string>(),
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
             .Returns(expectedResponse);
-
-        var emailService = CreateEmailService();
 
         // Act
         _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
@@ -624,7 +611,7 @@ public class EmailServiceTests
         // Arrange
         var producerEmails = new List<ProducerEmail>
     {
-        new ProducerEmail
+        new ()
         {
             EmailAddress = "producer1@example.com",
             FirstName = "John",
@@ -638,7 +625,6 @@ public class EmailServiceTests
         }
     };
         var organisationId = "org123";
-        //var expectedResponse = new EmailNotificationResponse { id = "responseId" };
         var templateId = "template-123";
         var expectedException = new Exception("Simulated email sending failure");
 
@@ -646,10 +632,7 @@ public class EmailServiceTests
                 It.IsAny<string>(),
                 templateId,
                 It.IsAny<Dictionary<string, dynamic>>(), null, null, null))
-           // .Returns(expectedResponse)
             .Throws(expectedException);
-
-        var emailService = CreateEmailService();
 
         // Act
         _emailService.SendCancelledPrnsNotificationEmails(producerEmails, organisationId);
@@ -659,11 +642,14 @@ public class EmailServiceTests
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((state, type) =>
-                state.ToString().Contains("GOV UK NOTIFY ERROR")),
+                ContainsString(state, "GOV UK NOTIFY ERROR")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
     }
 
-
+    private static bool ContainsString(object obj, string value)
+    {
+        return obj?.ToString()?.Contains(value) == true;
+    }
 }

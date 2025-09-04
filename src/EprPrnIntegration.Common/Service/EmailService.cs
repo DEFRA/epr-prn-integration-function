@@ -2,7 +2,6 @@
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Notify.Client;
 using Notify.Interfaces;
 using System.Diagnostics;
 
@@ -77,10 +76,13 @@ public class EmailService(
 
     public void SendValidationErrorPrnEmail(string csvData, DateTime reportDate)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(csvData, nameof(csvData));
+        if (string.IsNullOrWhiteSpace(csvData))
+        {
+            throw new ArgumentException("CSV content cannot be null or whitespace.", nameof(csvData));
+        }
 
-        var templateId = _messagingConfig.NpwdValidationErrorsTemplateId;
-        var emailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdValidationErrorsTemplateId ?? string.Empty;
+        var emailAddress = _messagingConfig.NpwdEmail ?? string.Empty;
 
         var parameters = new Dictionary<string, object>
         {
@@ -129,10 +131,13 @@ public class EmailService(
 
     public void SendIssuedPrnsReconciliationEmailToNpwd(DateTime reportDate, int reportCount, string reportCsv)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+        if (string.IsNullOrWhiteSpace(reportCsv))
+        {
+            throw new ArgumentException("CSV content cannot be null or whitespace.", nameof(reportCsv));
+        }
 
-        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId;
-        var emailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconcileIssuedPrnsTemplateId ?? string.Empty;
+        var emailAddress = _messagingConfig.NpwdEmail ?? string.Empty;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
@@ -152,10 +157,13 @@ public class EmailService(
 
     public void SendUpdatedPrnsReconciliationEmailToNpwd(DateTime reportDate, string reportCsv, int rowCount)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+        if (string.IsNullOrWhiteSpace(reportCsv))
+        {
+            throw new ArgumentException("CSV content cannot be null or whitespace.", nameof(reportCsv));
+        }
 
-        var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId;
-        var emailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId ?? string.Empty;
+        var emailAddress = _messagingConfig.NpwdEmail ?? string.Empty;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
@@ -168,16 +176,19 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            logger.LogInformation($"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.");
+            logger.LogInformation("Reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.", emailAddress, responseId);
         }
     }
 
     public void SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime reportDate, int reportDataRowsCount, string reportCsv)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(reportCsv, nameof(reportCsv));
+        if (string.IsNullOrWhiteSpace(reportCsv))
+        {
+            throw new ArgumentException("CSV content cannot be null or whitespace.", nameof(reportCsv));
+        }
 
-        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId;
-        var emailAddress = _messagingConfig.NpwdEmail;
+        var templateId = _messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId ?? string.Empty;
+        var emailAddress = _messagingConfig.NpwdEmail ?? string.Empty;
 
         var messagePersonalisation = new Dictionary<string, object>
         {
@@ -190,8 +201,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            var message = $"Updated organisations reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
-            logger.LogInformation(message);
+            logger.LogInformation("Updated organisations reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.", emailAddress, responseId);
         }
     }
 
