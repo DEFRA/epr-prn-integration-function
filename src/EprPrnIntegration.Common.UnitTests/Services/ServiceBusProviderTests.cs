@@ -351,7 +351,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(msg => msg.Contains("Message with EvidenceNo"))), Times.Once);
     }
 
     [Fact]
