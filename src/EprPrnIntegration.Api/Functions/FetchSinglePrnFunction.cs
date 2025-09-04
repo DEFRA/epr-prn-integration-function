@@ -52,10 +52,10 @@ public class FetchSinglePrnFunction(
     {
         var filter = $"(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR') AND evidenceNo eq '{prnNumber}'";
 
-        logger.LogInformation("Fetching evidence from NPWD API with filter: {filter}", filter);
+        logger.LogInformation("Fetching evidence from NPWD API with filter: {Filter}", filter);
 
         var issuedPrns = await npwdClient.GetIssuedPrns(filter);
 
-        return issuedPrns != null && issuedPrns?.Count > 0 ? issuedPrns.FirstOrDefault() : null;
+        return issuedPrns != null && issuedPrns.Count > 0 ? issuedPrns.FirstOrDefault() : null;
     }
 }

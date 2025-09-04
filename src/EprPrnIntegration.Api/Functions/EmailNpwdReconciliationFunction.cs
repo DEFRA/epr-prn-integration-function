@@ -1,6 +1,7 @@
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
@@ -93,11 +94,12 @@ public class EmailNpwdReconciliationFunction(
 
         try
         {
-            var updatedOrgs = await appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync();
-            updatedOrgs ??= [];
+            // Force a non-null list
+            List<UpdatedOrganisationReconciliationSummary> updatedOrgs = await appInsightsService
+                .GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync() ?? [];
 
             logger.LogInformation("Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}", 
-                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs?.Count ?? 0, DateTime.UtcNow);
+                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs.Count, DateTime.UtcNow);
 
             var csvData = new Dictionary<string, List<string>>
             {
@@ -113,7 +115,7 @@ public class EmailNpwdReconciliationFunction(
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
-            var dataRowsCount = updatedOrgs?.Count ?? 0;
+            var dataRowsCount = updatedOrgs.Count;
             emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime.UtcNow, dataRowsCount, csvContent);
         }
         catch (Exception ex)
