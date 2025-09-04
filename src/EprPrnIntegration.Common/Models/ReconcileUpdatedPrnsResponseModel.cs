@@ -4,15 +4,15 @@ namespace EprPrnIntegration.Common.Models;
 
 public class ReconcileUpdatedPrnsResponseModel
 {
-    [JsonProperty("PrnNumber")]
+    [JsonProperty(nameof(PrnNumber))]
     public string PrnNumber { get; set; } = null!;
 
-    [JsonProperty("StatusName")]
+    [JsonProperty(nameof(StatusName))]
     public string StatusName { get; set; } = null!;
 
-    [JsonProperty("UpdatedOn")]
+    [JsonProperty(nameof(UpdatedOn))]
     public string UpdatedOn { get; set; } = null!;
 
-    [JsonProperty("OrganisationName")]
+    [JsonProperty(nameof(OrganisationName))]
     public string OrganisationName { get; set; } = null!;
 }

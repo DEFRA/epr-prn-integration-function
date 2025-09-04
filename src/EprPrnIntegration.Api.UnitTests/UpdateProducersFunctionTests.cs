@@ -207,7 +207,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
                   It.IsAny<LogLevel>(),
                   It.IsAny<EventId>(),
-                  It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdateProducersList function is disabled by feature flag")),
+                  It.Is<It.IsAnyType>((state, type) => ContainsString(state, "UpdateProducersList function is disabled by feature flag")),
 
                   It.IsAny<Exception>(),
                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
@@ -258,7 +258,7 @@ public class UpdateProducersFunctionTests
 
         var defaultDeltaSync = new DeltaSyncExecution
         {
-            LastSyncDateTime = DateTime.Parse(defaultDatetime),
+            LastSyncDateTime = DateTimeHelper.Parse(defaultDatetime),
             SyncType = NpwdDeltaSyncType.UpdatedProducers
         };
 
@@ -280,7 +280,7 @@ public class UpdateProducersFunctionTests
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _commonDataServiceMock.Verify(service =>
-            service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+            service.GetUpdatedProducers(DateTimeHelper.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -468,7 +468,7 @@ public class UpdateProducersFunctionTests
 
         // Assert
         Assert.NotNull(capturedDelta);
-        Assert.Equal(batchSize, capturedDelta!.Value.Count());
+        Assert.Equal(batchSize, capturedDelta!.Value.Count);
         _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers), Times.Once);
     }
 
