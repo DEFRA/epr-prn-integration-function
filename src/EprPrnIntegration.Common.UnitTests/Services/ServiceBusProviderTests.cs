@@ -15,7 +15,7 @@ namespace EprPrnIntegration.Common.UnitTests.Services;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
     "Usage", "CA2254:Template should be a static expression",
-    Justification = "Fixing SonarQube issues and suppressing this low priority issue")]
+    Justification = "Suppressing this low priority issue as there are too many different templates for logs")]
 public class ServiceBusProviderTests
 {
     private readonly Mock<ILogger<ServiceBusProvider>> _loggerMock;

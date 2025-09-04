@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Service;
 using Fare;
 using Microsoft.Extensions.Logging;
@@ -641,6 +642,50 @@ public class EmailServiceTests
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
+    }
+
+    [Fact]
+    public void SendValidationErrorPrnEmail_ThrowsError_WhenRequiredParametersNotPassed()
+    {
+        // Arrange
+        var csvData = string.Empty;
+        var reportDate = DateTimeHelper.NewUtcDateTime(2025, 1, 1);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _emailService.SendValidationErrorPrnEmail(csvData, reportDate));
+    }
+
+    [Fact]
+    public void SendIssuedPrnsReconciliationEmailToNpwd_ThrowsError_WhenRequiredParametersNotPassed()
+    {
+        // Arrange
+        var csvData = string.Empty;
+        var reportDate = DateTimeHelper.NewUtcDateTime(2025, 1, 1);
+       
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _emailService.SendIssuedPrnsReconciliationEmailToNpwd(reportDate, 0, csvData));
+    }
+
+    [Fact]
+    public void SendUpdatedPrnsReconciliationEmailToNpwd_ThrowsError_WhenRequiredParametersNotPassed()
+    {
+        // Arrange
+        var csvData = string.Empty;
+        var reportDate = DateTimeHelper.NewUtcDateTime(2025, 1, 1);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(reportDate, csvData, 0));
+    }
+
+    [Fact]
+    public void SendUpdatedOrganisationsReconciliationEmailToNpwd_ThrowsError_WhenRequiredParametersNotPassed()
+    {
+        // Arrange
+        var csvData = string.Empty;
+        var reportDate = DateTimeHelper.NewUtcDateTime(2025, 1, 1);
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(reportDate, 0, csvData));
     }
 
     private static bool ContainsString(object obj, string value)
