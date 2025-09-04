@@ -121,7 +121,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.Is<string>(s => !string.IsNullOrEmpty(s))), Times.Once);
     }
 
     [Fact]
