@@ -69,7 +69,7 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Exactly(2));
+        _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(msg => msg.Contains("SendFetchedNpwdPrnsToQueue"))), Times.Exactly(2));
 
     }
 
@@ -174,10 +174,6 @@ public class ServiceBusProviderTests
         // Arrange
         var deltaSyncExecution = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
         var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
-        var message = new ServiceBusMessage(executionMessage)
-        {
-            ContentType = "application/json"
-        };
 
         // Mocking GetDeltaSyncExecutionFromQueue to return null (no existing message)
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
