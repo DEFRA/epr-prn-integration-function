@@ -259,7 +259,7 @@ namespace EprPrnIntegration.Api.Functions
             {
                 filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
-            _logger.LogInformation("Filter for fetching prns from npwd: {filter}", filter);
+            _logger.LogInformation("Filter for fetching prns from npwd: {Filter}", filter);
             return filter;
         }
 
@@ -272,16 +272,16 @@ namespace EprPrnIntegration.Api.Functions
                 npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);
                 if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
                 {
-                    _logger.LogWarning($"No Prns Exists in npwd for filter {filter}");
+                    _logger.LogWarning("No Prns Exists in npwd for filter {Filter}", filter);
                 }
                 else
                 {
-                    _logger.LogInformation("Total: {Count} fetched from Npwd with filter {filter}", npwdIssuedPrns!.Count, filter);
+                    _logger.LogInformation("Total: {Count} fetched from Npwd with filter {Filter}", npwdIssuedPrns!.Count, filter);
                 }
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError("Failed Get Prns from npwd for filter {filter} with exception {ex}", filter, ex);
+                _logger.LogError(ex, "Failed Get Prns from npwd for filter {Filter} with exception {Ex}", filter, ex);
 
                 if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
                 {
@@ -292,7 +292,7 @@ namespace EprPrnIntegration.Api.Functions
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Failed Get Prns method for filter {filter} with exception {ex}", filter, ex.Message);
+                _logger.LogError(ex, "Failed Get Prns method for filter {Filter} with exception {Ex}", filter, ex.Message);
                 throw;
             }
 
@@ -309,7 +309,7 @@ namespace EprPrnIntegration.Api.Functions
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed pushing issued prns in message queue with exception: {ex}", ex);
+                _logger.LogError(ex, "Failed pushing issued prns in message queue with exception: {Ex}", ex);
                 throw;
             }
         }
