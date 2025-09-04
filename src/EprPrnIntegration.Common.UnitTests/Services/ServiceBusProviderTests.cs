@@ -13,6 +13,9 @@ using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Services;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Usage", "CA2254:Template should be a static expression",
+    Justification = "Fixing SonarQube issues and suppressing this low priority issue")]
 public class ServiceBusProviderTests
 {
     private readonly Mock<ILogger<ServiceBusProvider>> _loggerMock;
@@ -95,7 +98,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync(messageBatch1)
             .ReturnsAsync(messageBatch2);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        
+
         // Act
         await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns);
 
@@ -165,7 +168,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.Is<string>(s => !string.IsNullOrEmpty(s))), Times.Once);
     }
 
     [Fact]
@@ -233,10 +236,10 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
-        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns }; 
+        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
         var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
-        var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1 );
+        var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1);
         var message2 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync2), sequenceNumber: 2);
         var latestMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync3), sequenceNumber: 3);
 
@@ -297,7 +300,7 @@ public class ServiceBusProviderTests
     public async Task ReceiveDeltaSyncExecutionFromQueue_ExceptionThrown_LogsErrorAndRethrows()
     {
         // Arrange
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(),default))
+        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), default))
             .ThrowsAsync(new Exception("Service bus connection error"));
 
         // Act & Assert
