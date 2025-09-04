@@ -49,18 +49,16 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         // owing to performance limitations (timeouts) on external service, limit number of rows sent in a batch
-        if (int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows))
+        if (int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows) && maxRows > 0 && maxRows < updatedEprPrns.Count)
         {
-            if (maxRows > 0 && maxRows < updatedEprPrns.Count)
-            {
-                logger.LogInformation("Batching {BatchSize} of {PrnCount} Prns", maxRows, updatedEprPrns.Count);
+            logger.LogInformation("Batching {BatchSize} of {PrnCount} Prns", maxRows, updatedEprPrns.Count);
 
-                updatedEprPrns = updatedEprPrns.OrderBy(x => x.StatusDate).Take(maxRows).ToList();
-                DateTime? newestPrnStatusDate = updatedEprPrns.Select(x => x.StatusDate).LastOrDefault();
-                if (newestPrnStatusDate.GetValueOrDefault() > DateTime.MinValue)
-                {
-                    toDate = newestPrnStatusDate.GetValueOrDefault().ToUniversalTime();
-                }
+            updatedEprPrns = updatedEprPrns.OrderBy(x => x.StatusDate).Take(maxRows).ToList();
+                
+            var newestPrnStatusDate = updatedEprPrns.Select(x => x.StatusDate).LastOrDefault();
+            if (newestPrnStatusDate.GetValueOrDefault() > DateTime.MinValue)
+            {
+                toDate = newestPrnStatusDate.GetValueOrDefault().ToUniversalTime();
             }
         }
 

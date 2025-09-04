@@ -295,7 +295,7 @@ public class UpdateProducersFunctionTests
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync([updatedProducers[0]]);
 
-        IEnumerable<Producer> mappedProducers = null;
+        IEnumerable<Producer> mappedProducers = new List<Producer>();
 
         _npwdClientMock
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))

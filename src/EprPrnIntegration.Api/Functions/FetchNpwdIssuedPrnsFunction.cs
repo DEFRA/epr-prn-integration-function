@@ -122,7 +122,7 @@ namespace EprPrnIntegration.Api.Functions
                 else
                 {
                     _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
-                    var errorMessages = string.Join(" | ", validationResult?.Errors?.Select(x => x.ErrorMessage) ?? []);
+                    var errorMessages = string.Join(" | ", validationResult.Errors.Select(x => x.ErrorMessage) ?? []);
                     var eventData = CreateCustomEvent(messageContent, errorMessages);
                     _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
 
@@ -296,7 +296,7 @@ namespace EprPrnIntegration.Api.Functions
                 throw;
             }
 
-            return npwdIssuedPrns;
+            return npwdIssuedPrns ?? [];
         }
 
         // place Prn message into a queue to await processing

@@ -94,6 +94,7 @@ public class EmailNpwdReconciliationFunction(
         try
         {
             var updatedOrgs = await appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync();
+            updatedOrgs ??= [];
 
             logger.LogInformation("Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}", 
                 nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs?.Count ?? 0, DateTime.UtcNow);

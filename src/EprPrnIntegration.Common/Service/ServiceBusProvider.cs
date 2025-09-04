@@ -52,10 +52,6 @@ namespace EprPrnIntegration.Common.Service
                 logger.LogError(ex, "SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {Exception}", ex);
                 throw;
             }
-            finally
-            {
-                messageBatch?.Dispose();
-            }
         }
 
         public async Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecution)
