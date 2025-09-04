@@ -81,7 +81,7 @@ namespace EprPrnIntegration.Api.Functions
 
             if (validationFailedPrns != null && validationFailedPrns.Count != 0)
             {
-                await SendErrorFetchedPrnEmail(validationFailedPrns);
+                SendErrorFetchedPrnEmail(validationFailedPrns);
             }
 
             _logger.LogInformation("FetchNpwdIssuedPrnsFunction function Completed at: {DateTime}", DateTime.UtcNow);
@@ -212,7 +212,7 @@ namespace EprPrnIntegration.Api.Functions
             
         }
 
-        private async Task SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
+        private void SendErrorFetchedPrnEmail(List<Dictionary<string, string>> validatedErrorMessages)
         {
             try
             {
