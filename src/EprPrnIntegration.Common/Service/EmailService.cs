@@ -35,9 +35,12 @@ public class EmailService(
             try
             {
                 var response = notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
-                string message = $"Email sent to {producer.FirstName} {producer.LastName} with email address {producer.EmailAddress} and the responseid is {response.id}.";
-                logger.LogInformation(message);
-
+                logger.LogInformation("Email sent to {FirstName} {LastName} with email address {EmailAddress} and the responseid is {ResponseId}."
+                    , producer.FirstName
+                    , producer.LastName
+                    , producer.EmailAddress
+                    , response.id
+                    );
             }
             catch (Exception ex)
             {
@@ -63,10 +66,7 @@ public class EmailService(
         try
         {
             var response = notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
-
-            string message = $"Email sent to NPWD with email address {npwdEmailAddress} and the responseid is {response.id}.";
-            logger.LogInformation(message);
-
+            logger.LogInformation("Email sent to NPWD with email address {NpwdEmailAddress} and the responseid is {ResponseId}.", npwdEmailAddress, response.id);
         }
         catch (Exception ex)
         {
@@ -94,8 +94,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            var message = $"Validation Error email sent to NPWD with email address {emailAddress} and the response ID is {responseId}.";
-            logger.LogInformation(message);
+            logger.LogInformation("Validation Error email sent to NPWD with email address {EmailAddress} and the response ID is {ResponseId}.", emailAddress, responseId);
         }
     }
 
@@ -118,9 +117,7 @@ public class EmailService(
             try
             {
                 var response = notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
-                string message = $"Email sent to email address {producer.EmailAddress} and the responseid is {response.id}.";
-                logger.LogInformation("{Message}", message);
-
+                logger.LogInformation("Email sent to email address {EmailAddress} and the responseid is {ResponseId}.", producer.EmailAddress, response.id);
             }
             catch (Exception ex)
             {
@@ -150,8 +147,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            var message = $"Reconciliation email sent to NPWD with email address {emailAddress} and the response id is {responseId}.";
-            logger.LogInformation(message);
+            logger.LogInformation("Reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.", emailAddress, responseId);
         }
     }
 
