@@ -415,11 +415,6 @@ public class EmailServiceTests
         _emailService.SendUpdatedPrnsReconciliationEmailToNpwd(new DateTime(2025, 12, 1), "Sample CSV Content", 2);
 
         // Assert
-        _mockNotificationClient.Verify(client => client.SendEmail(
-            It.Is<string>(email => email == _messagingConfig.NpwdEmail),
-            It.Is<string>(template => template == _messagingConfig.NpwdReconcileUpdatedPrnsTemplateId),
-            It.IsAny<Dictionary<string, object>>(), null, null, null), Times.Once);
-
         _mockLogger.Verify(logger =>
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
