@@ -94,6 +94,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync(messageBatch1)
             .ReturnsAsync(messageBatch2);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+        
         // Act
         await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns);
 
@@ -176,6 +177,7 @@ public class ServiceBusProviderTests
         {
             ContentType = "application/json"
         };
+
         // Mocking GetDeltaSyncExecutionFromQueue to return null (no existing message)
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
 
@@ -184,6 +186,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync((List<ServiceBusReceivedMessage>)null!);
 
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
         // Act
         await _serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaSyncExecution);
 

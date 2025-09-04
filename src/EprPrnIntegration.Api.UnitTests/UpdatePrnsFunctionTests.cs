@@ -85,7 +85,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
+            It.Is<string>(s => s.Contains("No updated Prns are retrieved from common database")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -115,7 +115,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
+            It.Is<string>(s => s.Contains("Prns list successfully updated in NPWD")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -145,13 +145,13 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
+            It.Is<string>(s => s.Contains("Failed to update Prns list in NPWD")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
+            It.Is<string>(s => s.Contains("Status Code: BadRequest")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -178,14 +178,14 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
+            It.Is<string>(s => s.Contains("Failed to retrieve data from common backend")),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
+            It.Is<string>(s => s.Contains("form time period")),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -207,7 +207,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdatePrnsList function is disabled by feature flag")),
+            It.Is<string>(s => s.Contains("UpdatePrnsList function is disabled by feature flag")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -433,7 +433,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching 2 of 3 Prns")),
+            It.Is<string>(s => s.Contains("Batching 2 of 3 Prns")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
@@ -478,7 +478,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
+            It.Is<string>(s => s.Contains("Batching")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
 
@@ -515,7 +515,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
+            It.Is<string>(s => s.Contains("Batching")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
 
