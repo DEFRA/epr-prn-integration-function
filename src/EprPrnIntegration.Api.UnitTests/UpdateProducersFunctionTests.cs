@@ -108,7 +108,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated producers")),
+            It.Is<It.IsAnyType>((v, t) => ContainString(v, "No updated producers")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -139,7 +139,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data")),
+            It.Is<It.IsAnyType>((v, t) => ContainString(v, "Failed to retrieve data")),
             It.IsAny<Exception>(),
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -185,9 +185,7 @@ public class UpdateProducersFunctionTests
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) =>
-                $"{v}".ToString()
-                    .Contains(
-                        $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
+               ContainString(v, $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -536,5 +534,10 @@ public class UpdateProducersFunctionTests
             };
 
         return string.Join(", ", addressFields.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private static bool ContainString(object obj, string value)
+    {
+        return obj?.ToString()?.Contains(value) == true;
     }
 }
