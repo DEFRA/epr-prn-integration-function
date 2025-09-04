@@ -49,7 +49,7 @@ public class EmailServiceTests
     private EmailService CreateEmailService() =>
         new(_mockNotificationClient.Object, _mockMessagingConfig.Object, _mockLogger.Object);
 
-    private static bool ContainString(object obj, string value)
+    private static bool ContainsString(object obj, string value)
     {
         return obj?.ToString()?.Contains(value) == true;
     }
@@ -93,7 +93,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainString(state, "Email sent to John Doe with email address producer1@example.com and the responseid is responseId")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Email sent to John Doe with email address producer1@example.com and the responseid is responseId")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -133,7 +133,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainString(state, "GOV UK NOTIFY ERROR. Method: SendEmail")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "GOV UK NOTIFY ERROR. Method: SendEmail")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -225,7 +225,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainString(state,"Email sent to NPWD with email address")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state,"Email sent to NPWD with email address")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -248,7 +248,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainString(state, "GOV UK NOTIFY ERROR")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "GOV UK NOTIFY ERROR")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -292,7 +292,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainString(state, "Validation Error email sent to NPWD with email address")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Validation Error email sent to NPWD with email address")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -364,7 +364,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, "Reconciliation email sent to NPWD")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Reconciliation email sent to NPWD")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -399,7 +399,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileIssuedPrnsTemplateId}")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -435,7 +435,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, "Reconciliation email sent to NPWD")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Reconciliation email sent to NPWD")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -471,7 +471,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedPrnsTemplateId}")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedPrnsTemplateId}")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -508,7 +508,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, "Updated organisations reconciliation email sent to NPWD")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Updated organisations reconciliation email sent to NPWD")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -540,7 +540,7 @@ public class EmailServiceTests
                 logger.Log(
                     It.Is<LogLevel>(logLevel => logLevel == LogLevel.Error),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((state, type) => ContainString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId}")),
+                    It.Is<It.IsAnyType>((state, type) => ContainsString(state, $"Failed to send email to {_messagingConfig.NpwdEmail} using template ID {_messagingConfig.NpwdReconcileUpdatedOrganisationsTemplateId}")),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
                 ),
@@ -588,7 +588,7 @@ public class EmailServiceTests
         _mockLogger.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, _) => ContainString(state, "Email sent to email address producer1@example.com and the responseid is responseId")),
+            It.Is<It.IsAnyType>((state, _) => ContainsString(state, "Email sent to email address producer1@example.com and the responseid is responseId")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);

@@ -117,7 +117,7 @@ public class EmailService(
             {
                 var response = notificationClient.SendEmail(producer.EmailAddress, templateId, parameters);
                 string message = $"Email sent to email address {producer.EmailAddress} and the responseid is {response.id}.";
-                logger.LogInformation(message);
+                logger.LogInformation("{Message}", message);
 
             }
             catch (Exception ex)
