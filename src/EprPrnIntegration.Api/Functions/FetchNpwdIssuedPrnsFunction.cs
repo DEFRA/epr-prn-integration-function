@@ -23,25 +23,20 @@ namespace EprPrnIntegration.Api.Functions
 {
     public class FetchNpwdIssuedPrnsFunction
     {
+        private readonly CoreServices _core;
+        private readonly MessagingServices _messaging;
+
         private readonly ILogger<FetchNpwdIssuedPrnsFunction> _logger;
-        private readonly INpwdClient _npwdClient;
-        private readonly IServiceBusProvider _serviceBusProvider;
-        private readonly IEmailService _emailService;
         private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
-        private readonly IOrganisationService _organisationService;
-        private readonly IPrnService _prnService;
         private readonly IValidator<NpwdPrn> _validator;
         private readonly IUtilities _utilities;
         private readonly IConfiguration _configuration;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, INpwdClient npwdClient, IServiceBusProvider serviceBusProvider, IEmailService emailService, IOrganisationService organisationService, IPrnService prnService, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, CoreServices core, MessagingServices messaging, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
         {
             _logger = logger;
-            _npwdClient = npwdClient;
-            _serviceBusProvider = serviceBusProvider;
-            _emailService = emailService;
-            _organisationService = organisationService;
-            _prnService = prnService;
+            _core = core;
+            _messaging = messaging;
             _validator = validator;
             _featureConfig = featureConfig;
             _utilities = utilities;
@@ -77,7 +72,7 @@ namespace EprPrnIntegration.Api.Functions
 
             await _utilities.SetDeltaSyncExecution(deltaRun!, toDate);
 
-            var validationFailedPrns = await _serviceBusProvider.ProcessFetchedPrns(ProcessFetchedPrn);
+            var validationFailedPrns = await _messaging.ServiceBusProvider.ProcessFetchedPrns(ProcessFetchedPrn);
 
             if (validationFailedPrns != null && validationFailedPrns.Count != 0)
             {
@@ -107,7 +102,7 @@ namespace EprPrnIntegration.Api.Functions
 
                         // Save to PRN DB
                         var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(messageContent!);
-                        await _prnService.SavePrn(request);
+                        await _core.PrnService.SavePrn(request);
                         _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
                         await SendEmailToProducers(message, messageContent, request);
                         var eventData = CreateCustomEvent(messageContent);
@@ -116,7 +111,7 @@ namespace EprPrnIntegration.Api.Functions
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
-                        await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                        await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     }
                 }
                 else
@@ -126,14 +121,14 @@ namespace EprPrnIntegration.Api.Functions
                     var eventData = CreateCustomEvent(messageContent, errorMessages);
                     _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
 
-                    await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                    await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     return eventData;
                 }
                 return null;
             }
             catch (Exception ex)
             {
-                await _serviceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                 _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}.", message.MessageId);
                 throw;
             }
@@ -171,7 +166,7 @@ namespace EprPrnIntegration.Api.Functions
             try
             {
                 // Get list of producers
-                var producerEmails = await _organisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
+                var producerEmails = await _core.OrganisationService.GetPersonEmailsAsync(messageContent!.IssuedToEPRId!, messageContent.IssuedToEntityTypeCode!, CancellationToken.None) ?? [];
                 _logger.LogInformation("Fetched {ProducerCount} producers for OrganisationId: {EPRId}", producerEmails.Count, messageContent.IssuedToEPRId);
 
                 var producers = new List<ProducerEmail>();
@@ -196,11 +191,11 @@ namespace EprPrnIntegration.Api.Functions
 
                 if (messageContent.EvidenceStatusCode == "EV-CANCEL")
                 {
-                    _emailService.SendCancelledPrnsNotificationEmails(producers, messageContent!.IssuedToEPRId!);
+                    _messaging.EmailService.SendCancelledPrnsNotificationEmails(producers, messageContent!.IssuedToEPRId!);
                 }
                 else
                 {
-                    _emailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
+                    _messaging.EmailService.SendEmailsToProducers(producers, messageContent!.IssuedToEPRId!);
                 }
              
                 _logger.LogInformation("Successfully processed and sent emails for message Id: {MessageId}", message.MessageId);
@@ -230,7 +225,7 @@ namespace EprPrnIntegration.Api.Functions
 
                     var csvContent = _utilities.CreateCsvContent(csvData);
 
-                    _emailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
+                    _messaging.EmailService.SendValidationErrorPrnEmail(csvContent, dateTimeNow);
                 }
             }
             catch (Exception ex)
@@ -269,7 +264,7 @@ namespace EprPrnIntegration.Api.Functions
             List<NpwdPrn> npwdIssuedPrns;
             try
             {
-                npwdIssuedPrns = await _npwdClient.GetIssuedPrns(filter);
+                npwdIssuedPrns = await _core.NpwdClient.GetIssuedPrns(filter);
                 if (npwdIssuedPrns == null || npwdIssuedPrns.Count == 0)
                 {
                     _logger.LogWarning("No Prns Exists in npwd for filter {Filter}", filter);
@@ -285,7 +280,7 @@ namespace EprPrnIntegration.Api.Functions
 
                 if (ex.StatusCode >= HttpStatusCode.InternalServerError || ex.StatusCode == HttpStatusCode.RequestTimeout)
                 {
-                    _emailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
+                    _messaging.EmailService.SendErrorEmailToNpwd($"Failed to fetch issued PRNs. error code {ex.StatusCode} and raw response body: {ex.Message}");
                 }
 
                 throw;
@@ -304,7 +299,7 @@ namespace EprPrnIntegration.Api.Functions
         {
             try
             {
-                await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+                await _messaging.ServiceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
             }
             catch (Exception ex)
