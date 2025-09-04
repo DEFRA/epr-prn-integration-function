@@ -403,7 +403,6 @@ public class UpdateProducersFunctionTests
     public async Task Run_HandlesMultipleBatches_CallsNpwdClientMultipleTimes()
     {
         // Arrange
-        var batchSize = 100;
         var totalProducers = 201; // should trigger 3 batches: 100 + 100 + 1
         var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(totalProducers).ToList();
 

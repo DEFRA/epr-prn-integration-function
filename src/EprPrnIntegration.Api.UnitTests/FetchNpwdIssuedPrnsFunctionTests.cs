@@ -507,8 +507,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .Returns(Task.CompletedTask);
 
-            var lastSyncDate = new DateTime(2024, 10, 01, 00, 00, 00, DateTimeKind.Utc); // Before default last run date
-            var defaultLastRunDate = new DateTime(2024, 11, 01, 00, 00, 00, DateTimeKind.Utc);
+            var lastSyncDate = DateTimeHelper.NewUtcDateTime(2024, 10, 1); // Before default last run date
+            var defaultLastRunDate = DateTimeHelper.NewUtcDateTime(2024, 11, 1);
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = lastSyncDate, SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
