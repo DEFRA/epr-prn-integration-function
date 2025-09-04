@@ -54,7 +54,7 @@ namespace EprPrnIntegration.Api.Functions
             if (!IsFeatureEnabled())
                 return;
 
-            _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function started at: {DateTime.UtcNow}");
+            _logger.LogInformation("FetchNpwdIssuedPrnsFunction function started at: {DateTime}", DateTime.UtcNow);
 
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
 
@@ -65,7 +65,7 @@ namespace EprPrnIntegration.Api.Functions
                 _logger.LogInformation("Upper date range {Now} rolled back to {ToDate}", now, toDate);
             }
 
-            _logger.LogInformation("Fetching From: {fromDate} and To {ToDate} dates for this execution", deltaRun.LastSyncDateTime, toDate);
+            _logger.LogInformation("Fetching From: {FromDate} and To {ToDate} dates for this execution", deltaRun.LastSyncDateTime, toDate);
 
             var filter = GetFilterToFetchPrns(deltaRun, toDate);
 
@@ -84,7 +84,7 @@ namespace EprPrnIntegration.Api.Functions
                 await SendErrorFetchedPrnEmail(validationFailedPrns);
             }
 
-            _logger.LogInformation($"FetchNpwdIssuedPrnsFunction function Completed at: {DateTime.UtcNow}");
+            _logger.LogInformation("FetchNpwdIssuedPrnsFunction function Completed at: {DateTime}", DateTime.UtcNow);
 
         }
 
@@ -207,7 +207,7 @@ namespace EprPrnIntegration.Api.Functions
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email notification for issued prn: {prnNo} and EprId: {EPRId}", messageContent?.EvidenceNo,messageContent?.IssuedToEPRId);
+                _logger.LogError(ex, "Failed to send email notification for issued prn: {PrnNo} and EprId: {EprId}", messageContent?.EvidenceNo,messageContent?.IssuedToEPRId);
             }
             
         }
