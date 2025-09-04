@@ -1,10 +1,10 @@
-﻿using Azure.Messaging.ServiceBus;
+﻿using System.Text.Json;
+using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace EprPrnIntegration.Common.Service
 {
@@ -26,7 +26,7 @@ namespace EprPrnIntegration.Common.Service
                     var message = new ServiceBusMessage(jsonPrn);
                     if (!messageBatch.TryAddMessage(message))
                     {
-                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {count}", messageBatch.Count);
+                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {Count}", messageBatch.Count);
                         await sender.SendMessagesAsync(messageBatch);
 
                         logger.LogInformation("SendFetchedNpwdPrnsToQueue - Disposing current batch and creating new batch");
@@ -42,14 +42,14 @@ namespace EprPrnIntegration.Common.Service
                 }
                 if (messageBatch.Count > 0)
                 {
-                    logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {count}", messageBatch.Count);
+                    logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {Count}", messageBatch.Count);
                     await sender.SendMessagesAsync(messageBatch);
                 }
-                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {count} messages has been published to the queue: {queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
+                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {Count} messages has been published to the queue: {Queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
             }
             catch (Exception ex)
             {
-                logger.LogError("SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {exception}", ex);
+                logger.LogError(ex, "SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {Exception}", ex);
                 throw;
             }
             finally
@@ -72,11 +72,11 @@ namespace EprPrnIntegration.Common.Service
                 };
                 
                 await sender.SendMessageAsync(message);
-                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {queue}", queueName);
+                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {Queue}", queueName);
             }
             catch (Exception ex)
             {
-                logger.LogError("SendDeltaSyncExecutionToQueue failed to add message on Queue with exception: {exception}", ex);
+                logger.LogError(ex, "SendDeltaSyncExecutionToQueue failed to add message on Queue with exception: {Exception}", ex);
                 throw;
             }
         }
@@ -92,7 +92,7 @@ namespace EprPrnIntegration.Common.Service
 
                 if (messages == null || messages.Count == 0)
                 {
-                    logger.LogInformation("No message received from the queue: {queue}", queueName);
+                    logger.LogInformation("No message received from the queue: {Queue}", queueName);
                     return null;
                 }
 
@@ -108,7 +108,7 @@ namespace EprPrnIntegration.Common.Service
             }
             catch (Exception ex)
             {
-                logger.LogError("GetDeltaSyncExecutionFromQueue failed with exception: {exception}", ex);
+                logger.LogError(ex, "GetDeltaSyncExecutionFromQueue failed with exception: {Exception}", ex);
                 throw;
             }
         }
@@ -138,7 +138,7 @@ namespace EprPrnIntegration.Common.Service
             }
             catch (Exception ex)
             {
-                logger.LogError("Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
+                logger.LogError(ex, "Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
             }
         }
 
