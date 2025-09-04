@@ -2,6 +2,7 @@
 using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
@@ -235,9 +236,9 @@ public class ServiceBusProviderTests
     public async Task ReceiveDeltaSyncExecutionFromQueue_Returns_LatestMessageBasedOnSequence()
     {
         // Arrange
-        var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
-        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns }; 
-        var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns }; 
+        var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
         var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1 );
         var message2 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync2), sequenceNumber: 2);
