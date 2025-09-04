@@ -300,11 +300,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Getting Reconciled updated PRN's")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Getting Reconciled updated PRN's")),
+                    It.IsAny<Exception?>(), // exception is nullable
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>() // formatter's second param is nullable
+                ),
+                Times.Once);
         }
 
         [Fact]
