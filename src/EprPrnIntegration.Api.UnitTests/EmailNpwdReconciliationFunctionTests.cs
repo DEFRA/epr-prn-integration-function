@@ -562,11 +562,6 @@ public class EmailNpwdReconciliationFunctionTests
 
     private static bool ContainString(object obj, string value)
     {
-        if (obj is string strObj)
-        {
-            return strObj.Contains(value);
-        }
-
-        return false;
+        return obj?.ToString()?.Contains(value) == true;
     }
 }
