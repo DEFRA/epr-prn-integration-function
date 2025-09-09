@@ -131,13 +131,15 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
             if (updatedEprPrns == null || updatedEprPrns.Count.Equals(0))
             {
                 logger.LogWarning("No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.", fromDate, toDate);
+                return null;
             }
+
+            return updatedEprPrns;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.", fromDate, toDate);
+            return null;
         }
-
-        return updatedEprPrns;
     }
 }
