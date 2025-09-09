@@ -82,15 +82,8 @@ public static class HostBuilderConfiguration
         });
 
         services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
-
-        services.AddScoped<CoreServices>(sp => new CoreServices(
-            sp.GetRequiredService<INpwdClient>(),
-            sp.GetRequiredService<IOrganisationService>(),
-            sp.GetRequiredService<IPrnService>()));
-
-        services.AddScoped<MessagingServices>(sp => new MessagingServices(
-            sp.GetRequiredService<IServiceBusProvider>(),
-            sp.GetRequiredService<IEmailService>()));
+        services.AddScoped<ICoreServices, CoreServices>();
+        services.AddScoped<IMessagingServices, MessagingServices>();
     }
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)

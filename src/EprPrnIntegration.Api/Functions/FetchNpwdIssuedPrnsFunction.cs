@@ -1,9 +1,7 @@
 using EprPrnIntegration.Api.Models;
-using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using FluentValidation;
 using Microsoft.Azure.Functions.Worker;
@@ -17,14 +15,13 @@ using EprPrnIntegration.Common.Constants;
 using System.Net;
 using EprPrnIntegration.Common.Models.Queues;
 using System.Globalization;
-using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api.Functions
 {
     public class FetchNpwdIssuedPrnsFunction
     {
-        private readonly CoreServices _core;
-        private readonly MessagingServices _messaging;
+        private readonly ICoreServices _core;
+        private readonly IMessagingServices _messaging;
 
         private readonly ILogger<FetchNpwdIssuedPrnsFunction> _logger;
         private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
@@ -32,7 +29,7 @@ namespace EprPrnIntegration.Api.Functions
         private readonly IUtilities _utilities;
         private readonly IConfiguration _configuration;
 
-        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, CoreServices core, MessagingServices messaging, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
+        public FetchNpwdIssuedPrnsFunction(ILogger<FetchNpwdIssuedPrnsFunction> logger, ICoreServices core, IMessagingServices messaging, IValidator<NpwdPrn> validator, IOptions<FeatureManagementConfiguration> featureConfig, IUtilities utilities, IConfiguration configuration)
         {
             _logger = logger;
             _core = core;

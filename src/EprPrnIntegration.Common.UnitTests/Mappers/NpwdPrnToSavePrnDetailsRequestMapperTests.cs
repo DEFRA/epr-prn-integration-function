@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Mappers;
+using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Helpers;
 
 namespace EprPrnIntegration.Tests.Mappers

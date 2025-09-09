@@ -6,7 +6,7 @@ using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 namespace EprPrnIntegration.Common.Service;
 
 [ExcludeFromCodeCoverage]
-public sealed class CoreServices
+public sealed class CoreServices : ICoreServices
 {
     public INpwdClient NpwdClient { get; }
     public IOrganisationService OrganisationService { get; }
@@ -17,8 +17,8 @@ public sealed class CoreServices
         IOrganisationService organisationService,
         IPrnService prnService)
     {
-        NpwdClient = npwdClient;
-        OrganisationService = organisationService;
-        PrnService = prnService;
+        NpwdClient = npwdClient ?? throw new ArgumentNullException(nameof(npwdClient));
+        OrganisationService = organisationService ?? throw new ArgumentNullException(nameof(organisationService));
+        PrnService = prnService ?? throw new ArgumentNullException(nameof(prnService));
     }
 }

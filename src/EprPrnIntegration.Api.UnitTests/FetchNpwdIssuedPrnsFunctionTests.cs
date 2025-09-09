@@ -53,13 +53,13 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities = new Mock<IUtilities>();
             _mockConfiguration = new Mock<IConfiguration>();
 
-            var _core = new CoreServices(_mockNpwdClient.Object, _mockOrganisationService.Object, _mockPrnService.Object);
-            var _messaging = new MessagingServices(_mockServiceBusProvider.Object, _mockEmailService.Object);
+            var _core = new Mock<ICoreServices>();
+            var _messaging = new Mock<IMessagingServices>();
 
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
-                _core,
-                _messaging,
+                _core.Object,
+                _messaging.Object,
                 _mockValidator.Object,
                 _mockFeatureConfig.Object,
                 _mockPrnUtilities.Object,
