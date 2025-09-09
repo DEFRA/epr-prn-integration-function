@@ -127,7 +127,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         try
         {
-            updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate, new CancellationToken());
+            updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate, CancellationToken.None);
             if (updatedEprPrns == null || updatedEprPrns.Count.Equals(0))
             {
                 logger.LogWarning("No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.", fromDate, toDate);
