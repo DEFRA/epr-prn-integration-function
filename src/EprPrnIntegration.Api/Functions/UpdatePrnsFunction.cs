@@ -123,23 +123,21 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     // Retrieve data from the common backend
     private async Task<List<UpdatedPrnsResponseModel>?> GetUpdatedPrnsAsync(DateTime fromDate, DateTime toDate)
     {
-        List<UpdatedPrnsResponseModel>? updatedEprPrns = null;
-
         try
         {
-            updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate, CancellationToken.None);
-            if (updatedEprPrns == null || updatedEprPrns.Count.Equals(0))
+            var updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate, CancellationToken.None);
+            if (updatedEprPrns != null && updatedEprPrns.Count > 0)
             {
-                logger.LogWarning("No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.", fromDate, toDate);
-                return null;
+                return updatedEprPrns;
             }
 
-            return updatedEprPrns;
+            logger.LogWarning("No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.", fromDate, toDate);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.", fromDate, toDate);
-            return null;
         }
+
+        return null;
     }
 }
