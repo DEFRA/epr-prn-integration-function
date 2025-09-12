@@ -25,7 +25,7 @@ namespace EprPrnIntegration.Common.RESTServices.CommonService
         }
 
 
-        public async Task<List<UpdatedProducersResponse>> GetUpdatedProducers(DateTime from, DateTime to,
+        public async Task<List<UpdatedProducersResponse>?> GetUpdatedProducers(DateTime from, DateTime to,
             CancellationToken cancellationToken)
         {
             var fromDate = from.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);

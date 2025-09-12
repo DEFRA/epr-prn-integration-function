@@ -126,7 +126,7 @@ public class UpdateProducersFunctionTests
         _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedProducersResponse>());
+            .ReturnsAsync([]);
 
         _utilitiesMock
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
