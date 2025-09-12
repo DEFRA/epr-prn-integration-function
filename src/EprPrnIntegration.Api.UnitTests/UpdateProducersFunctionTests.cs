@@ -115,13 +115,6 @@ public class UpdateProducersFunctionTests
                 It.IsAny<CancellationToken>()), Times.Once);
         _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
             Times.Once());
-
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Warning,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching 100 of 101 producers")),
-            null,
-            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]

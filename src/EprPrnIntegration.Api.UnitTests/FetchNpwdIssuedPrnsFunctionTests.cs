@@ -54,7 +54,13 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockConfiguration = new Mock<IConfiguration>();
 
             var _core = new Mock<ICoreServices>();
+            _core.SetupGet(c => c.NpwdClient).Returns(_mockNpwdClient.Object);
+            _core.SetupGet(c => c.OrganisationService).Returns(_mockOrganisationService.Object);
+            _core.SetupGet(c => c.PrnService).Returns(_mockPrnService.Object);
+
             var _messaging = new Mock<IMessagingServices>();
+            _messaging.SetupGet(c => c.EmailService).Returns(_mockEmailService.Object);
+            _messaging.SetupGet(c => c.ServiceBusProvider).Returns(_mockServiceBusProvider.Object);
 
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
