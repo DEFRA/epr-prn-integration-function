@@ -191,6 +191,36 @@ public class UpdatePrnsFunctionTests
     }
 
     [Fact]
+    public async Task Run_ShouldLogError_WhenNpwdClientThrowsException()
+    {
+        // Arrange
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Client error"));
+
+        // Act
+        await _function.Run(null!);
+
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to patch NpwdUpdatedPrns")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
     public async Task Run_Ends_When_Feature_Flag_Is_False()
     {
         // Arrange
