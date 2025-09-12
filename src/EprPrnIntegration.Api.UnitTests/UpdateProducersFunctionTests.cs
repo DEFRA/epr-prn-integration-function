@@ -149,37 +149,6 @@ public class UpdateProducersFunctionTests
     }
 
     [Fact]
-    public async Task Run_NullUpdatedProducers_LogsWarning()
-    {
-        // Arrange
-        _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns("2024-01-01");
-
-        _commonDataServiceMock
-            .Setup(service =>
-                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(default(List<UpdatedProducersResponse>));
-
-        _utilitiesMock
-            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatedProducers,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
-
-        // Act
-        await function.Run(null!);
-
-        // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Warning,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "No updated producers")),
-            null,
-            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
-    }
-
-    [Fact]
     public async Task Run_FailedToFetchData_LogsError()
     {
         // Arrange

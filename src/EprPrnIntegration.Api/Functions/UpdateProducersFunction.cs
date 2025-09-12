@@ -44,7 +44,7 @@ public class UpdateProducersFunction(
         logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
-        if (updatedEprProducers == null || updatedEprProducers.Count.Equals(0))
+        if (updatedEprProducers.Count.Equals(0))
         {
             logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
             return;
@@ -121,7 +121,7 @@ public class UpdateProducersFunction(
         }
     }
 
-    private async Task<List<UpdatedProducersResponse>?> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
     {
         try
         {
