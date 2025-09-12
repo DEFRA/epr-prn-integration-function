@@ -121,7 +121,7 @@ public class UpdateProducersFunction(
         }
     }
 
-    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedProducersResponse>?> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
     {
         try
         {
