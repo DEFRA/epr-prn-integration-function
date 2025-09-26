@@ -1,5 +1,7 @@
 ﻿using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Mappers;
+using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Helpers;
 
 namespace EprPrnIntegration.Tests.Mappers
 {
@@ -13,13 +15,13 @@ namespace EprPrnIntegration.Tests.Mappers
             {
                 AccreditationNo = "12345",
                 AccreditationYear = 2024,
-                CancelledDate = new DateTime(2024, 12, 11),
+                CancelledDate = DateTimeHelper.NewUtcDateTime(2024, 12, 11),
                 DecemberWaste = true,
                 EvidenceMaterial = "Plastic",
                 EvidenceNo = "EA123456",
                 EvidenceStatusCode = "Active",
                 EvidenceTonnes = 200,
-                IssueDate = new DateTime(2024, 01, 01),
+                IssueDate = DateTimeHelper.NewUtcDateTime(2024, 01, 01),
                 IssuedByNPWDCode = "6B29FC40-CA47-1067-B31D-00DD010662DA",
                 IssuedByOrgName = "Exporter Ltd.",
                 IssuedToNPWDCode = "6B29FC40-CA47-1067-B31D-00DD010662DA",
@@ -28,14 +30,14 @@ namespace EprPrnIntegration.Tests.Mappers
                 IssuerNotes = "No Notes",
                 IssuerRef = "IssuerRef123",
                 MaterialOperationCode = "6b29fc40-ca47-1067-b31d-00dd010662da",
-                ModifiedOn = new DateTime(2024, 11, 01),
+                ModifiedOn = DateTimeHelper.NewUtcDateTime(2024, 11, 01),
                 ObligationYear = 2024,
                 PRNSignatory = "John Doe",
                 PRNSignatoryPosition = "Manager",
                 ProducerAgency = "AgencyA",
                 RecoveryProcessCode = "R123",
                 ReprocessorAgency = "AgencyB",
-                StatusDate = new DateTime(2024, 11, 10)
+                StatusDate = DateTimeHelper.NewUtcDateTime(2024, 11, 10)
             };
 
             // Act
@@ -79,13 +81,13 @@ namespace EprPrnIntegration.Tests.Mappers
             {
                 AccreditationNo = "12345",
                 AccreditationYear = 2024,
-                CancelledDate = new DateTime(2024, 12, 11),
+                CancelledDate = DateTimeHelper.NewUtcDateTime(2024, 12, 11),
                 DecemberWaste = true,
                 EvidenceMaterial = "Plastic",
                 EvidenceNo = "EA123456",
                 EvidenceStatusCode = "Active",
                 EvidenceTonnes = 200,
-                IssueDate = new DateTime(2024, 01, 01),
+                IssueDate = DateTimeHelper.NewUtcDateTime(2024, 01, 01),
                 IssuedByNPWDCode = "6B29FC40-CA47-1067-B31D-00DD010662DA",
                 IssuedByOrgName = "Exporter Ltd.",
                 IssuedToNPWDCode = "6B29FC40-CA47-1067-B31D-00DD010662DA",
@@ -94,14 +96,14 @@ namespace EprPrnIntegration.Tests.Mappers
                 IssuerNotes = "No Notes",
                 IssuerRef = "IssuerRef123",
                 MaterialOperationCode = "6b29fc40-ca47-1067-b31d-00dd010662da",
-                ModifiedOn = new DateTime(2024, 11, 01),
+                ModifiedOn = DateTimeHelper.NewUtcDateTime(2024, 11, 01),
                 ObligationYear = null,
                 PRNSignatory = "John Doe",
                 PRNSignatoryPosition = "Manager",
                 ProducerAgency = "AgencyA",
                 RecoveryProcessCode = "R123",
                 ReprocessorAgency = "AgencyB",
-                StatusDate = new DateTime(2024, 11, 10)
+                StatusDate = DateTimeHelper.NewUtcDateTime(2024, 11, 10)
             };
 
             // Act

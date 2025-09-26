@@ -53,13 +53,19 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockPrnUtilities = new Mock<IUtilities>();
             _mockConfiguration = new Mock<IConfiguration>();
 
+            var _core = new Mock<ICoreServices>();
+            _core.SetupGet(c => c.NpwdClient).Returns(_mockNpwdClient.Object);
+            _core.SetupGet(c => c.OrganisationService).Returns(_mockOrganisationService.Object);
+            _core.SetupGet(c => c.PrnService).Returns(_mockPrnService.Object);
+
+            var _messaging = new Mock<IMessagingServices>();
+            _messaging.SetupGet(c => c.EmailService).Returns(_mockEmailService.Object);
+            _messaging.SetupGet(c => c.ServiceBusProvider).Returns(_mockServiceBusProvider.Object);
+
             _function = new FetchNpwdIssuedPrnsFunction(
                 _mockLogger.Object,
-                _mockNpwdClient.Object,
-                _mockServiceBusProvider.Object,
-                _mockEmailService.Object,
-                _mockOrganisationService.Object,
-                _mockPrnService.Object,
+                _core.Object,
+                _messaging.Object,
                 _mockValidator.Object,
                 _mockFeatureConfig.Object,
                 _mockPrnUtilities.Object,
@@ -507,8 +513,8 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockServiceBusProvider.Setup(provider => provider.SendFetchedNpwdPrnsToQueue(It.IsAny<List<NpwdPrn>>()))
                                    .Returns(Task.CompletedTask);
 
-            var lastSyncDate = new DateTime(2024, 10, 01, 00, 00, 00, DateTimeKind.Utc); // Before default last run date
-            var defaultLastRunDate = new DateTime(2024, 11, 01, 00, 00, 00, DateTimeKind.Utc);
+            var lastSyncDate = DateTimeHelper.NewUtcDateTime(2024, 10, 1); // Before default last run date
+            var defaultLastRunDate = DateTimeHelper.NewUtcDateTime(2024, 11, 1);
             var deltaSyncExecution = new DeltaSyncExecution { LastSyncDateTime = lastSyncDate, SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
             _mockPrnUtilities.Setup(utils => utils.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))

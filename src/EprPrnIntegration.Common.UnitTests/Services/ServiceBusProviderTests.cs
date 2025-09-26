@@ -2,6 +2,7 @@
 using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
@@ -12,6 +13,9 @@ using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Services;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Usage", "CA2254:Template should be a static expression",
+    Justification = "Suppressing this low priority issue as there are too many different templates for logs")]
 public class ServiceBusProviderTests
 {
     private readonly Mock<ILogger<ServiceBusProvider>> _loggerMock;
@@ -68,7 +72,7 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Exactly(2));
+        _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(msg => msg.Contains("SendFetchedNpwdPrnsToQueue"))), Times.Exactly(2));
 
     }
 
@@ -94,6 +98,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync(messageBatch1)
             .ReturnsAsync(messageBatch2);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
         // Act
         await _serviceBusProvider.SendFetchedNpwdPrnsToQueue(npwdPrns);
 
@@ -119,7 +124,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.Is<string>(s => !string.IsNullOrEmpty(s))), Times.Once);
     }
 
     [Fact]
@@ -163,7 +168,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogError(It.IsAny<Exception>(), It.Is<string>(s => !string.IsNullOrEmpty(s))), Times.Once);
     }
 
     [Fact]
@@ -172,10 +177,7 @@ public class ServiceBusProviderTests
         // Arrange
         var deltaSyncExecution = new DeltaSyncExecution { SyncType = NpwdDeltaSyncType.UpdatedProducers };
         var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
-        var message = new ServiceBusMessage(executionMessage)
-        {
-            ContentType = "application/json"
-        };
+
         // Mocking GetDeltaSyncExecutionFromQueue to return null (no existing message)
         _serviceBusClientMock.Setup(client => client.CreateReceiver(It.IsAny<string>())).Returns(_serviceBusReceiverMock.Object);
 
@@ -184,6 +186,7 @@ public class ServiceBusProviderTests
             .ReturnsAsync((List<ServiceBusReceivedMessage>)null!);
 
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
         // Act
         await _serviceBusProvider.SendDeltaSyncExecutionToQueue(deltaSyncExecution);
 
@@ -232,11 +235,11 @@ public class ServiceBusProviderTests
     public async Task ReceiveDeltaSyncExecutionFromQueue_Returns_LatestMessageBasedOnSequence()
     {
         // Arrange
-        var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
-        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns }; 
-        var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTime.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync1 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-08"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync2 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-09"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
+        var sync3 = new DeltaSyncExecution() { LastSyncDateTime = DateTimeHelper.Parse("2024-10-10"), SyncType = NpwdDeltaSyncType.FetchNpwdIssuedPrns };
 
-        var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1 );
+        var message1 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync1), sequenceNumber: 1);
         var message2 = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync2), sequenceNumber: 2);
         var latestMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(new BinaryData(sync3), sequenceNumber: 3);
 
@@ -297,7 +300,7 @@ public class ServiceBusProviderTests
     public async Task ReceiveDeltaSyncExecutionFromQueue_ExceptionThrown_LogsErrorAndRethrows()
     {
         // Arrange
-        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(),default))
+        _serviceBusReceiverMock.Setup(receiver => receiver.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), default))
             .ThrowsAsync(new Exception("Service bus connection error"));
 
         // Act & Assert
@@ -351,7 +354,7 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _loggerMock.VerifyLog(l => l.LogInformation(It.IsAny<string>()), Times.Once);
+        _loggerMock.VerifyLog(l => l.LogInformation(It.Is<string>(msg => msg.Contains("Message with EvidenceNo"))), Times.Once);
     }
 
     [Fact]

@@ -82,6 +82,8 @@ public static class HostBuilderConfiguration
         });
 
         services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
+        services.AddScoped<ICoreServices, CoreServices>();
+        services.AddScoped<IMessagingServices, MessagingServices>();
     }
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services, IConfiguration configuration)

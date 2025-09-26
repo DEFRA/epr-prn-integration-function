@@ -44,7 +44,7 @@ public class UpdateProducersFunction(
         logger.LogInformation("Fetching producers from {FromDate} to {ToDate}.", fromDate, toDate);
 
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
-        if (updatedEprProducers == null || updatedEprProducers.Count.Equals(0))
+        if (updatedEprProducers.Count.Equals(0))
         {
             logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
             return;
@@ -52,13 +52,10 @@ public class UpdateProducersFunction(
 
         updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).ToList();
 
-        if (int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize))
+        if (int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize) && batchSize > 0 && batchSize < updatedEprProducers.Count)
         {
-            if (batchSize > 0 && batchSize < updatedEprProducers.Count)
-            {
-                logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize, updatedEprProducers.Count);
-                updatedEprProducers = updatedEprProducers.Take(batchSize).ToList();
-            }
+            logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize, updatedEprProducers.Count);
+            updatedEprProducers = updatedEprProducers.Take(batchSize).ToList();
         }
 
         var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();

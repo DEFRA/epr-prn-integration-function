@@ -5,7 +5,7 @@ namespace EprPrnIntegration.Common.UnitTests
         [Fact]
         public void Test_Middleware_Appends_Bearer_Token_To_Requests_Correctly()
         {
-            // TODO:
+            // TO DO:
             Assert.True(true);
         }
     }

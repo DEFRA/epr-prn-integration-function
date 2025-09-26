@@ -83,6 +83,41 @@ public class UpdateProducersFunctionTests
     }
 
     [Fact]
+    public async Task Run_ValidStartHour_FetchesAndUpdatesProducersWithBatch()
+    {
+        // Arrange
+        var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(101).ToList();
+
+        _commonDataServiceMock
+            .Setup(service =>
+                service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(updatedProducers);
+
+        _npwdClientMock
+            .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
+
+        _utilitiesMock
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatedProducers,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+
+        // Act
+        await function.Run(null!);
+
+        // Assert
+        _commonDataServiceMock.Verify(
+            service => service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()), Times.Once);
+        _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers),
+            Times.Once());
+    }
+
+    [Fact]
     public async Task Run_NoUpdatedProducers_LogsWarning()
     {
         // Arrange
@@ -91,7 +126,7 @@ public class UpdateProducersFunctionTests
         _commonDataServiceMock
             .Setup(service =>
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedProducersResponse>());
+            .ReturnsAsync([]);
 
         _utilitiesMock
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers))
@@ -108,7 +143,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated producers")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "No updated producers")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -139,7 +174,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to retrieve data")),
             It.IsAny<Exception>(),
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -185,9 +220,7 @@ public class UpdateProducersFunctionTests
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) =>
-                $"{v}".ToString()
-                    .Contains(
-                        $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
+               ContainsString(v, $"Failed to update producer lists. error code {HttpStatusCode.BadRequest} and raw response body: {responseBody}")),
             null,
             (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
@@ -209,7 +242,7 @@ public class UpdateProducersFunctionTests
         _loggerMock.Verify(logger => logger.Log(
                   It.IsAny<LogLevel>(),
                   It.IsAny<EventId>(),
-                  It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdateProducersList function is disabled by feature flag")),
+                  It.Is<It.IsAnyType>((state, type) => ContainsString(state, "UpdateProducersList function is disabled by feature flag")),
 
                   It.IsAny<Exception>(),
                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
@@ -260,7 +293,7 @@ public class UpdateProducersFunctionTests
 
         var defaultDeltaSync = new DeltaSyncExecution
         {
-            LastSyncDateTime = DateTime.Parse(defaultDatetime),
+            LastSyncDateTime = DateTimeHelper.Parse(defaultDatetime),
             SyncType = NpwdDeltaSyncType.UpdatedProducers
         };
 
@@ -282,7 +315,7 @@ public class UpdateProducersFunctionTests
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _commonDataServiceMock.Verify(service =>
-            service.GetUpdatedProducers(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+            service.GetUpdatedProducers(DateTimeHelper.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -297,7 +330,7 @@ public class UpdateProducersFunctionTests
                 service.GetUpdatedProducers(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync([updatedProducers[0]]);
 
-        IEnumerable<Producer> mappedProducers = null;
+        IEnumerable<Producer> mappedProducers = new List<Producer>();
 
         _npwdClientMock
             .Setup(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers))
@@ -405,7 +438,6 @@ public class UpdateProducersFunctionTests
     public async Task Run_HandlesMultipleBatches_CallsNpwdClientMultipleTimes()
     {
         // Arrange
-        var batchSize = 100;
         var totalProducers = 201; // should trigger 3 batches: 100 + 100 + 1
         var updatedProducers = _fixture.CreateMany<UpdatedProducersResponse>(totalProducers).ToList();
 
@@ -471,7 +503,7 @@ public class UpdateProducersFunctionTests
 
         // Assert
         Assert.NotNull(capturedDelta);
-        Assert.Equal(batchSize, capturedDelta!.Value.Count());
+        Assert.Equal(batchSize, capturedDelta!.Value.Count);
         _npwdClientMock.Verify(client => client.Patch(It.IsAny<ProducerDelta>(), NpwdApiPath.Producers), Times.Once);
     }
 
@@ -536,5 +568,10 @@ public class UpdateProducersFunctionTests
             };
 
         return string.Join(", ", addressFields.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private static bool ContainsString(object obj, string value)
+    {
+        return obj?.ToString()?.Contains(value) == true;
     }
 }

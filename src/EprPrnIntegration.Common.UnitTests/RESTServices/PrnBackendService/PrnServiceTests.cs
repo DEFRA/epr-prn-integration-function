@@ -94,7 +94,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated PRN's.")),
+                It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Getting updated PRN's.")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
@@ -143,7 +143,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Insert of sync data failed with ex:")),
+                It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Insert of sync data failed with ex:")),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
@@ -160,7 +160,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Sync data inserted")),
+                It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Sync data inserted")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
             ), Times.Once);
@@ -185,7 +185,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("Saving PRN with id 1234")),
+                It.Is<It.IsAnyType>((state, type) => ContainsString(state, "Saving PRN with id 1234")),
                 It.IsAny<Exception>(),
                 It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
             ), Times.Once);
@@ -210,7 +210,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Saving PRN with id 1234")),
+                It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Saving PRN with id 1234")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }
@@ -237,15 +237,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
     {
-        new ReconcileUpdatedPrnsResponseModel
-        {
+        new() {
             PrnNumber = "001",
             StatusName = "Approved",
             UpdatedOn = "2024-12-04T15:57:02",
             OrganisationName = "Company A"
         },
-        new ReconcileUpdatedPrnsResponseModel
-        {
+        new() {
             PrnNumber = "002",
             StatusName = "Rejected",
             UpdatedOn = "2024-12-03T23:51:02",
@@ -286,8 +284,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
     {
-        new ReconcileUpdatedPrnsResponseModel
-        {
+        new() {
             PrnNumber = "001",
             StatusName = "Approved",
             UpdatedOn = "2024-12-04T15:57:02",
@@ -303,11 +300,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Getting Reconciled updated PRN's")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Getting Reconciled updated PRN's")),
+                    It.IsAny<Exception?>(), // exception is nullable
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>() // formatter's second param is nullable
+                ),
+                Times.Once);
         }
 
         [Fact]
@@ -318,6 +317,11 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Act & Assert
             await Assert.ThrowsAsync<ResponseCodeException>(() => sut.GetReconciledUpdatedPrns());
+        }
+
+        private static bool ContainsString(object obj, string value)
+        {
+            return obj?.ToString()?.Contains(value) == true;
         }
     }
 }

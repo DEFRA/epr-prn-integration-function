@@ -85,7 +85,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("No updated Prns are retrieved from common database")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "No updated Prns are retrieved from common database")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -115,7 +115,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Prns list successfully updated in NPWD")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Prns list successfully updated in NPWD")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -145,13 +145,13 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to update Prns list in NPWD")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to update Prns list in NPWD")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Status Code: BadRequest")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Status Code: BadRequest")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -178,14 +178,44 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Failed to retrieve data from common backend")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to retrieve data from common backend")),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("form time period")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "form time period")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Run_ShouldLogError_WhenNpwdClientThrowsException()
+    {
+        // Arrange
+        _mockUtilities
+            .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
+            .ReturnsAsync(new DeltaSyncExecution
+            {
+                SyncType = NpwdDeltaSyncType.UpdatePrns,
+                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
+            });
+
+        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+
+        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Client error"));
+
+        // Act
+        await _function.Run(null!);
+
+        // Assert
+        _loggerMock.Verify(logger => logger.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to patch NpwdUpdatedPrns")),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
@@ -207,7 +237,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => state.ToString().Contains("UpdatePrnsList function is disabled by feature flag")),
+            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "UpdatePrnsList function is disabled by feature flag")),
             It.IsAny<Exception>(),
             It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
         ), Times.Once);
@@ -269,7 +299,7 @@ public class UpdatePrnsFunctionTests
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
             .ReturnsAsync(new DeltaSyncExecution
             {
-                LastSyncDateTime = DateTime.Parse(defaultDatetime),
+                LastSyncDateTime = DateTimeHelper.Parse(defaultDatetime),
                 SyncType = NpwdDeltaSyncType.UpdatePrns
             });
 
@@ -278,7 +308,7 @@ public class UpdatePrnsFunctionTests
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
         _mockPrnService.Verify(service =>
-            service.GetUpdatedPrns(DateTime.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+            service.GetUpdatedPrns(DateTimeHelper.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -347,8 +377,8 @@ public class UpdatePrnsFunctionTests
             });
 
         _mockNpwdClient.Setup(x => x.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error")});
-            
+            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
+
 
         // Act
         await _function.Run(null!);
@@ -433,7 +463,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching 2 of 3 Prns")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching 2 of 3 Prns")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
@@ -478,7 +508,7 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
 
@@ -515,11 +545,16 @@ public class UpdatePrnsFunctionTests
         _loggerMock.Verify(logger => logger.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Batching")),
+            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
             null,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
 
         prnCount.Should().Be(3);
 
+    }
+
+    private static bool ContainsString(object obj, string value)
+    {
+        return obj?.ToString()?.Contains(value) == true;
     }
 }
