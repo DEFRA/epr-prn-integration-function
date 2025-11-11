@@ -1,6 +1,5 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Constants;
-using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -33,14 +32,6 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         return await Get<List<PersonEmail>>($"person-emails?organisationId={organisationId}&entityTypeCode={issuedToEntityTypeCode}", cancellationToken, false);
     }
 
-
-    public async Task<List<UpdatedProducersResponseModel>> GetUpdatedProducers(DateTime from, DateTime to,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Getting updated producers list.");
-        return await Get<List<UpdatedProducersResponseModel>>($"organisation?From={from:yyyy-MM-ddTHH:mm:ss}&To={to:yyyy-MM-ddTHH:mm:ss}",
-            cancellationToken, false);
-    }
 
     /// <inheritdoc/>
     public async Task<bool> DoesProducerOrComplianceSchemeExistAsync(string organisationId, string entityTypeCode, CancellationToken cancellationToken)
