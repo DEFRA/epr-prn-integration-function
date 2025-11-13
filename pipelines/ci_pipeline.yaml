@@ -34,6 +34,8 @@ variables:
     value: false
   - name: runTests
     value: true
+  - name: runIntegrationTests
+    value: true
   - name: dotnetVersion
     value: dotnetVersion8
 
@@ -42,7 +44,7 @@ resources:
     - repository: CommonTemplates
       name: RWD-CPR-EPR4P-ADO/epr-webapps-code-deploy-templates
       type: git
-      ref: main
+      ref: feature/integration-test
 
 extends:
   template: epr-build-pipeline.yaml@CommonTemplates
@@ -53,6 +55,7 @@ extends:
     sonarQubeProjectKey: ${{ variables.sonarQubeProjectKey }}
     sonarQubeProjectName: ${{ variables.sonarQubeProjectName }}
     runTests: ${{ variables.runTests }}
+    runIntegrationTests: ${{ variables.runIntegrationTests }}
     azureSubscription: $(azureSubscription)
     acrAzureContainerRegistryName: $(acr.azureContainerRegistryName)
     acrRepositoryName: $(acr.repositoryName)
