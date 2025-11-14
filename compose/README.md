@@ -14,15 +14,7 @@ Services that will be started:
 
 **Azure service bus emulator**
 
-Configures a single queue, see `compose/asb.json`.
-
-**SQL edge**
-
-Runs on standard 1433 port, see `compose.yml` for username/password so you can connect locally.
-
-See `migrations` service for how PayCal database is created, migrations are run and then initial seeding.
-
-The seed file sets up some dev organisation and POM data so the Synapse pipeline is not required.
+Configures the queues, see `compose/asb.json`.
 
 **Azurite**
 
@@ -58,9 +50,7 @@ docker compose logs <service name>
 
 **You'll need to update your own copy with a gov.notify API (TEST) key but check the .json file for details.**
 
-Once you're configured you can spin up the function via either:
-- your IDE, to attach and set breakpoints
-- a separate docker command: `docker -f compose/function.yml up`
+Once you're configured you can spin up the function via your IDE, to attach and set breakpoints
 
 Then, invoke the chosen function e.g.  `FetchNpwdIssuedPrnsFunction`:
 
