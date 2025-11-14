@@ -68,28 +68,12 @@ services:
       retries: 10
       start_period: 5s
 
-  npwd-service:
+  -http-api-mocks:
     image: wiremock/wiremock:latest
     ports:
       - "5666:8080"
     volumes:
-      - ./compose/wiremock/npwd/mappings:/home/wiremock/mappings
-    command: [ "--verbose", "--global-response-templating" ]
-    
-  org-service:
-    image: wiremock/wiremock:latest
-    ports:
-      - "5667:8080"
-    volumes:
-      - ./compose/wiremock/org-service/mappings:/home/wiremock/mappings
-    command: [ "--verbose", "--global-response-templating" ]
-
-  prn-service:
-    image: wiremock/wiremock:latest
-    ports:
-      - "5668:8080"
-    volumes:
-      - ./compose/wiremock/prn-service/mappings:/home/wiremock/mappings
+      - ./compose/wiremock/mappings:/home/wiremock/mappings
     command: [ "--verbose", "--global-response-templating" ]
 
 volumes:
