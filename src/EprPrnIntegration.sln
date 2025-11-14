@@ -14,6 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "compose", "compose", "{559BDE99-5CC8-4274-99B6-7C3E3F7A7F24}"
 	ProjectSection(SolutionItems) = preProject
 		..\compose.yml = ..\compose.yml
+		..\compose\README.md = ..\compose\README.md
 	EndProjectSection
 EndProject
 Global
