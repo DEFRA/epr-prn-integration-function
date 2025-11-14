@@ -1,0 +1,8 @@
+services:
+  wiremock:
+    pull_policy: always
+    environment:
+      TZ: Europe/London
+    image: sheyenrath/wiremock.net:latest
+    ports:
+      - "9090:80"
