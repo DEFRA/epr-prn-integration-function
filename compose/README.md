@@ -48,7 +48,7 @@ docker compose logs <service name>
 
 `cp src/EprPrnIntegration.Api/local.settings.json.example cp src/EprPrnIntegration.Api/local.settings.json`
 
-**You'll need to update your own copy with a gov.notify API (TEST) key but check the .json file for details.**
+**You'll need to update your own copy with a gov.notify API (TEST) key for the `MessagingConfig:ApiKey` env but check the .json file for details.**
 
 Once you're configured you can spin up the function via your IDE, to attach and set breakpoints
 
