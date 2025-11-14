@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/organisations/person-emails"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "FirstName": "firstName",
+        "LastName": "lastName",
+        "Email": "fake-email-person@fake-email.domain.co.uk"
+      }
+    ]
+  }
+}
