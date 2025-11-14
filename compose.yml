@@ -76,6 +76,7 @@ services:
       - ./compose/wiremock/mappings:/home/wiremock/mappings
     command: [ "--verbose", "--global-response-templating" ]
 
+
 volumes:
   azurite-data:
   sqledge-data:
