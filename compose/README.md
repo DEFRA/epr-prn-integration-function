@@ -44,6 +44,8 @@ docker compose logs <service name>
 
 ## Running the function
 
+### With a debugger in an IDE
+
 `local.settings.json` contains config that will point to the dockerised services above. Copy the .example file:
 
 `cp src/EprPrnIntegration.Api/local.settings.json.example cp src/EprPrnIntegration.Api/local.settings.json`
@@ -55,5 +57,21 @@ Once you're configured you can spin up the function via your IDE, to attach and 
 Then, invoke the chosen function e.g.  `FetchNpwdIssuedPrnsFunction`:
 
 `./scripts/trigger-local-function.sh FetchNpwdIssuedPrnsFunction` 
+
+The functions are void-style so it's recommended to tail your logs/watch IDE output if you want to track behaviour.
+
+### With the function hosted within Docker
+
+`compose/function.env.example` contains config you'll need to copy:
+
+`cp compose/function.env.example compose/function.env`
+
+Once you're configured you can spin up the function with docker: 
+
+`docker compose -f function.yml up --build -d`
+
+Then issue commands to the container via another helper script:
+
+`./scripts/trigger-container-function.sh FetchNpwdIssuedPrnsFunction`
 
 The functions are void-style so it's recommended to tail your logs/watch IDE output if you want to track behaviour.

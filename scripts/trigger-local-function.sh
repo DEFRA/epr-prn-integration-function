@@ -8,4 +8,7 @@ fi
 
 FUNCTION_NAME=$1
 
-curl -v POST http://localhost:7234/admin/functions/$FUNCTION_NAME -H "Content-Type: application/json" -d '{}'
+curl -v POST http://localhost:7234/admin/functions/$FUNCTION_NAME \
+-H "Content-Type: application/json" \
+-H "x-functions-key: $functionMasterKey" \
+-d '{}'
