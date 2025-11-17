@@ -68,14 +68,13 @@ services:
       retries: 10
       start_period: 5s
 
-  -http-api-mocks:
+  http-api-mocks:
     image: wiremock/wiremock:latest
     ports:
       - "5666:8080"
     volumes:
       - ./compose/wiremock/mappings:/home/wiremock/mappings
     command: [ "--verbose", "--global-response-templating" ]
-
 
 volumes:
   azurite-data:
