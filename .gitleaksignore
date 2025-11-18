@@ -1,2 +1,6 @@
 52959d479115a5af4c286db36b24f0734771ed7a:src/EprPrnIntegration.Api/local.settings.json.example:azure-messaging-connection-string-shared-access-key:33
 52959d479115a5af4c286db36b24f0734771ed7a:src/EprPrnIntegration.Api/local.settings.json.example:azure-database-connection-string-account-key:62
+1facba8b2823059ffe300b93545b858b72575123:src/EprPrnIntegration.Api/local.settings.json.example:azure-database-connection-string-account-key:62
+1facba8b2823059ffe300b93545b858b72575123:compose/function.env.example:generic-api-key:46
+1facba8b2823059ffe300b93545b858b72575123:compose/function.env.example:azure-messaging-connection-string-shared-access-key:30
+1facba8b2823059ffe300b93545b858b72575123:compose/function.env.example:azure-database-connection-string-account-key:55
