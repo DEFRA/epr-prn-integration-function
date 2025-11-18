@@ -1,10 +1,10 @@
 {
   "dependencies": {
     "appInsights1": {
-      "type": "appInsights"
+      "type": "appInsights.sdk"
     },
     "storage1": {
-      "type": "storage",
+      "type": "storage.emulator",
       "connectionId": "AzureWebJobsStorage"
     }
   }
