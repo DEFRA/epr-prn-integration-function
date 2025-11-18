@@ -75,6 +75,12 @@ services:
     volumes:
       - ./compose/wiremock/mappings:/home/wiremock/mappings
     command: [ "--verbose", "--global-response-templating" ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/__admin/mappings" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
 volumes:
   azurite-data:

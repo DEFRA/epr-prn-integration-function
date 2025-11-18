@@ -8,8 +8,6 @@ services:
       platforms:
         - linux/amd64
     depends_on:
-      sqledge:
-        condition: service_healthy
       asb:
         condition: service_healthy
       http-api-mocks:
@@ -28,7 +26,3 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
-
-volumes:
-  azurite-data:
-  sqledge-data:
