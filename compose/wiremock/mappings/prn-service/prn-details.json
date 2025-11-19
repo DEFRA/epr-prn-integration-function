@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/api/v1/prn/prn-details/"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {}
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v1/prn/ModifiedPrnsByDate",
+    "queryParameters": {
+      "from": {
+        "matches": ".*"
+      },
+      "to": {
+        "matches": ".*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "evidenceNo": "PRN001234567",
+        "evidenceStatusCode": "EV-ACCEP",
+        "statusDate": "2025-01-15T10:30:00Z"
+      }
+    ]
+  }
+}
