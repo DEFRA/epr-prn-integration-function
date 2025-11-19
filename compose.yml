@@ -43,7 +43,6 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "s4usag3s!"
-
     healthcheck:
       interval: 5s
       retries: 10
@@ -81,6 +80,14 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+
+  wiremock:
+    pull_policy: always
+    environment:
+      TZ: Europe/London
+    image: sheyenrath/wiremock.net:latest
+    ports:
+      - "9090:80"
 
 volumes:
   azurite-data:
