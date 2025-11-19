@@ -41,6 +41,8 @@ variables:
     value: false
   - name: dotnetVersion
     value: dotnetVersion8
+  - name: gitleaksFailOnSecretDetection
+    value: false
 
 resources:
   repositories:
@@ -67,3 +69,4 @@ extends:
     serviceName: $(serviceName)
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
     dotnetVersion: ${{ variables.dotnetVersion }}
+    gitleaksFailOnSecretDetection: ${{ parameters.gitleaksFailOnSecretDetection }}
