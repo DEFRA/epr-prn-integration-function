@@ -64,7 +64,7 @@ The functions are void-style so it's recommended to tail your logs/watch IDE out
 
 `compose/function.env.example` contains config you'll need to copy:
 
-`cp compose/function.env.example compose/function.env`
+`cp compose/function.env.example compose/function.env`  (see note above, there's a api key you'll need to provide yourself for `MessagingConfig:ApiKey`)
 
 Once you're configured you can spin up the function with docker: 
 
@@ -73,5 +73,3 @@ Once you're configured you can spin up the function with docker:
 Then issue commands to the container via another helper script:
 
 `./scripts/trigger-container-function.sh FetchNpwdIssuedPrnsFunction`
-
-The functions are void-style so it's recommended to tail your logs/watch IDE output if you want to track behaviour.
