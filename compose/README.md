@@ -7,7 +7,7 @@ See `epr-calculator-frontend/compose` and copy the .env.example file, obtaining 
 From the `epr-prn-integration-function` folder in a terminal, run:
 
 ```
-docker compose up -d
+docker compose up asb azurite http-api-mocks -d
 ```
 
 Services that will be started:
@@ -68,7 +68,7 @@ The functions are void-style so it's recommended to tail your logs/watch IDE out
 
 Once you're configured you can spin up the function with docker: 
 
-`docker compose -f function.yml up --build -d`
+`docker compose up --build -d`
 
 Then issue commands to the container via another helper script:
 
