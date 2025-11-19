@@ -20,6 +20,13 @@ public class NpwdOAuthMiddleware : DelegatingHandler
         _logger = logger;
         _npwdIntegrationConfig = npwdConfig.Value;
 
+        if (String.IsNullOrEmpty(_npwdIntegrationConfig.ClientId))
+        {
+            // this enables local dev to fake endpoints, without having to auth handshake to anything.
+            _logger.LogWarning("Skipping NPWD auth middleware because no client id configured.");
+            return;
+        }
+
         try
         {
             _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(_npwdIntegrationConfig.ClientId)
@@ -38,6 +45,11 @@ public class NpwdOAuthMiddleware : DelegatingHandler
     {
         try
         {
+            if (_confidentialClientApplication == null)
+            {
+                return await base.SendAsync(request, cancellationToken);
+            }
+            
             if (string.IsNullOrEmpty(_accessToken))
             {
                 var result = await _confidentialClientApplication.AcquireTokenForClient([_npwdIntegrationConfig.Scope])

@@ -11,6 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EprPrnIntegration.Api.UnitT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EprPrnIntegration.Common.UnitTests", "EprPrnIntegration.Common.UnitTests\EprPrnIntegration.Common.UnitTests.csproj", "{6E3B4ACD-387A-4782-902A-D122EE0D4810}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "compose", "compose", "{559BDE99-5CC8-4274-99B6-7C3E3F7A7F24}"
+	ProjectSection(SolutionItems) = preProject
+		..\compose.yml = ..\compose.yml
+		..\compose\README.md = ..\compose\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

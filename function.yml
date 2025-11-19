@@ -1,0 +1,28 @@
+include:
+  - compose.yml
+services:
+  prn-functions:
+    build:
+      context: src
+      dockerfile: EprPrnIntegration.Api/Dockerfile
+      platforms:
+        - linux/amd64
+    depends_on:
+      asb:
+        condition: service_healthy
+      http-api-mocks:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+    volumes:
+      - ./compose/secrets/host.fake:/azure-functions-host/Secrets/host.json
+    env_file:
+      - compose/function.env
+    ports:
+      - "5800:80"
+    healthcheck:
+      test: [ "CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/80' || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s

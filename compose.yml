@@ -1,0 +1,87 @@
+services:
+  asb-backend:
+    depends_on:
+      sqledge:
+        condition: service_healthy
+    pull_policy: always
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    ports:
+      - "5672:5672"
+      - "5300:5300"
+    volumes:
+      - "./compose/asb.json:/ServiceBus_Emulator/ConfigFiles/Config.json"
+    environment:
+      SQL_WAIT_INTERVAL: 0
+      SQL_SERVER: sqledge
+      MSSQL_SA_PASSWORD: "s4usag3s!"
+      ACCEPT_EULA: "Y"
+
+  asb:
+    depends_on:
+      asb-backend:
+        condition: service_started
+    pull_policy: always
+    image: alpine/curl:latest
+    command: ["tail", "-f", "/dev/null"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://asb-backend:5300/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  sqledge:
+    pull_policy: always
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    # On some platforms there are compatibility issues with running Azure SQL Edge e.g. M1 Macs with later Docker versions.
+    # If SQL Edge does not work for you, try swapping out with SQL Server image instead
+    # image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqledge-data:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "s4usag3s!"
+
+    healthcheck:
+      interval: 5s
+      retries: 10
+      start_period: 5s
+      test: timeout 1 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/1433'
+      timeout: 5s
+
+  azurite:
+    pull_policy: always
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 10000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  http-api-mocks:
+    image: wiremock/wiremock:latest
+    ports:
+      - "5666:8080"
+    volumes:
+      - ./compose/wiremock/mappings:/home/wiremock/mappings
+    command: [ "--verbose", "--global-response-templating" ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/__admin/mappings" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  azurite-data:
+  sqledge-data:
