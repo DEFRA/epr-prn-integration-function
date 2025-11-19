@@ -14,5 +14,6 @@ namespace EprPrnIntegration.Common.Configuration
         public string FetchPrnDeltaSyncQueueName { get; set; } = null!;
         public string UpdateProducerDeltaSyncQueueName { get; set; } = null!;
         public string UpdatePrnDeltaSyncQueueName { get; set; } = null!;
+        public string TransportType { get; set; } = null!;
     }
 }
