@@ -137,9 +137,11 @@ public static class HostBuilderConfiguration
             {
                 clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
                 {
-                    options.TransportType = ServiceBusTransportType.AmqpWebSockets;
                     var sp = services.BuildServiceProvider();
                     var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfiguration>>().Value;
+                    options.TransportType = Enum.TryParse<ServiceBusTransportType>(serviceBusConfig.TransportType, out var transportType) 
+                        ? transportType 
+                        : ServiceBusTransportType.AmqpWebSockets;
                     return new(serviceBusConfig.ConnectionString, options);
                 });
             });
