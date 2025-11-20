@@ -7,7 +7,7 @@ See `epr-calculator-frontend/compose` and copy the .env.example file, obtaining 
 From the `epr-prn-integration-function` folder in a terminal, run:
 
 ```
-docker compose up -d
+docker compose up asb azurite http-api-mocks -d
 ```
 
 Services that will be started:
@@ -28,7 +28,9 @@ To stop all services run:
 docker compose down
 ```
 
-The SQL Edge and Azurite services use persisted volumes so data will be retained following a restart. Be mindful that these may need clearing down if using the same calculation run names, as generated files within blob storage may start to clash.
+The SQL Edge and Azurite services use persisted volumes so data will be retained following a restart. Be mindful that
+these may need clearing down if using the same calculation run names, as generated files within blob storage may start
+to clash.
 
 To remove volumes:
 
@@ -50,25 +52,20 @@ docker compose logs <service name>
 
 `cp src/EprPrnIntegration.Api/local.settings.json.example cp src/EprPrnIntegration.Api/local.settings.json`
 
-**You'll need to update your own copy with a gov.notify API (TEST) key for the `MessagingConfig:ApiKey` env but check the .json file for details.**
+**You'll need to update your own copy with a gov.notify API (TEST) key for the `MessagingConfig:ApiKey` env but check
+the .json file for details.**
 
 Once you're configured you can spin up the function via your IDE, to attach and set breakpoints
 
 Then, invoke the chosen function e.g.  `FetchNpwdIssuedPrnsFunction`:
 
-`./scripts/trigger-local-function.sh FetchNpwdIssuedPrnsFunction` 
+`./scripts/trigger-local-function.sh FetchNpwdIssuedPrnsFunction`
 
 The functions are void-style so it's recommended to tail your logs/watch IDE output if you want to track behaviour.
 
 ### With the function hosted within Docker
 
-`compose/function.env.example` contains config you'll need to copy:
-
-`cp compose/function.env.example compose/function.env`  (see note above, there's a api key you'll need to provide yourself for `MessagingConfig:ApiKey`)
-
-Once you're configured you can spin up the function with docker: 
-
-`docker compose -f function.yml up --build -d`
+`docker compose up --build -d`
 
 Then issue commands to the container via another helper script:
 
