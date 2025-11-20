@@ -88,12 +88,12 @@ services:
     image: sheyenrath/wiremock.net:latest
     ports:
       - "9090:80"
-#    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost/__admin/mappings" ]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 10
-#      start_period: 5s
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/__admin/mappings" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   prn-functions:
     build:
