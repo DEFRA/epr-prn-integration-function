@@ -148,6 +148,7 @@ services:
       ServiceBus__MaxWaitTimeInSeconds: "1"
       ServiceBus__ConnectionString: "Endpoint=sb://asb-backend;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;"
       ServiceBus__TransportType: "AmqpTcp"
+      MessagingConfig__Bypass: true
       MessagingConfig__ApiKey: ""
       MessagingConfig__PrnTemplateId: "a43a573c-3367-4aa2-b9ac-6b347ce8bf32"
       MessagingConfig__PERNTemplateId: "24925202-125b-4b85-b54a-9f3100301eb4"

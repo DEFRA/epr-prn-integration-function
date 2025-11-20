@@ -66,9 +66,8 @@ public static class HostBuilderConfiguration
             MessagingConfig messagingConfig = new();
             configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
 
-            if (string.IsNullOrEmpty(messagingConfig.ApiKey)) {
+            if (messagingConfig.Bypass)
                 return new PassThruNotificationClient(provider.GetRequiredService<ILogger<INotificationClient>>());
-            }
 
             return new NotificationClient(messagingConfig.ApiKey);
         });
