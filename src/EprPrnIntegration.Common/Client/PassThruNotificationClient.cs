@@ -10,8 +10,8 @@ namespace EprPrnIntegration.Common.Client;
 public class PassThruNotificationClient(ILogger<INotificationClient> logger) : INotificationClient
 {
     public EmailNotificationResponse SendEmail(string emailAddress, string templateId,
-        Dictionary<string, dynamic> personalisation = null,
-        string clientReference = null, string emailReplyToId = null, string oneClickUnsubscribeURL = null)
+        Dictionary<string, dynamic> personalisation = null!,
+        string clientReference = null!, string emailReplyToId = null!, string oneClickUnsubscribeURL = null!)
     {
         logger.LogError(
             "PassThruNotificationClient::SendEmail is a dummy implementation intended for local testing. If you're reading this log from a cloud workload, the system is misconfigured.");
@@ -47,7 +47,7 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
         throw new NotImplementedException();
     }
 
-    public Task<string> MakeRequest(string url, HttpMethod method, HttpContent content = null)
+    public Task<string> MakeRequest(string url, HttpMethod method, HttpContent content = null!)
     {
         throw new NotImplementedException();
     }
@@ -68,7 +68,7 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
     }
 
     public TemplatePreviewResponse GenerateTemplatePreview(string templateId,
-        Dictionary<string, dynamic> personalisation = null)
+        Dictionary<string, dynamic> personalisation = null!)
     {
         throw new NotImplementedException();
     }
@@ -105,21 +105,21 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
     }
 
     public SmsNotificationResponse SendSms(string mobileNumber, string templateId,
-        Dictionary<string, dynamic> personalisation = null,
-        string clientReference = null, string smsSenderId = null)
+        Dictionary<string, dynamic> personalisation = null!,
+        string clientReference = null!, string smsSenderId = null!)
     {
         throw new NotImplementedException();
     }
 
 
     public LetterNotificationResponse SendLetter(string templateId, Dictionary<string, dynamic> personalisation,
-        string clientReference = null)
+        string clientReference = null!)
     {
         throw new NotImplementedException();
     }
 
     public LetterNotificationResponse SendPrecompiledLetter(string clientReference, byte[] pdfContents,
-        string postage = null)
+        string postage = null!)
     {
         throw new NotImplementedException();
     }
