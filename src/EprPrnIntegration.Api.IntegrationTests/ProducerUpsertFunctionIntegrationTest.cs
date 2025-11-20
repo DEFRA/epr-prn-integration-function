@@ -24,11 +24,11 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
     }
 
     [Fact]
-    public async Task Azure_function_sends_updated_producer_to_NPWD_via_PATCH()
+    public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()
     {
-        await Common_data_API_has_update_for("Acme Manufacturing Ltd");
+        await Given_CommonDataAPIHasUpdateFor("Acme Manufacturing Ltd");
 
-        await NPWD_accepts_producer_patch();
+        await Given_NpwdAcceptsProducerPatch();
 
         await _azureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
 
@@ -41,7 +41,7 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
         });
     }
 
-    private async Task NPWD_accepts_producer_patch()
+    private async Task Given_NpwdAcceptsProducerPatch()
     {
         var mappingBuilder = _wireMockContext.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
@@ -52,7 +52,7 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
         Assert.NotNull(status.Guid);
     }
 
-    private async Task Common_data_API_has_update_for(string name)
+    private async Task Given_CommonDataAPIHasUpdateFor(string name)
     {
         var mappingBuilder = _wireMockContext.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
