@@ -25,7 +25,7 @@ variables:
   - name: projectFolder
     value: EprPrnIntegration.Api
   - name: testProjectFolder
-    value: 'Tests/EprPrnIntegration.Test.Common'
+    value: EprPrnIntegration.Api
   - name: sonarQubeProjectKey
     value: epr-prn-integration-function
   - name: sonarQubeProjectName
