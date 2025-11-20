@@ -19,6 +19,17 @@ public static class WireMockStubs
         Assert.NotNull(status.Guid);
     }
 
+    public static async Task NpwdAcceptsPrnPatch(this WireMockContext wiremock)
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingPatch().WithPath("/odata/PRNs"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
     public static async Task CommonDataApiHasUpdateFor(this WireMockContext wiremock, string name)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
@@ -51,9 +62,53 @@ public static class WireMockStubs
         Assert.NotNull(status.Guid);
     }
 
+
+    public static async Task PrnApiAcceptsSyncStatus(this WireMockContext wiremock)
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingPost().WithPath("/api/v1/prn/updatesyncstatus/"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public static async Task PrnApiHasUpdateFor(this WireMockContext wiremock, string evidenceNo)
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingGet().WithPath("/api/v1/prn/ModifiedPrnsByDate"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(new[]
+                {
+                    new
+                    {
+                        evidenceNo,
+                        evidenceStatusCode = "EV-ACCEP",
+                        statusDate = "2025-01-15T10:30:00Z"
+                    }
+                }))
+        );
+
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
     public static async Task<IList<LogEntryModel>> GetNpwdProducersPatchRequests(this WireMockContext wiremock)
     {
         var requestsModel = new RequestModel { Methods = ["PATCH"], Path = "/odata/producers" };
+        return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public static async Task<IList<LogEntryModel>> GetNpwdPrnPatchRequests(this WireMockContext wiremock)
+    {
+        var requestsModel = new RequestModel { Methods = ["PATCH"], Path = "/odata/PRNs" };
+        return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public static async Task<IList<LogEntryModel>> GetPrnUpdateSyncStatusRequests(this WireMockContext wiremock)
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v1/prn/updatesyncstatus/" };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 }
