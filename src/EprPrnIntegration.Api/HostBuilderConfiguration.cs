@@ -1,13 +1,18 @@
-﻿using Azure.Identity;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.CommonService;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService;
+using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
@@ -23,10 +28,6 @@ using Notify.Client;
 using Notify.Interfaces;
 using Polly;
 using Polly.Extensions.Http;
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using EprPrnIntegration.Common.RESTServices.PrnBackendService;
-using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 namespace EprPrnIntegration.Api;
 
@@ -65,6 +66,9 @@ public static class HostBuilderConfiguration
             MessagingConfig messagingConfig = new();
             configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
 
+            if (string.IsNullOrEmpty(messagingConfig.ApiKey))
+                return new PassThruNotificationClient(provider.GetRequiredService<ILogger<INotificationClient>>());
+
             return new NotificationClient(messagingConfig.ApiKey);
         });
 
@@ -72,13 +76,6 @@ public static class HostBuilderConfiguration
         services.AddHttpClients(configuration);
         services.AddServiceBus(configuration);
         services.ConfigureOptions(configuration);
-
-        // Add the Notification Client
-        services.AddSingleton<INotificationClient>(provider =>
-        {
-            var apiKey = configuration.GetValue<string>("MessagingConfig:ApiKey");
-            return new NotificationClient(apiKey);
-        });
 
         services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
     }

@@ -22,9 +22,9 @@ services:
         condition: service_started
     pull_policy: always
     image: alpine/curl:latest
-    command: ["tail", "-f", "/dev/null"]
+    command: [ "tail", "-f", "/dev/null" ]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://asb-backend:5300/health"]
+      test: [ "CMD", "curl", "-f", "http://asb-backend:5300/health" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -61,12 +61,14 @@ services:
       - azurite-data:/data
     command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data"
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 10000"]
+      test: [ "CMD-SHELL", "nc -z 127.0.0.1 10000" ]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
 
+  # this service fakes out any possible endpoint for running the service via your IDE,
+  # with static responses - local.settings.json rely on these mocks.
   http-api-mocks:
     image: wiremock/wiremock:latest
     ports:
@@ -81,6 +83,8 @@ services:
       retries: 10
       start_period: 5s
 
+  # this service stands up a server for integration tests to create dynamic responses
+  # the service prn-functions point to this server, integration tests rely on these.
   wiremock:
     pull_policy: always
     environment:
@@ -112,8 +116,66 @@ services:
         condition: service_started
     volumes:
       - ./compose/secrets/host.fake:/azure-functions-host/Secrets/host.json
-    env_file:
-      - compose/function.env
+    environment:
+      FeatureManagement__RunIntegration: "true"
+      FeatureManagement__RunUpdateProducers: "true"
+      FeatureManagement__RunReconciliation: "true"
+      IsRunningLocally: "true"
+      DefaultLastRunDate: "2024-01-01"
+      FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
+      HOST: "localhost"
+      UpdateProducersTrigger: "1,31 0-7 * * *"
+      UpdatePrnsTrigger: "0 0 18 * * 1-5"
+      FetchNpwdIssuedPrns__Schedule: "0 0 18 * * 1-5"
+      EmailNpwdReconciliationTrigger: "0 0 18 * * 1-5"
+      ProducersContext: "https://fat.npwd.org.uk/odata/Producers/$delta"
+      PrnsContext: "https://fat.npwd.org.uk/odata/PRNs/$delta"
+      Service__AccountBaseUrl: "http://http-api-mocks:8080/"
+      Service__AccountClientId: ""
+      Service__AccountEndPointName: "api/organisations"
+      Service__TimeoutSeconds: "100"
+      Service__PrnBaseUrl: "http://http-api-mocks:8080/"
+      Service__PrnEndPointName: "api/v1/prn"
+      Service__ClientId: ""
+      Service__CommonDataServiceBaseUrl: "http://wiremock"
+      Service__CommonDataServiceEndPointName: "api/producer-details"
+      ServiceBus__FullyQualifiedNamespace: "asb-backend:5300"
+      ServiceBus__FetchPrnQueueName: "defra.epr.npwd.integration.fetchprn.local"
+      ServiceBus__ErrorPrnQueue: "defra.epr.npwd.integration.errorqueue.local"
+      ServiceBus__FetchPrnDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.fetchprn.local"
+      ServiceBus__UpdateProducerDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.updateproducer.local"
+      ServiceBus__UpdatePrnDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.updateprn.local"
+      ServiceBus__MaxWaitTimeInSeconds: "1"
+      ServiceBus__ConnectionString: "Endpoint=sb://asb-backend;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;"
+      ServiceBus__TransportType: "AmqpTcp"
+      MessagingConfig__ApiKey: ""
+      MessagingConfig__PrnTemplateId: "a43a573c-3367-4aa2-b9ac-6b347ce8bf32"
+      MessagingConfig__PERNTemplateId: "24925202-125b-4b85-b54a-9f3100301eb4"
+      MessagingConfig__ErrorMessagesTemplateId: "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25"
+      MessagingConfig__NpwdEmailTemplateId: "4e67b91b-b010-4d39-a0ea-ecb7e5e77b25"
+      MessagingConfig__NpwdEmail: "npwd.support@fake.domain.co.uk"
+      MessagingConfig__NpwdValidationErrorsTemplateId: "66bf9f5e-82d3-4f43-8b25-50d6a138a7ef"
+      MessagingConfig__NpwdReconcileIssuedPrnsTemplateId: "3f28cb69-4703-46c6-902f-9350aaeebc87"
+      MessagingConfig__NpwdReconcileUpdatedOrganisationsTemplateId: "07e89bba-7f0e-47f3-a96d-9fbcd923f9ee"
+      MessagingConfig__NpwdCancelledPrnsNotificationTemplateId: "52ec5cdb-ab29-475e-82d5-f5841f016066"
+      MessagingConfig__NpwdReconcileUpdatedPrnsTemplateId: "a1b81df4-560e-4034-a3cc-282d00ee2959"
+      ApiCallsRetryConfig__WaitTimeBetweenRetryInSecs: "30"
+      ApiCallsRetryConfig__MaxAttempts: "3"
+      NpwdIntegration__BaseUrl: "http://wiremock"
+      NpwdIntegration__ClientId: ""
+      NpwdIntegration__ClientSecret: ""
+      NpwdIntegration__Scope: ""
+      NpwdIntegration__AccessTokenUrl: ""
+      NpwdIntegration__Authority: ""
+      NpwdIntegration__TimeoutSeconds: "5"
+      AppInsightsConfig__ResourceId: ""
+      FetchNpwdPrnsPollingLagSeconds: "60"
+      UpdatePrnsMaxRows: "100"
+      UpdateProducersBatchSize: "100"
+      AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azuri
+    te:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;"
+      AzureWebJobsSecretStorageType: "files"
+    
     ports:
       - "5800:80"
     healthcheck:

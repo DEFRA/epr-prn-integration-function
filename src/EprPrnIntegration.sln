@@ -17,8 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "compose", "compose", "{559B
 	ProjectSection(SolutionItems) = preProject
 		..\compose.yml = ..\compose.yml
 		..\compose\README.md = ..\compose\README.md
-		..\compose\function.env = ..\compose\function.env
-		..\compose\function.env.example = ..\compose\function.env.example
 	EndProjectSection
 EndProject
 Global
