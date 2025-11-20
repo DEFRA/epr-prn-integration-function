@@ -13,6 +13,7 @@ public class MessagingConfig
     public string? NpwdEmailTemplateId { get; set; }
     public string? NpwdEmail { get; set; }
     public string? ApiKey { get; set; }
+    public bool Bypass { get; set; } = false;
     public string? NpwdValidationErrorsTemplateId { get; set; }
     public string? NpwdReconcileIssuedPrnsTemplateId { get; set; }
     public string? NpwdReconcileUpdatedPrnsTemplateId { get; set; }
