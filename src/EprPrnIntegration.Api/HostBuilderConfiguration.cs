@@ -45,8 +45,7 @@ public static class HostBuilderConfiguration
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
         // Add Application Insights
-        services.AddApplicationInsightsTelemetryWorkerService();
-        services.ConfigureFunctionsApplicationInsights();
+        services.AddCustomApplicationInsights();
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
@@ -161,6 +160,7 @@ public static class HostBuilderConfiguration
         }
         return services;
     }
+    
     public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(ILogger logger,int retryCount, double sleepDuration, string requestType)
     {
         return HttpPolicyExtensions
@@ -187,5 +187,42 @@ public static class HostBuilderConfiguration
                 retryAttempt, requestType, timespan.TotalSeconds, response.Result?.StatusCode);
                 await Task.CompletedTask;
             });
+    }
+    
+    public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
+    {
+        // Add AI worker service with custom options
+        services.AddApplicationInsightsTelemetryWorkerService(options =>
+        {
+            options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+        });
+
+        // Configure Functions-specific AI settings
+        services.ConfigureFunctionsApplicationInsights();
+
+        // Customize logging rules for Application Insights
+        services.Configure<LoggerFilterOptions>(options =>
+        {
+            const string aiProvider = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
+
+            // Remove existing default rule for AI provider, if any
+            var defaultRule = options.Rules.FirstOrDefault(r => r.ProviderName == aiProvider);
+            if (defaultRule != null)
+            {
+                options.Rules.Remove(defaultRule);
+            }
+
+            // Add a new rule to log Information level and above for all categories
+            options.Rules.Add(
+                new LoggerFilterRule(
+                    providerName: aiProvider,
+                    categoryName: null,
+                    logLevel: LogLevel.Information,
+                    filter: null
+                )
+            );
+        });
+
+        return services;
     }
 }
