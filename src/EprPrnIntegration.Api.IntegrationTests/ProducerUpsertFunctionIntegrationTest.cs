@@ -5,7 +5,6 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
-[Collection("EPRFunctions")]
 public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsyncLifetime
 {
     private AzureFunctionInvokerContext _azureFunctionInvokerContext = null!;
