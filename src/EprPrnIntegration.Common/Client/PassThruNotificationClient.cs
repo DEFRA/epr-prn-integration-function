@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Notify.Interfaces;
 using Notify.Models;
@@ -5,6 +6,7 @@ using Notify.Models.Responses;
 
 namespace EprPrnIntegration.Common.Client;
 
+[ExcludeFromCodeCoverage]
 public class PassThruNotificationClient(ILogger<INotificationClient> logger) : INotificationClient
 {
     public EmailNotificationResponse SendEmail(string emailAddress, string templateId,
