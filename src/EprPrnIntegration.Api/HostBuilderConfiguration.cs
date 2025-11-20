@@ -66,8 +66,9 @@ public static class HostBuilderConfiguration
             MessagingConfig messagingConfig = new();
             configuration.GetSection(MessagingConfig.SectionName).Bind(messagingConfig);
 
-            if (string.IsNullOrEmpty(messagingConfig.ApiKey))
+            if (string.IsNullOrEmpty(messagingConfig.ApiKey)) {
                 return new PassThruNotificationClient(provider.GetRequiredService<ILogger<INotificationClient>>());
+            }
 
             return new NotificationClient(messagingConfig.ApiKey);
         });
@@ -155,7 +156,7 @@ public static class HostBuilderConfiguration
         }
         return services;
     }
-    
+
     public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(ILogger logger,int retryCount, double sleepDuration, string requestType)
     {
         return HttpPolicyExtensions
@@ -183,7 +184,7 @@ public static class HostBuilderConfiguration
                 await Task.CompletedTask;
             });
     }
-    
+
     public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
     {
         // Add AI worker service with custom options
