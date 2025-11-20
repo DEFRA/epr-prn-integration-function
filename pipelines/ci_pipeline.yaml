@@ -43,6 +43,8 @@ variables:
     value: dotnetVersion8
   - name: gitleaksFailOnSecretDetection
     value: false
+  - name: runIntegrationTests
+    value: true
 
 resources:
   repositories:
@@ -70,3 +72,4 @@ extends:
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
     dotnetVersion: ${{ variables.dotnetVersion }}
     gitleaksFailOnSecretDetection: ${{ variables.gitleaksFailOnSecretDetection }}
+    runIntegrationTests: ${{ variables.runIntegrationTests }}
