@@ -27,6 +27,34 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
     [Fact]
     public async Task Azure_function_sends_updated_producer_to_NPWD_via_PATCH()
     {
+        await Common_data_API_has_update_for("Acme Manufacturing Ltd");
+
+        await NPWD_accepts_producer_patch();
+
+        await _azureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var requestsModel = new RequestModel { Methods = ["PATCH"], Path = "/odata/producers" };
+            var requests = await _wireMockContext.WireMockAdminApi.FindRequestsAsync(requestsModel);
+
+            Assert.Contains(requests, entry => entry.Request.Body!.Contains("Acme Manufacturing Ltd"));
+        });
+    }
+
+    private async Task NPWD_accepts_producer_patch()
+    {
+        var mappingBuilder = _wireMockContext.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingPatch().WithPath("/odata/producers"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    private async Task Common_data_API_has_update_for(string name)
+    {
         var mappingBuilder = _wireMockContext.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/get-updated-producers"))
@@ -34,7 +62,7 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
                 {
                     new
                     {
-                        organisationName = "Acme Manufacturing Ltd",
+                        organisationName = name,
                         tradingName = "Acme Plastics",
                         organisationType = "Limited Company",
                         companiesHouseNumber = "12345678",
@@ -55,25 +83,5 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
 
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
-
-        mappingBuilder = _wireMockContext.WireMockAdminApi.GetMappingBuilder();
-        mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingPatch().WithPath("/odata/producers"))
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
-        );
-        status = await mappingBuilder.BuildAndPostAsync();
-        Assert.NotNull(status.Guid);
-
-        await _azureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
-
-        Assert.True(
-            await AsyncWaiter.WaitForAsync(async () =>
-            {
-                var requestsModel = new RequestModel { Methods = ["PATCH"], Path = "/odata/producers" };
-                var requests = await _wireMockContext.WireMockAdminApi.FindRequestsAsync(requestsModel);
-
-                return requests.Any(x => x.Request.Body.Contains("Acme Manufacturing Ltd"));
-            })
-        );
     }
 }
