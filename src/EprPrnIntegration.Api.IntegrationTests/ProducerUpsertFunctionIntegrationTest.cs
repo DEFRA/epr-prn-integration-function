@@ -4,15 +4,12 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 
 public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsyncLifetime
 {
-    private AzureFunctionInvokerContext _azureFunctionInvokerContext = null!;
     private WireMockContext _wireMockContext = null!;
 
     public async Task InitializeAsync()
     {
         _wireMockContext = new WireMockContext();
         await _wireMockContext.InitializeAsync();
-
-        _azureFunctionInvokerContext = new AzureFunctionInvokerContext();
     }
 
     public async Task DisposeAsync()
@@ -27,7 +24,7 @@ public class ProducerUpsertFunctionIntegrationTest : IntegrationTestBase, IAsync
 
         await _wireMockContext.NpwdAcceptsProducerPatch();
 
-        await _azureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

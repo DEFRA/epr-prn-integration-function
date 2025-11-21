@@ -4,15 +4,12 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 
 public class UpdatePrnsListFunctionIntegrationTest : IntegrationTestBase, IAsyncLifetime
 {
-    private AzureFunctionInvokerContext _azureFunctionInvokerContext = null!;
     private WireMockContext _wireMockContext = null!;
 
     public async Task InitializeAsync()
     {
         _wireMockContext = new WireMockContext();
         await _wireMockContext.InitializeAsync();
-
-        _azureFunctionInvokerContext = new AzureFunctionInvokerContext();
     }
 
     public async Task DisposeAsync()
@@ -28,7 +25,7 @@ public class UpdatePrnsListFunctionIntegrationTest : IntegrationTestBase, IAsync
             _wireMockContext.PrnApiAcceptsSyncStatus(),
             _wireMockContext.NpwdAcceptsPrnPatch());
 
-        await _azureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

@@ -8,23 +8,23 @@ public enum FunctionName
     UpdatePrnsList
 }
 
-public class AzureFunctionInvokerContext
+public static class AzureFunctionInvokerContext
 {
-    private readonly HttpClient _httpClient;
+    private static readonly HttpClient HttpClient;
 
-    public AzureFunctionInvokerContext()
+    static AzureFunctionInvokerContext()
     {
-        _httpClient = new HttpClient
+        HttpClient = new HttpClient
         {
             BaseAddress = new Uri($"{BaseUri}/admin/functions/")
         };
 
-        _httpClient.DefaultRequestHeaders.Add("x-functions-key", "this-is-a-dummy-value");
+        HttpClient.DefaultRequestHeaders.Add("x-functions-key", "this-is-a-dummy-value");
     }
 
     private static string BaseUri => "http://localhost:5800";
 
-    public async Task InvokeAzureFunction(FunctionName functionName)
+    public static async Task InvokeAzureFunction(FunctionName functionName)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, functionName.ToString())
         {
@@ -35,7 +35,7 @@ public class AzureFunctionInvokerContext
             )
         };
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
     }
