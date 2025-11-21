@@ -5,7 +5,8 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 public enum FunctionName
 {
     UpdateProducersList,
-    UpdatePrnsList
+    UpdatePrnsList,
+    FetchNpwdIssuedPrnsFunction
 }
 
 public static class AzureFunctionInvokerContext
