@@ -1,8 +1,8 @@
 using Xunit;
 
-namespace EprPrnIntegration.Api.IntegrationTests;
+namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
-public class UpdatePrnsListFunctionIntegrationTest : IntegrationTestBase
+public class UpdatePrnsListTests : IntegrationTestBase
 {
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()

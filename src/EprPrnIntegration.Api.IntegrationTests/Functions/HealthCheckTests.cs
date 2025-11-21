@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace EprPrnIntegration.Api.IntegrationTests;
+namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
 public class HealthCheckTests : IntegrationTestBase
 {
