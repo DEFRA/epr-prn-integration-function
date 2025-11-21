@@ -16,25 +16,7 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
         logger.LogError(
             "PassThruNotificationClient::SendEmail is a dummy implementation intended for local testing. If you're reading this log from a cloud workload, the system is misconfigured.");
 
-        return new EmailNotificationResponse
-        {
-            id = "passthru-notification-dummy-id",
-            reference = clientReference ?? "",
-            uri = emailAddress,
-            content =
-            {
-                body = "",
-                fromEmail = "",
-                oneClickUnsubscribeURL = "",
-                subject = ""
-            },
-            template =
-            {
-                id = templateId,
-                uri = "",
-                version = 1
-            }
-        };
+        return new EmailNotificationResponse();
     }
 
     public Task<string> GET(string url)
