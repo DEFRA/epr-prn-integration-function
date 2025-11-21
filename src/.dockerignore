@@ -21,6 +21,8 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/local.settings.json
+**/local.settings.json.example
 LICENSE
 README.md
 !**/.gitignore

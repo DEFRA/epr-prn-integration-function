@@ -92,12 +92,6 @@ services:
     image: sheyenrath/wiremock.net:latest
     ports:
       - "9090:80"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/__admin/mappings" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
 
   prn-functions:
     build:
@@ -128,8 +122,8 @@ services:
       UpdatePrnsTrigger: "0 0 18 * * 1-5"
       FetchNpwdIssuedPrns__Schedule: "0 0 18 * * 1-5"
       EmailNpwdReconciliationTrigger: "0 0 18 * * 1-5"
-      ProducersContext: "https://fat.npwd.org.uk/odata/Producers/$delta"
-      PrnsContext: "https://fat.npwd.org.uk/odata/PRNs/$delta"
+      ProducersContext: "https://fat.npwd.org.uk/odata/Producers/$$delta"
+      PrnsContext: "https://fat.npwd.org.uk/odata/PRNs/$$delta"
       Service__AccountBaseUrl: "http://http-api-mocks:8080/"
       Service__AccountClientId: ""
       Service__AccountEndPointName: "api/organisations"
@@ -175,7 +169,6 @@ services:
       UpdateProducersBatchSize: "100"
       AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;"
       AzureWebJobsSecretStorageType: "files"
-    
     ports:
       - "5800:80"
     healthcheck:
