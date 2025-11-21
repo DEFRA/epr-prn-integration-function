@@ -39,4 +39,6 @@ public static class AzureFunctionInvokerContext
 
         response.EnsureSuccessStatusCode();
     }
+
+    public static async Task<HttpResponseMessage> Get(string requestUri) => await HttpClient.GetAsync(requestUri);
 }
