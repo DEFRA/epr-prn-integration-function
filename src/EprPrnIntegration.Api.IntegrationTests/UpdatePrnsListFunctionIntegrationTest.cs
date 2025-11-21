@@ -2,41 +2,28 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
-public class UpdatePrnsListFunctionIntegrationTest : IntegrationTestBase, IAsyncLifetime
+public class UpdatePrnsListFunctionIntegrationTest : IntegrationTestBase
 {
-    private WireMockContext _wireMockContext = null!;
-
-    public async Task InitializeAsync()
-    {
-        _wireMockContext = new WireMockContext();
-        await _wireMockContext.InitializeAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _wireMockContext.DisposeAsync();
-    }
-
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()
     {
         await Task.WhenAll(
-            _wireMockContext.PrnApiHasUpdateFor("PRN001234567"),
-            _wireMockContext.PrnApiAcceptsSyncStatus(),
-            _wireMockContext.NpwdAcceptsPrnPatch());
+            WireMockContext.PrnApiHasUpdateFor("PRN001234567"),
+            WireMockContext.PrnApiAcceptsSyncStatus(),
+            WireMockContext.NpwdAcceptsPrnPatch());
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var requests = await _wireMockContext.GetNpwdPrnPatchRequests();
+            var requests = await WireMockContext.GetNpwdPrnPatchRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
         });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var requests = await _wireMockContext.GetPrnUpdateSyncStatusRequests();
+            var requests = await WireMockContext.GetPrnUpdateSyncStatusRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
         });

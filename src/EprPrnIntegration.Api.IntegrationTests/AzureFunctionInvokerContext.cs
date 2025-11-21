@@ -22,7 +22,7 @@ public static class AzureFunctionInvokerContext
         HttpClient.DefaultRequestHeaders.Add("x-functions-key", "this-is-a-dummy-value");
     }
 
-    private static string BaseUri => "http://localhost:5800";
+    private static string BaseUri => "http://localhost:7234";
 
     public static async Task InvokeAzureFunction(FunctionName functionName)
     {
