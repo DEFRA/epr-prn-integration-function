@@ -22,7 +22,6 @@ namespace EprPrnIntegration.Api.Functions
     {
         private readonly ICoreServices _core;
         private readonly IMessagingServices _messaging;
-
         private readonly ILogger<FetchNpwdIssuedPrnsFunction> _logger;
         private readonly IOptions<FeatureManagementConfiguration> _featureConfig;
         private readonly IValidator<NpwdPrn> _validator;
@@ -49,9 +48,9 @@ namespace EprPrnIntegration.Api.Functions
             _logger.LogInformation("FetchNpwdIssuedPrnsFunction function started at: {DateTime}", DateTime.UtcNow);
 
             var deltaRun = await _utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.FetchNpwdIssuedPrns);
-
             var now = DateTime.UtcNow;
             var toDate = _utilities.OffsetDateTimeWithLag(now, _configuration["FetchNpwdPrnsPollingLagSeconds"]);
+            
             if (!toDate.Equals(now))
             {
                 _logger.LogInformation("Upper date range {Now} rolled back to {ToDate}", now, toDate);
@@ -86,11 +85,13 @@ namespace EprPrnIntegration.Api.Functions
             try
             {
                 var messageContent = JsonSerializer.Deserialize<NpwdPrn>(message.Body.ToString());
+                
                 _logger.LogInformation("Validating message with Id: {MessageId}", message.MessageId);
+                
                 evidenceNo = messageContent?.EvidenceNo ?? "Missing";
 
-                // prns sourced from NPWD must pass validation
                 var validationResult = await _validator.ValidateAsync(messageContent!);
+                
                 if (validationResult.IsValid)
                 {
                     try
@@ -98,35 +99,51 @@ namespace EprPrnIntegration.Api.Functions
                         _logger.LogInformation("Validation passed for message Id: {MessageId}. Processing the PRN.", message.MessageId);
 
                         // Save to PRN DB
-                        var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(messageContent!);
+                        var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(
+                            messageContent!,
+                            _configuration,
+                            _logger
+                        );
+
                         await _core.PrnService.SavePrn(request);
+                        
                         _logger.LogInformation("Successfully saved PRN details for EvidenceNo: {EvidenceNo}", request.EvidenceNo);
+                        
                         await SendEmailToProducers(message, messageContent, request);
+                        
                         var eventData = CreateCustomEvent(messageContent);
+                        
                         _utilities.AddCustomEvent(CustomEvents.InsertPrnOnEpr, eventData);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing message Id: {MessageId}. Adding it back to the queue.", message.MessageId);
+                        
                         await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
                     }
                 }
                 else
                 {
                     _logger.LogWarning("Validation failed for message Id: {MessageId}. Sending to error queue.", message.MessageId);
+                    
                     var errorMessages = string.Join(" | ", validationResult.Errors.Select(x => x.ErrorMessage));
                     var eventData = CreateCustomEvent(messageContent, errorMessages);
+                    
                     _utilities.AddCustomEvent(CustomEvents.NpwdPrnValidationError, eventData);
 
                     await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                    
                     return eventData;
                 }
+                
                 return null;
             }
             catch (Exception ex)
             {
                 await _messaging.ServiceBusProvider.SendMessageToErrorQueue(message, evidenceNo);
+                
                 _logger.LogError(ex, "Unexpected error while processing message Id: {MessageId}.", message.MessageId);
+                
                 throw;
             }
         }
@@ -235,10 +252,12 @@ namespace EprPrnIntegration.Api.Functions
         private bool IsFeatureEnabled()
         {
             bool isOn = _featureConfig.Value.RunIntegration ?? false;
+            
             if (!isOn)
             {
                 _logger.LogInformation("FetchNpwdIssuedPrnsFunction function is disabled by feature flag");
             }
+            
             return isOn;
         }
 
@@ -246,12 +265,15 @@ namespace EprPrnIntegration.Api.Functions
         private string GetFilterToFetchPrns(DeltaSyncExecution deltaRun, DateTime toDate)
         {
             var filter = "(EvidenceStatusCode eq 'EV-CANCEL' or EvidenceStatusCode eq 'EV-AWACCEP' or EvidenceStatusCode eq 'EV-AWACCEP-EPR')";
+            
             if (deltaRun != null && DateTime.TryParseExact(_configuration["DefaultLastRunDate"], "yyyy-MM-dd",
                        CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime defaultLastRunDate) && deltaRun.LastSyncDateTime > defaultLastRunDate)
             {
                 filter = $@"{filter} and ((StatusDate ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and StatusDate lt {toDate.ToUniversalTime():O}) or (ModifiedOn ge {deltaRun.LastSyncDateTime.ToUniversalTime():O} and ModifiedOn lt {toDate.ToUniversalTime():O}))";
             }
+            
             _logger.LogInformation("Filter for fetching prns from npwd: {Filter}", filter);
+            
             return filter;
         }
 
@@ -259,6 +281,7 @@ namespace EprPrnIntegration.Api.Functions
         private async Task<List<NpwdPrn>> FetchPrns(string filter)
         {
             List<NpwdPrn> npwdIssuedPrns;
+            
             try
             {
                 npwdIssuedPrns = await _core.NpwdClient.GetIssuedPrns(filter);
@@ -285,6 +308,7 @@ namespace EprPrnIntegration.Api.Functions
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed Get Prns method for filter {Filter} with exception {Ex}", filter, ex.Message);
+                
                 throw;
             }
 
@@ -297,14 +321,15 @@ namespace EprPrnIntegration.Api.Functions
             try
             {
                 await _messaging.ServiceBusProvider.SendFetchedNpwdPrnsToQueue(npwdIssuedPrns);
+                
                 _logger.LogInformation("Issued Prns Pushed into Message Queue");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed pushing issued prns in message queue with exception: {Ex}", ex);
+                
                 throw;
             }
         }
-
     }
 }
