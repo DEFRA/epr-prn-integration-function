@@ -1,3 +1,5 @@
+using System.Net;
+using FluentAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
@@ -9,6 +11,6 @@ public class HealthCheckTests : IntegrationTestBase
     {
         var result = await AzureFunctionInvokerContext.Get("/api/health");
 
-        result.EnsureSuccessStatusCode();
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
