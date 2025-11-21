@@ -170,7 +170,7 @@ services:
       AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;"
       AzureWebJobsSecretStorageType: "files"
     ports:
-      - "5800:80"
+      - "7234:80"
     healthcheck:
       test: [ "CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/80' || exit 1" ]
       interval: 5s
