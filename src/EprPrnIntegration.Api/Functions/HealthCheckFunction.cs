@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace EprPrnIntegration.Api.Functions;
 
+[ExcludeFromCodeCoverage(Justification = "Covered in integration tests")]
 public class HealthCheckFunction
 {
     [Function("HealthCheck")]
