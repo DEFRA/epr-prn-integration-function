@@ -8,22 +8,22 @@ public class UpdatePrnsListTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()
     {
         await Task.WhenAll(
-            WireMockContext.PrnApiHasUpdateFor("PRN001234567"),
-            WireMockContext.PrnApiAcceptsSyncStatus(),
-            WireMockContext.NpwdAcceptsPrnPatch());
+            PrnApiStub.HasUpdateFor("PRN001234567"),
+            PrnApiStub.AcceptsSyncStatus(),
+            NpwdApiStub.AcceptsPrnPatch());
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var requests = await WireMockContext.GetNpwdPrnPatchRequests();
+            var requests = await NpwdApiStub.GetPrnPatchRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
         });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var requests = await WireMockContext.GetPrnUpdateSyncStatusRequests();
+            var requests = await PrnApiStub.GetUpdateSyncStatusRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
         });
