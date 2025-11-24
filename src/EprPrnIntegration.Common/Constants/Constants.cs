@@ -57,6 +57,7 @@
     {
         public const string IssuedPrn = "IssuedPrn";
         public const string UpdateProducer = "UpdateProducer";
+        public const string UpdateRrepwProducers = "UpdateRrepwProducers";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
         public const string UpdatePrn = "UpdatePrnOnNpwd";
         public const string InsertPrnOnEpr = "InsertedPrnOnEpr";

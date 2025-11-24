@@ -3,6 +3,7 @@
 public enum NpwdDeltaSyncType
 {
     UpdatedProducers,
+    UpdatedRrepwProducers,
     UpdatePrns,
     FetchNpwdIssuedPrns
 }

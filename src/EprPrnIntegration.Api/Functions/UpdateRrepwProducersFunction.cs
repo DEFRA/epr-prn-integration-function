@@ -1,6 +1,5 @@
 using System.Net;
 using EprPrnIntegration.Common.Client;
-using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
@@ -11,32 +10,23 @@ using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateRrepwProducersFunction(
     ICommonDataService commonDataService,
     INpwdClient npwdClient,
-    ILogger<UpdateProducersFunction> logger,
+    ILogger<UpdateRrepwProducersFunction> logger,
     IConfiguration configuration,
     IUtilities utilities,
-    IOptions<FeatureManagementConfiguration> featureConfig,
     IEmailService emailService)
 {
-    [Function("UpdateProducersList")]
-    public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
+    [Function("UpdateRrepwProducersList")]
+    public async Task Run([TimerTrigger("%UpdateRrepwProducersTrigger%")] TimerInfo myTimer)
     {
-        var isOn = featureConfig.Value.RunUpdateProducers ?? false;
-        if (!isOn)
-        {
-            logger.LogInformation("UpdateProducersList function is disabled by feature flag");
-            return;
-        }
+        logger.LogInformation("UpdateRrepwProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
 
-        logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
-
-        var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers);
+        var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedRrepwProducers);
 
         var toDate = DateTime.UtcNow;
         var fromDate = deltaRun.LastSyncDateTime;
@@ -53,7 +43,7 @@ public class UpdateRrepwProducersFunction(
 
         updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).ToList();
 
-        if (int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize))
+        if (int.TryParse(configuration["UpdateRrepwProducersBatchSize"], out var batchSize))
             if (batchSize > 0 && batchSize < updatedEprProducers.Count)
             {
                 logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize,
@@ -119,7 +109,7 @@ public class UpdateRrepwProducersFunction(
                 { CustomEventFields.OrganisationRegNo, producer.CompanyRegNo }
             };
 
-            utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
+            utilities.AddCustomEvent(CustomEvents.UpdateRrepwProducers, eventData);
         }
     }
 
