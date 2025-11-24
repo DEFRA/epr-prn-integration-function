@@ -80,6 +80,6 @@
 
     public static class ObligationYearDefaults
     {
-        public const string ObligationYear = "2025";
+        public const string ObligationYear2025 = "2025";
     }
 }

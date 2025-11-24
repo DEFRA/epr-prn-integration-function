@@ -146,7 +146,7 @@ namespace EprPrnIntegration.Tests.Mappers
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(ObligationYearDefaults.ObligationYear, result.ObligationYear);
+            Assert.Equal(ObligationYearDefaults.ObligationYear2025, result.ObligationYear);
         }
 
         [Fact]
@@ -170,7 +170,7 @@ namespace EprPrnIntegration.Tests.Mappers
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(ObligationYearDefaults.ObligationYear, result.ObligationYear);
+            Assert.Equal(ObligationYearDefaults.ObligationYear2025, result.ObligationYear);
 
             // Optional: verify a warning was logged at least once
             _loggerMock.Verify(

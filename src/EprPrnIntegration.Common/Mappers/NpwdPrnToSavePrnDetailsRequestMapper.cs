@@ -58,7 +58,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
         if (string.IsNullOrWhiteSpace(configValue))
         {
             logger.LogWarning("DefaultObligationYear is missing or empty. Falling back to default.");
-            return ObligationYearDefaults.ObligationYear;
+            return ObligationYearDefaults.ObligationYear2025;
         }
 
         if (int.TryParse(configValue, out var year) && year is >= 1990 and <= 2100)
@@ -68,7 +68,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
 
         logger.LogWarning("DefaultObligationYear '{ConfigValue}' is invalid. Using fallback value.", configValue);
         
-        return ObligationYearDefaults.ObligationYear;
+        return ObligationYearDefaults.ObligationYear2025;
     }
 
     public static bool IsExport(string evidenceNo)
