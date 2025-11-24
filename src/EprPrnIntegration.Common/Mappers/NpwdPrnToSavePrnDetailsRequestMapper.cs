@@ -1,4 +1,5 @@
 ﻿using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,8 +10,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
 {
     public static SavePrnDetailsRequest Map(NpwdPrn npwdPrn, IConfiguration config, ILogger logger)
     {
-        var defaultYearConfig = config["DefaultObligationYear"];
-        var resolvedYear = ResolveDefaultObligationYear(defaultYearConfig, logger);
+        var resolvedYear = ObligationYearResolver.GetDefaultObligationYear(config, logger);
 
         return new SavePrnDetailsRequest
         {
@@ -43,7 +43,6 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
         };
     }
 
-
     private static Guid? ParseGuid(string? input)
     {
         if (Guid.TryParse(input, out var guid))
@@ -51,24 +50,6 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             return guid;
         }
         return null;
-    }
-
-    private static string ResolveDefaultObligationYear(string? configValue, ILogger logger)
-    {
-        if (string.IsNullOrWhiteSpace(configValue))
-        {
-            logger.LogWarning("DefaultObligationYear is missing or empty. Falling back to default.");
-            return ObligationYearDefaults.ObligationYear2025;
-        }
-
-        if (int.TryParse(configValue, out var year) && year is >= 1990 and <= 2100)
-        {
-            return year.ToString();
-        }
-
-        logger.LogWarning("DefaultObligationYear '{ConfigValue}' is invalid. Using fallback value.", configValue);
-        
-        return ObligationYearDefaults.ObligationYear2025;
     }
 
     public static bool IsExport(string evidenceNo)
