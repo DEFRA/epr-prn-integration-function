@@ -1,3 +1,4 @@
+using EprPrnIntegration.Api.IntegrationTests.Stubs;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
@@ -6,13 +7,22 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 [Collection("Integration Tests")]
 public abstract class IntegrationTestBase : IAsyncLifetime
 {
-    protected WireMockContext WireMockContext = null!;
+    protected AccountApi AccountApiStub = null!;
+    protected CommonDataApi CommonDataApiStub = null!;
+    protected NpwdApi NpwdApiStub = null!;
+    protected PrnApi PrnApiStub = null!;
+    private WireMockContext WireMockContext = null!;
 
     public async Task InitializeAsync()
     {
         WireMockContext = new WireMockContext();
-        
+
         await WireMockContext.InitializeAsync();
+
+        NpwdApiStub = new NpwdApi(WireMockContext);
+        CommonDataApiStub = new CommonDataApi(WireMockContext);
+        PrnApiStub = new PrnApi(WireMockContext);
+        AccountApiStub = new AccountApi(WireMockContext);
     }
 
     public async Task DisposeAsync()

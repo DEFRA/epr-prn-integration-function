@@ -8,17 +8,17 @@ public class FetchNpwdIssuedPrnsFunctionIntegrationTest : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsIssuedPrnsToPrnService()
     {
         await Task.WhenAll(
-            WireMockContext.NpwdHasIssuedPrns("ACC123456"),
-            WireMockContext.AccountServiceValidatesIssuedEpr(),
-            WireMockContext.PrnApiAcceptsPrnDetails(),
-            WireMockContext.AccountServiceHasPersonEmailForEpr()
+            NpwdApiStub.HasIssuedPrns("ACC123456"),
+            AccountApiStub.ValidatesIssuedEpr(),
+            PrnApiStub.AcceptsPrnDetails(),
+            AccountApiStub.HasPersonEmailForEpr()
         );
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchNpwdIssuedPrnsFunction);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var requests = await WireMockContext.GetPrnDetailRequests();
+            var requests = await PrnApiStub.GetDetailRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("ACC123456"));
         });
