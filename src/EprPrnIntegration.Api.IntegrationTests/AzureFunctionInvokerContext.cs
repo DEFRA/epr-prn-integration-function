@@ -5,6 +5,7 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 public enum FunctionName
 {
     UpdateProducersList,
+    UpdateRrepwProducersList,
     UpdatePrnsList,
     FetchNpwdIssuedPrnsFunction
 }

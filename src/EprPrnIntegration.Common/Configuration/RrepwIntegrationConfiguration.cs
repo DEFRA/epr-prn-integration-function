@@ -1,11 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Common.Configuration;
 
 [ExcludeFromCodeCoverage]
-public class NpwdIntegrationConfiguration
+public class RrepwIntegrationConfiguration
 {
-    public const string SectionName = "NpwdIntegration";
+    public const string SectionName = "RrepwIntegration";
     public string BaseUrl { get; set; } = null!;
     public string ClientId { get; set; } = null!;
     public string ClientSecret { get; set; } = null!;
