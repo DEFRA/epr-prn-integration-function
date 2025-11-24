@@ -61,6 +61,20 @@
             }
           },
           {
+            "Name": "defra.npwd.integration.lastsuccessfulrun.update.producer.rrepw.local",
+            "Properties": {
+              "DeadLetteringOnMessageExpiration": false,
+              "DefaultMessageTimeToLive": "PT1H",
+              "DuplicateDetectionHistoryTimeWindow": "PT20S",
+              "ForwardDeadLetteredMessagesTo": "",
+              "ForwardTo": "",
+              "LockDuration": "PT1M",
+              "MaxDeliveryCount": 3,
+              "RequiresDuplicateDetection": false,
+              "RequiresSession": false
+            }
+          },
+          {
             "Name": "defra.npwd.integration.lastsuccessfulrun.updateprn.local",
             "Properties": {
               "DeadLetteringOnMessageExpiration": false,

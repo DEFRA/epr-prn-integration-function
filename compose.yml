@@ -139,6 +139,7 @@ services:
       ServiceBus__ErrorPrnQueue: "defra.epr.npwd.integration.errorqueue.local"
       ServiceBus__FetchPrnDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.fetchprn.local"
       ServiceBus__UpdateProducerDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.updateproducer.local"
+      ServiceBus__UpdateRrepwProducerDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.update.producer.rrepw.local"
       ServiceBus__UpdatePrnDeltaSyncQueueName: "defra.npwd.integration.lastsuccessfulrun.updateprn.local"
       ServiceBus__MaxWaitTimeInSeconds: "1"
       ServiceBus__ConnectionString: "Endpoint=sb://asb-backend;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;"

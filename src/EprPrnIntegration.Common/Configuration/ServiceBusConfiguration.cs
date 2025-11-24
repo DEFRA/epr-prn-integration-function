@@ -13,6 +13,7 @@ namespace EprPrnIntegration.Common.Configuration
         public int? MaxWaitTimeInSeconds { get; set; }
         public string FetchPrnDeltaSyncQueueName { get; set; } = null!;
         public string UpdateProducerDeltaSyncQueueName { get; set; } = null!;
+        public string UpdateRrepwProducerDeltaSyncQueueName { get; set; } = null!;
         public string UpdatePrnDeltaSyncQueueName { get; set; } = null!;
         public string TransportType { get; set; } = null!;
     }

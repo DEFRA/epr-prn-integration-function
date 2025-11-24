@@ -6,7 +6,6 @@ using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
-using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,8 +17,7 @@ public class UpdateRrepwProducersFunction(
     INpwdClient npwdClient,
     ILogger<UpdateRrepwProducersFunction> logger,
     IConfiguration configuration,
-    IUtilities utilities,
-    IEmailService emailService)
+    IUtilities utilities)
 {
     [Function("UpdateRrepwProducersList")]
     public async Task Run([TimerTrigger("%UpdateRrepwProducersTrigger%")] TimerInfo myTimer)

@@ -189,6 +189,7 @@ namespace EprPrnIntegration.Common.Service
             syncType switch
             {
                 NpwdDeltaSyncType.UpdatedProducers => config.Value.UpdateProducerDeltaSyncQueueName,
+                NpwdDeltaSyncType.UpdatedRrepwProducers => config.Value.UpdateProducerDeltaSyncQueueName,
                 NpwdDeltaSyncType.UpdatePrns => config.Value.UpdatePrnDeltaSyncQueueName,
                 NpwdDeltaSyncType.FetchNpwdIssuedPrns => config.Value.FetchPrnDeltaSyncQueueName,
                 _ => throw new ArgumentOutOfRangeException(nameof(syncType), syncType, null)
