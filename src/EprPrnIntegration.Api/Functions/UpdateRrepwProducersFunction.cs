@@ -80,11 +80,6 @@ public class UpdateRrepwProducersFunction(
                 logger.LogError(
                     "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
                     pEprApiResponse.StatusCode, responseBody);
-
-                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError ||
-                    pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
-                    emailService.SendErrorEmailToNpwd(
-                        $"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
             }
         }
         catch (Exception ex)
