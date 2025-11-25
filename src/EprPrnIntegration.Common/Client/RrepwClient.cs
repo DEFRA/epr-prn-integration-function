@@ -5,10 +5,15 @@ using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Common.Client;
 
+public interface IRrepwClient
+{
+    Task Patch(ProducerUpdateRequest request);
+}
+
 // A temporary stub for RREPW's producer endpoint
 [ExcludeFromCodeCoverage]
 public class RrepwClient(
-    ILogger<RrepwClient> logger)
+    ILogger<RrepwClient> logger) : IRrepwClient
 {
     public Task Patch(ProducerUpdateRequest request)
     {

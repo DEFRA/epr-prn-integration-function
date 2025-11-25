@@ -15,6 +15,7 @@ namespace EprPrnIntegration.Api.Functions;
 public class UpdateRrepwProducersFunction(
     ICommonDataService commonDataService,
     INpwdClient npwdClient,
+    IRrepwClient rrepwClient,
     ILogger<UpdateRrepwProducersFunction> logger,
     IConfiguration configuration,
     IUtilities utilities)

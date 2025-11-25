@@ -53,6 +53,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
+        services.AddScoped<IRrepwClient, RrepwClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IEmailService, EmailService>();
