@@ -12,7 +12,11 @@ public class RrepwClient(
 {
     public Task Patch(ProducerUpdateRequest request)
     {
-        var json = JsonConvert.SerializeObject(request);
+        var json = JsonConvert.SerializeObject(new {
+           id = request.Id,
+           status = request.Status,
+           type = request.Type,
+        });
         
         logger.LogInformation("Patching producer update to RREPW: ${json}", json);
         
