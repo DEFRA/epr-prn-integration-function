@@ -1,16 +1,14 @@
-﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Common.Models.Rrepw;
 
 public class ProducerUpdateRequest
 {
     [JsonProperty("id")]
-    public Guid Id { get; set; }
+    public string Id { get; set; }
 
     [JsonProperty("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; }
 
     [JsonProperty("tradingName")]
     public string? TradingName { get; set; }
@@ -38,25 +36,4 @@ public class ProducerUpdateRequest
 
     [JsonProperty("postcode")]
     public string? Postcode { get; set; }
-}
-
-[JsonConverter(typeof(StringEnumConverter))]
-public enum ProducerType
-{
-    CS, // Compliance Scheme
-    DR, // Direct Registrant
-    CSM // DR Moved to CS - no longer valid for PRN Issuance
-}
-
-[JsonConverter(typeof(StringEnumConverter))]
-public enum ProducerStatus
-{
-    [EnumMember(Value = "PR-REGISTERED")]
-    PrRegistered,
-    [EnumMember(Value = "PR-CANCELLED")]
-    PrCancelled,
-    [EnumMember(Value = "CSR-REGISTERED")]
-    CsrRegistered,
-    [EnumMember(Value = "CSR-CANCELLED")]
-    CsrCancelled
 }
