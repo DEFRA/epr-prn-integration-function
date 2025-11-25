@@ -28,10 +28,9 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = "Organisation's Name",
                 TradingName = "Compliance Scheme's name",
             };
-            // Act
+            
             var result = ProducerUpdateRequestMapper.Map(input);
 
-            // Assert
             var expected = new ProducerUpdateRequest()
             {
                 Id = input.PEPRID,
@@ -57,7 +56,6 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("Some Unmatched Status", "Some Organisation Type", null, null)]
         public void MapsCorrectStatusCodes(string status, string orgType, ProducerStatus? expectedStatusCode, ProducerType? expectedProducerType)
         {
-            // Arrange
             var producer = new UpdatedProducersResponse
             {
                 PEPRID = Guid.NewGuid().ToString(),
@@ -66,10 +64,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = orgType,
             };
         
-            // Act
             var result = ProducerUpdateRequestMapper.Map(producer);
         
-            // Assert
             Assert.Equal(result.Status, expectedStatusCode);
             Assert.Equal(result.Type, expectedProducerType);
         }
