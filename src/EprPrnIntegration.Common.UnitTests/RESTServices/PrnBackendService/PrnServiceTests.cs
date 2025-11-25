@@ -50,8 +50,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2)  },
-                    new() { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2)  }
+                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2), ObligationYear = "2025"},
+                    new() { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2), ObligationYear = "2025"}
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
@@ -78,7 +78,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
             {
-                new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2) }
+                new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2), ObligationYear = "2025" }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var _prnService1 = CreatePrnService(mockDataJson);

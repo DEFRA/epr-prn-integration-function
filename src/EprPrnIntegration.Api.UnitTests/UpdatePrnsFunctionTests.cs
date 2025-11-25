@@ -95,7 +95,7 @@ public class UpdatePrnsFunctionTests
     {
         // Arrange
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
@@ -133,7 +133,7 @@ public class UpdatePrnsFunctionTests
             });
 
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
@@ -203,7 +203,7 @@ public class UpdatePrnsFunctionTests
             });
 
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ThrowsAsync(new Exception("Client error"));
@@ -248,7 +248,7 @@ public class UpdatePrnsFunctionTests
     {
         // Arrange
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
@@ -290,7 +290,7 @@ public class UpdatePrnsFunctionTests
         var defaultDatetime = "2024-01-01";
 
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
@@ -366,7 +366,7 @@ public class UpdatePrnsFunctionTests
     {
         // Arrange
         _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active" } });
+            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
 
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
@@ -426,21 +426,24 @@ public class UpdatePrnsFunctionTests
         {
             EvidenceNo = "A",
             EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(2))
+            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(2)),
+            ObligationYear = "2025"
         };
 
         var secondPrn = new UpdatedPrnsResponseModel
         {
             EvidenceNo = "B",
             EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))
+            StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)),
+            ObligationYear = "2025"
         };
 
         var thirdPrn = new UpdatedPrnsResponseModel
         {
             EvidenceNo = "C",
             EvidenceStatusCode = "ACCEPTED",
-            StatusDate = DateTime.UtcNow
+            StatusDate = DateTime.UtcNow,
+            ObligationYear = "2025"
         };
 
         var updatePrns = new List<UpdatedPrnsResponseModel> { firstPrn, secondPrn, thirdPrn };

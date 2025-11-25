@@ -54,12 +54,14 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 new UpdatedPrnsResponseModel
                 {
                     EvidenceNo = "12345",
-                    EvidenceStatusCode = "EV-ACANCEL"
+                    EvidenceStatusCode = "EV-ACANCEL",
+                    ObligationYear = "2025"
                 },
                 new UpdatedPrnsResponseModel
                 {
                     EvidenceNo = "67890",
-                    EvidenceStatusCode = "EV-ACCEP"
+                    EvidenceStatusCode = "EV-ACCEP",
+                    ObligationYear = "2025"
                 }
             };
 
@@ -87,7 +89,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 new UpdatedPrnsResponseModel
                 {
                     EvidenceNo = "12345",
-                    EvidenceStatusCode = ""
+                    EvidenceStatusCode = "",
+                    ObligationYear = "2025"
                 }
             };
 

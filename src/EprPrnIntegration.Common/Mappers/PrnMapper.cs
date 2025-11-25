@@ -1,18 +1,32 @@
 ﻿using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
+using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models.Npwd;
 
 namespace EprPrnIntegration.Common.Mappers;
 
 public static class PrnMapper
 {
     public static PrnDelta Map(
-        List<UpdatedPrnsResponseModel> updatedPrns, IConfiguration configuration)
+        List<UpdatedPrnsResponseModel> updatedPrns,
+        IConfiguration configuration)
     {
-        string prnsContext = configuration["PrnsContext"] ?? string.Empty;
+        var prnsContext = configuration["PrnsContext"] ?? string.Empty;
+        
+        // Resolve configured default obligation year safely
+        var obligationYear = ObligationYearResolver.GetDefaultObligationYear(
+            configuration,
+            NullLogger.Instance
+        );
+        
         if (updatedPrns == null || updatedPrns.Count.Equals(0))
         {
-            return new PrnDelta { Context = prnsContext, Value = [] };
+            return new PrnDelta
+            {
+                Context = prnsContext,
+                Value = []
+            };
         }
 
         return new PrnDelta
@@ -22,7 +36,8 @@ public static class PrnMapper
             {
                 EvidenceNo = eprProducer.EvidenceNo,
                 EvidenceStatusCode = eprProducer.EvidenceStatusCode,
-                StatusDate = eprProducer.StatusDate
+                StatusDate = eprProducer.StatusDate,
+                ObligationYear = obligationYear
             }).ToList()
         };
     }
