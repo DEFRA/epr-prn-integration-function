@@ -5,10 +5,10 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class ProducerUpdateRequest
 {
     [JsonProperty("id")]
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
     [JsonProperty("name")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [JsonProperty("tradingName")]
     public string? TradingName { get; set; }

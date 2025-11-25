@@ -21,8 +21,8 @@ public static class ProducerUpdateRequestMapper
         
         return new ProducerUpdateRequest
         {
-            Id = updatedProducer.PEPRID ?? "",
-            Name = updatedProducer.OrganisationName ?? "",
+            Id = updatedProducer.PEPRID,
+            Name = updatedProducer.OrganisationName,
             TradingName = updatedProducer.TradingName,
             AddressLine1 = updatedProducer.AddressLine1,
             AddressLine2 = updatedProducer.AddressLine2,
