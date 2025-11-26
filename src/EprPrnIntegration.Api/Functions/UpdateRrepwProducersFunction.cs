@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
+using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
@@ -14,10 +15,8 @@ namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateRrepwProducersFunction(
     ICommonDataService commonDataService,
-    INpwdClient npwdClient,
     IRrepwClient rrepwClient,
     ILogger<UpdateRrepwProducersFunction> logger,
-    IConfiguration configuration,
     IUtilities utilities)
 {
     [Function("UpdateRrepwProducersList")]
@@ -42,69 +41,21 @@ public class UpdateRrepwProducersFunction(
 
         updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).ToList();
 
-        if (int.TryParse(configuration["UpdateRrepwProducersBatchSize"], out var batchSize))
-            if (batchSize > 0 && batchSize < updatedEprProducers.Count)
-            {
-                logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize,
-                    updatedEprProducers.Count);
-                updatedEprProducers = updatedEprProducers.Take(batchSize).ToList();
-            }
-
         var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
         if (newestProducerStatusDate.GetValueOrDefault() > DateTime.MinValue)
             toDate = newestProducerStatusDate.GetValueOrDefault().ToUniversalTime();
 
-        var npwdUpdatedProducers = ProducerMapper.Map(updatedEprProducers, configuration);
-
-        try
+        logger.LogInformation("Received a total of {ProducerCount} producer to RREPW for updating",
+            updatedEprProducers.Count);
+        
+        foreach (var updatedProducer in updatedEprProducers)
         {
-            logger.LogInformation("Sending total of {ProducerCount} producer to npwd for updating",
-                updatedEprProducers.Count);
+            var request = ProducerUpdateRequestMapper.Map(updatedProducer);
 
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.Producers);
-
-            if (pEprApiResponse.IsSuccessStatusCode)
-            {
-                logger.LogInformation(
-                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
-                    toDate);
-
-                await utilities.SetDeltaSyncExecution(deltaRun, toDate);
-
-                LogCustomEvents(npwdUpdatedProducers.Value);
-            }
-            else
-            {
-                var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-                logger.LogError(
-                    "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                    pEprApiResponse.StatusCode, responseBody);
-            }
+            await rrepwClient.Patch(request);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.Producers}");
-        }
-    }
-
-    private void LogCustomEvents(IEnumerable<Producer> updatedProducers)
-    {
-        foreach (var producer in updatedProducers)
-        {
-            Dictionary<string, string> eventData = new()
-            {
-                { CustomEventFields.OrganisationName, producer.ProducerName },
-                { CustomEventFields.OrganisationId, producer.EPRCode },
-                { CustomEventFields.Date, DateTime.UtcNow.ToString() },
-                { CustomEventFields.OrganisationAddress, ProducerMapper.MapAddress(producer) },
-                { CustomEventFields.OrganisationType, producer.EntityTypeCode },
-                { CustomEventFields.OrganisationStatus, producer.StatusCode },
-                { CustomEventFields.OrganisationEprId, producer.EPRId },
-                { CustomEventFields.OrganisationRegNo, producer.CompanyRegNo }
-            };
-
-            utilities.AddCustomEvent(CustomEvents.UpdateRrepwProducers, eventData);
-        }
+        
+        await utilities.SetDeltaSyncExecution(deltaRun, toDate);
     }
 
     private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
