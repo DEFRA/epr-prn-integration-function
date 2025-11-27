@@ -1,11 +1,11 @@
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationApi;
 
 namespace EprPrnIntegration.Common.Mappers;
 
-public static class ProducerUpdateRequestMapper
+public static class OrganisationUpdateRequestMapper
 {
-    public static ProducerUpdateRequest Map(UpdatedProducersResponse updatedProducer)
+    public static OrganisationUpdateRequest Map(UpdatedProducersResponse updatedProducer)
     {
         if (updatedProducer.PEPRID == null)
         {
@@ -19,7 +19,7 @@ public static class ProducerUpdateRequestMapper
         
         var mappedStatus = MapStatusEnums(updatedProducer.Status, updatedProducer.OrganisationType);
         
-        return new ProducerUpdateRequest
+        return new OrganisationUpdateRequest
         {
             Id = updatedProducer.PEPRID,
             Name = updatedProducer.OrganisationName,

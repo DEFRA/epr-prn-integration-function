@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 
-namespace EprPrnIntegration.Common.Models.Rrepw;
+namespace EprPrnIntegration.Common.Models.WasteOrganisationApi;
 
-public class ProducerUpdateRequest
+public class OrganisationUpdateRequest
 {
     [JsonProperty("id")]
     public required string Id { get; set; }

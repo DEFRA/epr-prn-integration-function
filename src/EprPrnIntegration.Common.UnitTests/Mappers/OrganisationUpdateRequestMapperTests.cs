@@ -2,14 +2,14 @@
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
-using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationApi;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers
 {
-    public class ProducerUpdateRequestMapperTests
+    public class OrganisationUpdateRequestMapperTests
     {
         [Fact]
         public void MapsCorrectFields()
@@ -29,9 +29,9 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 TradingName = "Compliance Scheme's name",
             };
             
-            var result = ProducerUpdateRequestMapper.Map(input);
+            var result = OrganisationUpdateRequestMapper.Map(input);
 
-            var expected = new ProducerUpdateRequest()
+            var expected = new OrganisationUpdateRequest()
             {
                 Id = input.PEPRID,
                 AddressLine1 = "address1",
@@ -64,7 +64,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = orgType,
             };
         
-            var result = ProducerUpdateRequestMapper.Map(producer);
+            var result = OrganisationUpdateRequestMapper.Map(producer);
         
             Assert.Equal(result.Status, expectedStatusCode);
             Assert.Equal(result.Type, expectedProducerType);
@@ -78,7 +78,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = "some name"
             };
             
-            Assert.Throws<ArgumentException>(() => ProducerUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
         }
         
         [Fact]
@@ -89,7 +89,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 PEPRID = Guid.NewGuid().ToString(),
             };
             
-            Assert.Throws<ArgumentException>(() => ProducerUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
         }
     }
 }
