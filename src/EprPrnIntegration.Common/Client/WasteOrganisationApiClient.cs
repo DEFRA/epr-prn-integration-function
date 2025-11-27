@@ -14,8 +14,12 @@ public class WasteOrganisationApiClient(
     {
         var json = JsonConvert.SerializeObject(new {
            id = request.Id,
-           status = request.Status,
-           type = request.Type,
+           registration = new
+           {
+               status = request.Registration.Status,
+               type = request.Registration.Type,
+           },
+           businessCountry = request.BusinessCountry,
         });
         
         logger.LogInformation("Patching producer update to RREPW: ${json}", json);
