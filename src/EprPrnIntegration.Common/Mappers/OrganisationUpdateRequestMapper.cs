@@ -56,17 +56,32 @@ public static class OrganisationUpdateRequestMapper
 
     private static Registration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
     {
-        return (updatedProducer.Status, updatedProducer.OrganisationType) switch
+        var type = (updatedProducer.OrganisationType) switch
         {
-            ("DR Registered", "DR") => 
-                new Registration { Status = RegistrationStatus.Registered, Type = RegistrationType.LargeProducer, SubmissionYear = updatedProducer.SubmissionYear ?? 0} ,
-            ("DR Deleted", "DR") => 
-                new Registration { Status = RegistrationStatus.Cancelled, Type = RegistrationType.LargeProducer, SubmissionYear = updatedProducer.SubmissionYear ?? 0} ,
-            ("CS Added", "S") => 
-                new Registration { Status = RegistrationStatus.Registered, Type = RegistrationType.ComplianceScheme, SubmissionYear = updatedProducer.SubmissionYear ?? 0} ,
-            ("CS Deleted", "S") => 
-                new Registration { Status = RegistrationStatus.Cancelled, Type = RegistrationType.ComplianceScheme, SubmissionYear = updatedProducer.SubmissionYear ?? 0} ,
-            _ => throw new ArgumentException()
+            "DR" => RegistrationType.LargeProducer,
+            "S" => RegistrationType.ComplianceScheme,
+            _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
+        };
+
+        var status = (updatedProducer.Status) switch
+        {
+            "DR Registered" => RegistrationStatus.Registered,
+            "CS Added" => RegistrationStatus.Registered,
+            "DR Deleted" => RegistrationStatus.Cancelled,
+            "CS Deleted" => RegistrationStatus.Cancelled,
+            _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
+        };
+
+        if (updatedProducer.SubmissionYear == null)
+        {
+            throw new ArgumentException("SubmissionYear is null");
+        }
+
+        return new Registration
+        {
+            Status = status,
+            Type = type,
+            SubmissionYear = updatedProducer.SubmissionYear.Value
         };
     }
 }
