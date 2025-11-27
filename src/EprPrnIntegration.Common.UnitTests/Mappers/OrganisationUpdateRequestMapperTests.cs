@@ -26,8 +26,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 TradingName = "Organisation's TradingName",
                 
                 SubmissionYear = 2025,
-                Status = "DR Registered",
-                OrganisationType = "DR"
+                Status = "registered",
+                OrganisationType = "DP"
             };
             
             var result = OrganisationUpdateRequestMapper.Map(input);
@@ -53,8 +53,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Country = "UK",
                 
                 
-                Status = "DR Registered",
-                OrganisationType = "DR",
+                Status = "registered",
+                OrganisationType = "DP",
                 SubmissionYear = 2025,
                 
                 CompaniesHouseNumber = "some-company-number",
@@ -87,8 +87,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
-                Status = "DR Registered",
-                OrganisationType = "DR",
+                Status = "registered",
+                OrganisationType = "DP",
                 SubmissionYear = 2026,
                 BusinessCountry = country
             };
@@ -99,10 +99,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("DR Registered", "DR", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
-        [InlineData("DR Deleted", "DR", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("CS Added", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("CS Deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
+        [InlineData("registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
+        [InlineData("deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
+        [InlineData("registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
+        [InlineData("deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
         public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2
@@ -132,7 +132,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "foobar",
-                OrganisationType = "DR",
+                OrganisationType = "DP",
                 SubmissionYear = 2026
             }));
         }
@@ -144,7 +144,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
-                Status = "CS Added",
+                Status = "registered",
                 OrganisationType = "foobar",
                 SubmissionYear = 2026
             }));

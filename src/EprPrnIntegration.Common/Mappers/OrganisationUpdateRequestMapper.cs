@@ -58,17 +58,15 @@ public static class OrganisationUpdateRequestMapper
     {
         var type = (updatedProducer.OrganisationType) switch
         {
-            "DR" => RegistrationType.LargeProducer,
+            "DP" => RegistrationType.LargeProducer,
             "S" => RegistrationType.ComplianceScheme,
             _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
         };
 
         var status = (updatedProducer.Status) switch
         {
-            "DR Registered" => RegistrationStatus.Registered,
-            "CS Added" => RegistrationStatus.Registered,
-            "DR Deleted" => RegistrationStatus.Cancelled,
-            "CS Deleted" => RegistrationStatus.Cancelled,
+            "registered" => RegistrationStatus.Registered,
+            "deleted" => RegistrationStatus.Cancelled,
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
         };
 
