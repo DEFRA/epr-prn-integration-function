@@ -5,7 +5,7 @@ namespace EprPrnIntegration.Common.Mappers;
 
 public static class OrganisationUpdateRequestMapper
 {
-    public static OrganisationUpdateRequest Map(UpdatedProducersResponse updatedProducer)
+    public static OrganisationUpdateRequest Map(UpdatedProducersResponseV2 updatedProducer)
     {
         if (updatedProducer.PEPRID == null)
         {

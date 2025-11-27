@@ -1,11 +1,7 @@
-﻿using AutoFixture;
-using EprPrnIntegration.Common.Mappers;
+﻿using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.WasteOrganisationApi;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers
 {
@@ -14,7 +10,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void MapsCorrectFields()
         {
-            var input = new UpdatedProducersResponse()
+            var input = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 
@@ -31,7 +27,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             
             var result = OrganisationUpdateRequestMapper.Map(input);
 
-            var expected = new OrganisationUpdateRequest()
+            var expected = new OrganisationUpdateRequest
             {
                 Id = input.PEPRID,
                 AddressLine1 = "address1",
@@ -56,7 +52,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("Some Unmatched Status", "Some Organisation Type", null, null)]
         public void MapsCorrectStatusCodes(string status, string orgType, ProducerStatus? expectedStatusCode, ProducerType? expectedProducerType)
         {
-            var producer = new UpdatedProducersResponse
+            var producer = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
@@ -73,7 +69,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void ThrowsForMissingId()
         {
-            var producer = new UpdatedProducersResponse
+            var producer = new UpdatedProducersResponseV2
             {
                 OrganisationName = "some name"
             };
@@ -84,7 +80,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void ThrowsForMissingOrganisationName()
         {
-            var producer = new UpdatedProducersResponse
+            var producer = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
             };
