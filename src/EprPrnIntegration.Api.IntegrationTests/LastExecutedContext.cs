@@ -12,7 +12,7 @@ public static class LastExecutedContext
 
     static LastExecutedContext()
     {
-        var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+        var connectionString = DockerEnvironmentHelper.GetAzureWebJobsStorage();
         BlobServiceClient = new BlobServiceClient(connectionString);
         BlobStorage = new BlobStorage(BlobServiceClient);
         LastUpdateService = new LastUpdateService(BlobStorage);
