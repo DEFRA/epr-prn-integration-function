@@ -52,6 +52,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Postcode = "postcode",
                 Country = "UK",
                 
+                
                 Status = "registered",
                 OrganisationType = "DP",
                 SubmissionYear = 2025,
@@ -147,6 +148,28 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = "foobar",
                 SubmissionYear = 2026
             }));
+        }
+
+        [Fact]
+        public void ThrowsForMissingId()
+        {
+            var producer = new UpdatedProducersResponseV2
+            {
+                OrganisationName = "some name"
+            };
+            
+            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
+        }
+        
+        [Fact]
+        public void ThrowsForMissingOrganisationName()
+        {
+            var producer = new UpdatedProducersResponseV2
+            {
+                PEPRID = Guid.NewGuid().ToString(),
+            };
+            
+            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
         }
     }
 }

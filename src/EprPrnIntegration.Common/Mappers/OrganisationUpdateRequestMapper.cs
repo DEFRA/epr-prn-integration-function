@@ -7,6 +7,16 @@ public static class OrganisationUpdateRequestMapper
 {
     public static OrganisationUpdateRequest Map(UpdatedProducersResponseV2 updatedProducer)
     {
+        if (updatedProducer.PEPRID == null)
+        {
+            throw new ArgumentException("PEPRID is null");
+        }
+        
+        if (updatedProducer.OrganisationName == null)
+        {
+            throw new ArgumentException("OrganisationName is null");
+        }
+        
         return new OrganisationUpdateRequest
         {
             Id = updatedProducer.PEPRID,
