@@ -8,11 +8,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedWasteOrganisationToNPWD()
     {
+        var lastUpdateBefore = (await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations")) ?? DateTime.MinValue;
+
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+        
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var lastUpdateAfter = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
 
-        var now = DateTime.UtcNow;
-        var lastUpdate = await LastUpdateService.GetLastUpdate("update-waste-organisations");
-
-        lastUpdate.Should().BeCloseTo(now, TimeSpan.FromSeconds(5));
+            lastUpdateAfter.Should().BeAfter(lastUpdateBefore);
+        });
     }
 }

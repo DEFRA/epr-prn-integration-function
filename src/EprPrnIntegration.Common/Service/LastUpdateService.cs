@@ -4,20 +4,14 @@ using EprPrnIntegration.Common.Helpers;
 namespace EprPrnIntegration.Common.Service;
 
 [ExcludeFromCodeCoverage]
-public class LastUpdateService : ILastUpdateService
+public class LastUpdateService(IBlobStorage blobStorage) : ILastUpdateService
 {
-    private readonly IBlobStorage _blobStorage;
     private const string ContainerName = "last-update-store";
-
-    public LastUpdateService(IBlobStorage blobStorage)
-    {
-        _blobStorage = blobStorage;
-    }
 
     public async Task<DateTime?> GetLastUpdate(string name)
     {
         var blobName = $"{name}.json";
-        var data = await _blobStorage.ReadJsonFromBlob<LastUpdateData>(ContainerName, blobName);
+        var data = await blobStorage.ReadJsonFromBlob<LastUpdateData>(ContainerName, blobName);
 
         if (data == null)
         {
@@ -35,7 +29,7 @@ public class LastUpdateService : ILastUpdateService
             LastUpdate = lastUpdate
         };
 
-        await _blobStorage.WriteJsonToBlob(ContainerName, blobName, data);
+        await blobStorage.WriteJsonToBlob(ContainerName, blobName, data);
     }
 
     private class LastUpdateData

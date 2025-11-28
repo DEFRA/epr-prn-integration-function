@@ -4,7 +4,6 @@ using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
@@ -59,6 +58,9 @@ public static class HostBuilderConfiguration
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAppInsightsService, AppInsightsService>();
+        
+        services.AddScoped<IBlobStorage, BlobStorage>();
+        services.AddScoped<ILastUpdateService, LastUpdateService>();
 
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>
@@ -70,6 +72,11 @@ public static class HostBuilderConfiguration
                 return new PassThruNotificationClient(provider.GetRequiredService<ILogger<INotificationClient>>());
 
             return new NotificationClient(messagingConfig.ApiKey);
+        });
+        
+        services.AddAzureClients(builder =>
+        {
+            builder.AddBlobServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
         });
 
         // Add middleware
@@ -121,7 +128,7 @@ public static class HostBuilderConfiguration
         services.Configure<AppInsightsConfig>(configuration.GetSection(AppInsightsConfig.SectionName));
         return services;
     }
-
+    
     public static IServiceCollection AddServiceBus(this IServiceCollection services, IConfiguration configuration)
     {
         var isRunningLocally = configuration.GetValue<bool?>("IsRunningLocally");

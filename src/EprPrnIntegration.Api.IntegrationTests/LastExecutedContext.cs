@@ -6,15 +6,13 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 
 public static class LastExecutedContext
 {
-    private static readonly BlobServiceClient BlobServiceClient;
-    private static readonly IBlobStorage BlobStorage;
     public static readonly ILastUpdateService LastUpdateService;
 
     static LastExecutedContext()
     {
         var connectionString = DockerEnvironmentHelper.GetAzureWebJobsStorage();
-        BlobServiceClient = new BlobServiceClient(connectionString);
-        BlobStorage = new BlobStorage(BlobServiceClient);
-        LastUpdateService = new LastUpdateService(BlobStorage);
+        var blobServiceClient = new BlobServiceClient(connectionString);
+        var blobStorage = new BlobStorage(blobServiceClient);
+        LastUpdateService = new LastUpdateService(blobStorage);
     }
 }
