@@ -32,7 +32,7 @@ public class LastUpdateService(IBlobStorage blobStorage) : ILastUpdateService
         await blobStorage.WriteJsonToBlob(ContainerName, blobName, data);
     }
 
-    private class LastUpdateData
+    private sealed class LastUpdateData
     {
         public DateTime LastUpdate { get; set; }
     }
