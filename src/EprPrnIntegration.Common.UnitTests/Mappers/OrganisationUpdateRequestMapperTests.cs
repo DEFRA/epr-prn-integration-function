@@ -149,19 +149,6 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 SubmissionYear = 2026
             }));
         }
-        
-        [Fact]
-        public void ThrowsForMissingOrganisationYear()
-        {
-            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(new UpdatedProducersResponseV2
-            {
-                PEPRID = Guid.NewGuid().ToString(),
-                OrganisationName = Guid.NewGuid().ToString(),
-                Status = "CS Added",
-                OrganisationType = "S",
-                SubmissionYear = null
-            }));
-        }
 
         [Fact]
         public void ThrowsForMissingId()

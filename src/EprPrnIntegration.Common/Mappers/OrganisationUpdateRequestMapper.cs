@@ -70,16 +70,11 @@ public static class OrganisationUpdateRequestMapper
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
         };
 
-        if (updatedProducer.SubmissionYear == null)
-        {
-            throw new ArgumentException("SubmissionYear is null");
-        }
-
         return new Registration
         {
             Status = status,
             Type = type,
-            SubmissionYear = updatedProducer.SubmissionYear.Value
+            SubmissionYear = updatedProducer.SubmissionYear
         };
     }
 }

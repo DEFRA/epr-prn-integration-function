@@ -20,5 +20,5 @@ public class UpdatedProducersResponseV2
     public string? Status { get; set; }
     public string? BusinessCountry { get; set; }
     public DateTime? UpdatedDateTime { get; set; }
-    public int? SubmissionYear { get; set; }
+    public int SubmissionYear { get; set; }
 }
