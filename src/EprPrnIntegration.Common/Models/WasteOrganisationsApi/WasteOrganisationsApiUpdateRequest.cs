@@ -2,9 +2,9 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace EprPrnIntegration.Common.Models.WasteOrganisationApi;
+namespace EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
-public class OrganisationUpdateRequest
+public class WasteOrganisationsApiUpdateRequest
 {
     [JsonProperty("id")]
     public required string Id { get; set; }

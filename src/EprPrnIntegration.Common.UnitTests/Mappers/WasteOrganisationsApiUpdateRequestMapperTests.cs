@@ -1,11 +1,11 @@
 ﻿using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.WasteOrganisationApi;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers
 {
-    public class OrganisationUpdateRequestMapperTests
+    public class WasteOrganisationsApiUpdateRequestMapperTests
     {
         [Fact]
         public void MapsTopLevelFields()
@@ -30,7 +30,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = "DP"
             };
             
-            var result = OrganisationUpdateRequestMapper.Map(input);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
             
             result.Id.Should().Be(input.PEPRID);
             result.Name.Should().Be("Organisation's Name");
@@ -62,7 +62,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 TradingName = "Organisation's TradingName"
             };
             
-            var result = OrganisationUpdateRequestMapper.Map(input);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
 
             result.Address.Should().BeEquivalentTo(new Address
             {
@@ -93,7 +93,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 BusinessCountry = country
             };
         
-            var result = OrganisationUpdateRequestMapper.Map(producer);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             
             result.BusinessCountry.Should().Be(expectedBusinessCountry);
         }
@@ -114,7 +114,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 SubmissionYear = 2026
             };
         
-            var result = OrganisationUpdateRequestMapper.Map(producer);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             
             result.Registration.Should().BeEquivalentTo(new Registration
             {
@@ -127,7 +127,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void ThrowsForUnrecognisedStatus()
         {
-            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(new UpdatedProducersResponseV2
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
@@ -140,7 +140,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Fact]
         public void ThrowsForUnrecognisedOrganisationType()
         {
-            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(new UpdatedProducersResponseV2
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
@@ -158,7 +158,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = "some name"
             };
             
-            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
         }
         
         [Fact]
@@ -169,7 +169,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 PEPRID = Guid.NewGuid().ToString(),
             };
             
-            Assert.Throws<ArgumentException>(() => OrganisationUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
         }
     }
 }

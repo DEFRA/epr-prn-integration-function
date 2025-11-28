@@ -1,11 +1,11 @@
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.WasteOrganisationApi;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.Mappers;
 
-public static class OrganisationUpdateRequestMapper
+public static class WasteOrganisationsApiUpdateRequestMapper
 {
-    public static OrganisationUpdateRequest Map(UpdatedProducersResponseV2 updatedProducer)
+    public static WasteOrganisationsApiUpdateRequest Map(UpdatedProducersResponseV2 updatedProducer)
     {
         if (updatedProducer.PEPRID == null)
         {
@@ -17,7 +17,7 @@ public static class OrganisationUpdateRequestMapper
             throw new ArgumentException("OrganisationName is null");
         }
         
-        return new OrganisationUpdateRequest
+        return new WasteOrganisationsApiUpdateRequest
         {
             Id = updatedProducer.PEPRID,
             Name = updatedProducer.OrganisationName,

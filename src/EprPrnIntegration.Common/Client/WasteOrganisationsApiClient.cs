@@ -1,16 +1,16 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EprPrnIntegration.Common.Models.WasteOrganisationApi;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Common.Client;
 
-// A temporary stub for RREPW's producer endpoint
+// A temporary stub for the waste-organisations-api endpoint
 [ExcludeFromCodeCoverage]
-public class WasteOrganisationApiClient(
-    ILogger<WasteOrganisationApiClient> logger)
+public class WasteOrganisationsApiClient(
+    ILogger<WasteOrganisationsApiClient> logger)
 {
-    public Task Patch(OrganisationUpdateRequest request)
+    public Task Patch(WasteOrganisationsApiUpdateRequest request)
     {
         var json = JsonConvert.SerializeObject(new {
            id = request.Id,
