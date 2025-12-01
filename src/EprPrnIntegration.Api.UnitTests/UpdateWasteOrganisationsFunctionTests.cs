@@ -26,5 +26,7 @@ public class UpdateWasteOrganisationsFunctionTests
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
 
         await function.Run(new TimerInfo());
+        
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 }
