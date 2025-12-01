@@ -9,13 +9,11 @@ public class UpdateWasteOrganisationsFunction(
     ILogger<UpdateWasteOrganisationsFunction> logger)
 {
     [Function("UpdateWasteOrganisations")]
-    public async Task<bool> Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
         logger.LogInformation("UpdateWasteOrganisationsList function executed at: {ExecutionDateTime}", lastUpdate);
 
         await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", DateTime.UtcNow);
-
-        return true;
     }
 }
