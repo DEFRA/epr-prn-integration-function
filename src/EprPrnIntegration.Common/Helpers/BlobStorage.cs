@@ -6,8 +6,8 @@ namespace EprPrnIntegration.Common.Helpers;
 
 public interface IBlobStorage
 {
-    Task<T?> ReadJsonFromBlob<T>(string containerName, string blobName, CancellationToken cancellationToken = default);
-    Task WriteJsonToBlob<T>(string containerName, string blobName, T data, CancellationToken cancellationToken = default);
+    Task<T?> ReadJsonFromBlob<T>(string containerName, string blobName);
+    Task WriteJsonToBlob<T>(string containerName, string blobName, T data);
 }
 
 [ExcludeFromCodeCoverage] // This will have coverage at the integration-test level.
@@ -20,34 +20,34 @@ public class BlobStorage : IBlobStorage
         _blobServiceClient = blobServiceClient;
     }
 
-    public async Task<T?> ReadJsonFromBlob<T>(string containerName, string blobName, CancellationToken cancellationToken = default)
+    public async Task<T?> ReadJsonFromBlob<T>(string containerName, string blobName)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
         var blobClient = containerClient.GetBlobClient(blobName);
 
 
-        if (!await blobClient.ExistsAsync(cancellationToken))
+        if (!await blobClient.ExistsAsync())
         {
             return default;
         }
 
-        var response = await blobClient.DownloadContentAsync(cancellationToken);
+        var response = await blobClient.DownloadContentAsync();
         var content = response.Value.Content.ToString();
 
         return JsonSerializer.Deserialize<T>(content);
     }
 
-    public async Task WriteJsonToBlob<T>(string containerName, string blobName, T data, CancellationToken cancellationToken = default)
+    public async Task WriteJsonToBlob<T>(string containerName, string blobName, T data)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-        await containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+        await containerClient.CreateIfNotExistsAsync();
 
         var blobClient = containerClient.GetBlobClient(blobName);
 
         var json = JsonSerializer.Serialize(data);
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
 
-        await blobClient.UploadAsync(stream, overwrite: true, cancellationToken);
+        await blobClient.UploadAsync(stream, overwrite: true);
     }
 }
