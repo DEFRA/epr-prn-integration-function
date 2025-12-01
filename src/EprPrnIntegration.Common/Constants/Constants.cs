@@ -77,4 +77,9 @@
         public const string OrganisationRegNo = "CompanyRegNo";
         public const string ErrorComments = "Error Comments";
     }
+
+    public static class ObligationYearDefaults
+    {
+        public const string ObligationYear2025 = "2025";
+    }
 }

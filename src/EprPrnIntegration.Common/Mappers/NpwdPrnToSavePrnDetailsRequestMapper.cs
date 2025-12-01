@@ -1,12 +1,17 @@
 ﻿using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Common.Mappers;
 
 public static class NpwdPrnToSavePrnDetailsRequestMapper
 {
-    public static SavePrnDetailsRequest Map(NpwdPrn npwdPrn)
+    public static SavePrnDetailsRequest Map(NpwdPrn npwdPrn, IConfiguration config, ILogger logger)
     {
+        var resolvedYear = ObligationYearResolver.GetDefaultObligationYear(config, logger);
+
         return new SavePrnDetailsRequest
         {
             AccreditationNo = npwdPrn.AccreditationNo,
@@ -27,7 +32,7 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             IssuerRef = npwdPrn.IssuerRef ?? "", // Null is converted to empty for now this need discussion Data Arch
             MaterialOperationCode = ParseGuid(npwdPrn.MaterialOperationCode),
             ModifiedOn = npwdPrn.ModifiedOn,
-            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? "2025",
+            ObligationYear = npwdPrn.ObligationYear?.ToString() ?? resolvedYear,
             PrnSignatory = npwdPrn.PRNSignatory,
             PrnSignatoryPosition = npwdPrn.PRNSignatoryPosition,
             ProducerAgency = npwdPrn.ProducerAgency,
@@ -55,6 +60,6 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
         var val = evidenceNo.Substring(0, 2).Trim();
 
         return string.Equals(val, ExporterCodePrefixes.EaExport, StringComparison.InvariantCultureIgnoreCase)
-                || string.Equals(val, ExporterCodePrefixes.SepaExport, StringComparison.InvariantCultureIgnoreCase);
+               || string.Equals(val, ExporterCodePrefixes.SepaExport, StringComparison.InvariantCultureIgnoreCase);
     }
 }
