@@ -6,7 +6,8 @@ public enum FunctionName
 {
     UpdateProducersList,
     UpdatePrnsList,
-    FetchNpwdIssuedPrnsFunction
+    FetchNpwdIssuedPrnsFunction,
+    UpdateWasteOrganisations
 }
 
 public static class AzureFunctionInvokerContext
