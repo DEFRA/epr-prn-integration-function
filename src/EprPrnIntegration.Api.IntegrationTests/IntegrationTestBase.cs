@@ -1,4 +1,5 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
+using EprPrnIntegration.Common.Service;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
@@ -11,6 +12,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected CommonDataApi CommonDataApiStub = null!;
     protected NpwdApi NpwdApiStub = null!;
     protected PrnApi PrnApiStub = null!;
+    protected ILastUpdateService LastUpdateService = LastExecutedContext.LastUpdateService;
     private WireMockContext WireMockContext = null!;
 
     public async Task InitializeAsync()
