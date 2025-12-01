@@ -11,7 +11,8 @@ public class UpdateWasteOrganisationsFunction(
     [Function("UpdateWasteOrganisations")]
     public async Task<bool> Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
     {
-        logger.LogInformation("UpdateWasteOrganisationsList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        logger.LogInformation("UpdateWasteOrganisationsList function executed at: {ExecutionDateTime}", lastUpdate);
 
         await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", DateTime.UtcNow);
 
