@@ -8,32 +8,24 @@ public class LastUpdateService(IBlobStorage blobStorage) : ILastUpdateService
 {
     private const string ContainerName = "last-update-store";
 
-    public async Task<DateTime?> GetLastUpdate(string name)
+    public async Task<DateTime?> GetLastUpdate(string functionName)
     {
-        var blobName = $"{name}.json";
-        var data = await blobStorage.ReadJsonFromBlob<LastUpdateData>(ContainerName, blobName);
+        var blobName = $"{functionName}.txt";
+        var content = await blobStorage.ReadTextFromBlob(ContainerName, blobName);
 
-        if (data == null)
+        if (string.IsNullOrEmpty(content))
         {
             return null;
         }
 
-        return data.LastUpdate;
+        return DateTime.Parse(content);
     }
 
     public async Task SetLastUpdate(string name, DateTime lastUpdate)
     {
-        var blobName = $"{name}.json";
-        var data = new LastUpdateData
-        {
-            LastUpdate = lastUpdate
-        };
+        var blobName = $"{name}.txt";
+        var content = lastUpdate.ToString("O"); // ISO 8601 format
 
-        await blobStorage.WriteJsonToBlob(ContainerName, blobName, data);
-    }
-
-    private sealed class LastUpdateData
-    {
-        public DateTime LastUpdate { get; set; }
+        await blobStorage.WriteTextToBlob(ContainerName, blobName, content);
     }
 }
