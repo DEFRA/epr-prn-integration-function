@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using EprPrnIntegration.Common.Helpers;
 
 namespace EprPrnIntegration.Common.Service;
@@ -18,7 +19,7 @@ public class LastUpdateService(IBlobStorage blobStorage) : ILastUpdateService
             return null;
         }
 
-        return DateTime.Parse(content);
+        return DateTime.ParseExact(content, "O", CultureInfo.InvariantCulture, DateTimeStyles.None);
     }
 
     public async Task SetLastUpdate(string name, DateTime lastUpdate)
