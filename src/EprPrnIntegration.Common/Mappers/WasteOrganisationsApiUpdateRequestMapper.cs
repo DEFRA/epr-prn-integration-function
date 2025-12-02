@@ -74,7 +74,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         {
             Status = status,
             Type = type,
-            SubmissionYear = updatedProducer.RegistrationYear
+            RegistrationYear = updatedProducer.RegistrationYear
         };
     }
 }

@@ -120,7 +120,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                Status = expectedStatus,
                Type = expectedRegistrationType,
-               SubmissionYear = 2026,
+               RegistrationYear = 2026,
             });
         }
 
