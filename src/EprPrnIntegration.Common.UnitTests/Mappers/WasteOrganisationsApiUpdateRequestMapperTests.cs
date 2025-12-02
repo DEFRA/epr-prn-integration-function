@@ -32,7 +32,6 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
             
-            result.Id.Should().Be(input.PEPRID);
             result.Name.Should().Be("Organisation's Name");
             result.TradingName.Should().Be("Organisation's TradingName");
             result.CompaniesHouseNumber.Should().Be("some-company-number");
@@ -99,10 +98,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
-        [InlineData("deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
+        [InlineData("Registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
+        [InlineData("Deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
+        [InlineData("Registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
+        [InlineData("Deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
         public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2

@@ -19,7 +19,6 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         
         return new WasteOrganisationsApiUpdateRequest
         {
-            Id = updatedProducer.PEPRID,
             Name = updatedProducer.OrganisationName,
             TradingName = updatedProducer.TradingName,
             CompaniesHouseNumber = updatedProducer.CompaniesHouseNumber,
@@ -63,7 +62,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
         };
 
-        var status = (updatedProducer.Status) switch
+        var status = updatedProducer.Status?.ToLowerInvariant() switch
         {
             "registered" => RegistrationStatus.Registered,
             "deleted" => RegistrationStatus.Cancelled,
