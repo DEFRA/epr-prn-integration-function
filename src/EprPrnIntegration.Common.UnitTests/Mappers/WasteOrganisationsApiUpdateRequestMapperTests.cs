@@ -25,7 +25,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = "Organisation's Name",
                 TradingName = "Organisation's TradingName",
                 
-                SubmissionYear = 2025,
+                RegistrationYear = 2025,
                 Status = "registered",
                 OrganisationType = "DP"
             };
@@ -55,7 +55,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 
                 Status = "registered",
                 OrganisationType = "DP",
-                SubmissionYear = 2025,
+                RegistrationYear = 2025,
                 
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
@@ -89,7 +89,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "DP",
-                SubmissionYear = 2026,
+                RegistrationYear = 2026,
                 BusinessCountry = country
             };
         
@@ -111,7 +111,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = status,
                 OrganisationType = orgType,
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             };
         
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
@@ -133,7 +133,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "foobar",
                 OrganisationType = "DP",
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             }));
         }
         
@@ -146,7 +146,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "foobar",
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             }));
         }
 
