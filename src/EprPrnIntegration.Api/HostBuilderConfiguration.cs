@@ -124,6 +124,7 @@ public static class HostBuilderConfiguration
     {
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
         services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
+        services.Configure<WasteOrganisationsApiConfiguration>(configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
