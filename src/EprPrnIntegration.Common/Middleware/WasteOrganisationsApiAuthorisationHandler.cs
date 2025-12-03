@@ -8,19 +8,13 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
-[ExcludeFromCodeCoverage]
-public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
+[ExcludeFromCodeCoverage(Justification = "This will have test coverage via integration tests.")]
+public class WasteOrganisationsApiAuthorisationHandler(
+    IOptions<WasteOrganisationsApiConfiguration> config,
+    IHttpClientFactory httpClientFactory)
+    : DelegatingHandler
 {
-    private readonly WasteOrganisationsApiConfiguration _config;
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public WasteOrganisationsApiAuthorisationHandler(
-        IOptions<WasteOrganisationsApiConfiguration> config,
-        IHttpClientFactory httpClientFactory)
-    {
-        _config = config.Value;
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly WasteOrganisationsApiConfiguration _config = config.Value;
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -42,7 +36,7 @@ public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
-        using var httpClient = _httpClientFactory.CreateClient();
+        using var httpClient = httpClientFactory.CreateClient();
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _config.AccessTokenUrl);
         tokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", encodedCredentials);
@@ -55,7 +49,7 @@ public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
         };
 
         tokenRequest.Content = new FormUrlEncodedContent(formData);
-
+        
         var response = await httpClient.SendAsync(tokenRequest, cancellationToken);
         response.EnsureSuccessStatusCode();
 

@@ -168,7 +168,7 @@ services:
       FetchNpwdPrnsPollingLagSeconds: "60"
       UpdatePrnsMaxRows: "100"
       UpdateProducersBatchSize: "100"
-      WasteOrganisationsApi__BaseUrl: ""
+      WasteOrganisationsApi__BaseUrl: "http://wiremock"
       WasteOrganisationsApi__ClientId: ""
       WasteOrganisationsApi__ClientSecret: ""
       WasteOrganisationsApi__AccessTokenUrl: ""

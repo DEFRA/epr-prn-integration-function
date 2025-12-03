@@ -12,6 +12,8 @@ using EprPrnIntegration.Common.RESTServices.CommonService;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService;
+using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
@@ -53,6 +55,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
+        services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();

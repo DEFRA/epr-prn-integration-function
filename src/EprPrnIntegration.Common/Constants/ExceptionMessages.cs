@@ -9,6 +9,7 @@
         public const string PrnServiceEndPointNameMissing = "PrnService EndPointName configuration is missing";
         public const string CommonDataServiceBaseUrlMissing = "CommonDataService BaseUrl configuration is missing";
         public const string CommonDataServiceEndPointNameMissing = "CommonDataService EndPointName configuration is missing";
+        public const string WasteOrganisationsApiBaseUrlMissing = "WasteOrganisationsApi BaseUrl configuration is missing";
 
         // HttpGovPayService exceptions
         public const string BearerTokenNull = "Bearer token is null. Unable to initiate payment.";

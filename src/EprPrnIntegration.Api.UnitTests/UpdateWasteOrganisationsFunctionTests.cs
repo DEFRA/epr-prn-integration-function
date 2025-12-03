@@ -1,4 +1,5 @@
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -11,12 +12,13 @@ public class UpdateWasteOrganisationsFunctionTests
 {
     private readonly Mock<ILogger<UpdateWasteOrganisationsFunction>> _loggerMock = new();
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
+    private readonly Mock<IWasteOrganisationsService> _wasteOrganisationsService = new();
 
     private readonly UpdateWasteOrganisationsFunction function;
 
     public UpdateWasteOrganisationsFunctionTests()
     {
-        function = new UpdateWasteOrganisationsFunction(_lastUpdateServiceMock.Object, _loggerMock.Object);
+        function = new UpdateWasteOrganisationsFunction(_lastUpdateServiceMock.Object, _loggerMock.Object, _wasteOrganisationsService.Object);
     }
 
     [Fact]
@@ -24,6 +26,7 @@ public class UpdateWasteOrganisationsFunctionTests
     {
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+        _wasteOrganisationsService.Setup(x => x.GetOrganisation(It.IsAny<string>())).ReturnsAsync(true);
 
         await function.Run(new TimerInfo());
         
