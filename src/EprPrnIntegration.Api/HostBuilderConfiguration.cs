@@ -95,6 +95,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
         services.AddTransient<CommonDataServiceAuthorisationHandler>();
+        services.AddTransient<WasteOrganisationsApiAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -116,6 +117,11 @@ public static class HostBuilderConfiguration
             .AddHttpMessageHandler<NpwdOAuthMiddleware>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
+            .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.WasteOrganisations));
 
         return services;
     }
