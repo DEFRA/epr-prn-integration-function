@@ -13,9 +13,6 @@ public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config;
     private readonly IHttpClientFactory _httpClientFactory;
-    private string? _cachedToken;
-    private DateTime _tokenExpiry = DateTime.MinValue;
-    private readonly SemaphoreSlim _tokenLock = new(1, 1);
 
     public WasteOrganisationsApiAuthorisationHandler(
         IOptions<WasteOrganisationsApiConfiguration> config,
@@ -34,40 +31,13 @@ public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
             return await base.SendAsync(request, cancellationToken);
         }
 
-        var token = await GetAccessTokenAsync(cancellationToken);
+        var token = await GetCognitoTokenAsync(cancellationToken);
         request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, token);
 
         return await base.SendAsync(request, cancellationToken);
     }
 
-    private async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
-    {
-        // Check if we have a valid cached token
-        if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
-        {
-            return _cachedToken;
-        }
-
-        await _tokenLock.WaitAsync(cancellationToken);
-        try
-        {
-            // Double-check after acquiring lock
-            if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
-            {
-                return _cachedToken;
-            }
-
-            // Get new token from Cognito
-            var token = await FetchCognitoTokenAsync(cancellationToken);
-            return token;
-        }
-        finally
-        {
-            _tokenLock.Release();
-        }
-    }
-
-    private async Task<string> FetchCognitoTokenAsync(CancellationToken cancellationToken)
+    private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
@@ -97,13 +67,7 @@ public class WasteOrganisationsApiAuthorisationHandler : DelegatingHandler
             throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
-        _cachedToken = tokenResponse.AccessToken;
-
-        // Set token expiry with a 5-minute buffer before actual expiration
-        var expiresIn = tokenResponse.ExpiresIn > 300 ? tokenResponse.ExpiresIn - 300 : tokenResponse.ExpiresIn;
-        _tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn);
-
-        return _cachedToken;
+        return tokenResponse.AccessToken;
     }
 
     private class CognitoTokenResponse
