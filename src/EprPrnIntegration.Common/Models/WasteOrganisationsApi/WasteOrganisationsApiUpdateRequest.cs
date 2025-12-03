@@ -6,9 +6,6 @@ namespace EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 public class WasteOrganisationsApiUpdateRequest
 {
-    [JsonProperty("id")]
-    public required string Id { get; set; }
-
     [JsonProperty("name")]
     public required string Name { get; set; }
 
@@ -35,18 +32,18 @@ public class Address
 
     [JsonProperty("addressLine2")]
     public string? AddressLine2 { get; set; }
-
-    [JsonProperty("postcode")]
-    public string? Postcode { get; set; }
-
-    [JsonProperty("country")]
-    public string? Country { get; set; }
+    
+    [JsonProperty("town")]
+    public string? Town { get; set; }
 
     [JsonProperty("county")]
     public string? County { get; set; }
 
-    [JsonProperty("town")]
-    public string? Town { get; set; }
+    [JsonProperty("postcode")]
+    public string? Postcode { get; set; }
+    
+    [JsonProperty("country")]
+    public string? Country { get; set; }
 }
 
 public class Registration
@@ -57,8 +54,8 @@ public class Registration
     [JsonProperty("type")]
     public required RegistrationType Type { get; set; }
 
-    [JsonProperty("submissionYear")]
-    public required int SubmissionYear { get; set; }
+    [JsonProperty("registrationYear")]
+    public required int RegistrationYear { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]
@@ -74,13 +71,13 @@ public enum RegistrationStatus
 [JsonConverter(typeof(StringEnumConverter))]
 public enum RegistrationType
 {
-    [EnumMember(Value = "SMALL-PRODUCER")]
+    [EnumMember(Value = "SMALL_PRODUCER")]
     SmallProducer,
 
-    [EnumMember(Value = "LARGE-PRODUCER")]
+    [EnumMember(Value = "LARGE_PRODUCER")]
     LargeProducer,
 
-    [EnumMember(Value = "COMPLIANCE-SCHEME")]
+    [EnumMember(Value = "COMPLIANCE_SCHEME")]
     ComplianceScheme,
 
     [EnumMember(Value = "REPROCESSOR")]

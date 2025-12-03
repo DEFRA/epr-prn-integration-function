@@ -13,7 +13,6 @@ public class WasteOrganisationsApiClient(
     public Task Patch(WasteOrganisationsApiUpdateRequest request)
     {
         var json = JsonConvert.SerializeObject(new {
-           id = request.Id,
            registration = new
            {
                status = request.Registration.Status,

@@ -25,14 +25,13 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = "Organisation's Name",
                 TradingName = "Organisation's TradingName",
                 
-                SubmissionYear = 2025,
+                RegistrationYear = 2025,
                 Status = "registered",
                 OrganisationType = "DP"
             };
             
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
             
-            result.Id.Should().Be(input.PEPRID);
             result.Name.Should().Be("Organisation's Name");
             result.TradingName.Should().Be("Organisation's TradingName");
             result.CompaniesHouseNumber.Should().Be("some-company-number");
@@ -55,7 +54,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 
                 Status = "registered",
                 OrganisationType = "DP",
-                SubmissionYear = 2025,
+                RegistrationYear = 2025,
                 
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
@@ -89,7 +88,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "DP",
-                SubmissionYear = 2026,
+                RegistrationYear = 2026,
                 BusinessCountry = country
             };
         
@@ -99,10 +98,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
-        [InlineData("deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
+        [InlineData("Registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
+        [InlineData("Deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
+        [InlineData("Registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
+        [InlineData("Deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
         public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2
@@ -111,7 +110,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = status,
                 OrganisationType = orgType,
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             };
         
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
@@ -120,7 +119,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                Status = expectedStatus,
                Type = expectedRegistrationType,
-               SubmissionYear = 2026,
+               RegistrationYear = 2026,
             });
         }
 
@@ -133,7 +132,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "foobar",
                 OrganisationType = "DP",
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             }));
         }
         
@@ -146,7 +145,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "foobar",
-                SubmissionYear = 2026
+                RegistrationYear = 2026
             }));
         }
 
