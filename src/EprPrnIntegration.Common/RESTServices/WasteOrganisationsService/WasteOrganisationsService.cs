@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
@@ -27,7 +28,28 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
 
         public async Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation)
         {
-            await Put($"{id}", organisation, CancellationToken.None);
+            LogPayload(id, organisation);
+
+            try
+            {
+                await Put($"{id}", organisation, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                // Due to CDP connectivity, this will fail in real Azure workloads.
+                // to facilitate testing until CDP is connected, log and continue. 
+                // This can be removed once we advance past happy-path stories.
+                _logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing", id);
+            }
+        }
+
+        // This function is temporary for testing, since we don't yet have a working instance of the service.
+        // This MUST be removed before promoting to PRE prod,
+        // since it runs the risk of leaking PII with production-like data.
+        private void LogPayload(string id, WasteOrganisationsApiUpdateRequest organisation)
+        {
+            var json = JsonSerializer.Serialize(organisation, new JsonSerializerOptions { WriteIndented = true });
+            _logger.LogInformation("Sending organisation update for {OrganisationId}:\n{Json}", id, json);
         }
     }
 }
