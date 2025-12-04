@@ -25,9 +25,9 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
     {
         private readonly ILogger<WasteOrganisationsService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        public Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation)
+        public async Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation)
         {
-            throw new NotImplementedException();
+            await Put($"{id}", organisation, CancellationToken.None);
         }
     }
 }
