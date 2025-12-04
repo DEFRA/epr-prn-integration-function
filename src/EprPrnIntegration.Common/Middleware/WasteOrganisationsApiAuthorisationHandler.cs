@@ -47,7 +47,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
-        using var httpClient = httpClientFactory.CreateClient();
+        var httpClient = httpClientFactory.CreateClient();
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _config.AccessTokenUrl);
         tokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", encodedCredentials);
