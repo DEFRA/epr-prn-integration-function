@@ -98,7 +98,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
         services.AddTransient<CommonDataServiceAuthorisationHandler>();
-        services.AddTransient<WasteOrganisationsApiAuthorisationHandler>();
+        services.AddSingleton<WasteOrganisationsApiAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
