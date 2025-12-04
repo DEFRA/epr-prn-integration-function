@@ -2,7 +2,6 @@
 using System.Net;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
-using Duende.AccessTokenManagement;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
@@ -99,6 +98,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
         services.AddTransient<CommonDataServiceAuthorisationHandler>();
+        services.AddTransient<WasteOrganisationsApiAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -107,7 +107,7 @@ public static class HostBuilderConfiguration
         services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IPrnService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Prn));
-
+        
         services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
         .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IOrganisationService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Organisation));
@@ -121,19 +121,8 @@ public static class HostBuilderConfiguration
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
 
-        var wasteOrgConfig = configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName)
-            .Get<WasteOrganisationsApiConfiguration>();
-
-        services.AddClientCredentialsTokenManagement()
-            .AddClient(Common.Constants.HttpClientNames.WasteOrganisations, client =>
-            {
-                client.TokenEndpoint = new Uri(wasteOrgConfig?.AccessTokenUrl!);
-                client.ClientId = ClientId.Parse(wasteOrgConfig?.ClientId!);
-                client.ClientSecret = ClientSecret.Parse(wasteOrgConfig?.ClientSecret!);
-            });
-
         services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
-            .AddClientCredentialsTokenHandler(ClientCredentialsClientName.Parse(Common.Constants.HttpClientNames.WasteOrganisations))
+            .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.WasteOrganisations));
 
