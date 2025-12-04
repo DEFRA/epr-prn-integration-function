@@ -120,6 +120,10 @@ public static class HostBuilderConfiguration
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
 
+        services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
+        
         return services;
     }
 
