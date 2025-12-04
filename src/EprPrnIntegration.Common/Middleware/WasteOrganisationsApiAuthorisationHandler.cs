@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
@@ -11,7 +12,8 @@ namespace EprPrnIntegration.Common.Middleware;
 [ExcludeFromCodeCoverage(Justification = "This will have test coverage via integration tests.")]
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    ILogger<WasteOrganisationsApiAuthorisationHandler> logger)
     : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
@@ -36,8 +38,11 @@ public class WasteOrganisationsApiAuthorisationHandler(
     {
         if (_cachedAccessToken != null)
         {
+            logger.LogInformation("Using cached Cognito access token");
             return _cachedAccessToken;
         }
+
+        logger.LogInformation("Obtaining fresh Cognito access token");
 
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
@@ -68,6 +73,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         }
 
         _cachedAccessToken = tokenResponse.AccessToken;
+        logger.LogInformation("Successfully obtained and cached Cognito access token");
         return _cachedAccessToken;
     }
 
