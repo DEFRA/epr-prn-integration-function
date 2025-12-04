@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentAssertions;
 using Xunit;
 
@@ -16,12 +17,24 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
-            
+
             entries.Count.Should().Be(1);
-            
+
             var entry = entries[0];
 
             entry.Request.Body!.Should().Contain("acme");
+
+            var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
+
+            jsonDocument.RootElement
+                .GetProperty("registration")
+                .GetProperty("type")
+                .GetString().Should().Be("COMPLIANCE_SCHEME");
+            
+            jsonDocument.RootElement
+                .GetProperty("registration")
+                .GetProperty("status")
+                .GetString().Should().Be("REGISTERED");
         });
     }
     
