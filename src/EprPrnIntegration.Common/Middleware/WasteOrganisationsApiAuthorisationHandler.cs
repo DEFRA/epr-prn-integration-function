@@ -15,6 +15,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
     : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
+    private string? _cachedAccessToken;
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -33,6 +34,11 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
+        if (_cachedAccessToken != null)
+        {
+            return _cachedAccessToken;
+        }
+
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
@@ -49,7 +55,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         };
 
         tokenRequest.Content = new FormUrlEncodedContent(formData);
-        
+
         var response = await httpClient.SendAsync(tokenRequest, cancellationToken);
         response.EnsureSuccessStatusCode();
 
@@ -61,7 +67,8 @@ public class WasteOrganisationsApiAuthorisationHandler(
             throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
-        return tokenResponse.AccessToken;
+        _cachedAccessToken = tokenResponse.AccessToken;
+        return _cachedAccessToken;
     }
 
     private class CognitoTokenResponse
