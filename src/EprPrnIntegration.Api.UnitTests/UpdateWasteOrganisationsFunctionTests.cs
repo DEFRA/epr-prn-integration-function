@@ -35,15 +35,15 @@ public class UpdateWasteOrganisationsFunctionTests
                 OrganisationName = "Producer 1",
                 Status = "registered",
                 OrganisationType = "DP",
-                RegistrationYear = 2025
+                RegistrationYear = "2025"
             },
             new()
             {
                 PEPRID = "producer-2",
                 OrganisationName = "Producer 2",
                 Status = "registered",
-                OrganisationType = "S",
-                RegistrationYear = 2025
+                OrganisationType = "CS",
+                RegistrationYear = "2025"
             },
             new()
             {
@@ -51,7 +51,7 @@ public class UpdateWasteOrganisationsFunctionTests
                 OrganisationName = "Producer 3",
                 Status = "deleted",
                 OrganisationType = "DP",
-                RegistrationYear = 2024
+                RegistrationYear = "2024"
             }
         };
 

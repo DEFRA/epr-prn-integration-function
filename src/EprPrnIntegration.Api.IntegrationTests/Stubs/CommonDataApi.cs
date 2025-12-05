@@ -51,10 +51,9 @@ public class CommonDataApi(WireMockContext wireMock)
                         peprid = id,
                         organisationName = name,
                         tradingName = "Acme Plastics",
-                        organisationType = "S",
+                        organisationType = "CS",
                         status = "registered",
                         companiesHouseNumber = "12345678",
-                        organisationId = "ORG-001",
                         addressLine1 = "123 Industrial Estate",
                         addressLine2 = "Unit 5",
                         town = "Manchester",
@@ -63,7 +62,7 @@ public class CommonDataApi(WireMockContext wireMock)
                         postcode = "M1 1AA",
                         businessCountry = "England",
                         updatedDateTime = "2025-01-15T10:30:00Z",
-                        registrationYear = 2025
+                        registrationYear = "2025"
                     }
                 }))
         );
