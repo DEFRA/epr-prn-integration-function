@@ -9,7 +9,6 @@ public class UpdatedProducersResponseV2
     public string? TradingName { get; set; }
     public string? OrganisationType { get; set; }
     public string? CompaniesHouseNumber { get; set; }
-    public string? OrganisationId { get; set; }
     public string? AddressLine1 { get; set; }
     public string? AddressLine2 { get; set; }
     public string? Town { get; set; }
