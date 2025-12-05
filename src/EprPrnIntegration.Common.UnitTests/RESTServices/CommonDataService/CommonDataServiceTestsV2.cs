@@ -51,8 +51,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.CommonService
             // Arrange
             var mockData = new List<UpdatedProducersResponseV2>
             {
-                new UpdatedProducersResponseV2 { OrganisationName = "Org1", TradingName = "Trade1" },
-                new UpdatedProducersResponseV2 { OrganisationName = "Org2", TradingName = "Trade2" }
+                new UpdatedProducersResponseV2 { OrganisationName = "Org1", TradingName = "Trade1", RegistrationYear = "2024" },
+                new UpdatedProducersResponseV2 { OrganisationName = "Org2", TradingName = "Trade2", RegistrationYear = "2025" }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var commonDataService = CreateCommonDataService(mockDataJson);
