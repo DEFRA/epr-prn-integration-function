@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -8,7 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Api.Functions;
 
-[ExcludeFromCodeCoverage]
 public class UpdateWasteOrganisationsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<UpdateWasteOrganisationsFunction> logger,
