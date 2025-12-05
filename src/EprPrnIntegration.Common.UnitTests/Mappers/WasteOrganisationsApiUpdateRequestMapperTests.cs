@@ -75,12 +75,12 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("England", BusinessCountry.England)]
-        [InlineData("Northern Ireland", BusinessCountry.NorthernIreland)]
-        [InlineData("Wales", BusinessCountry.Wales)]
-        [InlineData("Scotland", BusinessCountry.Scotland)]
+        [InlineData("England", "GB-ENG")]
+        [InlineData("Northern Ireland", "GB-NIR")]
+        [InlineData("Wales", "GB-WLS")]
+        [InlineData("Scotland", "GB-SCT")]
         [InlineData("", null)]
-        public void MapsBusinessCountry(string country, BusinessCountry? expectedBusinessCountry)
+        public void MapsBusinessCountry(string country, string? expectedBusinessCountry)
         {
             var producer = new UpdatedProducersResponseV2
             {
@@ -91,18 +91,18 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 RegistrationYear = "2026",
                 BusinessCountry = country
             };
-        
+
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            
+
             result.BusinessCountry.Should().Be(expectedBusinessCountry);
         }
 
         [Theory]
-        [InlineData("Registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
-        [InlineData("Deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("Registered", "CS", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("Deleted", "CS", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
-        public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
+        [InlineData("Registered", "DP", "REGISTERED", "LARGE_PRODUCER")]
+        [InlineData("Deleted", "DP", "CANCELLED", "LARGE_PRODUCER")]
+        [InlineData("Registered", "CS", "REGISTERED", "COMPLIANCE_SCHEME")]
+        [InlineData("Deleted", "CS", "CANCELLED", "COMPLIANCE_SCHEME")]
+        public void MapsRegistration(string status, string orgType, string expectedStatus, string expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2
             {
@@ -112,9 +112,9 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = orgType,
                 RegistrationYear = "2026"
             };
-        
+
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            
+
             result.Registration.Should().BeEquivalentTo(new Registration
             {
                Status = expectedStatus,

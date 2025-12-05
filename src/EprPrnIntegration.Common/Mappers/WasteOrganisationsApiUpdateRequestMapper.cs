@@ -41,14 +41,14 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         };
     }
 
-    private static BusinessCountry? MapBusinessCountry(string? businessCountry)
+    private static string? MapBusinessCountry(string? businessCountry)
     {
         return (businessCountry) switch
         {
-            "England" => BusinessCountry.England,
-            "Northern Ireland" => BusinessCountry.NorthernIreland,
-            "Scotland" => BusinessCountry.Scotland,
-            "Wales" => BusinessCountry.Wales,
+            "England" => "GB-ENG",
+            "Northern Ireland" => "GB-NIR",
+            "Scotland" => "GB-SCT",
+            "Wales" => "GB-WLS",
             _ => null
         };
     }
@@ -57,15 +57,15 @@ public static class WasteOrganisationsApiUpdateRequestMapper
     {
         var type = (updatedProducer.OrganisationType) switch
         {
-            "DP" => RegistrationType.LargeProducer,
-            "CS" => RegistrationType.ComplianceScheme,
+            "DP" => "LARGE_PRODUCER",
+            "CS" => "COMPLIANCE_SCHEME",
             _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
         };
 
         var status = updatedProducer.Status?.ToLowerInvariant() switch
         {
-            "registered" => RegistrationStatus.Registered,
-            "deleted" => RegistrationStatus.Cancelled,
+            "registered" => "REGISTERED",
+            "deleted" => "CANCELLED",
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
         };
 
