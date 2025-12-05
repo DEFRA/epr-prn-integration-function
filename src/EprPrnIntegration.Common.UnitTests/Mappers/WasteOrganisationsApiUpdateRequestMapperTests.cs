@@ -100,8 +100,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Theory]
         [InlineData("Registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
         [InlineData("Deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("Registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("Deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
+        [InlineData("Registered", "CS", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
+        [InlineData("Deleted", "CS", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
         public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2

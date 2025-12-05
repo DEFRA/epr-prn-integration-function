@@ -58,7 +58,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         var type = (updatedProducer.OrganisationType) switch
         {
             "DP" => RegistrationType.LargeProducer,
-            "S" => RegistrationType.ComplianceScheme,
+            "CS" => RegistrationType.ComplianceScheme,
             _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
         };
 
