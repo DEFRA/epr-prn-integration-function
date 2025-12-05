@@ -51,8 +51,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.CommonService
             // Arrange
             var mockData = new List<UpdatedProducersResponseV2>
             {
-                new UpdatedProducersResponseV2 { OrganisationName = "Org1", TradingName = "Trade1", OrganisationId = "1" },
-                new UpdatedProducersResponseV2 { OrganisationName = "Org2", TradingName = "Trade2", OrganisationId = "2" }
+                new UpdatedProducersResponseV2 { OrganisationName = "Org1", TradingName = "Trade1", RegistrationYear = "2024" },
+                new UpdatedProducersResponseV2 { OrganisationName = "Org2", TradingName = "Trade2", RegistrationYear = "2025" }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var commonDataService = CreateCommonDataService(mockDataJson);
@@ -68,7 +68,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.CommonService
             result.Should().NotBeNullOrEmpty();
             result.Should().HaveCount(2);
             result[0].OrganisationName.Should().Be("Org1");
-            result[1].OrganisationId.Should().Be("2");
+            result[1].OrganisationName.Should().Be("Org2");
         }
 
         [Fact]

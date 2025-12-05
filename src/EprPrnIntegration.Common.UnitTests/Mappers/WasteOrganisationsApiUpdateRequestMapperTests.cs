@@ -24,8 +24,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
                 TradingName = "Organisation's TradingName",
-                
-                RegistrationYear = 2025,
+
+                RegistrationYear = "2025",
                 Status = "registered",
                 OrganisationType = "DP"
             };
@@ -51,11 +51,11 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Postcode = "postcode",
                 Country = "UK",
                 
-                
+
                 Status = "registered",
                 OrganisationType = "DP",
-                RegistrationYear = 2025,
-                
+                RegistrationYear = "2025",
+
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
                 TradingName = "Organisation's TradingName"
@@ -88,7 +88,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "DP",
-                RegistrationYear = 2026,
+                RegistrationYear = "2026",
                 BusinessCountry = country
             };
         
@@ -100,8 +100,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Theory]
         [InlineData("Registered", "DP", RegistrationStatus.Registered, RegistrationType.LargeProducer)]
         [InlineData("Deleted", "DP", RegistrationStatus.Cancelled, RegistrationType.LargeProducer)]
-        [InlineData("Registered", "S", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
-        [InlineData("Deleted", "S", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
+        [InlineData("Registered", "CS", RegistrationStatus.Registered, RegistrationType.ComplianceScheme)]
+        [InlineData("Deleted", "CS", RegistrationStatus.Cancelled, RegistrationType.ComplianceScheme)]
         public void MapsRegistration(string status, string orgType, RegistrationStatus expectedStatus, RegistrationType expectedRegistrationType)
         {
             var producer = new UpdatedProducersResponseV2
@@ -110,7 +110,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = status,
                 OrganisationType = orgType,
-                RegistrationYear = 2026
+                RegistrationYear = "2026"
             };
         
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
@@ -132,7 +132,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "foobar",
                 OrganisationType = "DP",
-                RegistrationYear = 2026
+                RegistrationYear = "2026"
             }));
         }
         
@@ -145,7 +145,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "foobar",
-                RegistrationYear = 2026
+                RegistrationYear = "2026"
             }));
         }
 
@@ -154,9 +154,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         {
             var producer = new UpdatedProducersResponseV2
             {
-                OrganisationName = "some name"
+                OrganisationName = "some name",
+                RegistrationYear = "2026"
             };
-            
+
             Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
         }
         
@@ -166,8 +167,24 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             var producer = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
+                RegistrationYear = "2026"
             };
-            
+
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+        }
+
+        [Fact]
+        public void ThrowsForInvalidRegistrationYear()
+        {
+            var producer = new UpdatedProducersResponseV2
+            {
+                PEPRID = Guid.NewGuid().ToString(),
+                OrganisationName = Guid.NewGuid().ToString(),
+                Status = "registered",
+                OrganisationType = "DP",
+                RegistrationYear = "not-a-number"
+            };
+
             Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
         }
     }

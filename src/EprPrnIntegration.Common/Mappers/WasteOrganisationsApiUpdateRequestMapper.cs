@@ -58,7 +58,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         var type = (updatedProducer.OrganisationType) switch
         {
             "DP" => RegistrationType.LargeProducer,
-            "S" => RegistrationType.ComplianceScheme,
+            "CS" => RegistrationType.ComplianceScheme,
             _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
         };
 
@@ -69,11 +69,16 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
         };
 
+        if (!int.TryParse(updatedProducer.RegistrationYear, out var registrationYear))
+        {
+            throw new ArgumentException($"RegistrationYear '{updatedProducer.RegistrationYear}' is not a valid integer");
+        }
+
         return new Registration
         {
             Status = status,
             Type = type,
-            RegistrationYear = updatedProducer.RegistrationYear
+            RegistrationYear = registrationYear
         };
     }
 }
