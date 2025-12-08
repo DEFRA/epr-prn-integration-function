@@ -74,4 +74,37 @@ public class UpdateWasteOrganisationsFunctionTests
             Times.Once);
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
+
+    [Fact]
+    public async Task WhenCommonDataServiceThrows_DoesNotSetLastUpdateTime()
+    {
+        var expectedException = new HttpRequestException("Service unavailable");
+
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _commonDataService.Setup(x =>
+                x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expectedException);
+
+        await _function.Run(new TimerInfo());
+
+        // Verify last update was NOT set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task WhenCommonDataReturnsZeroItems_DoesNotSetLastUpdateTime()
+    {
+        var emptyProducersList = new List<UpdatedProducersResponseV2>();
+
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+        _commonDataService.Setup(x =>
+                x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(emptyProducersList);
+
+        await _function.Run(new TimerInfo());
+
+        // Verify last update was NOT set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
+    }
 }
