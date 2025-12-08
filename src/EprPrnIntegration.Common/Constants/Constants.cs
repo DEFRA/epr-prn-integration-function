@@ -17,6 +17,7 @@
         public const string Organisation = "OrganisationClient";
         public const string Account = "AccountClient";
         public const string CommonData = "CommonDataClient";
+        public const string WasteOrganisations = "WasteOrganisations";
     }
 
     public static class HttpHeaderNames

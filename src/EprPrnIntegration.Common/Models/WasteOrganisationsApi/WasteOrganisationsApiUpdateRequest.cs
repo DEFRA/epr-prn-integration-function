@@ -1,104 +1,57 @@
-﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿using System.Text.Json.Serialization;
 
 namespace EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 public class WasteOrganisationsApiUpdateRequest
 {
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public required string Name { get; set; }
 
-    [JsonProperty("tradingName")]
+    [JsonPropertyName("tradingName")]
     public string? TradingName { get; set; }
 
-    [JsonProperty("businessCountry")]
-    public BusinessCountry? BusinessCountry { get; set; }
+    [JsonPropertyName("businessCountry")]
+    public string? BusinessCountry { get; set; }
 
-    [JsonProperty("companiesHouseNumber")]
+    [JsonPropertyName("companiesHouseNumber")]
     public string? CompaniesHouseNumber { get; set; }
 
-    [JsonProperty("address")]
+    [JsonPropertyName("address")]
     public required Address Address { get; set; }
 
-    [JsonProperty("registration")]
+    [JsonPropertyName("registration")]
     public required Registration Registration { get; set; }
 }
 
 public class Address
 {
-    [JsonProperty("addressLine1")]
+    [JsonPropertyName("addressLine1")]
     public string? AddressLine1 { get; set; }
 
-    [JsonProperty("addressLine2")]
+    [JsonPropertyName("addressLine2")]
     public string? AddressLine2 { get; set; }
-    
-    [JsonProperty("town")]
+
+    [JsonPropertyName("town")]
     public string? Town { get; set; }
 
-    [JsonProperty("county")]
+    [JsonPropertyName("county")]
     public string? County { get; set; }
 
-    [JsonProperty("postcode")]
+    [JsonPropertyName("postcode")]
     public string? Postcode { get; set; }
-    
-    [JsonProperty("country")]
+
+    [JsonPropertyName("country")]
     public string? Country { get; set; }
 }
 
 public class Registration
 {
-    [JsonProperty("status")]
-    public required RegistrationStatus Status { get; set; }
+    [JsonPropertyName("status")]
+    public required string Status { get; set; }
 
-    [JsonProperty("type")]
-    public required RegistrationType Type { get; set; }
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
 
-    [JsonProperty("registrationYear")]
+    [JsonPropertyName("registrationYear")]
     public required int RegistrationYear { get; set; }
-}
-
-[JsonConverter(typeof(StringEnumConverter))]
-public enum RegistrationStatus
-{
-    [EnumMember(Value = "REGISTERED")]
-    Registered,
-
-    [EnumMember(Value = "CANCELLED")]
-    Cancelled
-}
-
-[JsonConverter(typeof(StringEnumConverter))]
-public enum RegistrationType
-{
-    [EnumMember(Value = "SMALL_PRODUCER")]
-    SmallProducer,
-
-    [EnumMember(Value = "LARGE_PRODUCER")]
-    LargeProducer,
-
-    [EnumMember(Value = "COMPLIANCE_SCHEME")]
-    ComplianceScheme,
-
-    [EnumMember(Value = "REPROCESSOR")]
-    Reprocessor,
-
-    [EnumMember(Value = "EXPORTER")]
-    Exporter
-}
-
-[JsonConverter(typeof(StringEnumConverter))]
-public enum BusinessCountry
-{
-    [EnumMember(Value = "GB-ENG")]
-    England,
-
-    [EnumMember(Value = "GB-NIR")]
-    NorthernIreland,
-
-    [EnumMember(Value = "GB-SCT")]
-    Scotland,
-
-    [EnumMember(Value = "GB-WLS")]
-    Wales
 }
