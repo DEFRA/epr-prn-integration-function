@@ -72,4 +72,57 @@ public class CommonDataApi(WireMockContext wireMock)
 
         return id;
     }
+
+    public async Task<string> HasV2UpdateForWithTransientFailures(string name)
+    {
+        var id = Guid.NewGuid().ToString();
+
+        var responseData = new[]
+        {
+            new
+            {
+                peprid = id,
+                organisationName = name,
+                tradingName = "Acme Plastics",
+                organisationType = "CS",
+                status = "registered",
+                companiesHouseNumber = "12345678",
+                addressLine1 = "123 Industrial Estate",
+                addressLine2 = "Unit 5",
+                town = "Manchester",
+                county = "Greater Manchester",
+                country = "England",
+                postcode = "M1 1AA",
+                businessCountry = "England",
+                updatedDateTime = "2025-01-15T10:30:00Z",
+                registrationYear = "2025"
+            }
+        };
+
+        var scenarioName = "TransientFailure-" + Guid.NewGuid();
+
+        // First mapping: return 503 and transition to "Attempt1" state
+        var failureMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
+        failureMapping.Given(builder =>
+            builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/updated-producers"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.ServiceUnavailable))
+                .WithScenario(scenarioName)
+                .WithSetStateTo("Attempt1")
+        );
+        var failureMappingStatus= await failureMapping.BuildAndPostAsync();
+        Assert.NotNull(failureMappingStatus.Guid);
+
+        // Second mapping: return 200 when in "Attempt1" state
+        var successMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
+        successMapping.Given(builder =>
+            builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/updated-producers"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(responseData))
+                .WithScenario(scenarioName)
+                .WithWhenStateIs("Attempt1")
+        );
+        var successMappingStatus = await successMapping.BuildAndPostAsync();
+        Assert.NotNull(successMappingStatus.Guid);
+
+        return id;
+    }
 }
