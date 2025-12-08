@@ -39,7 +39,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     }
     
     [Fact]
-    public async Task WhenAzureFunctionIsInvoked_UpdatesLastUpdatedTimestamp()
+    public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
         var id = await CommonDataApiStub.HasV2UpdateFor("acme");
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
@@ -70,6 +70,28 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries.Count.Should().Be(1);
             entries[0].Request.Body!.Should().Contain("acme-resilient");
+        });
+    }
+
+    [Fact]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
+    {
+        var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
+        await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id);
+
+        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+
+            entries.Count.Should().BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
+            entries[0].Request.Body!.Should().Contain("acme-transient");
+
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().BeAfter(before);
         });
     }
 }
