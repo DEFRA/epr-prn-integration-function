@@ -8,11 +8,14 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class WasteOrganisationsApi(WireMockContext wireMock)
 {
-    public async Task AcceptsOrganisation(string id)
+    public async Task AcceptsOrganisation(string id, string bearerToken)
     {
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
+            builder.WithRequest(request => request
+                    .UsingPut()
+                    .WithPath($"/organisations/{id}/")
+                    .WithHeader("Authorization", $"Bearer {bearerToken}"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();

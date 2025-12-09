@@ -9,9 +9,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedWasteOrganisationToApi()
     {
+        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
         var id = await CommonDataApiStub.HasV2UpdateFor("acme");
-        await WasteOrganisationsApiStub.AcceptsOrganisation(id); 
-        
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id, token);
+
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
         
         await AsyncWaiter.WaitForAsync(async () =>
@@ -41,8 +42,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
+        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
         var id = await CommonDataApiStub.HasV2UpdateFor("acme");
-        await WasteOrganisationsApiStub.AcceptsOrganisation(id);
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id, token);
 
         var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
 
@@ -59,8 +61,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
     {
+        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures("acme-resilient");
-        await WasteOrganisationsApiStub.AcceptsOrganisation(id);
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id, token);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
 
