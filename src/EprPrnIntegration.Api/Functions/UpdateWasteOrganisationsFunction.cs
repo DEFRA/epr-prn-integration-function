@@ -1,3 +1,4 @@
+using System.Net;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -20,7 +21,7 @@ public class UpdateWasteOrganisationsFunction(
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
         logger.LogInformation("UpdateWasteOrganisationsList function executed at: {ExecutionDateTime}", lastUpdate);
         
-        var producers = await GetUpdatedProducers(lastUpdate);
+        var producers = await GetProducersToUpdate(lastUpdate);
 
         if (!producers.Any())
         {
@@ -43,7 +44,7 @@ public class UpdateWasteOrganisationsFunction(
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        catch (HttpRequestException ex) when (IsTransient(ex))
         {
             logger.LogError(ex, "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing", ex.StatusCode, producer.PEPRID);
             throw;
@@ -54,7 +55,7 @@ public class UpdateWasteOrganisationsFunction(
         }
     }
 
-    private async Task<List<UpdatedProducersResponseV2>> GetUpdatedProducers(DateTime lastUpdate)
+    private async Task<List<UpdatedProducersResponseV2>> GetProducersToUpdate(DateTime lastUpdate)
     {
         try
         {
@@ -64,8 +65,15 @@ public class UpdateWasteOrganisationsFunction(
         }
         catch (Exception e)
         {
-            logger.LogError("Failed to fetch updated producers: {Exception}", e);
+            logger.LogError("Failed to fetch producers: {Exception}", e);
             return [];
         }
+    }
+    
+   // 5xx, 408 or 429.
+    private static bool IsTransient(HttpRequestException ex)
+    {
+        
+        return ex.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
     }
 }

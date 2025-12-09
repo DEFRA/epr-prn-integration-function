@@ -1,5 +1,4 @@
 using EprPrnIntegration.Api.Functions;
-using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -150,7 +149,7 @@ public class UpdateWasteOrganisationsFunctionTests
         // Setup producer-2 to fail
         _wasteOrganisationsService
             .Setup(x => x.UpdateOrganisation("producer-2-fails", It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()))
-            .ThrowsAsync(new HttpRequestException("Service unavailable"));
+            .ThrowsAsync(new HttpRequestException("Missing credentials", null, HttpStatusCode.Unauthorized ));
 
         await _function.Run(new TimerInfo());
 
@@ -169,8 +168,14 @@ public class UpdateWasteOrganisationsFunctionTests
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 
-    [Fact]
-    public async Task When503ErrorOccurs_RethrowsExceptionAndDoesNotUpdateLastUpdatedTime()
+    [Theory]
+    [InlineData(HttpStatusCode.RequestTimeout)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task WhenTransientErrorOccurs_ForWasteOrganisationApi_RethrowsExceptionAndDoesNotUpdateLastUpdatedTime(HttpStatusCode statusCode)
     {
         var producers = new List<UpdatedProducersResponseV2>
         {
@@ -184,7 +189,7 @@ public class UpdateWasteOrganisationsFunctionTests
             },
             new()
             {
-                PEPRID = "producer-2-503",
+                PEPRID = "producer-2-transient",
                 OrganisationName = "Producer 2",
                 Status = "registered",
                 OrganisationType = "CS",
@@ -197,16 +202,16 @@ public class UpdateWasteOrganisationsFunctionTests
                 x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(producers);
 
-        // Setup producer-2 to throw a 503 Service Unavailable error
-        var httpException = new HttpRequestException("Service Unavailable", null, HttpStatusCode.ServiceUnavailable);
+        // Setup producer-2 to throw a transient error
+        var httpException = new HttpRequestException($"Error: {statusCode}", null, statusCode);
         _wasteOrganisationsService
-            .Setup(x => x.UpdateOrganisation("producer-2-503", It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()))
+            .Setup(x => x.UpdateOrganisation("producer-2-transient", It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()))
             .ThrowsAsync(httpException);
 
         // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
-        // Verify last update was NOT set when 503 occurs
+        // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
 }
