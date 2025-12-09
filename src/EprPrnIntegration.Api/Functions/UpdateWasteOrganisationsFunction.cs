@@ -30,11 +30,28 @@ public class UpdateWasteOrganisationsFunction(
 
         foreach (var producer in producers)
         {
-            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
+            await UpdateProducer(producer);
         }
 
         await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", DateTime.UtcNow);
+    }
+
+    private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
+    {
+        try
+        {
+            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+            await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        {
+            logger.LogError(ex, "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing", ex.StatusCode, producer.PEPRID);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing with next producer", producer.PEPRID);
+        }
     }
 
     private async Task<List<UpdatedProducersResponseV2>> GetUpdatedProducers(DateTime lastUpdate)
