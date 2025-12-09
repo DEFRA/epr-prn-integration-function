@@ -17,6 +17,8 @@ public class WasteOrganisationsApiAuthorisationHandler(
     : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
+    private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
+    private static string? _cachedToken;
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -35,8 +37,39 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("Obtaining fresh Cognito access token");
+        // Fast path: check cache first without locking
+        if (_cachedToken != null)
+        {
+            logger.LogDebug("Using cached Cognito access token");
+            return _cachedToken;
+        }
 
+        // Slow path: acquire semaphore to prevent thundering herd
+        await TokenSemaphore.WaitAsync();
+        try
+        {
+            // Double-check cache after acquiring lock
+            if (_cachedToken != null)
+            {
+                logger.LogDebug("Using cached Cognito access token (acquired after lock)");
+                return _cachedToken;
+            }
+
+            // Fetch fresh token
+            logger.LogInformation("Obtaining fresh Cognito access token");
+            var token = await FetchCognitoTokenAsync(cancellationToken);
+            _cachedToken = token;
+
+            return token;
+        }
+        finally
+        {
+            TokenSemaphore.Release();
+        }
+    }
+
+    private async Task<string> FetchCognitoTokenAsync(CancellationToken cancellationToken)
+    {
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
