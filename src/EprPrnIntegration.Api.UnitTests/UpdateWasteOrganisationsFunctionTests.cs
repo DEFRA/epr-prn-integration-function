@@ -30,36 +30,14 @@ public class UpdateWasteOrganisationsFunctionTests
     {
         var producers = new List<UpdatedProducersResponseV2>
         {
-            new()
-            {
-                PEPRID = "producer-1",
-                OrganisationName = "Producer 1",
-                Status = "registered",
-                OrganisationType = "DP",
-                RegistrationYear = "2025"
-            },
-            new()
-            {
-                PEPRID = "producer-2",
-                OrganisationName = "Producer 2",
-                Status = "registered",
-                OrganisationType = "CS",
-                RegistrationYear = "2025"
-            },
-            new()
-            {
-                PEPRID = "producer-3",
-                OrganisationName = "Producer 3",
-                Status = "deleted",
-                OrganisationType = "DP",
-                RegistrationYear = "2024"
-            }
+            CreateProducer("producer-1"),
+            CreateProducer("producer-2", "CS"),
+            CreateProducer("producer-3", status: "deleted")
         };
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _commonDataService.Setup(x =>
-                x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+        _commonDataService.Setup(x => x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(producers);
 
         await _function.Run(new TimerInfo());
@@ -114,42 +92,19 @@ public class UpdateWasteOrganisationsFunctionTests
     {
         var producers = new List<UpdatedProducersResponseV2>
         {
-            new()
-            {
-                PEPRID = "producer-1",
-                OrganisationName = "Producer 1",
-                Status = "registered",
-                OrganisationType = "DP",
-                RegistrationYear = "2025"
-            },
-            new()
-            {
-                PEPRID = "producer-2-fails",
-                OrganisationName = "Producer 2",
-                Status = "registered",
-                OrganisationType = "CS",
-                RegistrationYear = "2025"
-            },
-            new()
-            {
-                PEPRID = "producer-3",
-                OrganisationName = "Producer 3",
-                Status = "deleted",
-                OrganisationType = "DP",
-                RegistrationYear = "2024"
-            }
+            CreateProducer("producer-1"),
+            CreateProducer("producer-2-fails", "CS"),
+            CreateProducer("producer-3", status: "deleted")
         };
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _commonDataService.Setup(x =>
-                x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+        _commonDataService.Setup(x => x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(producers);
 
-        // Setup producer-2 to fail
         _wasteOrganisationsService
             .Setup(x => x.UpdateOrganisation("producer-2-fails", It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()))
-            .ThrowsAsync(new HttpRequestException("Missing credentials", null, HttpStatusCode.Unauthorized ));
+            .ThrowsAsync(new HttpRequestException("Missing credentials", null, HttpStatusCode.Unauthorized));
 
         await _function.Run(new TimerInfo());
 
@@ -179,39 +134,35 @@ public class UpdateWasteOrganisationsFunctionTests
     {
         var producers = new List<UpdatedProducersResponseV2>
         {
-            new()
-            {
-                PEPRID = "producer-1",
-                OrganisationName = "Producer 1",
-                Status = "registered",
-                OrganisationType = "DP",
-                RegistrationYear = "2025"
-            },
-            new()
-            {
-                PEPRID = "producer-2-transient",
-                OrganisationName = "Producer 2",
-                Status = "registered",
-                OrganisationType = "CS",
-                RegistrationYear = "2025"
-            }
+            CreateProducer("producer-1"),
+            CreateProducer("producer-2-transient", "CS")
         };
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
-        _commonDataService.Setup(x =>
-                x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+        _commonDataService.Setup(x => x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(producers);
 
-        // Setup producer-2 to throw a transient error
-        var httpException = new HttpRequestException($"Error: {statusCode}", null, statusCode);
         _wasteOrganisationsService
             .Setup(x => x.UpdateOrganisation("producer-2-transient", It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()))
-            .ThrowsAsync(httpException);
+            .ThrowsAsync(new HttpRequestException($"Error: {statusCode}", null, statusCode));
 
         // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
         // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
+    }
+    
+    private static UpdatedProducersResponseV2 CreateProducer(string peprid, string type = "DP", string status = "registered")
+    {
+        return new()
+        {
+            PEPRID = peprid,
+            OrganisationName = $"Producer {peprid}",
+            Status = status,
+            OrganisationType = type,
+            RegistrationYear = "2025"
+        };
     }
 }
