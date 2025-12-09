@@ -19,22 +19,27 @@ public class UpdateWasteOrganisationsFunction(
     public async Task Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
-        logger.LogInformation("UpdateWasteOrganisationsList function executed at: {ExecutionDateTime}", lastUpdate);
+        logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
         
         var producers = await GetProducersToUpdate(lastUpdate);
 
         if (!producers.Any())
         {
-            logger.LogInformation("No waste organisations were found, terminating.");
+            logger.LogInformation("No freshly updated producers were found; terminating.");
             return;
         }
 
-        foreach (var producer in producers)
-        {
-            await UpdateProducer(producer);
-        }
+        await UpdateProducers(producers);
 
         await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", DateTime.UtcNow);
+    }
+
+    private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
+    {
+        await Parallel.ForEachAsync(producers, new ParallelOptions
+        {
+            MaxDegreeOfParallelism = 20
+        }, async (producer, _) => await UpdateProducer(producer));
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
@@ -73,7 +78,6 @@ public class UpdateWasteOrganisationsFunction(
    // 5xx, 408 or 429.
     private static bool IsTransient(HttpRequestException ex)
     {
-        
         return ex.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
     }
 }
