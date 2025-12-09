@@ -89,7 +89,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.CommonService
             _loggerMock.Verify(logger => logger.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated producers list.")),
+                It.Is<It.IsAnyType>((v, t) => $"{v}".ToString().Contains("Getting updated producers list v2.")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
         }

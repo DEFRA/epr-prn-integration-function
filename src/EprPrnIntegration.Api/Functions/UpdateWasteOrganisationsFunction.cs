@@ -21,7 +21,9 @@ public class UpdateWasteOrganisationsFunction(
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
         logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
         
-        var producers = await GetProducersToUpdate(lastUpdate);
+        var now = DateTime.UtcNow;
+        
+        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, now, CancellationToken.None);
 
         if (!producers.Any())
         {
@@ -31,7 +33,7 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", DateTime.UtcNow);
+        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", now);
     }
 
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
@@ -51,31 +53,19 @@ public class UpdateWasteOrganisationsFunction(
         }
         catch (HttpRequestException ex) when (IsTransient(ex))
         {
+            // Allow the function to terminate and resume on the next schedule with the original time window.
             logger.LogError(ex, "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing", ex.StatusCode, producer.PEPRID);
             throw;
         }
         catch (Exception ex)
         {
+            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
+            // to allow investigation.
             logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing with next producer", producer.PEPRID);
         }
     }
 
-    private async Task<List<UpdatedProducersResponseV2>> GetProducersToUpdate(DateTime lastUpdate)
-    {
-        try
-        {
-            var producers =
-                await commonDataService.GetUpdatedProducersV2(lastUpdate, DateTime.UtcNow, CancellationToken.None);
-            return producers;
-        }
-        catch (Exception e)
-        {
-            logger.LogError("Failed to fetch producers: {Exception}", e);
-            return [];
-        }
-    }
-    
-   // 5xx, 408 or 429.
+    // 5xx, 408 or 429.
     private static bool IsTransient(HttpRequestException ex)
     {
         return ex.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;

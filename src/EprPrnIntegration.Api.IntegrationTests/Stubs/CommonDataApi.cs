@@ -1,4 +1,6 @@
 using System.Net;
+using WireMock.Admin.Mappings;
+using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
 using Xunit;
 
@@ -72,8 +74,28 @@ public class CommonDataApi(WireMockContext wireMock)
 
         return id;
     }
+    
+    public async Task<string> HasNoUpdates()
+    {
+        var id = Guid.NewGuid().ToString();
+        var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/updated-producers"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.NoContent)));
 
-    public async Task<string> HasV2UpdateForWithTransientFailures(string name)
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+
+        return id;
+    }
+    
+    public async Task<IList<LogEntryModel>> GetUpdatedProducersRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["GET"], Path = "/api/producer-details/updated-producers" };
+        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public async Task<string> HasV2UpdateWithTransientFailures(string name)
     {
         var id = Guid.NewGuid().ToString();
 

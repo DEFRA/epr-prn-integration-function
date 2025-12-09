@@ -59,7 +59,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
     {
-        var id = await CommonDataApiStub.HasV2UpdateForWithTransientFailures("acme-resilient");
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures("acme-resilient");
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
@@ -92,6 +92,25 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
             after.Should().BeAfter(before);
+        });
+    }
+    
+    [Fact]
+    public async Task WhenCommonDataApiHasNoData_LastUpdateStaysUntouched()
+    {
+        await CommonDataApiStub.HasNoUpdates();
+
+        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var requests = await CommonDataApiStub.GetUpdatedProducersRequests();
+            requests.Count.Should().Be(1);
+            
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().Be(before);
         });
     }
 }

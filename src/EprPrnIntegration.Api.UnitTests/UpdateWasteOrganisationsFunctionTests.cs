@@ -64,7 +64,7 @@ public class UpdateWasteOrganisationsFunctionTests
                 x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
-        await _function.Run(new TimerInfo());
+        await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
         // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
