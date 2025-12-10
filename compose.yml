@@ -119,7 +119,6 @@ services:
       FUNCTIONS_WORKER_RUNTIME: "dotnet-isolated"
       HOST: "localhost"
       UpdateProducersTrigger: "1,31 0-7 * * *"
-      UpdateWasteOrganisationsTrigger: "1,31 0-7 * * *"
       UpdatePrnsTrigger: "0 0 18 * * 1-5"
       FetchNpwdIssuedPrns__Schedule: "0 0 18 * * 1-5"
       EmailNpwdReconciliationTrigger: "0 0 18 * * 1-5"
@@ -173,6 +172,8 @@ services:
       WasteOrganisationsApi__ClientSecret: ""
       WasteOrganisationsApi__AccessTokenUrl: ""
       WasteOrganisationsApi__TimeoutSeconds: "1"
+      UpdateWasteOrganisations__Trigger: "1,31 0-7 * * *"
+      UpdateWasteOrganisations__DefaultStartDate: "2024-01-01"
       AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;"
       AzureWebJobsSecretStorageType: "files"
     ports:

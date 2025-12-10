@@ -16,7 +16,7 @@ public class UpdateWasteOrganisationsFunction(
     IWasteOrganisationsService wasteOrganisationsService)
 {
     [Function("UpdateWasteOrganisations")]
-    public async Task Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
         logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
