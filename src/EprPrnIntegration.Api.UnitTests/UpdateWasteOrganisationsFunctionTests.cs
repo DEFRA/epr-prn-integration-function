@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 using Microsoft.Azure.Functions.Worker;
@@ -18,7 +19,7 @@ public class UpdateWasteOrganisationsFunctionTests
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IWasteOrganisationsService> _wasteOrganisationsService = new();
     private readonly Mock<ICommonDataService> _commonDataService = new();
-    private readonly UpdateWasteOrganisationsConfiguration _config = new() { DefaultStartDate = "2024-01-01" };
+    private readonly IOptions<UpdateWasteOrganisationsConfiguration> _config = Options.Create(new UpdateWasteOrganisationsConfiguration { DefaultStartDate = "2024-01-01" });
 
     private readonly UpdateWasteOrganisationsFunction _function;
 

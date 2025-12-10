@@ -7,6 +7,7 @@ using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -15,7 +16,7 @@ public class UpdateWasteOrganisationsFunction(
     ILogger<UpdateWasteOrganisationsFunction> logger,
     ICommonDataService commonDataService,
     IWasteOrganisationsService wasteOrganisationsService,
-    UpdateWasteOrganisationsConfiguration config)
+    IOptions<UpdateWasteOrganisationsConfiguration> config)
 {
     [Function("UpdateWasteOrganisations")]
     public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
@@ -44,7 +45,7 @@ public class UpdateWasteOrganisationsFunction(
         if (!lastUpdate.HasValue)
         {
            return DateTime.SpecifyKind(
-               DateTime.Parse(config.DefaultStartDate),
+               DateTime.Parse(config.Value.DefaultStartDate),
                DateTimeKind.Utc
            );
         }
