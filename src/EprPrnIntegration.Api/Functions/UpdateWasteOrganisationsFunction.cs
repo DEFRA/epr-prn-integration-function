@@ -45,7 +45,7 @@ public class UpdateWasteOrganisationsFunction(
         if (!lastUpdate.HasValue)
         {
            return DateTime.SpecifyKind(
-               DateTime.Parse(config.Value.DefaultStartDate),
+               DateTime.ParseExact(config.Value.DefaultStartDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                DateTimeKind.Utc
            );
         }
