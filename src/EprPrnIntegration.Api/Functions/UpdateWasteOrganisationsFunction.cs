@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -13,17 +14,18 @@ public class UpdateWasteOrganisationsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<UpdateWasteOrganisationsFunction> logger,
     ICommonDataService commonDataService,
-    IWasteOrganisationsService wasteOrganisationsService)
+    IWasteOrganisationsService wasteOrganisationsService,
+    UpdateWasteOrganisationsConfiguration config)
 {
     [Function("UpdateWasteOrganisations")]
     public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+        var lastUpdate = await GetLastUpdate();
         logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
+
+        var utcNow = DateTime.UtcNow;
         
-        var now = DateTime.UtcNow;
-        
-        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, now, CancellationToken.None);
+        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, utcNow, CancellationToken.None);
 
         if (!producers.Any())
         {
@@ -33,7 +35,20 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", now);
+        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", utcNow);
+    }
+
+    private async Task<DateTime> GetLastUpdate()
+    {
+        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        if (!lastUpdate.HasValue)
+        {
+           return DateTime.SpecifyKind(
+               DateTime.Parse(config.DefaultStartDate),
+               DateTimeKind.Utc
+           );
+        }
+        return lastUpdate!.Value;
     }
 
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)

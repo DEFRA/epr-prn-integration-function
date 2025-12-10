@@ -1,4 +1,5 @@
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -17,12 +18,13 @@ public class UpdateWasteOrganisationsFunctionTests
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IWasteOrganisationsService> _wasteOrganisationsService = new();
     private readonly Mock<ICommonDataService> _commonDataService = new();
+    private readonly UpdateWasteOrganisationsConfiguration _config = new() { DefaultStartDate = "2024-01-01" };
 
     private readonly UpdateWasteOrganisationsFunction _function;
 
     public UpdateWasteOrganisationsFunctionTests()
     {
-        _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _commonDataService.Object, _wasteOrganisationsService.Object);
+        _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _commonDataService.Object, _wasteOrganisationsService.Object, _config);
     }
 
     [Fact]
@@ -153,7 +155,37 @@ public class UpdateWasteOrganisationsFunctionTests
         // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
-    
+
+    [Fact]
+    public async Task WhenNoBlobStorageValueExists_UsesDefaultStartDateFromConfiguration()
+    {
+        var producers = new List<UpdatedProducersResponseV2>
+        {
+            CreateProducer("producer-1"),
+            CreateProducer("producer-2")
+        };
+
+        // Setup: GetLastUpdate returns null (no blob storage value)
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync((DateTime?)null);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+        _commonDataService.Setup(x => x.GetUpdatedProducersV2(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(producers);
+
+        await _function.Run(new TimerInfo());
+
+        // Verify CommonDataService was called with the default start date (2024-01-01 as UTC)
+        var expectedStartDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        _commonDataService.Verify(
+            x => x.GetUpdatedProducersV2(
+                It.Is<DateTime>(d => d == expectedStartDate),
+                It.IsAny<DateTime>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify last update was set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
+    }
+
     private static UpdatedProducersResponseV2 CreateProducer(string peprid, string type = "DP", string status = "registered")
     {
         return new()
