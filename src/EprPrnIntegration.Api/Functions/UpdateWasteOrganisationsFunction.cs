@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -6,6 +7,7 @@ using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -13,17 +15,18 @@ public class UpdateWasteOrganisationsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<UpdateWasteOrganisationsFunction> logger,
     ICommonDataService commonDataService,
-    IWasteOrganisationsService wasteOrganisationsService)
+    IWasteOrganisationsService wasteOrganisationsService,
+    IOptions<UpdateWasteOrganisationsConfiguration> config)
 {
     [Function("UpdateWasteOrganisations")]
-    public async Task Run([TimerTrigger("%UpdateWasteOrganisationsTrigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+        var lastUpdate = await GetLastUpdate();
         logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
+
+        var utcNow = DateTime.UtcNow;
         
-        var now = DateTime.UtcNow;
-        
-        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, now, CancellationToken.None);
+        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, utcNow, CancellationToken.None);
 
         if (!producers.Any())
         {
@@ -33,7 +36,20 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", now);
+        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", utcNow);
+    }
+
+    private async Task<DateTime> GetLastUpdate()
+    {
+        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        if (!lastUpdate.HasValue)
+        {
+           return DateTime.SpecifyKind(
+               DateTime.ParseExact(config.Value.DefaultStartDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+               DateTimeKind.Utc
+           );
+        }
+        return lastUpdate!.Value;
     }
 
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
