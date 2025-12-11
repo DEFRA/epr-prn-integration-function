@@ -236,20 +236,21 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
-    {
-        new() {
-            PrnNumber = "001",
-            StatusName = "Approved",
-            UpdatedOn = "2024-12-04T15:57:02",
-            OrganisationName = "Company A"
-        },
-        new() {
-            PrnNumber = "002",
-            StatusName = "Rejected",
-            UpdatedOn = "2024-12-03T23:51:02",
-            OrganisationName = "Company B"
-        }
-    };
+            {
+                new() {
+                    PrnNumber = "001",
+                    StatusName = "Approved",
+                    UpdatedOn = "2024-12-04T15:57:02",
+                    OrganisationName = "Company A",
+                    SourceSystemId = "SSI"
+                },
+                new() {
+                    PrnNumber = "002",
+                    StatusName = "Rejected",
+                    UpdatedOn = "2024-12-03T23:51:02",
+                    OrganisationName = "Company B"
+                }
+            };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var sut = CreatePrnService(mockDataJson);
@@ -261,8 +262,10 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             Assert.NotEmpty(result);
             Assert.Equal("001", result[0].PrnNumber);
             Assert.Equal("Approved", result[0].StatusName);
+            Assert.Equal("SSI", result[0].SourceSystemId);
             Assert.Equal("002", result[1].PrnNumber);
             Assert.Equal("Rejected", result[1].StatusName);
+            Assert.Null(result[1].SourceSystemId);
         }
 
         [Fact]
@@ -283,14 +286,14 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
-    {
-        new() {
-            PrnNumber = "001",
-            StatusName = "Approved",
-            UpdatedOn = "2024-12-04T15:57:02",
-            OrganisationName = "Company A"
-        }
-    };
+            {
+                new() {
+                    PrnNumber = "001",
+                    StatusName = "Approved",
+                    UpdatedOn = "2024-12-04T15:57:02",
+                    OrganisationName = "Company A"
+                }
+            };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var sut = CreatePrnService(mockDataJson);
