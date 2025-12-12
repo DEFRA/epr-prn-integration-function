@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/producer-details/updated-producers",
+    "queryParameters": {
+      "from": {
+        "matches": ".*"
+      },
+      "to": {
+        "matches": ".*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      {
+        "organisationName": "Acme Manufacturing Ltd",
+        "tradingName": "Acme Plastics",
+        "organisationType": "CS",
+        "companiesHouseNumber": "12345678",
+        "organisationId": "ORG-001",
+        "addressLine1": "123 Industrial Estate",
+        "addressLine2": "Unit 5",
+        "town": "Manchester",
+        "county": "Greater Manchester",
+        "country": "England",
+        "postcode": "M1 1AA",
+        "peprid": "a8e1506b-23ce-4d54-8956-1e2b1dcc7140",
+        "registrationYear": "2026",
+        "status": "registered",
+        "businessCountry": "United Kingdom",
+        "updatedDateTime": "2025-01-15T10:30:00Z"
+      }
+    ]
+  }
+}

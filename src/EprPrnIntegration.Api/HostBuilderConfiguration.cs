@@ -20,6 +20,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -62,6 +63,8 @@ public static class HostBuilderConfiguration
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAppInsightsService, AppInsightsService>();
         
+        services.AddMemoryCache();
+        
         services.AddScoped<IBlobStorage, BlobStorage>();
         services.AddScoped<ILastUpdateService, LastUpdateService>();
 
@@ -98,6 +101,7 @@ public static class HostBuilderConfiguration
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
         services.AddTransient<CommonDataServiceAuthorisationHandler>();
+        services.AddTransient<WasteOrganisationsApiAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -121,6 +125,7 @@ public static class HostBuilderConfiguration
                 GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
 
         services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
+            .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IWasteOrganisationsService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.WasteOrganisations));
         
