@@ -39,7 +39,8 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             RecoveryProcessCode = npwdPrn.RecoveryProcessCode,
             ReprocessorAgency = npwdPrn.ReprocessorAgency,
             StatusDate = npwdPrn.StatusDate,
-            CreatedByUser = "IntegrationFA"
+            CreatedByUser = "IntegrationFA",
+            SourceSystemId = null // not from RE EX
         };
     }
 

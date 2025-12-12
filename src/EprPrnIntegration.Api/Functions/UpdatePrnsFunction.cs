@@ -11,7 +11,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -19,7 +18,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
-    IUtilities utilities, IEmailService _emailService)
+    IUtilities utilities, IEmailService emailService)
 {
     [Function("UpdatePrnsList")]
     public async Task Run(
@@ -42,11 +41,10 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
 
         // Retrieve data from the common backend
-        var updatedEprPrns = await GetUpdatedPrnsAsync(fromDate, toDate);
-        if (updatedEprPrns == null) 
-        {
-            return;
-        }
+        var updatedEprPrns = (await GetUpdatedPrnsAsync(fromDate, toDate))?
+            .FilterNpwdPrns()
+            .ToList();
+        if (updatedEprPrns == null) return;
 
         // owing to performance limitations (timeouts) on external service, limit number of rows sent in a batch
         if (int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows) && maxRows > 0 && maxRows < updatedEprPrns.Count)
@@ -73,8 +71,7 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
-                logger.LogInformation(
-                    $"Prns list successfully updated in NPWD for time period {fromDate} to {toDate}.");
+                logger.LogInformation("Prns list successfully updated in NPWD for time period {FromDate} to {DateTime}.", fromDate, toDate);
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
  
@@ -95,13 +92,13 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
                 if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
                 {
-                    _emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to patch NpwdUpdatedPrns for {NpwdUpdatedPrns}", npwdUpdatedPrns?.ToString());
+            logger.LogError(ex, "Failed to patch NpwdUpdatedPrns for {NpwdUpdatedPrns}", npwdUpdatedPrns.ToString());
         }
     }
 
@@ -139,5 +136,17 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         }
 
         return null;
+    }
+}
+
+public static class PrnExtensions
+{
+    public static IEnumerable<UpdatedPrnsResponseModel> FilterNpwdPrns(this IEnumerable<UpdatedPrnsResponseModel> updatedEprPrns)
+    {
+        return updatedEprPrns.Where(prn => string.IsNullOrWhiteSpace(prn.SourceSystemId));
+    }
+    public static IEnumerable<UpdatedPrnsResponseModel> FilterReExPrns(this IEnumerable<UpdatedPrnsResponseModel> updatedEprPrns)
+    {
+        return updatedEprPrns.Where(prn => !string.IsNullOrWhiteSpace(prn.SourceSystemId));
     }
 }

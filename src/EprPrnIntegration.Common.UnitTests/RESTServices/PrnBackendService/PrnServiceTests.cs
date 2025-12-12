@@ -50,26 +50,27 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Arrange
             var mockData = new List<UpdatedPrnsResponseModel>
                 {
-                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2), ObligationYear = "2025"},
+                    new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2), ObligationYear = "2025", SourceSystemId = "SSI"},
                     new() { EvidenceNo = "002", EvidenceStatusCode = "Inactive", StatusDate = new DateTime(2024, 11, 3, 23, 51, 2), ObligationYear = "2025"}
                 };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
-            var _prnService1 = CreatePrnService(mockDataJson);
+            var prnService1 = CreatePrnService(mockDataJson);
 
             var fromDate = DateTime.Now.AddDays(-1);
             var toDate = DateTime.Now;
-            var cancellationToken = new CancellationToken();
 
             // Act
-            var result = await _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
+            var result = await prnService1.GetUpdatedPrns(fromDate, toDate, CancellationToken.None);
 
             // Assert
             Assert.NotEmpty(result);
             Assert.Equal("001", result[0].EvidenceNo);
             Assert.Equal("Active", result[0].EvidenceStatusCode);
+            Assert.Equal("SSI", result[0].SourceSystemId);
             Assert.Equal("002", result[1].EvidenceNo);
             Assert.Equal("Inactive", result[1].EvidenceStatusCode);
+            Assert.Null( result[1].SourceSystemId);
         }
 
         [Fact]
@@ -81,14 +82,14 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                 new() { EvidenceNo = "001", EvidenceStatusCode = "Active", StatusDate = new DateTime(2024, 12, 4, 15, 57, 2), ObligationYear = "2025" }
             };
             var mockDataJson = JsonSerializer.Serialize(mockData);
-            var _prnService1 = CreatePrnService(mockDataJson);
+            var prnService1 = CreatePrnService(mockDataJson);
 
             var fromDate = DateTime.Now.AddDays(-1);
             var toDate = DateTime.Now;
-            var cancellationToken = new CancellationToken();
+            var cancellationToken = CancellationToken.None;
 
             // Act
-            await _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
+            await prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
 
             // Assert
             _loggerMock.Verify(logger => logger.Log(
@@ -103,14 +104,14 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         public async Task GetUpdatedPrns_ShouldReturnEmptyList_WhenNoPrnsReturned()
         {
             // Arrange
-            var _prnService1 = CreatePrnService("[]");
+            var prnService1 = CreatePrnService("[]");
 
             var fromDate = DateTime.Now.AddDays(-1);
             var toDate = DateTime.Now;
-            var cancellationToken = new CancellationToken();
+            var cancellationToken = CancellationToken.None;
 
             // Act
-            var result = await _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
+            var result = await prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken);
 
             // Assert
             Assert.Empty(result);
@@ -120,14 +121,14 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         public async Task GetUpdatedPrns_ShouldThrowException_WhenBaseHttpServiceThrowsException()
         {
             // Arrange
-            var _prnService1 = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
+            var prnService1 = CreatePrnService("", System.Net.HttpStatusCode.BadRequest);
 
             var fromDate = DateTime.Now.AddDays(-1);
             var toDate = DateTime.Now;
-            var cancellationToken = new CancellationToken();
+            var cancellationToken = CancellationToken.None;
 
             // Assert
-            var exception = await Assert.ThrowsAsync<ResponseCodeException>(() => _prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken));
+            var exception = await Assert.ThrowsAsync<ResponseCodeException>(() => prnService1.GetUpdatedPrns(fromDate, toDate, cancellationToken));
             Assert.Contains("EprPrnIntegration.Common.Exceptions.ResponseCodeException", exception.Message);
         }
 
@@ -236,20 +237,21 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
-    {
-        new() {
-            PrnNumber = "001",
-            StatusName = "Approved",
-            UpdatedOn = "2024-12-04T15:57:02",
-            OrganisationName = "Company A"
-        },
-        new() {
-            PrnNumber = "002",
-            StatusName = "Rejected",
-            UpdatedOn = "2024-12-03T23:51:02",
-            OrganisationName = "Company B"
-        }
-    };
+            {
+                new() {
+                    PrnNumber = "001",
+                    StatusName = "Approved",
+                    UpdatedOn = "2024-12-04T15:57:02",
+                    OrganisationName = "Company A",
+                    SourceSystemId = "SSI"
+                },
+                new() {
+                    PrnNumber = "002",
+                    StatusName = "Rejected",
+                    UpdatedOn = "2024-12-03T23:51:02",
+                    OrganisationName = "Company B"
+                }
+            };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var sut = CreatePrnService(mockDataJson);
@@ -261,8 +263,10 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             Assert.NotEmpty(result);
             Assert.Equal("001", result[0].PrnNumber);
             Assert.Equal("Approved", result[0].StatusName);
+            Assert.Equal("SSI", result[0].SourceSystemId);
             Assert.Equal("002", result[1].PrnNumber);
             Assert.Equal("Rejected", result[1].StatusName);
+            Assert.Null(result[1].SourceSystemId);
         }
 
         [Fact]
@@ -283,14 +287,14 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockData = new List<ReconcileUpdatedPrnsResponseModel>
-    {
-        new() {
-            PrnNumber = "001",
-            StatusName = "Approved",
-            UpdatedOn = "2024-12-04T15:57:02",
-            OrganisationName = "Company A"
-        }
-    };
+            {
+                new() {
+                    PrnNumber = "001",
+                    StatusName = "Approved",
+                    UpdatedOn = "2024-12-04T15:57:02",
+                    OrganisationName = "Company A"
+                }
+            };
 
             var mockDataJson = JsonSerializer.Serialize(mockData);
             var sut = CreatePrnService(mockDataJson);
