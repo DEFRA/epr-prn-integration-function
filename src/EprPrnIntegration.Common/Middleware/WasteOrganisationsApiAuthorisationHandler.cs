@@ -40,7 +40,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         // Fast path: check cache first without locking
         if (_cachedToken != null)
         {
-            logger.LogDebug("Using cached Cognito access token");
+            logger.LogInformation("Using cached Cognito access token");
             return _cachedToken;
         }
 
@@ -51,7 +51,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
             // Double-check cache after acquiring lock
             if (_cachedToken != null)
             {
-                logger.LogDebug("Using cached Cognito access token (acquired after lock)");
+                logger.LogInformation("Using cached Cognito access token (acquired after lock)");
                 return _cachedToken;
             }
 
@@ -70,6 +70,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     private async Task<string> FetchCognitoTokenAsync(CancellationToken cancellationToken)
     {
+        logger.LogInformation("Fetching Cognito access token");
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
@@ -98,7 +99,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
             throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
-        logger.LogInformation("Successfully obtained Cognito access token");
+        logger.LogInformation($"Successfully obtained Cognito access token");
         return tokenResponse.AccessToken;
     }
 

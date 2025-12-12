@@ -8,27 +8,21 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class WasteOrganisationsApi(WireMockContext wireMock)
 {
-    public async Task AcceptsOrganisation(string id, string bearerToken)
+    public async Task AcceptsOrganisation(string id)
     {
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder.WithRequest(request => request
                     .UsingPut()
                     .WithPath($"/organisations/{id}/")
-                    .WithHeader("Authorization", $"Bearer {bearerToken}"))
+                    .WithHeader("Authorization", "Bearer *"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
     }
 
-    public async Task<IList<LogEntryModel>> GetOrganisationRequests(string id)
-    {
-        var requestsModel = new RequestModel { Methods = ["PUT"], Path = $"/organisations/{id}/" };
-        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
-    }
-
-    public async Task AcceptsOrganisationWithTransientFailures(string id, string bearerToken)
+    public async Task AcceptsOrganisationWithTransientFailures(string id)
     {
         var scenarioName = "WasteOrgTransientFailure-" + Guid.NewGuid();
 
@@ -37,7 +31,7 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         failureMapping.Given(builder =>
             builder.WithRequest(request => request.UsingPut()
                     .WithPath($"/organisations/{id}/")
-                    .WithHeader("Authorization", $"Bearer {bearerToken}")
+                    .WithHeader("Authorization", "Bearer *")
                 )
             .WithResponse(response => response.WithStatusCode(HttpStatusCode.ServiceUnavailable))
             .WithScenario(scenarioName)
@@ -51,7 +45,7 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         successMapping.Given(builder =>
             builder.WithRequest(request => request.UsingPut()
                 .WithPath($"/organisations/{id}/")
-                .WithHeader("Authorization", $"Bearer {bearerToken}")
+                .WithHeader("Authorization", "Bearer *")
             )
             .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
             .WithScenario(scenarioName)
@@ -59,5 +53,17 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         );
         var successMappingStatus = await successMapping.BuildAndPostAsync();
         Assert.NotNull(successMappingStatus.Guid);
+    }
+    
+    public async Task<IList<LogEntryModel>> GetOrganisationRequests(string id)
+    {
+        var requestsModel = new RequestModel { Methods = ["PUT"], Path = $"/organisations/{id}/" };
+        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public async Task<IList<LogEntryModel>> GetAllOrganisationRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["PUT"], Path = "/organisations/*" };
+        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 }
