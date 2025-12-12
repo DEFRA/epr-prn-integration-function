@@ -1,4 +1,6 @@
 using System.Net;
+using WireMock.Admin.Mappings;
+using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
 using Xunit;
 
@@ -6,7 +8,7 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class CognitoApi(WireMockContext wireMock)
 {
-    public async Task<string> SetupOAuthToken()
+    public async Task SetupOAuthToken()
     {
         var accessToken = $"test-bearer-token-{Guid.NewGuid()}";
 
@@ -28,7 +30,11 @@ public class CognitoApi(WireMockContext wireMock)
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
-
-        return accessToken;
+    }
+    
+    public async Task<IList<LogEntryModel>> GetTokenRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"], Path = "/cognito/oauth/*" };
+        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 }
