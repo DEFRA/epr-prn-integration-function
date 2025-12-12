@@ -36,13 +36,18 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     private Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        // GetOrCreateAsync is thread-safe and handles thundering herd prevention
+        // Usage pattern for waste-orgs api is often to process a list, and make a request for each item.
+        // Therefore, memoryCache saves us from having to fetch a fresh token for each request.
+        // GetOrCreateAsync is thread-safe and handles thundering herd prevention.
+        // For x requests, this will ensure the only one token is requested and reused for each request.
+        // The memory cache has an expiry for completeness, although it's unlikely the lifetime of the
+        // function (running on a cron) will extend past more than 5 minutes in general usage.
         return memoryCache.GetOrCreateAsync(CacheKey, async entry =>
         {
             logger.LogInformation("Obtaining fresh Cognito access token");
             var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
 
-            // Set cache expiration based on token lifetime (with 90% buffer for safety)
+            // Cache expiration based on token lifetime (with 90% buffer for safety)
             var expirationTime = TimeSpan.FromSeconds(tokenResponse.ExpiresIn * 0.9);
             entry.AbsoluteExpirationRelativeToNow = expirationTime;
 
