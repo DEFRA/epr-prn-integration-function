@@ -6,7 +6,7 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class CognitoApi(WireMockContext wireMock)
 {
-    public async Task<string> SetupOAuthTokenEndpoint()
+    public async Task<string> SetupOAuthToken()
     {
         var accessToken = $"test-bearer-token-{Guid.NewGuid()}";
 
