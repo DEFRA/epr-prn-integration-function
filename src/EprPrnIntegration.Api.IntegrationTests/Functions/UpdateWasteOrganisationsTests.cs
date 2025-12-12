@@ -61,8 +61,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
     {
-        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures("acme-resilient");
+        
+        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id, token);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
@@ -80,7 +81,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
         var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
-        await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id);
+        
+        var token = await CognitoApiStub.SetupOAuthTokenEndpoint();
+        await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id, token);
 
         var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
 
