@@ -100,7 +100,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
-            entries[0].Request.Body!.Should().Contain("acme-transient");
+            var mostRecentUpdate = entries.Last();
+            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
+            mostRecentUpdate.Response.StatusCode.Should().Be(202);
 
             var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
             after.Should().BeAfter(before);

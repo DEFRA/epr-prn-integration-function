@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -11,17 +12,12 @@ namespace EprPrnIntegration.Common.Middleware;
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
+    IMemoryCache memoryCache,
     ILogger<WasteOrganisationsApiAuthorisationHandler> logger)
     : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
-    private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
-    private static string? _cachedToken;
-
-    public static void ClearCachedToken()
-    {
-        _cachedToken = null;
-    }
+    private const string CacheKey = "WasteOrganisationsApiToken";
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -38,40 +34,24 @@ public class WasteOrganisationsApiAuthorisationHandler(
         return await base.SendAsync(request, cancellationToken);
     }
 
-    private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
+    private Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        // Fast path: check cache first without locking
-        if (_cachedToken != null)
+        // GetOrCreateAsync is thread-safe and handles thundering herd prevention
+        return memoryCache.GetOrCreateAsync(CacheKey, async entry =>
         {
-            logger.LogInformation("Using cached Cognito access token");
-            return _cachedToken;
-        }
-
-        // Slow path: acquire semaphore to prevent thundering herd
-        await TokenSemaphore.WaitAsync();
-        try
-        {
-            // Double-check cache after acquiring lock
-            if (_cachedToken != null)
-            {
-                logger.LogInformation("Using cached Cognito access token (acquired after lock)");
-                return _cachedToken;
-            }
-
-            // Fetch fresh token
             logger.LogInformation("Obtaining fresh Cognito access token");
-            var token = await FetchCognitoTokenAsync(cancellationToken);
-            _cachedToken = token;
+            var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
 
-            return token;
-        }
-        finally
-        {
-            TokenSemaphore.Release();
-        }
+            // Set cache expiration based on token lifetime (with 90% buffer for safety)
+            var expirationTime = TimeSpan.FromSeconds(tokenResponse.ExpiresIn * 0.9);
+            entry.AbsoluteExpirationRelativeToNow = expirationTime;
+
+            logger.LogInformation("Cached Cognito access token (expires in {Seconds} seconds)", expirationTime.TotalSeconds);
+            return tokenResponse.AccessToken!;
+        })!;
     }
 
-    private async Task<string> FetchCognitoTokenAsync(CancellationToken cancellationToken)
+    private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("Fetching Cognito access token");
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
@@ -102,8 +82,8 @@ public class WasteOrganisationsApiAuthorisationHandler(
             throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
-        logger.LogInformation($"Successfully obtained Cognito access token");
-        return tokenResponse.AccessToken;
+        logger.LogInformation("Successfully obtained Cognito access token");
+        return tokenResponse;
     }
 
     private class CognitoTokenResponse
