@@ -120,7 +120,9 @@ public static class HostBuilderConfiguration
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<INpwdClient>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, "npwd"));
 
-        services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations);
+        services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<IWasteOrganisationsService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.WasteOrganisations));
         
         return services;
     }
@@ -130,6 +132,7 @@ public static class HostBuilderConfiguration
         services.Configure<ServiceBusConfiguration>(configuration.GetSection(ServiceBusConfiguration.SectionName));
         services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<WasteOrganisationsApiConfiguration>(configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName));
+        services.Configure<UpdateWasteOrganisationsConfiguration>(configuration.GetSection(UpdateWasteOrganisationsConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));
