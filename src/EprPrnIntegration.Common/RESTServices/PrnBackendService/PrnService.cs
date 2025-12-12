@@ -72,9 +72,7 @@ public class PrnService : BaseHttpService, IPrnService
      
         _logger.LogInformation("Getting Reconciled updated PRN's for date range from {FromDate} to {ToDate}", fromDate, toDate);
 
-        var reconciledPrns = await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}", 
+        return await Get<List<ReconcileUpdatedPrnsResponseModel>>($"syncstatuses?from={fromDate}&to={toDate}", 
             CancellationToken.None, false);
-
-        return reconciledPrns ??= [];
     }
 }
