@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
-[ExcludeFromCodeCoverage(Justification = "This will have test coverage via integration tests.")]
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
@@ -19,6 +17,11 @@ public class WasteOrganisationsApiAuthorisationHandler(
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
     private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
     private static string? _cachedToken;
+
+    public static void ClearCachedToken()
+    {
+        _cachedToken = null;
+    }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
