@@ -60,10 +60,4 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var requestsModel = new RequestModel { Methods = ["PUT"], Path = $"/organisations/{id}/" };
         return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
-
-    public async Task<IList<LogEntryModel>> GetAllOrganisationRequests()
-    {
-        var requestsModel = new RequestModel { Methods = ["PUT"], Path = "/organisations/*" };
-        return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
-    }
 }
