@@ -42,9 +42,25 @@ public class WasteOrganisationsApiAuthorisationHandler(
         }
 
         // Slow path: acquire semaphore to prevent thundering herd
-        // Usage pattern is to process a list and make a request for each item.
-        // This ensures only one token fetch happens, even with concurrent requests.
-        // Token expiration isn't a concern - function lifetime is much shorter than token TTL.
+        //
+        // Why SemaphoreSlim instead of IMemoryCache.GetOrCreateAsync()?
+        // - IMemoryCache.GetOrCreateAsync() does NOT prevent thundering herd (known issue: aspnet/Caching#218)
+        //   See: https://github.com/aspnet/Caching/issues/218
+        // - Multiple concurrent requests would all execute the factory function
+        // - SemaphoreSlim ensures only ONE token fetch happens for concurrent requests
+        //
+        // Why not use token expiration/IMemoryCache?
+        // - Function lifetime (running on cron) is much shorter than token TTL (typically 1 hour)
+        // - Simple static cache is sufficient for the duration of a single function execution
+        // - Usage pattern: process a list and make multiple API requests per item
+        //
+        // Why no built-in AWS helper?
+        // - Amazon.Extensions.CognitoAuthentication only supports user authentication, not OAuth client credentials
+        // - Cognito requires non-standard Basic auth on token endpoint, incompatible with generic OAuth libraries
+        // - Duende.IdentityModel (https://docs.duendesoftware.com/identitymodel/) is low-level and requires commercial
+        //   licensing (https://duendesoftware.com/products/identitymodel) for production use
+        // - This double-checked locking + SemaphoreSlim pattern is the standard approach for async lazy initialization
+        //   See: https://blog.stephencleary.com/2012/08/asynchronous-lazy-initialization.html
         await TokenSemaphore.WaitAsync(cancellationToken);
         try
         {
