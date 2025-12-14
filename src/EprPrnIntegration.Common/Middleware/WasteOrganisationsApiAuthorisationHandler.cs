@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,12 +11,12 @@ namespace EprPrnIntegration.Common.Middleware;
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
-    IMemoryCache memoryCache,
     ILogger<WasteOrganisationsApiAuthorisationHandler> logger)
     : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
-    private const string CacheKey = "WasteOrganisationsApiToken";
+    private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
+    private static string? _cachedToken;
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -34,26 +33,42 @@ public class WasteOrganisationsApiAuthorisationHandler(
         return await base.SendAsync(request, cancellationToken);
     }
 
-    private Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
+    private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        // Usage pattern for waste-orgs api is often to process a list, and make a request for each item.
-        // Therefore, memoryCache saves us from having to fetch a fresh token for each request.
-        // GetOrCreateAsync is thread-safe and handles thundering herd prevention.
-        // For x requests, this will ensure the only one token is requested and reused for each request.
-        // The memory cache has an expiry for completeness, although it's unlikely the lifetime of the
-        // function (running on a cron) will extend past more than 5 minutes in general usage.
-        return memoryCache.GetOrCreateAsync(CacheKey, async entry =>
+        // Fast path: check cache without locking
+        if (_cachedToken != null)
         {
+            return _cachedToken;
+        }
+
+        // Slow path: acquire semaphore to prevent thundering herd
+        // Usage pattern is to process a list and make a request for each item.
+        // This ensures only one token fetch happens, even with concurrent requests.
+        // Token expiration isn't a concern - function lifetime is much shorter than token TTL.
+        await TokenSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            // Double-check cache after acquiring semaphore
+            if (_cachedToken != null)
+            {
+                return _cachedToken;
+            }
+
             logger.LogInformation("Obtaining fresh Cognito access token");
             var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
+            _cachedToken = tokenResponse.AccessToken!;
 
-            // Cache expiration based on token lifetime (with 90% buffer for safety)
-            var expirationTime = TimeSpan.FromSeconds(tokenResponse.ExpiresIn * 0.9);
-            entry.AbsoluteExpirationRelativeToNow = expirationTime;
+            return _cachedToken;
+        }
+        finally
+        {
+            TokenSemaphore.Release();
+        }
+    }
 
-            logger.LogInformation("Cached Cognito access token (expires in {Seconds} seconds)", expirationTime.TotalSeconds);
-            return tokenResponse.AccessToken!;
-        })!;
+    public static void ClearCachedToken()
+    {
+        _cachedToken = null;
     }
 
     private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(CancellationToken cancellationToken)
