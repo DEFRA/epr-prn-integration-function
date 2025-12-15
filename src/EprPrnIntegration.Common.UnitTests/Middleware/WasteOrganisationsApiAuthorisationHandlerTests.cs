@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -11,6 +12,7 @@ using Moq.Protected;
 
 namespace EprPrnIntegration.Common.UnitTests.Middleware;
 
+[SuppressMessage("Design", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Test class has no finalizer; SuppressFinalize is unnecessary")]
 public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
 {
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
+[SuppressMessage("Critical Code Smell", "S2696:Instance members should not write to \"static\" fields", Justification = "Static cache is intentional for thread-safe token caching across all instances using semaphore-based double-checked locking pattern")]
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
@@ -122,7 +124,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         return tokenResponse;
     }
 
-    private class CognitoTokenResponse
+    private sealed class CognitoTokenResponse
     {
         [JsonPropertyName("access_token")]
         public string? AccessToken { get; set; }
