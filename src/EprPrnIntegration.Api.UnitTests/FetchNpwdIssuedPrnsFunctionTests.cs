@@ -296,6 +296,23 @@ namespace EprPrnIntegration.Api.UnitTests
         }
 
         [Fact]
+        public async Task ProcessFetchedPrn_SendsSourceSystemIdAsNull()
+        {
+            var npwdPrn = _fixture.Create<NpwdPrn>();
+            var message = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                body: BinaryData.FromString(JsonSerializer.Serialize(npwdPrn)),
+                messageId: "message-id"
+            );
+
+            _mockValidator.Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult ());
+
+            await _function.ProcessFetchedPrn(message);
+            
+            _mockPrnService.Verify(p => p.SavePrn(It.Is<SavePrnDetailsRequest>(s => s.SourceSystemId == null)), Times.Once);
+        }
+        
+        [Fact]
         public async Task ProcessFetchedPrn_InvalidMessage_AddsCustomEvent()
         {
             // Arrange
