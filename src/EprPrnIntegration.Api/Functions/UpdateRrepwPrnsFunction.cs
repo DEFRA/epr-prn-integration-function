@@ -1,5 +1,6 @@
 using System.Net;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
@@ -73,7 +74,7 @@ public class UpdateRrepwPrnsFunction(
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {EvidenceNo}", prn.EvidenceNo);
         }
-        catch (HttpRequestException ex) when (IsTransient(ex))
+        catch (HttpRequestException ex) when (ex.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule.
             logger.LogError(ex, "Service unavailable ({StatusCode}) when saving PRN {EvidenceNo}, rethrowing", ex.StatusCode, prn.EvidenceNo);
@@ -85,11 +86,5 @@ public class UpdateRrepwPrnsFunction(
             // to allow investigation.
             logger.LogError(ex, "Failed to save PRN {EvidenceNo}, continuing with next PRN", prn.EvidenceNo);
         }
-    }
-
-    // 5xx, 408 or 429.
-    private static bool IsTransient(HttpRequestException ex)
-    {
-        return ex.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
     }
 }
