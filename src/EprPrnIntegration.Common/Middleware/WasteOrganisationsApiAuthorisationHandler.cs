@@ -57,7 +57,7 @@ public class WasteOrganisationsApiAuthorisationHandler(
         // Why no built-in AWS helper?
         // - Amazon.Extensions.CognitoAuthentication only supports user authentication, not OAuth client credentials
         // - Cognito requires non-standard Basic auth on token endpoint, incompatible with generic OAuth libraries
-        // - Duende.IdentityModel (https://docs.duendesoftware.com/identitymodel/) is low-level and requires commercial
+        // - The preferred Duende.IdentityModel (https://docs.duendesoftware.com/identitymodel/) requires commercial
         //   licensing (https://duendesoftware.com/products/identitymodel) for production use
         // - This double-checked locking + SemaphoreSlim pattern is the standard approach for async lazy initialization
         //   See: https://blog.stephencleary.com/2012/08/asynchronous-lazy-initialization.html
