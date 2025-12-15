@@ -1,24 +1,32 @@
 using System.Net;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateRrepwPrnsFunction(
+    ILastUpdateService lastUpdateService,
     ILogger<UpdateRrepwPrnsFunction> logger,
     IRrepwPrnService rrepwPrnService,
     IPrnService prnService,
-    IConfiguration configuration)
+    IConfiguration configuration,
+    IOptions<UpdateRrepwPrnsConfiguration> config)
 {
     [Function("UpdateRrepwPrns")]
     public async Task Run([TimerTrigger("%UpdateRrepwPrns:Trigger%")] TimerInfo myTimer)
     {
-        logger.LogInformation("UpdateRrepwPrns function started at: {ExecutionDateTime}", DateTime.UtcNow);
+        var lastUpdate = await GetLastUpdate();
+        logger.LogInformation("UpdateRrepwPrns resuming with last update time: {ExecutionDateTime}", lastUpdate);
+
+        var utcNow = DateTime.UtcNow;
 
         var prns = await rrepwPrnService.GetPrns(CancellationToken.None);
 
@@ -32,7 +40,21 @@ public class UpdateRrepwPrnsFunction(
 
         await ProcessPrns(prns);
 
+        await lastUpdateService.SetLastUpdate("UpdateRrepwPrns", utcNow);
         logger.LogInformation("UpdateRrepwPrns function completed at: {ExecutionDateTime}", DateTime.UtcNow);
+    }
+
+    private async Task<DateTime> GetLastUpdate()
+    {
+        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateRrepwPrns");
+        if (!lastUpdate.HasValue)
+        {
+            return DateTime.SpecifyKind(
+                DateTime.ParseExact(config.Value.DefaultStartDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                DateTimeKind.Utc
+            );
+        }
+        return lastUpdate!.Value;
     }
 
     private async Task ProcessPrns(List<NpwdPrn> prns)

@@ -1,10 +1,13 @@
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
+using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using System.Net;
 using Xunit;
@@ -14,15 +17,17 @@ namespace EprPrnIntegration.Api.UnitTests;
 public class UpdateRrepwPrnsFunctionTests
 {
     private readonly Mock<ILogger<UpdateRrepwPrnsFunction>> _loggerMock = new();
+    private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwPrnService> _rrepwPrnServiceMock = new();
     private readonly Mock<IPrnService> _prnServiceMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
+    private readonly IOptions<UpdateRrepwPrnsConfiguration> _config = Options.Create(new UpdateRrepwPrnsConfiguration { DefaultStartDate = "2024-01-01" });
 
     private readonly UpdateRrepwPrnsFunction _function;
 
     public UpdateRrepwPrnsFunctionTests()
     {
-        _function = new(_loggerMock.Object, _rrepwPrnServiceMock.Object, _prnServiceMock.Object, _configurationMock.Object);
+        _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _rrepwPrnServiceMock.Object, _prnServiceMock.Object, _configurationMock.Object, _config);
     }
 
     [Fact]
@@ -35,6 +40,8 @@ public class UpdateRrepwPrnsFunctionTests
             CreatePrn("PRN-003")
         };
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
@@ -49,6 +56,7 @@ public class UpdateRrepwPrnsFunctionTests
         _prnServiceMock.Verify(
             x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-003")),
             Times.Once);
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 
     [Fact]
@@ -56,6 +64,7 @@ public class UpdateRrepwPrnsFunctionTests
     {
         var expectedException = new HttpRequestException("Service unavailable");
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
@@ -63,13 +72,17 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Verify no PRNs were saved
         _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        // Verify last update was NOT set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
 
     [Fact]
-    public async Task WhenRrepwPrnServiceReturnsZeroItems_DoesNotProcessPrns()
+    public async Task WhenRrepwPrnServiceReturnsZeroItems_DoesNotSetLastUpdateTime()
     {
         var emptyPrnsList = new List<NpwdPrn>();
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ReturnsAsync(emptyPrnsList);
 
@@ -77,10 +90,12 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Verify no PRNs were saved
         _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        // Verify last update was NOT set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
 
     [Fact]
-    public async Task WhenOnePrnSaveFails_ContinuesProcessingRemainingPrns()
+    public async Task WhenOnePrnSaveFails_ContinuesProcessingAndUpdatesLastUpdatedTime()
     {
         var prns = new List<NpwdPrn>
         {
@@ -89,6 +104,8 @@ public class UpdateRrepwPrnsFunctionTests
             CreatePrn("PRN-003")
         };
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
@@ -108,6 +125,9 @@ public class UpdateRrepwPrnsFunctionTests
         _prnServiceMock.Verify(
             x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-003")),
             Times.Once);
+
+        // Verify last update WAS still set despite one failure
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 
     [Theory]
@@ -117,7 +137,7 @@ public class UpdateRrepwPrnsFunctionTests
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenTransientErrorOccurs_ForPrnService_RethrowsException(HttpStatusCode statusCode)
+    public async Task WhenTransientErrorOccurs_ForPrnService_RethrowsExceptionAndDoesNotUpdateLastUpdatedTime(HttpStatusCode statusCode)
     {
         var prns = new List<NpwdPrn>
         {
@@ -125,6 +145,8 @@ public class UpdateRrepwPrnsFunctionTests
             CreatePrn("PRN-002-transient")
         };
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
@@ -134,6 +156,9 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+
+        // Verify last update was NOT set when transient error occurs
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
 
     [Fact]
@@ -145,6 +170,8 @@ public class UpdateRrepwPrnsFunctionTests
             material: "Glass",
             tonnes: 500);
 
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<NpwdPrn> { prn });
 
@@ -162,6 +189,35 @@ public class UpdateRrepwPrnsFunctionTests
         Assert.Equal("2024", capturedRequest.AccreditationYear);
         Assert.Equal("Glass", capturedRequest.EvidenceMaterial);
         Assert.Equal(500, capturedRequest.EvidenceTonnes);
+    }
+
+    [Fact]
+    public async Task WhenNoBlobStorageValueExists_UsesDefaultStartDateFromConfiguration()
+    {
+        var prns = new List<NpwdPrn>
+        {
+            CreatePrn("PRN-001"),
+            CreatePrn("PRN-002")
+        };
+
+        // Setup: GetLastUpdate returns null (no blob storage value)
+        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync((DateTime?)null);
+        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(prns);
+
+        await _function.Run(new TimerInfo());
+
+        // Verify GetLastUpdate was called
+        _lastUpdateServiceMock.Verify(x => x.GetLastUpdate("UpdateRrepwPrns"), Times.Once);
+
+        // Verify PRNs were processed
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()),
+            Times.Exactly(2));
+
+        // Verify last update was set
+        _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 
     private static NpwdPrn CreatePrn(

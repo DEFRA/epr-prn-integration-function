@@ -150,6 +150,7 @@ public static class HostBuilderConfiguration
         services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<WasteOrganisationsApiConfiguration>(configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName));
         services.Configure<UpdateWasteOrganisationsConfiguration>(configuration.GetSection(UpdateWasteOrganisationsConfiguration.SectionName));
+        services.Configure<UpdateRrepwPrnsConfiguration>(configuration.GetSection(UpdateRrepwPrnsConfiguration.SectionName));
         services.Configure<RrepwPrnConfiguration>(configuration.GetSection(RrepwPrnConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));

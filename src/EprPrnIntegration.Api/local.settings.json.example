@@ -72,6 +72,7 @@
     "UpdateWasteOrganisations:Trigger": "1,31 0-7 * * *",
     "UpdateWasteOrganisations:DefaultStartDate": "2024-01-01",
     "UpdateRrepwPrns:Trigger": "0 0 19 * * 1-5",
+    "UpdateRrepwPrns:DefaultStartDate": "2024-01-01",
     "RrepwApi:BaseUrl": "https://TBC.api.dev.cdp-int.defra.cloud",
     "RrepwApi:ClientId": "",
     "RrepwApi:ClientSecret": "",
