@@ -14,6 +14,8 @@ using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.RrepwPrnService;
+using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using EprPrnIntegration.Common.Validators;
 using FluentValidation;
@@ -57,6 +59,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
+        services.AddScoped<IRrepwPrnService, RrepwPrnService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
@@ -134,6 +137,10 @@ public static class HostBuilderConfiguration
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IWasteOrganisationsService>>()!, wasteOrganisationsApiConfig.RetryAttempts, wasteOrganisationsApiConfig.RetryDelaySeconds, Common.Constants.HttpClientNames.WasteOrganisations));
         
+        services.AddHttpClient(Common.Constants.HttpClientNames.RrepwPrn)
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<IRrepwPrnService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.RrepwPrn));
+
         return services;
     }
 
@@ -143,6 +150,7 @@ public static class HostBuilderConfiguration
         services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<WasteOrganisationsApiConfiguration>(configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName));
         services.Configure<UpdateWasteOrganisationsConfiguration>(configuration.GetSection(UpdateWasteOrganisationsConfiguration.SectionName));
+        services.Configure<RrepwPrnConfiguration>(configuration.GetSection(RrepwPrnConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
         services.Configure<FeatureManagementConfiguration>(configuration.GetSection(FeatureManagementConfiguration.SectionName));

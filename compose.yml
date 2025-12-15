@@ -177,6 +177,7 @@ services:
       WasteOrganisationsApi__RetryDelaySeconds: "1"
       UpdateWasteOrganisations__Trigger: "1,31 0-7 * * *"
       UpdateWasteOrganisations__DefaultStartDate: "2024-01-01"
+      UpdateRrepwPrns__Trigger: "0 0 19 * * 1-5"
       RrepwApi__BaseUrl: "http://wiremock"
       RrepwApi__ClientId: "dummy-client-id"
       RrepwApi__ClientSecret: "dummy-client-secret"
