@@ -15,4 +15,6 @@ public class ReconcileUpdatedPrnsResponseModel
 
     [JsonProperty(nameof(OrganisationName))]
     public string OrganisationName { get; set; } = null!;
+
+    public string? SourceSystemId { get; set; }
 }

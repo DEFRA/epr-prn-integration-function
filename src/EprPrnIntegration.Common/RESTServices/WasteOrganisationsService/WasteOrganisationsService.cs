@@ -30,17 +30,7 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
         {
             LogPayload(id, organisation);
 
-            try
-            {
-                await Put($"{id}", organisation, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                // Due to CDP connectivity, this will fail in real Azure workloads.
-                // to facilitate testing until CDP is connected, log and continue. 
-                // This can be removed once we advance past happy-path stories.
-                _logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing", id);
-            }
+            await Put($"{id}", organisation, CancellationToken.None);
         }
 
         // This function is temporary for testing, since we don't yet have a working instance of the service.
