@@ -20,7 +20,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -62,8 +61,6 @@ public static class HostBuilderConfiguration
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAppInsightsService, AppInsightsService>();
-        
-        services.AddMemoryCache();
         
         services.AddScoped<IBlobStorage, BlobStorage>();
         services.AddScoped<ILastUpdateService, LastUpdateService>();
