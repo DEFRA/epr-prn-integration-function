@@ -1,6 +1,7 @@
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -33,7 +34,7 @@ public class UpdateRrepwPrnsFunctionTests
     [Fact]
     public async Task ProcessesMultiplePrns()
     {
-        var prns = new List<NpwdPrn>
+        var prns = new List<PackagingRecyclingNote>
         {
             CreatePrn("PRN-001"),
             CreatePrn("PRN-002"),
@@ -79,7 +80,7 @@ public class UpdateRrepwPrnsFunctionTests
     [Fact]
     public async Task WhenRrepwPrnServiceReturnsZeroItems_DoesNotSetLastUpdateTime()
     {
-        var emptyPrnsList = new List<NpwdPrn>();
+        var emptyPrnsList = new List<PackagingRecyclingNote>();
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
@@ -97,7 +98,7 @@ public class UpdateRrepwPrnsFunctionTests
     [Fact]
     public async Task WhenOnePrnSaveFails_ContinuesProcessingAndUpdatesLastUpdatedTime()
     {
-        var prns = new List<NpwdPrn>
+        var prns = new List<PackagingRecyclingNote>
         {
             CreatePrn("PRN-001"),
             CreatePrn("PRN-002-fails"),
@@ -139,7 +140,7 @@ public class UpdateRrepwPrnsFunctionTests
     [InlineData(HttpStatusCode.GatewayTimeout)]
     public async Task WhenTransientErrorOccurs_ForPrnService_RethrowsExceptionAndDoesNotUpdateLastUpdatedTime(HttpStatusCode statusCode)
     {
-        var prns = new List<NpwdPrn>
+        var prns = new List<PackagingRecyclingNote>
         {
             CreatePrn("PRN-001"),
             CreatePrn("PRN-002-transient")
@@ -162,7 +163,7 @@ public class UpdateRrepwPrnsFunctionTests
     }
 
     [Fact]
-    public async Task MapsNpwdPrnToSavePrnDetailsRequestCorrectly()
+    public async Task MapsPackagingRecyclingNoteToSavePrnDetailsRequestCorrectly()
     {
         var prn = CreatePrn("PRN-TEST-123",
             accreditationNo: "ACC-123",
@@ -173,7 +174,7 @@ public class UpdateRrepwPrnsFunctionTests
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
         _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<NpwdPrn> { prn });
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
 
         SavePrnDetailsRequest? capturedRequest = null;
         _prnServiceMock
@@ -194,7 +195,7 @@ public class UpdateRrepwPrnsFunctionTests
     [Fact]
     public async Task WhenNoBlobStorageValueExists_UsesDefaultStartDateFromConfiguration()
     {
-        var prns = new List<NpwdPrn>
+        var prns = new List<PackagingRecyclingNote>
         {
             CreatePrn("PRN-001"),
             CreatePrn("PRN-002")
@@ -220,35 +221,44 @@ public class UpdateRrepwPrnsFunctionTests
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
 
-    private static NpwdPrn CreatePrn(
+    private static PackagingRecyclingNote CreatePrn(
         string evidenceNo,
         string accreditationNo = "ACC-001",
         int accreditationYear = 2025,
         string material = "Plastic",
         int tonnes = 100)
     {
-        return new NpwdPrn
+        return new PackagingRecyclingNote
         {
-            EvidenceNo = evidenceNo,
-            AccreditationNo = accreditationNo,
-            AccreditationYear = accreditationYear,
-            DecemberWaste = false,
-            EvidenceMaterial = material,
-            EvidenceStatusCode = "ACTIVE",
-            EvidenceStatusDesc = "Active",
-            EvidenceTonnes = tonnes,
-            IssueDate = DateTime.UtcNow.AddDays(-30),
-            IssuedByNPWDCode = "NPWD-001",
-            IssuedByOrgName = "Test Issuer Organization",
-            IssuedToNPWDCode = "NPWD-002",
-            IssuedToOrgName = "Test Recipient Organization",
-            MaterialOperationCode = "MAT-001",
-            ModifiedOn = DateTime.UtcNow,
-            ObligationYear = 2025,
-            RecoveryProcessCode = "REC-001",
-            StatusDate = DateTime.UtcNow,
-            CreatedByUser = "test-user",
-            IssuedToEntityTypeCode = "CS"
+            Id = Guid.NewGuid().ToString(),
+            PrnNumber = evidenceNo,
+            Status = new Status
+            {
+                CurrentStatus = "ACTIVE",
+                AuthorisedAt = DateTime.UtcNow.AddDays(-30)
+            },
+            IssuedByOrganisation = new Organisation
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Test Issuer Organization"
+            },
+            IssuedToOrganisation = new Organisation
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Test Recipient Organization"
+            },
+            Accreditation = new Accreditation
+            {
+                Id = Guid.NewGuid().ToString(),
+                AccreditationNumber = accreditationNo,
+                AccreditationYear = accreditationYear,
+                Material = material,
+                SubmittedToRegulator = "EA"
+            },
+            IsDecemberWaste = false,
+            IsExport = false,
+            TonnageValue = tonnes,
+            IssuerNotes = "Test PRN"
         };
     }
 }

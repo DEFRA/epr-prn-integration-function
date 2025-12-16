@@ -3,6 +3,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -58,7 +59,7 @@ public class UpdateRrepwPrnsFunction(
         return lastUpdate!.Value;
     }
 
-    private async Task ProcessPrns(List<NpwdPrn> prns)
+    private async Task ProcessPrns(List<PackagingRecyclingNote> prns)
     {
         await Parallel.ForEachAsync(prns, new ParallelOptions
         {
@@ -66,25 +67,25 @@ public class UpdateRrepwPrnsFunction(
         }, async (prn, _) => await ProcessPrn(prn));
     }
 
-    private async Task ProcessPrn(NpwdPrn prn)
+    private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
         try
         {
-            var request = NpwdPrnToSavePrnDetailsRequestMapper.Map(prn, configuration, logger);
+            var request = PackagingRecyclingNoteToSavePrnDetailsRequestMapper.Map(prn, configuration, logger);
             await prnService.SavePrn(request);
-            logger.LogInformation("Successfully saved PRN {EvidenceNo}", prn.EvidenceNo);
+            logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
         catch (HttpRequestException ex) when (ex.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule.
-            logger.LogError(ex, "Service unavailable ({StatusCode}) when saving PRN {EvidenceNo}, rethrowing", ex.StatusCode, prn.EvidenceNo);
+            logger.LogError(ex, "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing", ex.StatusCode, prn.PrnNumber);
             throw;
         }
         catch (Exception ex)
         {
             // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
             // to allow investigation.
-            logger.LogError(ex, "Failed to save PRN {EvidenceNo}, continuing with next PRN", prn.EvidenceNo);
+            logger.LogError(ex, "Failed to save PRN {PrnNumber}, continuing with next PRN", prn.PrnNumber);
         }
     }
 }

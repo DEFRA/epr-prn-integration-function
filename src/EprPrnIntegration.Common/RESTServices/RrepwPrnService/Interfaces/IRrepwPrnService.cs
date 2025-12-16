@@ -1,8 +1,8 @@
-using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rrepw;
 
 namespace EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
 
 public interface IRrepwPrnService
 {
-    Task<List<NpwdPrn>> GetPrns(CancellationToken cancellationToken);
+    Task<List<PackagingRecyclingNote>> GetPrns(CancellationToken cancellationToken);
 }
