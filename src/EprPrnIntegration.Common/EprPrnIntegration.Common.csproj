@@ -17,12 +17,13 @@
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="GovukNotify" Version="7.2.0" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.22.0" />
-	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.66.1" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
 	<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
 	<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="System.Threading.RateLimiting" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

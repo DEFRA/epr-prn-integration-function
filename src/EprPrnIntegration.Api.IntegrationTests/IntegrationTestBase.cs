@@ -13,6 +13,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected NpwdApi NpwdApiStub = null!;
     protected PrnApi PrnApiStub = null!;
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
+    protected CognitoApi CognitoApiStub = null!;
     protected ILastUpdateService LastUpdateService = LastExecutedContext.LastUpdateService;
     private WireMockContext WireMockContext = null!;
 
@@ -27,6 +28,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         PrnApiStub = new PrnApi(WireMockContext);
         AccountApiStub = new AccountApi(WireMockContext);
         WasteOrganisationsApiStub = new WasteOrganisationsApi(WireMockContext);
+        CognitoApiStub = new CognitoApi(WireMockContext);
     }
 
     public async Task DisposeAsync()

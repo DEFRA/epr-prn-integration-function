@@ -40,6 +40,7 @@ public class CommonDataApi(WireMockContext wireMock)
         Assert.NotNull(status.Guid);
     }
     
+    
     public async Task<string> HasV2UpdateFor(string name)
     {
         var id = Guid.NewGuid().ToString();
@@ -75,9 +76,43 @@ public class CommonDataApi(WireMockContext wireMock)
         return id;
     }
     
-    public async Task<string> HasNoUpdates()
+    public async Task<IList<string>> HasV2MultipleUpdates(int amount)
     {
-        var id = Guid.NewGuid().ToString();
+        var ids = Enumerable.Range(0, amount).Select(_ => Guid.NewGuid().ToString()).ToList();
+
+        var producers = ids.Select(id => new
+        {
+            peprid = id,
+            organisationName = $"dummy name {id}",
+            tradingName = "Acme Plastics",
+            organisationType = "CS",
+            status = "registered",
+            companiesHouseNumber = "12345678",
+            addressLine1 = "123 Industrial Estate",
+            addressLine2 = "Unit 5",
+            town = "Manchester",
+            county = "Greater Manchester",
+            country = "England",
+            postcode = "M1 1AA",
+            businessCountry = "England",
+            updatedDateTime = "2025-01-15T10:30:00Z",
+            registrationYear = "2025"
+        });
+
+        var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/updated-producers"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(producers))
+        );
+
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+        
+        return ids;
+    }
+    
+    public async Task HasNoV2Updates()
+    {
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder.WithRequest(request => request.UsingGet().WithPath("/api/producer-details/updated-producers"))
@@ -85,8 +120,6 @@ public class CommonDataApi(WireMockContext wireMock)
 
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
-
-        return id;
     }
     
     public async Task<IList<LogEntryModel>> GetUpdatedProducersRequests()
