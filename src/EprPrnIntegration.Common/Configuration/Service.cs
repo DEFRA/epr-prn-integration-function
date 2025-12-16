@@ -12,7 +12,6 @@ public class Service
     public int? Retries { get; set; }
     public string? PrnBaseUrl { get; set; }
     public string? PrnEndPointName { get; set; }
-    public string? PrnV2EndPointName { get; set; }
     public string? AccountClientId { get; set; }
     public string? PrnClientId { get; set; }
     public string? CommonDataClientId { get; set; }

@@ -7,7 +7,6 @@
         public const string OrganisationServiceEndPointNameMissing = "OrganisationService EndPointName configuration is missing";
         public const string PrnServiceBaseUrlMissing = "PrnService BaseUrl configuration is missing";
         public const string PrnServiceEndPointNameMissing = "PrnService EndPointName configuration is missing";
-        public const string PrnServiceV2EndPointNameMissing = "PrnServiceV2 EndPointName configuration is missing";
         public const string CommonDataServiceBaseUrlMissing = "CommonDataService BaseUrl configuration is missing";
         public const string CommonDataServiceEndPointNameMissing = "CommonDataService EndPointName configuration is missing";
         public const string WasteOrganisationsApiBaseUrlMissing = "WasteOrganisationsApi BaseUrl configuration is missing";

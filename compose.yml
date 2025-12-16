@@ -130,7 +130,6 @@ services:
       Service__TimeoutSeconds: "100"
       Service__PrnBaseUrl: "http://wiremock"
       Service__PrnEndPointName: "api/v1/prn"
-      Service__PrnV2EndPointName: "api/v2/"
       Service__ClientId: ""
       Service__CommonDataServiceBaseUrl: "http://wiremock"
       Service__CommonDataServiceEndPointName: "api/producer-details"
