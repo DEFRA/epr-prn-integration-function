@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace EprPrnIntegration.Common.Models;
 
@@ -16,7 +17,7 @@ public class SavePrnDetailsRequestV2
     public required string OrganisationName { get; set; }
     public required string AccreditationNumber { get; set; }
     public required string AccreditationYear { get; set; }
-    public required string MaterialName { get; set; } = "";
+    public required string MaterialName { get; set; }
     public required string ReprocessorExporterAgency { get; set; }
     public string? ReprocessingSite { get; set; }
     public required bool DecemberWaste { get; set; }
