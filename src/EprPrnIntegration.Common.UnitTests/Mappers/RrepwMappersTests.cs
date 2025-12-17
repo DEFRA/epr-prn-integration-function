@@ -65,6 +65,22 @@ public class RrepwMappersTests
     }
     
     [Theory]
+    [InlineData(RrepwProcessToBeUsed.Aluminium, RpdProcesses.R4)]
+    [InlineData(RrepwProcessToBeUsed.Fibre, RpdProcesses.R3)]
+    [InlineData(RrepwProcessToBeUsed.Glass, RpdProcesses.R5)]
+    [InlineData(RrepwProcessToBeUsed.Paper, RpdProcesses.R3)]
+    [InlineData(RrepwProcessToBeUsed.Plastic, RpdProcesses.R3)]
+    [InlineData(RrepwProcessToBeUsed.Steel, RpdProcesses.R4)]
+    [InlineData(RrepwProcessToBeUsed.Wood, RpdProcesses.R3)]
+    public void ShouldMapPackagingRecyclingNoteToPrn_ProcessToBeUsed(string materialName,  string expectedMaterialName)
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation.pr = materialName;
+        prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
+    }
+    [Theory]
     [InlineData(RrepwSubmittedToRegulator.EnvironmentAgency, RpdSubmittedToRegulator.EnvironmentAgency)]
     [InlineData(RrepwSubmittedToRegulator.NaturalResourcesWales, RpdSubmittedToRegulator.NaturalResourcesWales)]
     [InlineData(RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency, RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency)]

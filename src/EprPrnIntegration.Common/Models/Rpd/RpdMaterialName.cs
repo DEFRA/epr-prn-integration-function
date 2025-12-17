@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Common.Models.Rpd;
+
 [ExcludeFromCodeCoverage]
 public static class RpdMaterialName
 {
