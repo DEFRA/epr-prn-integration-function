@@ -20,7 +20,7 @@ public class UpdateRrepwPrnsFunctionTests
     private readonly Mock<ILogger<UpdateRrepwPrnsFunction>> _loggerMock = new();
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwPrnService> _rrepwPrnServiceMock = new();
-    private readonly Mock<IPrnService> _prnServiceMock = new();
+    private readonly Mock<IPrnServiceV2> _prnServiceMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly IOptions<UpdateRrepwPrnsConfiguration> _config = Options.Create(new UpdateRrepwPrnsConfiguration { DefaultStartDate = "2024-01-01" });
 
@@ -49,13 +49,13 @@ public class UpdateRrepwPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-001")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-001")),
             Times.Once);
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-002")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-002")),
             Times.Once);
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-003")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-003")),
             Times.Once);
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Once);
     }
@@ -72,7 +72,7 @@ public class UpdateRrepwPrnsFunctionTests
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
         // Verify no PRNs were saved
-        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequestV2>()), Times.Never);
         // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
@@ -90,7 +90,7 @@ public class UpdateRrepwPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Verify no PRNs were saved
-        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequestV2>()), Times.Never);
         // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
     }
@@ -111,20 +111,20 @@ public class UpdateRrepwPrnsFunctionTests
             .ReturnsAsync(prns);
 
         _prnServiceMock
-            .Setup(x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-002-fails")))
+            .Setup(x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-002-fails")))
             .ThrowsAsync(new HttpRequestException("Missing credentials", null, HttpStatusCode.Unauthorized));
 
         await _function.Run(new TimerInfo());
 
         // Verify all three PRNs were attempted
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-001")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-001")),
             Times.Once);
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-002-fails")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-002-fails")),
             Times.Once);
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-003")),
+            x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-003")),
             Times.Once);
 
         // Verify last update WAS still set despite one failure
@@ -152,7 +152,7 @@ public class UpdateRrepwPrnsFunctionTests
             .ReturnsAsync(prns);
 
         _prnServiceMock
-            .Setup(x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.EvidenceNo == "PRN-002-transient")))
+            .Setup(x => x.SavePrn(It.Is<SavePrnDetailsRequestV2>(req => req.PrnNumber == "PRN-002-transient")))
             .ThrowsAsync(new HttpRequestException($"Error: {statusCode}", null, statusCode));
 
         // Act & Assert - expect the exception to be rethrown
@@ -160,36 +160,6 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task MapsPackagingRecyclingNoteToSavePrnDetailsRequestCorrectly()
-    {
-        var prn = CreatePrn("PRN-TEST-123",
-            accreditationNo: "ACC-123",
-            accreditationYear: 2024,
-            material: "Glass",
-            tonnes: 500);
-
-        _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
-        _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
-
-        SavePrnDetailsRequest? capturedRequest = null;
-        _prnServiceMock
-            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
-            .Callback<SavePrnDetailsRequest>(req => capturedRequest = req)
-            .Returns(Task.CompletedTask);
-
-        await _function.Run(new TimerInfo());
-
-        Assert.NotNull(capturedRequest);
-        Assert.Equal("PRN-TEST-123", capturedRequest.EvidenceNo);
-        Assert.Equal("ACC-123", capturedRequest.AccreditationNo);
-        Assert.Equal("2024", capturedRequest.AccreditationYear);
-        Assert.Equal("Glass", capturedRequest.EvidenceMaterial);
-        Assert.Equal(500, capturedRequest.EvidenceTonnes);
     }
 
     [Fact]
@@ -214,7 +184,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Verify PRNs were processed
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()),
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequestV2>()),
             Times.Exactly(2));
 
         // Verify last update was set

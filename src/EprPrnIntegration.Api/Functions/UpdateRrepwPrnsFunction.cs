@@ -18,7 +18,7 @@ public class UpdateRrepwPrnsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<UpdateRrepwPrnsFunction> logger,
     IRrepwPrnService rrepwPrnService,
-    IPrnService prnService,
+    IPrnServiceV2 prnService,
     IConfiguration configuration,
     IOptions<UpdateRrepwPrnsConfiguration> config)
 {
@@ -71,7 +71,7 @@ public class UpdateRrepwPrnsFunction(
     {
         try
         {
-            var request = PackagingRecyclingNoteToSavePrnDetailsRequestMapper.Map(prn, configuration, logger);
+            var request = PackagingRecyclingNoteToSavePrnDetailsRequestMapper.Map(prn);
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }

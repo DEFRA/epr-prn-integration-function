@@ -10,37 +10,30 @@ namespace EprPrnIntegration.Common.Mappers;
 
 public static class PackagingRecyclingNoteToSavePrnDetailsRequestMapper
 {
-    public static SavePrnDetailsRequest Map(PackagingRecyclingNote prn, IConfiguration config, ILogger logger)
+    public static SavePrnDetailsRequestV2 Map(PackagingRecyclingNote prn)
     {
-        return new SavePrnDetailsRequest
+        return new SavePrnDetailsRequestV2
         {
-            AccreditationNo = "DUMMY_ACCREDITATION",
-            AccreditationYear = "2024",
-            CancelledDate = null,
-            DecemberWaste = false,
-            EvidenceMaterial = "DUMMY_MATERIAL",
-            EvidenceNo = "DUMMY_EVIDENCE_NO",
-            EvidenceStatusCode = EprnStatus.ACCEPTED,
-            EvidenceTonnes = 0,
-            IssueDate = DateTime.UtcNow,
-            IssuedByNPWDCode = Guid.Empty,
-            IssuedByOrgName = "DUMMY_ISSUED_BY_ORG",
-            IssuedToNPWDCode = Guid.Empty,
-            IssuedToOrgName = "DUMMY_ISSUED_TO_ORG",
-            IssuerNotes = "DUMMY_NOTES",
-            StatusDate = DateTime.UtcNow,
-            CreatedByUser = "IntegrationFA",
+            PrnNumber = prn.PrnNumber!,
             SourceSystemId = "RREPW",
-            IssuedToEPRId = null,
-            IssuerRef = "DUMMY_REF",
-            MaterialOperationCode = null,
-            ModifiedOn = null,
-            ObligationYear = "2024",
-            PrnSignatory = null,
+            PrnStatusId = 1,
+            PrnSignatory = "DUMMY_SIGNATORY",
             PrnSignatoryPosition = null,
-            ProducerAgency = null,
-            RecoveryProcessCode = null,
-            ReprocessorAgency = null
+            StatusUpdatedOn = DateTime.UtcNow,
+            IssuedByOrg = "DUMMY_ISSUED_BY_ORG",
+            OrganisationId = Guid.Empty,
+            OrganisationName = "DUMMY_ORG_NAME",
+            AccreditationNumber = "DUMMY_ACCREDITATION",
+            AccreditationYear = "2024",
+            MaterialName = "DUMMY_MATERIAL",
+            ReprocessorExporterAgency = "DUMMY_AGENCY",
+            ReprocessingSite = null,
+            DecemberWaste = false,
+            IsExport = false,
+            TonnageValue = 0,
+            IssuerNotes = null,
+            ProcessToBeUsed = "DUMMY_PROCESS",
+            ObligationYear = "2024"
         };
     }
 }
