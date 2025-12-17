@@ -15,36 +15,33 @@ public class RrepwMappers : Profile
 
     public RrepwMappers()
     {
-        CreateMap<RrepwPrn, SavePrnDetailsRequestV2>()
+        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequestV2>()
             .ForMember(rrepwPrn => rrepwPrn.SourceSystemId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(rrepwPrn => rrepwPrn.PrnNumber, opt => opt.MapFrom(src => src.PrnNumber))
-            .ForMember(rrepwPrn => rrepwPrn.EvidenceStatusCode, o => o.MapFrom(src => ConvertNotStatusToEprnStatus( src.Status.CurrentStatus)))
+            .ForMember(rrepwPrn => rrepwPrn.PrnStatusId, o => o.MapFrom(src => ConvertStatusToEprnStatus( src.Status.CurrentStatus)))
             .ForMember(rrepwPrn => rrepwPrn.PrnSignatory, o => o.MapFrom(src =>  src.Status.AuthorisedBy.FullName))
             .ForMember(rrepwPrn => rrepwPrn.PrnSignatoryPosition, o => o.MapFrom(src =>  src.Status.AuthorisedBy.JobTitle))
             .AfterMap((prn, request) =>
             {
-                switch (prn.Status.CurrentStatus)
+                request.StatusUpdatedOn = prn.Status.CurrentStatus switch
                 {
-                    case NoteStatus.cancelled:
-                        request.CancelledDate = prn.Status.CancelledAt;
-                        break;
-                    case NoteStatus.accepted:
-                        request.StatusDate = prn.Status.AuthorisedAt;
-                        break;
-                    // all other statuses are not relevant so ignored
-                }
+                    "cancelled" =>
+                        // todo should not be ignoring this potential null here
+                        prn.Status.CancelledAt!.Value,
+                    "accepted" => prn.Status.AuthorisedAt!.Value,
+                    _ => request.StatusUpdatedOn
+                };
             });
     }
 
-    private static EprnStatus ConvertNotStatusToEprnStatus(NoteStatus source)
+    private static EprnStatus ConvertStatusToEprnStatus(string source)
         => source switch
         {
-            NoteStatus.awaiting_authorisation => EprnStatus.AWAITINGACCEPTANCE,
-            NoteStatus.awaiting_acceptance    => EprnStatus.AWAITINGACCEPTANCE,
-            NoteStatus.accepted              => EprnStatus.ACCEPTED,
-            NoteStatus.awaiting_cancellation  => EprnStatus.CANCELLED,
-            NoteStatus.cancelled             => EprnStatus.CANCELLED,
-            NoteStatus.rejected              => EprnStatus.REJECTED,
+            "awaiting_authorisation" => EprnStatus.AWAITINGACCEPTANCE,
+            "awaiting_acceptance"    => EprnStatus.AWAITINGACCEPTANCE,
+            "accepted"               => EprnStatus.ACCEPTED,
+            "awaiting_cancellation"  => EprnStatus.CANCELLED,
+            "cancelled"              => EprnStatus.CANCELLED,
+            "rejected"               => EprnStatus.REJECTED,
             _ => throw new ArgumentOutOfRangeException(nameof(source), source, null)
         };
 

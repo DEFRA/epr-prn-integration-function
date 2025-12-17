@@ -15,54 +15,54 @@ public class RrepwMappersTests
 
 
     [Fact]
-    public void ShouldMapRrepwPrnToPrn_TheRest()
+    public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
-        var rrepwPrn = _fixture.Create<RrepwPrn>();
-        var savePrnDetailsRequest = _mapper.Map<RrepwPrn, SavePrnDetailsRequest>(rrepwPrn);
-        savePrnDetailsRequest.SourceSystemId.Should().Be(rrepwPrn.Id);
-        savePrnDetailsRequest.EvidenceNo.Should().Be(rrepwPrn.PrnNumber);
-        savePrnDetailsRequest.PrnSignatory.Should().Be(rrepwPrn.Status.AuthorisedBy.FullName);
-        savePrnDetailsRequest.PrnSignatoryPosition.Should().Be(rrepwPrn.Status.AuthorisedBy.JobTitle);
+        var prn = _fixture.Create<PackagingRecyclingNote>();
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
+        savePrnDetailsRequest.EvidenceNo.Should().Be(prn.PrnNumber);
+        savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status.AuthorisedBy!.FullName);
+        savePrnDetailsRequest.PrnSignatoryPosition.Should().Be(prn.Status.AuthorisedBy.JobTitle);
     }
 
     [Theory]
-    [InlineData(NoteStatus.accepted, EprnStatus.ACCEPTED)]
-    [InlineData(NoteStatus.awaiting_acceptance, EprnStatus.AWAITINGACCEPTANCE)]
-    [InlineData(NoteStatus.awaiting_authorisation, EprnStatus.AWAITINGACCEPTANCE)]
-    [InlineData(NoteStatus.awaiting_cancellation, EprnStatus.CANCELLED)]
-    [InlineData(NoteStatus.cancelled, EprnStatus.CANCELLED)]
-    [InlineData(NoteStatus.rejected, EprnStatus.REJECTED)]
-    public void ShouldMapRrepwPrnToPrn_Status_CurrentStatus(NoteStatus status, EprnStatus expected)
+    [InlineData("accepted", EprnStatus.ACCEPTED)]
+    [InlineData("awaiting_acceptance", EprnStatus.AWAITINGACCEPTANCE)]
+    [InlineData("awaiting_authorisation", EprnStatus.AWAITINGACCEPTANCE)]
+    [InlineData("awaiting_cancellation", EprnStatus.CANCELLED)]
+    [InlineData("cancelled", EprnStatus.CANCELLED)]
+    [InlineData("rejected", EprnStatus.REJECTED)]
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus(string status, EprnStatus expected)
     {
-        var rrepwPrn = _fixture.Create<RrepwPrn>();
-        rrepwPrn.Status.CurrentStatus = status;
-        var savePrnDetailsRequest = _mapper.Map<RrepwPrn, SavePrnDetailsRequest>(rrepwPrn);
+        var prn = _fixture.Create<PackagingRecyclingNote>();
+        prn.Status.CurrentStatus = status;
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.EvidenceStatusCode.Should().Be(expected);
     }
 
     [Theory]
-    [InlineData(NoteStatus.accepted)]
-    [InlineData(NoteStatus.awaiting_acceptance)]
-    [InlineData(NoteStatus.awaiting_authorisation)]
-    [InlineData(NoteStatus.awaiting_cancellation)]
-    [InlineData(NoteStatus.cancelled)]
-    [InlineData(NoteStatus.rejected)]
-    public void ShouldMapRrepwPrnToPrn_Status_AuthorizedAt(NoteStatus status)
+    [InlineData("accepted")]
+    [InlineData("awaiting_acceptance")]
+    [InlineData("awaiting_authorisation")]
+    [InlineData("awaiting_cancellation")]
+    [InlineData("cancelled")]
+    [InlineData("rejected")]
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt(string status)
     {
         var adt = new DateTime(2024, 12, 08);
         var cdt = new DateTime(2024, 12, 08);
-        var rrepwPrn = _fixture.Create<RrepwPrn>();
-        rrepwPrn.Status.CurrentStatus = status;
-        rrepwPrn.Status.AuthorisedAt = adt;
-        rrepwPrn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<RrepwPrn, SavePrnDetailsRequest>(rrepwPrn);
+        var prn = _fixture.Create<PackagingRecyclingNote>();
+        prn.Status.CurrentStatus = status;
+        prn.Status.AuthorisedAt = adt;
+        prn.Status.CancelledAt = cdt;
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         switch (status)
         {
-            case NoteStatus.cancelled:
+            case "cancelled":
                 savePrnDetailsRequest.CancelledDate.Should().Be(cdt);
                 savePrnDetailsRequest.StatusDate.Should().BeNull();
                 break;
-            case NoteStatus.accepted:
+            case "accepted":
                 savePrnDetailsRequest.CancelledDate.Should().BeNull();
                 savePrnDetailsRequest.StatusDate.Should().Be(adt);
                 break;
