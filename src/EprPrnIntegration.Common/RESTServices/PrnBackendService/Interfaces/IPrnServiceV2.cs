@@ -4,5 +4,5 @@ namespace EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 public interface IPrnServiceV2
 {
-    Task SaveEPRN(Prn request);
+    Task SavePrn(SavePrnDetailsRequestV2 request);
 }
