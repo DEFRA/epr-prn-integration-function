@@ -24,4 +24,5 @@ public class SavePrnDetailsRequestV2
     public required int TonnageValue { get; set; }
     public string? IssuerNotes { get; set; }
     public required string ProcessToBeUsed { get; set; }
+    public required string ObligationYear { get; set; }
 }
