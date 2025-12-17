@@ -65,7 +65,9 @@
     "WasteOrganisationsApi:ClientId": "secm1bm05h7v5vd36tvknl2go",
     "WasteOrganisationsApi:ClientSecret": "",
     "WasteOrganisationsApi:AccessTokenUrl": "https://waste-organisations-c63f2.auth.eu-west-2.amazoncognito.com/oauth2/token",
-    "WasteOrganisationsApi:TimeoutSeconds": "5",
+    "WasteOrganisationsApi:TimeoutSeconds": "30",
+    "WasteOrganisationsApi:RetryAttempts": 3,
+    "WasteOrganisationsApi:RetryDelaySeconds": 5,
     "UpdateWasteOrganisations:Trigger": "1,31 0-7 * * *",
     "UpdateWasteOrganisations:DefaultStartDate": "2024-01-01",
     "AzureWebJobsStorage": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
