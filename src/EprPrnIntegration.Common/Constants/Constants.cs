@@ -14,6 +14,7 @@
     {
         public const string Npwd = "NpwdClient";
         public const string Prn = "PrnClient";
+        public const string PrnV2 = "PrnClientV2";
         public const string Organisation = "OrganisationClient";
         public const string Account = "AccountClient";
         public const string CommonData = "CommonDataClient";
