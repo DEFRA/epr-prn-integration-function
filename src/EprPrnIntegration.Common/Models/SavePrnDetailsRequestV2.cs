@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace EprPrnIntegration.Common.Models;
 
