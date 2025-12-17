@@ -12,36 +12,39 @@ public class RrepwMappers : Profile
     {
         // all fields required here have been validated as not null prior to this mapping
         CreateMap<PackagingRecyclingNote, SavePrnDetailsRequestV2>()
-            .ForMember(rrepwPrn => rrepwPrn.SourceSystemId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(rrepwPrn => rrepwPrn.PrnStatusId,
+            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(spdr => spdr.PrnStatusId,
                 o => o.MapFrom(src => ConvertStatusToEprnStatus(src.Status.CurrentStatus)))
-            .ForMember(rrepwPrn => rrepwPrn.PrnSignatory, o => o.MapFrom(src => src.Status.AuthorisedBy!.FullName))
-            .ForMember(rrepwPrn => rrepwPrn.PrnSignatoryPosition,
+            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => src.Status.AuthorisedBy!.FullName))
+            .ForMember(spdr => spdr.PrnSignatoryPosition,
                 o => o.MapFrom(src => src.Status.AuthorisedBy!.JobTitle))
-            .ForMember(rrepwPrn => rrepwPrn.IssuedByOrg, o => o.MapFrom(src => src.IssuedByOrganisation.Name))
-            .ForMember(rrepwPrn => rrepwPrn.OrganisationId,
+            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => src.IssuedByOrganisation.Name))
+            .ForMember(spdr => spdr.OrganisationId,
                 o => o.MapFrom(src => Guid.Parse(src.IssuedToOrganisation.Id)))
-            .ForMember(rrepwPrn => rrepwPrn.OrganisationName, o => o.MapFrom(src => src.IssuedToOrganisation.Name))
-            .ForMember(rrepwPrn => rrepwPrn.OrganisationName, o => o.MapFrom(src => src.IssuedToOrganisation.Name))
-            .ForMember(rrepwPrn => rrepwPrn.AccreditationNumber,
+            .ForMember(spdr => spdr.OrganisationName, o => o.MapFrom(src => src.IssuedToOrganisation.Name))
+            .ForMember(spdr => spdr.OrganisationName, o => o.MapFrom(src => src.IssuedToOrganisation.Name))
+            .ForMember(spdr => spdr.AccreditationNumber,
                 o => o.MapFrom(src => src.Accreditation.AccreditationNumber))
-            .ForMember(rrepwPrn => rrepwPrn.AccreditationYear,
+            .ForMember(spdr => spdr.AccreditationYear,
                 o => o.MapFrom(src => src.Accreditation.AccreditationYear.ToString()))
-            .ForMember(rrepwPrn => rrepwPrn.ReprocessorExporterAgency,
+            .ForMember(spdr => spdr.ReprocessorExporterAgency,
                 o => o.MapFrom(src => ConvertRegulator( src.Accreditation.SubmittedToRegulator)))
-            .ForMember(rrepwPrn => rrepwPrn.ReprocessingSite,
+            .ForMember(spdr => spdr.ReprocessingSite,
                 o => o.MapFrom(src => src.Accreditation.SiteAddress!.Line1))
-            .ForMember(rrepwPrn => rrepwPrn.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
-            .ForMember(rrepwPrn => rrepwPrn.MaterialName,
-                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src.Accreditation.Material,src.Accreditation.GlassRecyclingProcess)))
-            .AfterMap((prn, request) =>
+            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
+            .ForMember(spdr => spdr.ProcessToBeUsed,
+                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.Accreditation.Material)))
+            .ForMember(spdr => spdr.ObligationYear,  "2026")
+            .ForMember(spdr => spdr.MaterialName,
+                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src.Accreditation.Material, src.Accreditation.GlassRecyclingProcess)))
+            .AfterMap((prn, spdr) =>
             {
-                request.StatusUpdatedOn = prn.Status.CurrentStatus switch
+                spdr.StatusUpdatedOn = prn.Status.CurrentStatus switch
                 {
                     StatusName.Cancelled =>
                         prn.Status.CancelledAt!.Value,
                     StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt!.Value,
-                    _ => request.StatusUpdatedOn
+                    _ => spdr.StatusUpdatedOn
                 };
             });
     }
@@ -95,6 +98,21 @@ public class RrepwMappers : Profile
             RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency => RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency,
             RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge => RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge,
             _ => throw new ArgumentOutOfRangeException(nameof(source), source, null)
+        };
+    }
+    
+    private static string ConvertMaterialToProcessToBeUsed(string material)
+    {
+        return material switch
+        {
+            RrepwMaterialName.Aluminium => RpdProcesses.R4,
+            RrepwMaterialName.Fibre => RpdProcesses.R3,
+            RrepwMaterialName.Glass => RpdProcesses.R5,
+            RrepwMaterialName.Paper => RpdProcesses.R3,
+            RrepwMaterialName.Plastic => RpdProcesses.R3,
+            RrepwMaterialName.Steel => RpdProcesses.R4,
+            RrepwMaterialName.Wood => RpdProcesses.R3,
+            _ => throw new ArgumentOutOfRangeException(nameof(material), material, null)
         };
     }
 }
