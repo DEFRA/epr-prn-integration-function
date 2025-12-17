@@ -143,5 +143,6 @@ public class RrepwMappersTests
         savePrnDetailsRequest.IsExport.Should().Be(prn.IsExport);
         savePrnDetailsRequest.TonnageValue.Should().Be(prn.TonnageValue);
         savePrnDetailsRequest.IssuerNotes.Should().Be(prn.IssuerNotes);
+        savePrnDetailsRequest.ObligationYear.Should().Be("2026");
     }
 }

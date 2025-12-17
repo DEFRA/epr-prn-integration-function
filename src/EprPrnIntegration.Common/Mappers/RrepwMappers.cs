@@ -34,7 +34,7 @@ public class RrepwMappers : Profile
             .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
             .ForMember(spdr => spdr.ProcessToBeUsed,
                 o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.Accreditation.Material)))
-            .ForMember(spdr => spdr.ObligationYear,  "2026")
+            .ForMember(spdr => spdr.ObligationYear,o => o.MapFrom(src => "2026"))
             .ForMember(spdr => spdr.MaterialName,
                 o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src.Accreditation.Material, src.Accreditation.GlassRecyclingProcess)))
             .AfterMap((prn, spdr) =>
