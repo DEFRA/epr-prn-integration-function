@@ -104,10 +104,13 @@ public static class HostBuilderConfiguration
         ApiCallsRetryConfig apiCallsRetryConfig = new();
         configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
 
+        WasteOrganisationsApiConfiguration wasteOrganisationsApiConfig = new();
+        configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName).Bind(wasteOrganisationsApiConfig);
+
         services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IPrnService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Prn));
-        
+
         services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
         .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IOrganisationService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Organisation));
@@ -124,7 +127,7 @@ public static class HostBuilderConfiguration
         services.AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
             .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
-                GetRetryPolicy(services.GetService<ILogger<IWasteOrganisationsService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.WasteOrganisations));
+                GetRetryPolicy(services.GetService<ILogger<IWasteOrganisationsService>>()!, wasteOrganisationsApiConfig.RetryAttempts, wasteOrganisationsApiConfig.RetryDelaySeconds, Common.Constants.HttpClientNames.WasteOrganisations));
         
         return services;
     }
