@@ -24,7 +24,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             HttpClientNames.Rrepw,
             config.Value.TimeoutSeconds), IRrepwService
     {
-        public async Task<ListPackagingRecyclingNotesResponse> ListPackagingRecyclingNotes(
+        public async Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
             CancellationToken cancellationToken = default)
@@ -37,7 +37,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             logger.LogInformation("Fetching packaging recycling notes from {DateFrom} to {DateTo}",
                 dateFromQuery, dateToQuery);
 
-            return await Get<ListPackagingRecyclingNotesResponse>(queryString, cancellationToken);
+            var response = await Get<ListPackagingRecyclingNotesResponse>(queryString, cancellationToken);
+            return response.Items;
         }
     }
 }

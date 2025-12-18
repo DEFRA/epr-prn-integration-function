@@ -4,7 +4,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
 {
     public interface IRrepwService
     {
-        Task<ListPackagingRecyclingNotesResponse> ListPackagingRecyclingNotes(
+        Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
             CancellationToken cancellationToken = default);
