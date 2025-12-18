@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -23,19 +24,17 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             HttpClientNames.Rrepw,
             config.Value.TimeoutSeconds), IRrepwService
     {
-        private readonly ILogger<RrepwService> _logger = logger;
-
         public async Task<ListPackagingRecyclingNotesResponse> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
             CancellationToken cancellationToken = default)
         {
-            var dateFromQuery = dateFrom.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            var dateToQuery = dateTo.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            var dateFromQuery = dateFrom.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            var dateToQuery = dateTo.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
 
             var queryString = $"?statuses=awaiting_acceptance,cancelled&dateFrom={dateFromQuery}&dateTo={dateToQuery}";
 
-            _logger.LogInformation("Fetching packaging recycling notes from {DateFrom} to {DateTo}",
+            logger.LogInformation("Fetching packaging recycling notes from {DateFrom} to {DateTo}",
                 dateFromQuery, dateToQuery);
 
             return await Get<ListPackagingRecyclingNotesResponse>(queryString, cancellationToken);
