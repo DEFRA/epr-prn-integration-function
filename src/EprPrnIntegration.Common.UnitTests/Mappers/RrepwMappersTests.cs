@@ -41,12 +41,8 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.Accepted, EprnStatus.ACCEPTED)]
     [InlineData(StatusName.AwaitingAcceptance, EprnStatus.AWAITINGACCEPTANCE)]
-    [InlineData(StatusName.AwaitingAuthorisation, EprnStatus.AWAITINGACCEPTANCE)]
-    [InlineData(StatusName.AwaitingCancellation, EprnStatus.CANCELLED)]
     [InlineData(StatusName.Cancelled, EprnStatus.CANCELLED)]
-    [InlineData(StatusName.Rejected, EprnStatus.REJECTED)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus(
         string status,
         EprnStatus expected
@@ -58,6 +54,20 @@ public class RrepwMappersTests
             prn
         );
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
+    }
+
+    [Theory]
+    [InlineData(StatusName.Accepted)]
+    [InlineData(StatusName.AwaitingAuthorisation)]
+    [InlineData(StatusName.AwaitingCancellation)]
+    [InlineData(StatusName.Rejected)]
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus_Wrong(string status)
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Status.CurrentStatus = status;
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
+        );
     }
 
     [Theory]
