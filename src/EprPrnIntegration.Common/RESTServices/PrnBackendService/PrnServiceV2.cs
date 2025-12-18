@@ -23,9 +23,9 @@ public class PrnServiceV2 : BaseHttpService, IPrnServiceV2
             HttpClientNames.PrnV2,
             config.Value.TimeoutSeconds)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
     }
-
+    
     public async Task SavePrn(SavePrnDetailsRequestV2 request)
     {
         _logger.LogInformation("Saving PRN V2 with id {PrnNumber}", request.PrnNumber);

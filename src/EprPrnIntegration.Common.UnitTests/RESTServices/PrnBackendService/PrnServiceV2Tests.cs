@@ -77,6 +77,54 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Act & Assert
             await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
         }
+
+        [Fact]
+        public void Constructor_ShouldThrowArgumentNullException_WhenPrnBaseUrlIsNull()
+        {
+            // Arrange
+            var mockConfig = new Mock<IOptions<Configuration.Service>>();
+            mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
+            {
+                PrnBaseUrl = null,
+                PrnEndPointNameV2 = "api/v2/prn"
+            });
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                new PrnServiceV2(
+                    _mockHttpContextAccessor.Object,
+                    new HttpClientFactoryMock(new HttpClient()),
+                    _loggerMock.Object,
+                    mockConfig.Object
+                )
+            );
+
+            Assert.Contains("PrnService BaseUrl configuration is missing", exception.Message);
+        }
+
+        [Fact]
+        public void Constructor_ShouldThrowArgumentNullException_WhenPrnEndPointNameV2IsNull()
+        {
+            // Arrange
+            var mockConfig = new Mock<IOptions<Configuration.Service>>();
+            mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
+            {
+                PrnBaseUrl = "http://localhost:5575/",
+                PrnEndPointNameV2 = null
+            });
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                new PrnServiceV2(
+                    _mockHttpContextAccessor.Object,
+                    new HttpClientFactoryMock(new HttpClient()),
+                    _loggerMock.Object,
+                    mockConfig.Object
+                )
+            );
+
+            Assert.Contains("PrnService EndPointNameV2 configuration is missing", exception.Message);
+        }
         
         private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(string responseContent = "", System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
         {
