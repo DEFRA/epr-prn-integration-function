@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Text.Json;
+using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
@@ -51,22 +52,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Verify the payload
             Assert.NotNull(mockHandler.LastRequestContent);
             var sentRequest = JsonSerializer.Deserialize<SavePrnDetailsRequestV2>(mockHandler.LastRequestContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            Assert.Equal("RREPW", sentRequest.SourceSystemId);
-            Assert.Equal("PRN-1234", sentRequest.PrnNumber);
-            Assert.Equal(1, sentRequest.PrnStatusId);
-            Assert.Equal("John Doe", sentRequest.PrnSignatory);
-            Assert.Equal("Org A", sentRequest.IssuedByOrg);
-            Assert.Equal(organisationId, sentRequest.OrganisationId);
-            Assert.Equal("Org Name", sentRequest.OrganisationName);
-            Assert.Equal("ACC-123", sentRequest.AccreditationNumber);
-            Assert.Equal("2024", sentRequest.AccreditationYear);
-            Assert.Equal("Plastic", sentRequest.MaterialName);
-            Assert.Equal("Agency", sentRequest.ReprocessorExporterAgency);
-            Assert.False(sentRequest.DecemberWaste);
-            Assert.False(sentRequest.IsExport);
-            Assert.Equal(100, sentRequest.TonnageValue);
-            Assert.Equal("Recycling", sentRequest.ProcessToBeUsed);
-            Assert.Equal("2024", sentRequest.ObligationYear);
+            
+            sentRequest.Should().BeEquivalentTo(request);
         }
 
         [Fact]
