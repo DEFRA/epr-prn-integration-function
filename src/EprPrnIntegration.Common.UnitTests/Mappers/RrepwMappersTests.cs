@@ -65,7 +65,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status.CurrentStatus = status;
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        Assert.Throws<AutoMapperMappingException>(() =>
             _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
         );
     }
