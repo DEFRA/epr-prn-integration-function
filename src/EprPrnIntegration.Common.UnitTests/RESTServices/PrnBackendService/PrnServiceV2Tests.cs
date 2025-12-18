@@ -26,7 +26,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
             {
                 PrnBaseUrl = "http://localhost:5575/",
-                PrnEndPointNameV2 = "api/v2"
+                PrnEndPointNameV2 = "api/v2/prn"
             });
         }
        
@@ -77,6 +77,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             // Act & Assert
             await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
         }
+        
         private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(string responseContent = "", System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
         {
             var mockHandler = new MockHttpMessageHandler(responseContent, statusCode);

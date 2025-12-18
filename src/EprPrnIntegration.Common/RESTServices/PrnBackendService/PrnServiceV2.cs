@@ -29,6 +29,6 @@ public class PrnServiceV2 : BaseHttpService, IPrnServiceV2
     public async Task SavePrn(SavePrnDetailsRequestV2 request)
     {
         _logger.LogInformation("Saving PRN V2 with id {PrnNumber}", request.PrnNumber);
-        await Post($"prn", request, CancellationToken.None);
+        await Post($"/", request, CancellationToken.None);
     }
 }

@@ -20,7 +20,7 @@
     "Service:TimeoutSeconds": "100",
     "Service:PrnBaseUrl": "http://localhost:5666/",
     "Service:PrnEndPointName": "api/v1/prn",
-    "Service:PrnEndPointNameV2": "api/v2",
+    "Service:PrnEndPointNameV2": "api/v2/prn",
     "Service:ClientId": "",
     "Service:CommonDataServiceBaseUrl": "http://localhost:5666",
     "Service:CommonDataServiceEndPointName": "api/producer-details",
