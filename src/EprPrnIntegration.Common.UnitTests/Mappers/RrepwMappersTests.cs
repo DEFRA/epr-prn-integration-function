@@ -15,14 +15,24 @@ public class RrepwMappersTests
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
 
     public RrepwMappersTests()
-    { 
-        _fixture.Register(() =>_fixture.Build<Organisation>().With(o => o.Id, Guid.NewGuid().ToString()).Create());
-        _fixture.Register(() =>_fixture.Build<Status>().With(o => o.CurrentStatus, StatusName.AwaitingAcceptance).Create());
-        _fixture.Register(() =>_fixture.Build<Accreditation>()
-            .With(o => o.Material, RrepwMaterialName.Aluminium)
-            .With(o => o.GlassRecyclingProcess, (string?)null)
-            .With(o => o.SubmittedToRegulator, RrepwSubmittedToRegulator.EnvironmentAgency)
-            .Create());
+    {
+        _fixture.Register(() =>
+            _fixture.Build<Organisation>().With(o => o.Id, Guid.NewGuid().ToString()).Create()
+        );
+        _fixture.Register(() =>
+            _fixture
+                .Build<Status>()
+                .With(o => o.CurrentStatus, StatusName.AwaitingAcceptance)
+                .Create()
+        );
+        _fixture.Register(() =>
+            _fixture
+                .Build<Accreditation>()
+                .With(o => o.Material, RrepwMaterialName.Aluminium)
+                .With(o => o.GlassRecyclingProcess, (string?)null)
+                .With(o => o.SubmittedToRegulator, RrepwSubmittedToRegulator.EnvironmentAgency_EA)
+                .Create()
+        );
     }
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
@@ -30,7 +40,6 @@ public class RrepwMappersTests
         return _fixture.Build<PackagingRecyclingNote>().Create();
     }
 
-    
     [Theory]
     [InlineData(StatusName.Accepted, EprnStatus.ACCEPTED)]
     [InlineData(StatusName.AwaitingAcceptance, EprnStatus.AWAITINGACCEPTANCE)]
@@ -38,32 +47,51 @@ public class RrepwMappersTests
     [InlineData(StatusName.AwaitingCancellation, EprnStatus.CANCELLED)]
     [InlineData(StatusName.Cancelled, EprnStatus.CANCELLED)]
     [InlineData(StatusName.Rejected, EprnStatus.REJECTED)]
-    public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus(string status, EprnStatus expected)
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus(
+        string status,
+        EprnStatus expected
+    )
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status.CurrentStatus = status;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
     }
-    
+
     [Theory]
     [InlineData(RrepwMaterialName.Aluminium, null, RpdMaterialName.Aluminium)]
     [InlineData(RrepwMaterialName.Fibre, null, RpdMaterialName.Fibre)]
-    [InlineData(RrepwMaterialName.Glass, RrepwGlassRecyclingProcess.GlassOther, RpdMaterialName.GlassOther)]
-    [InlineData(RrepwMaterialName.Glass, RrepwGlassRecyclingProcess.GlassRemelt, RpdMaterialName.GlassRemelt)]
+    [InlineData(
+        RrepwMaterialName.Glass,
+        RrepwGlassRecyclingProcess.GlassOther,
+        RpdMaterialName.GlassOther
+    )]
+    [InlineData(
+        RrepwMaterialName.Glass,
+        RrepwGlassRecyclingProcess.GlassRemelt,
+        RpdMaterialName.GlassRemelt
+    )]
     [InlineData(RrepwMaterialName.Paper, null, RpdMaterialName.PaperBoard)]
     [InlineData(RrepwMaterialName.Plastic, null, RpdMaterialName.Plastic)]
     [InlineData(RrepwMaterialName.Steel, null, RpdMaterialName.Steel)]
     [InlineData(RrepwMaterialName.Wood, null, RpdMaterialName.Wood)]
-    public void ShouldMapPackagingRecyclingNoteToPrn_MaterialName(string materialName, string? glassRecyclingProcess, string expectedMaterialName)
+    public void ShouldMapPackagingRecyclingNoteToPrn_MaterialName(
+        string materialName,
+        string? glassRecyclingProcess,
+        string expectedMaterialName
+    )
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
     }
-    
+
     [Theory]
     [InlineData(RrepwMaterialName.Aluminium, RpdProcesses.R4)]
     [InlineData(RrepwMaterialName.Fibre, RpdProcesses.R3)]
@@ -72,25 +100,47 @@ public class RrepwMappersTests
     [InlineData(RrepwMaterialName.Plastic, RpdProcesses.R3)]
     [InlineData(RrepwMaterialName.Steel, RpdProcesses.R4)]
     [InlineData(RrepwMaterialName.Wood, RpdProcesses.R3)]
-    public void ShouldMapPackagingRecyclingNoteToPrn_ProcessToBeUsed(string materialName,  string expectedProcessToBeUsed)
+    public void ShouldMapPackagingRecyclingNoteToPrn_ProcessToBeUsed(
+        string materialName,
+        string expectedProcessToBeUsed
+    )
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = RrepwGlassRecyclingProcess.GlassOther;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         savePrnDetailsRequest.ProcessToBeUsed.Should().Be(expectedProcessToBeUsed);
     }
-    
+
     [Theory]
-    [InlineData(RrepwSubmittedToRegulator.EnvironmentAgency, RpdSubmittedToRegulator.EnvironmentAgency)]
-    [InlineData(RrepwSubmittedToRegulator.NaturalResourcesWales, RpdSubmittedToRegulator.NaturalResourcesWales)]
-    [InlineData(RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency, RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency)]
-    [InlineData(RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge, RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge)]
-    public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(string sourceStr,  string expectedStr)
+    [InlineData(
+        RrepwSubmittedToRegulator.EnvironmentAgency_EA,
+        RpdSubmittedToRegulator.EnvironmentAgency
+    )]
+    [InlineData(
+        RrepwSubmittedToRegulator.NaturalResourcesWales_NRW,
+        RpdSubmittedToRegulator.NaturalResourcesWales
+    )]
+    [InlineData(
+        RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA,
+        RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency
+    )]
+    [InlineData(
+        RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
+        RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge
+    )]
+    public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(
+        string sourceStr,
+        string expectedStr
+    )
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation.SubmittedToRegulator = sourceStr;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().Be(expectedStr);
     }
 
@@ -109,7 +159,9 @@ public class RrepwMappersTests
         prn.Status.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         switch (status)
         {
             case StatusName.Cancelled:
@@ -123,12 +175,14 @@ public class RrepwMappersTests
                 break;
         }
     }
-    
+
     [Fact]
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
         var prn = CreatePackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn);
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
         savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
         savePrnDetailsRequest.PrnNumber.Should().Be(prn.PrnNumber);
         savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status.AuthorisedBy!.FullName);
@@ -136,8 +190,12 @@ public class RrepwMappersTests
         savePrnDetailsRequest.IssuedByOrg.Should().Be(prn.IssuedByOrganisation.Name);
         savePrnDetailsRequest.OrganisationId.Should().Be(prn.IssuedToOrganisation.Id);
         savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
-        savePrnDetailsRequest.AccreditationNumber.Should().Be(prn.Accreditation.AccreditationNumber);
-        savePrnDetailsRequest.AccreditationYear.Should().Be(prn.Accreditation.AccreditationYear.ToString());
+        savePrnDetailsRequest
+            .AccreditationNumber.Should()
+            .Be(prn.Accreditation.AccreditationNumber);
+        savePrnDetailsRequest
+            .AccreditationYear.Should()
+            .Be(prn.Accreditation.AccreditationYear.ToString());
         savePrnDetailsRequest.ReprocessingSite.Should().Be(prn.Accreditation.SiteAddress!.Line1);
         savePrnDetailsRequest.DecemberWaste.Should().Be(prn.IsDecemberWaste);
         savePrnDetailsRequest.IsExport.Should().Be(prn.IsExport);
