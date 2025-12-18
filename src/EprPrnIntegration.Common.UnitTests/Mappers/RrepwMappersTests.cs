@@ -185,7 +185,7 @@ public class RrepwMappersTests
         prn.Status.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        Assert.Throws<AutoMapperMappingException>(() =>
             _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
         );
     }
