@@ -19,6 +19,7 @@
         public const string Account = "AccountClient";
         public const string CommonData = "CommonDataClient";
         public const string WasteOrganisations = "WasteOrganisations";
+        public const string Rrepw = "Rrepw";
     }
 
     public static class HttpHeaderNames
