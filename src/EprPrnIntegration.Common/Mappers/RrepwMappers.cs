@@ -80,7 +80,11 @@ public class RrepwMappers : Profile
                     {
                         StatusName.Cancelled => prn.Status.CancelledAt!.Value,
                         StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt!.Value,
-                        _ => spdr.StatusUpdatedOn,
+                        _ => throw new ArgumentOutOfRangeException(
+                            nameof(prn.Status.CurrentStatus),
+                            prn.Status.CurrentStatus,
+                            "Only Cancelled and AwaitingAcceptance statuses are supported"
+                        ),
                     };
                 }
             );
