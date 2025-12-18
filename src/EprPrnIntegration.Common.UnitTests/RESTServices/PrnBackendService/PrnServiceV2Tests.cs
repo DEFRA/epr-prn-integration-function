@@ -28,49 +28,16 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                 PrnEndPointNameV2 = "api/v2"
             });
         }
-
-        private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(string responseContent = "", System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
-        {
-            var mockHandler = new MockHttpMessageHandler(responseContent, statusCode);
-            var httpClient = new HttpClient(mockHandler);
-            var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
-
-            var service = new PrnServiceV2(
-                _mockHttpContextAccessor.Object,
-                httpClientFactoryMock,
-                _loggerMock.Object,
-                _mockConfig.Object
-            );
-
-            return (service, mockHandler);
-        }
-
+       
         [Fact]
         public async Task SavePrn_ShouldCallServiceWithCorrectRequest()
         {
             // Arrange
             var organisationId = Guid.NewGuid();
             var statusUpdatedOn = DateTime.UtcNow;
-            var request = new SavePrnDetailsRequestV2
-            {
-                SourceSystemId = "RREPW",
-                PrnNumber = "PRN-1234",
-                PrnStatusId = 1,
-                PrnSignatory = "John Doe",
-                StatusUpdatedOn = statusUpdatedOn,
-                IssuedByOrg = "Org A",
-                OrganisationId = organisationId,
-                OrganisationName = "Org Name",
-                AccreditationNumber = "ACC-123",
-                AccreditationYear = "2024",
-                MaterialName = "Plastic",
-                ReprocessorExporterAgency = "Agency",
-                DecemberWaste = false,
-                IsExport = false,
-                TonnageValue = 100,
-                ProcessToBeUsed = "Recycling",
-                ObligationYear = "2024"
-            };
+            var request = CreateSavePrnDetailsRequest(
+                organisationId: organisationId,
+                statusUpdatedOn: statusUpdatedOn);
             var (sut, mockHandler) = CreatePrnServiceV2();
 
             // Act
@@ -106,26 +73,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         public async Task SavePrn_ShouldThrowException_WhenPostFails()
         {
             // Arrange
-            var request = new SavePrnDetailsRequestV2
-            {
-                SourceSystemId = "RREPW",
-                PrnNumber = "PRN-ERROR",
-                PrnStatusId = 1,
-                PrnSignatory = "Test User",
-                StatusUpdatedOn = DateTime.UtcNow,
-                IssuedByOrg = "Org C",
-                OrganisationId = Guid.NewGuid(),
-                OrganisationName = "Org Name C",
-                AccreditationNumber = "ACC-789",
-                AccreditationYear = "2024",
-                MaterialName = "Paper",
-                ReprocessorExporterAgency = "Agency C",
-                DecemberWaste = false,
-                IsExport = false,
-                TonnageValue = 50,
-                ProcessToBeUsed = "Recycling",
-                ObligationYear = "2024"
-            };
+            var request = CreateSavePrnDetailsRequest();
             var (sut, _) = CreatePrnServiceV2("", System.Net.HttpStatusCode.BadRequest);
 
             // Act & Assert
@@ -136,30 +84,52 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         public async Task SavePrn_ShouldThrowException_WhenServerError()
         {
             // Arrange
-            var request = new SavePrnDetailsRequestV2
-            {
-                SourceSystemId = "RREPW",
-                PrnNumber = "PRN-SERVER-ERROR",
-                PrnStatusId = 1,
-                PrnSignatory = "Test User",
-                StatusUpdatedOn = DateTime.UtcNow,
-                IssuedByOrg = "Org D",
-                OrganisationId = Guid.NewGuid(),
-                OrganisationName = "Org Name D",
-                AccreditationNumber = "ACC-999",
-                AccreditationYear = "2024",
-                MaterialName = "Metal",
-                ReprocessorExporterAgency = "Agency D",
-                DecemberWaste = true,
-                IsExport = true,
-                TonnageValue = 150,
-                ProcessToBeUsed = "Export",
-                ObligationYear = "2024"
-            };
+            var request = CreateSavePrnDetailsRequest();
             var (sut, _) = CreatePrnServiceV2("", System.Net.HttpStatusCode.InternalServerError);
 
             // Act & Assert
             await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
+        }
+        private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(string responseContent = "", System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
+        {
+            var mockHandler = new MockHttpMessageHandler(responseContent, statusCode);
+            var httpClient = new HttpClient(mockHandler);
+            var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
+
+            var service = new PrnServiceV2(
+                _mockHttpContextAccessor.Object,
+                httpClientFactoryMock,
+                _loggerMock.Object,
+                _mockConfig.Object
+            );
+
+            return (service, mockHandler);
+        }
+
+        private SavePrnDetailsRequestV2 CreateSavePrnDetailsRequest(
+            Guid? organisationId = null,
+            DateTime? statusUpdatedOn = null)
+        {
+            return new SavePrnDetailsRequestV2
+            {
+                SourceSystemId = "RREPW",
+                PrnNumber = "PRN-1234",
+                PrnStatusId = 1,
+                PrnSignatory = "John Doe",
+                StatusUpdatedOn = statusUpdatedOn ?? DateTime.UtcNow,
+                IssuedByOrg = "Org A",
+                OrganisationId = organisationId ?? Guid.NewGuid(),
+                OrganisationName = "Org Name",
+                AccreditationNumber = "ACC-123",
+                AccreditationYear = "2024",
+                MaterialName = "Plastic",
+                ReprocessorExporterAgency = "Agency",
+                DecemberWaste = false,
+                IsExport = false,
+                TonnageValue = 100,
+                ProcessToBeUsed = "Recycling",
+                ObligationYear = "2024"
+            };
         }
     }
 }
