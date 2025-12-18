@@ -59,15 +59,13 @@ public class RrepwMappers : Profile
     {
         return source switch
         {
-            StatusName.AwaitingAuthorisation => EprnStatus.AWAITINGACCEPTANCE,
+            // only interested in these two, anything else should have been filtered out earlier and so is an error here
             StatusName.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
-            StatusName.Accepted => EprnStatus.ACCEPTED,
-            StatusName.AwaitingCancellation => EprnStatus.CANCELLED,
             StatusName.Cancelled => EprnStatus.CANCELLED,
-            StatusName.Rejected => EprnStatus.REJECTED,
             _ => throw new ArgumentOutOfRangeException(nameof(source), source, null)
         };
     }
+    
     private static string ConvertMaterialToEprnMaterial(string material, string? glassRecyclingProcess)
     {
         return material switch
