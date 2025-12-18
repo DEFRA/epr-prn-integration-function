@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Common.Models.Rrepw;
+
 [ExcludeFromCodeCoverage]
 public static class RrepwGlassRecyclingProcess
 {
