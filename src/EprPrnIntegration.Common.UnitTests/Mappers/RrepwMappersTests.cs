@@ -145,12 +145,8 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.Accepted)]
     [InlineData(StatusName.AwaitingAcceptance)]
-    [InlineData(StatusName.AwaitingAuthorisation)]
-    [InlineData(StatusName.AwaitingCancellation)]
     [InlineData(StatusName.Cancelled)]
-    [InlineData(StatusName.Rejected)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt(string status)
     {
         var adt = new DateTime(2024, 12, 08);
@@ -171,9 +167,27 @@ public class RrepwMappersTests
                 savePrnDetailsRequest.StatusUpdatedOn.Should().Be(adt);
                 break;
             default:
-                savePrnDetailsRequest.StatusUpdatedOn.Should().Be(default);
+                Assert.Fail("Unexpected status");
                 break;
         }
+    }
+
+    [Theory]
+    [InlineData(StatusName.Accepted)]
+    [InlineData(StatusName.AwaitingAuthorisation)]
+    [InlineData(StatusName.AwaitingCancellation)]
+    [InlineData(StatusName.Rejected)]
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt_Wrong(string status)
+    {
+        var adt = new DateTime(2024, 12, 08);
+        var cdt = new DateTime(2024, 12, 08);
+        var prn = CreatePackagingRecyclingNote();
+        prn.Status.CurrentStatus = status;
+        prn.Status.AuthorisedAt = adt;
+        prn.Status.CancelledAt = cdt;
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
+        );
     }
 
     [Fact]
