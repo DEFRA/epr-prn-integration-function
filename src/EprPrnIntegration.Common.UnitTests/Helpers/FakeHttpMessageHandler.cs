@@ -30,15 +30,24 @@ public class MockHttpMessageHandler(
     System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
     : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    public HttpRequestMessage? LastRequest { get; private set; }
+    public string? LastRequestContent { get; private set; }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        LastRequest = request;
+        if (request.Content != null)
+        {
+            LastRequestContent = await request.Content.ReadAsStringAsync(cancellationToken);
+        }
+
         var httpResponse = new HttpResponseMessage
         {
             StatusCode = statusCode,
             Content = new StringContent(responseContent)
         };
 
-        return Task.FromResult(httpResponse);
+        return httpResponse;
     }
 
 }

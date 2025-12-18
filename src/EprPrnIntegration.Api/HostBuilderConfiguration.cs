@@ -53,6 +53,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<IPrnService, PrnService>();
+        services.AddScoped<IPrnServiceV2, PrnServiceV2>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
@@ -110,6 +111,10 @@ public static class HostBuilderConfiguration
         services.AddHttpClient(Common.Constants.HttpClientNames.Prn).AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
             .AddPolicyHandler((services, request) =>
                 GetRetryPolicy(services.GetService<ILogger<IPrnService>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.Prn));
+
+        services.AddHttpClient(Common.Constants.HttpClientNames.PrnV2).AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
+            .AddPolicyHandler((services, request) =>
+                GetRetryPolicy(services.GetService<ILogger<IPrnServiceV2>>()!, apiCallsRetryConfig?.MaxAttempts ?? 3, apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30, Common.Constants.HttpClientNames.PrnV2));
 
         services.AddHttpClient(Common.Constants.HttpClientNames.Organisation).AddHttpMessageHandler<OrganisationServiceAuthorisationHandler>()
         .AddPolicyHandler((services, request) =>
