@@ -7,7 +7,7 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class UserSummary
 {
     [JsonPropertyName("fullName")]
-    public required string FullName { get; set; }
+    public string? FullName { get; set; }
 
     [JsonPropertyName("jobTitle")]
     public string? JobTitle { get; set; }

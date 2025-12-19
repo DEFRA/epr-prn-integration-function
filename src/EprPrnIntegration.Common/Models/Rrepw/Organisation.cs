@@ -7,10 +7,10 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class Organisation
 {
     [JsonPropertyName("id")]
-    public required string Id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("name")]
-    public required string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("tradingName")]
     public string? TradingName { get; set; }

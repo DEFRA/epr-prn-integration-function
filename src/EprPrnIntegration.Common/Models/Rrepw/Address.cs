@@ -7,7 +7,7 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class Address
 {
     [JsonPropertyName("line1")]
-    public required string Line1 { get; set; }
+    public string? Line1 { get; set; }
 
     [JsonPropertyName("line2")]
     public string? Line2 { get; set; }
@@ -19,7 +19,7 @@ public class Address
     public string? County { get; set; }
 
     [JsonPropertyName("postcode")]
-    public required string Postcode { get; set; }
+    public string? Postcode { get; set; }
 
     [JsonPropertyName("country")]
     public string? Country { get; set; }
