@@ -15,139 +15,108 @@ public class RrepwMappers : Profile
             .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(
                 spdr => spdr.PrnStatusId,
-                o =>
-                    o.MapFrom(src =>
-                        ConvertStatusToEprnStatus(
-                            src.Status == null ? null : src.Status.CurrentStatus
-                        )
-                    )
+                o => o.MapFrom(src => ConvertStatusToEprnStatus(src))
             )
-            .ForMember(
-                spdr => spdr.PrnSignatory,
-                o =>
-                    o.MapFrom(src =>
-                        src.Status == null || src.Status.AuthorisedBy == null
-                            ? null
-                            : src.Status.AuthorisedBy.FullName
-                    )
-            )
+            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src)))
             .ForMember(
                 spdr => spdr.PrnSignatoryPosition,
-                o =>
-                    o.MapFrom(src =>
-                        src.Status == null || src.Status.AuthorisedBy == null
-                            ? null
-                            : src.Status.AuthorisedBy.JobTitle
-                    )
+                o => o.MapFrom(src => GetPrnSignatoryPosition(src))
             )
-            .ForMember(
-                spdr => spdr.IssuedByOrg,
-                o =>
-                    o.MapFrom(src =>
-                        src.IssuedByOrganisation == null ? null : src.IssuedByOrganisation.Name
-                    )
-            )
-            .ForMember(
-                spdr => spdr.OrganisationId,
-                o =>
-                    o.MapFrom<Guid?>(src =>
-                        src.IssuedToOrganisation == null
-                        || string.IsNullOrEmpty(src.IssuedToOrganisation.Id)
-                            ? null
-                            : Guid.Parse(src.IssuedToOrganisation.Id)
-                    )
-            )
+            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src)))
+            .ForMember(spdr => spdr.OrganisationId, o => o.MapFrom(src => GetOrganisationId(src)))
             .ForMember(
                 spdr => spdr.OrganisationName,
-                o =>
-                    o.MapFrom(src =>
-                        src.IssuedToOrganisation == null ? null : src.IssuedToOrganisation.Name
-                    )
+                o => o.MapFrom(src => GetOrganisationName(src))
             )
             .ForMember(
                 spdr => spdr.AccreditationNumber,
-                o =>
-                    o.MapFrom(src =>
-                        src.Accreditation == null ? null : src.Accreditation.AccreditationNumber
-                    )
+                o => o.MapFrom(src => GetAccreditationNumber(src))
             )
             .ForMember(
                 spdr => spdr.AccreditationYear,
-                o =>
-                    o.MapFrom(src =>
-                        src.Accreditation == null
-                            ? null
-                            : src.Accreditation.AccreditationYear.ToString()
-                    )
+                o => o.MapFrom(src => GetAccreditationYear(src))
             )
             .ForMember(
                 spdr => spdr.ReprocessorExporterAgency,
-                o =>
-                    o.MapFrom(src =>
-                        ConvertRegulator(
-                            src.Accreditation == null
-                            || src.Accreditation.SubmittedToRegulator == null
-                                ? null
-                                : src.Accreditation.SubmittedToRegulator
-                        )
-                    )
+                o => o.MapFrom(src => ConvertRegulator(src))
             )
             .ForMember(
                 spdr => spdr.ReprocessingSite,
-                o =>
-                    o.MapFrom(src =>
-                        src.Accreditation == null || src.Accreditation.SiteAddress == null
-                            ? null
-                            : src.Accreditation.SiteAddress.Line1
-                    )
+                o => o.MapFrom(src => GetReprocessingSite(src))
             )
             .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
             .ForMember(
                 spdr => spdr.ProcessToBeUsed,
-                o =>
-                    o.MapFrom(src =>
-                        ConvertMaterialToProcessToBeUsed(
-                            src.Accreditation == null ? null : src.Accreditation.Material
-                        )
-                    )
+                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src))
             )
             .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
             .ForMember(
                 spdr => spdr.MaterialName,
-                o =>
-                    o.MapFrom(src =>
-                        src.Accreditation == null
-                            ? null
-                            : ConvertMaterialToEprnMaterial(
-                                src.Accreditation.Material,
-                                src.Accreditation == null
-                                    ? null
-                                    : src.Accreditation.GlassRecyclingProcess
-                            )
-                    )
+                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
             )
-            .AfterMap(
-                (prn, spdr) =>
-                {
-                    spdr.StatusUpdatedOn = prn.Status?.CurrentStatus switch
-                    {
-                        StatusName.Cancelled => prn.Status.CancelledAt ?? null,
-                        StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
-                        _ => null,
-                    };
-                }
-            );
+            .AfterMap((prn, spdr) => spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn));
+    }
+
+    private static DateTime? GetStatusUpdatedOn(PackagingRecyclingNote prn)
+    {
+        return prn.Status?.CurrentStatus switch
+        {
+            StatusName.Cancelled => prn.Status.CancelledAt ?? null,
+            StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
+            _ => null,
+        };
+    }
+
+    private static string? GetReprocessingSite(PackagingRecyclingNote src)
+    {
+        return src.Accreditation?.SiteAddress?.Line1;
+    }
+
+    private static string? GetAccreditationYear(PackagingRecyclingNote src)
+    {
+        return src.Accreditation?.AccreditationYear.ToString();
+    }
+
+    private static string? GetAccreditationNumber(PackagingRecyclingNote src)
+    {
+        return src.Accreditation?.AccreditationNumber;
+    }
+
+    private static string? GetOrganisationName(PackagingRecyclingNote src)
+    {
+        return src.IssuedToOrganisation?.Name;
+    }
+
+    private static Guid? GetOrganisationId(PackagingRecyclingNote src)
+    {
+        return string.IsNullOrEmpty(src.IssuedToOrganisation?.Id)
+            ? null
+            : Guid.Parse(src.IssuedToOrganisation.Id);
+    }
+
+    private static string? GetIssuedByOrg(PackagingRecyclingNote src)
+    {
+        return src.IssuedByOrganisation?.Name;
+    }
+
+    private static string? GetPrnSignatoryPosition(PackagingRecyclingNote src)
+    {
+        return src.Status?.AuthorisedBy?.JobTitle;
+    }
+
+    private static string? GetPrnSignatory(PackagingRecyclingNote src)
+    {
+        return src.Status?.AuthorisedBy?.FullName;
     }
 
     public static IMapper CreateMapper()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<RrepwMappers>());
-        return config.CreateMapper();
+        return new MapperConfiguration(cfg => cfg.AddProfile<RrepwMappers>()).CreateMapper();
     }
 
-    private static EprnStatus? ConvertStatusToEprnStatus(string? source)
+    private static EprnStatus? ConvertStatusToEprnStatus(PackagingRecyclingNote prn)
     {
-        return source switch
+        return prn.Status?.CurrentStatus switch
         {
             // only interested in these two, anything else should have been filtered out earlier and so is an error here
             StatusName.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
@@ -156,11 +125,10 @@ public class RrepwMappers : Profile
         };
     }
 
-    private static string? ConvertMaterialToEprnMaterial(
-        string? material,
-        string? glassRecyclingProcess
-    )
+    private static string? ConvertMaterialToEprnMaterial(PackagingRecyclingNote prn)
     {
+        string? material = prn.Accreditation?.Material;
+        string? glassRecyclingProcess = prn.Accreditation?.GlassRecyclingProcess;
         return material switch
         {
             RrepwMaterialName.Aluminium => RpdMaterialName.Aluminium,
@@ -179,24 +147,26 @@ public class RrepwMappers : Profile
         };
     }
 
-    private static string? ConvertRegulator(string? source)
+    private static string? ConvertRegulator(PackagingRecyclingNote src)
     {
+        var source = src.Accreditation?.SubmittedToRegulator;
         return source switch
         {
             RrepwSubmittedToRegulator.EnvironmentAgency_EA =>
-                RpdSubmittedToRegulator.EnvironmentAgency,
+                RpdReprocessorExporterAgency.EnvironmentAgency,
             RrepwSubmittedToRegulator.NaturalResourcesWales_NRW =>
-                RpdSubmittedToRegulator.NaturalResourcesWales,
+                RpdReprocessorExporterAgency.NaturalResourcesWales,
             RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA =>
-                RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency,
+                RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
             RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA =>
-                RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge,
+                RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAge,
             _ => null,
         };
     }
 
-    private static string? ConvertMaterialToProcessToBeUsed(string? material)
+    private static string? ConvertMaterialToProcessToBeUsed(PackagingRecyclingNote prn)
     {
+        var material = prn.Accreditation?.Material;
         return material switch
         {
             RrepwMaterialName.Aluminium => RpdProcesses.R4,
