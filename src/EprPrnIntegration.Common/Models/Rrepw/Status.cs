@@ -7,7 +7,7 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class Status
 {
     [JsonPropertyName("currentStatus")]
-    public required string CurrentStatus { get; set; }
+    public string? CurrentStatus { get; set; }
 
     [JsonPropertyName("authorisedBy")]
     public UserSummary? AuthorisedBy { get; set; }

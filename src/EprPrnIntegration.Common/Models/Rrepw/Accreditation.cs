@@ -7,19 +7,19 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class Accreditation
 {
     [JsonPropertyName("id")]
-    public required string Id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("accreditationNumber")]
-    public required string AccreditationNumber { get; set; }
+    public string? AccreditationNumber { get; set; }
 
     [JsonPropertyName("accreditationYear")]
-    public required int AccreditationYear { get; set; }
+    public int? AccreditationYear { get; set; }
 
     [JsonPropertyName("material")]
-    public required string Material { get; set; }
+    public string? Material { get; set; }
 
     [JsonPropertyName("submittedToRegulator")]
-    public required string SubmittedToRegulator { get; set; }
+    public string? SubmittedToRegulator { get; set; }
 
     [JsonPropertyName("glassRecyclingProcess")]
     public string? GlassRecyclingProcess { get; set; }

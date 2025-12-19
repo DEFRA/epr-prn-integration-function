@@ -49,11 +49,23 @@ public class RrepwMappersTests
     )
     {
         var prn = CreatePackagingRecyclingNote();
-        prn.Status.CurrentStatus = status;
+        prn.Status!.CurrentStatus = status;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
             prn
         );
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
+    }
+
+    [Fact]
+    public void ShouldMapPackagingRecyclingNoteToPrn_WithNulls()
+    {
+        var prn = new PackagingRecyclingNote();
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
+        savePrnDetailsRequest
+            .Should()
+            .BeEquivalentTo(new SavePrnDetailsRequestV2 { ObligationYear = "2026" });
     }
 
     [Theory]
@@ -64,7 +76,7 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus_Wrong(string status)
     {
         var prn = CreatePackagingRecyclingNote();
-        prn.Status.CurrentStatus = status;
+        prn.Status!.CurrentStatus = status;
         Assert.Throws<AutoMapperMappingException>(() =>
             _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
         );
@@ -94,7 +106,7 @@ public class RrepwMappersTests
     )
     {
         var prn = CreatePackagingRecyclingNote();
-        prn.Accreditation.Material = materialName;
+        prn.Accreditation!.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
             prn
@@ -116,7 +128,7 @@ public class RrepwMappersTests
     )
     {
         var prn = CreatePackagingRecyclingNote();
-        prn.Accreditation.Material = materialName;
+        prn.Accreditation!.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = RrepwGlassRecyclingProcess.GlassOther;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
             prn
@@ -147,7 +159,7 @@ public class RrepwMappersTests
     )
     {
         var prn = CreatePackagingRecyclingNote();
-        prn.Accreditation.SubmittedToRegulator = sourceStr;
+        prn.Accreditation!.SubmittedToRegulator = sourceStr;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
             prn
         );
@@ -162,7 +174,7 @@ public class RrepwMappersTests
         var adt = new DateTime(2024, 12, 08);
         var cdt = new DateTime(2024, 12, 08);
         var prn = CreatePackagingRecyclingNote();
-        prn.Status.CurrentStatus = status;
+        prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
@@ -192,7 +204,7 @@ public class RrepwMappersTests
         var adt = new DateTime(2024, 12, 08);
         var cdt = new DateTime(2024, 12, 08);
         var prn = CreatePackagingRecyclingNote();
-        prn.Status.CurrentStatus = status;
+        prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
         Assert.Throws<AutoMapperMappingException>(() =>
@@ -209,14 +221,14 @@ public class RrepwMappersTests
         );
         savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
         savePrnDetailsRequest.PrnNumber.Should().Be(prn.PrnNumber);
-        savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status.AuthorisedBy!.FullName);
+        savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status!.AuthorisedBy!.FullName);
         savePrnDetailsRequest.PrnSignatoryPosition.Should().Be(prn.Status.AuthorisedBy.JobTitle);
-        savePrnDetailsRequest.IssuedByOrg.Should().Be(prn.IssuedByOrganisation.Name);
-        savePrnDetailsRequest.OrganisationId.Should().Be(prn.IssuedToOrganisation.Id);
+        savePrnDetailsRequest.IssuedByOrg.Should().Be(prn.IssuedByOrganisation!.Name);
+        savePrnDetailsRequest.OrganisationId.Should().Be(prn.IssuedToOrganisation!.Id);
         savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
         savePrnDetailsRequest
             .AccreditationNumber.Should()
-            .Be(prn.Accreditation.AccreditationNumber);
+            .Be(prn.Accreditation!.AccreditationNumber);
         savePrnDetailsRequest
             .AccreditationYear.Should()
             .Be(prn.Accreditation.AccreditationYear.ToString());

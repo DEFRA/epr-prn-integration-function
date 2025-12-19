@@ -15,76 +15,125 @@ public class RrepwMappers : Profile
             .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(
                 spdr => spdr.PrnStatusId,
-                o => o.MapFrom(src => ConvertStatusToEprnStatus(src.Status.CurrentStatus))
+                o =>
+                    o.MapFrom(src =>
+                        ConvertStatusToEprnStatus(
+                            src.Status == null ? null : src.Status.CurrentStatus
+                        )
+                    )
             )
             .ForMember(
                 spdr => spdr.PrnSignatory,
-                o => o.MapFrom(src => src.Status.AuthorisedBy!.FullName)
+                o =>
+                    o.MapFrom(src =>
+                        src.Status == null || src.Status.AuthorisedBy == null
+                            ? null
+                            : src.Status.AuthorisedBy.FullName
+                    )
             )
             .ForMember(
                 spdr => spdr.PrnSignatoryPosition,
-                o => o.MapFrom(src => src.Status.AuthorisedBy!.JobTitle)
+                o =>
+                    o.MapFrom(src =>
+                        src.Status == null || src.Status.AuthorisedBy == null
+                            ? null
+                            : src.Status.AuthorisedBy.JobTitle
+                    )
             )
             .ForMember(
                 spdr => spdr.IssuedByOrg,
-                o => o.MapFrom(src => src.IssuedByOrganisation.Name)
+                o =>
+                    o.MapFrom(src =>
+                        src.IssuedByOrganisation == null ? null : src.IssuedByOrganisation.Name
+                    )
             )
             .ForMember(
                 spdr => spdr.OrganisationId,
-                o => o.MapFrom(src => Guid.Parse(src.IssuedToOrganisation.Id))
+                o =>
+                    o.MapFrom<Guid?>(src =>
+                        src.IssuedToOrganisation == null
+                        || string.IsNullOrEmpty(src.IssuedToOrganisation.Id)
+                            ? null
+                            : Guid.Parse(src.IssuedToOrganisation.Id)
+                    )
             )
             .ForMember(
                 spdr => spdr.OrganisationName,
-                o => o.MapFrom(src => src.IssuedToOrganisation.Name)
-            )
-            .ForMember(
-                spdr => spdr.OrganisationName,
-                o => o.MapFrom(src => src.IssuedToOrganisation.Name)
+                o =>
+                    o.MapFrom(src =>
+                        src.IssuedToOrganisation == null ? null : src.IssuedToOrganisation.Name
+                    )
             )
             .ForMember(
                 spdr => spdr.AccreditationNumber,
-                o => o.MapFrom(src => src.Accreditation.AccreditationNumber)
+                o =>
+                    o.MapFrom(src =>
+                        src.Accreditation == null ? null : src.Accreditation.AccreditationNumber
+                    )
             )
             .ForMember(
                 spdr => spdr.AccreditationYear,
-                o => o.MapFrom(src => src.Accreditation.AccreditationYear.ToString())
+                o =>
+                    o.MapFrom(src =>
+                        src.Accreditation == null
+                            ? null
+                            : src.Accreditation.AccreditationYear.ToString()
+                    )
             )
             .ForMember(
                 spdr => spdr.ReprocessorExporterAgency,
-                o => o.MapFrom(src => ConvertRegulator(src.Accreditation.SubmittedToRegulator))
+                o =>
+                    o.MapFrom(src =>
+                        ConvertRegulator(
+                            src.Accreditation == null
+                            || src.Accreditation.SubmittedToRegulator == null
+                                ? null
+                                : src.Accreditation.SubmittedToRegulator
+                        )
+                    )
             )
             .ForMember(
                 spdr => spdr.ReprocessingSite,
-                o => o.MapFrom(src => src.Accreditation.SiteAddress!.Line1)
+                o =>
+                    o.MapFrom(src =>
+                        src.Accreditation == null || src.Accreditation.SiteAddress == null
+                            ? null
+                            : src.Accreditation.SiteAddress.Line1
+                    )
             )
             .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
             .ForMember(
                 spdr => spdr.ProcessToBeUsed,
-                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.Accreditation.Material))
+                o =>
+                    o.MapFrom(src =>
+                        ConvertMaterialToProcessToBeUsed(
+                            src.Accreditation == null ? null : src.Accreditation.Material
+                        )
+                    )
             )
             .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
             .ForMember(
                 spdr => spdr.MaterialName,
                 o =>
                     o.MapFrom(src =>
-                        ConvertMaterialToEprnMaterial(
-                            src.Accreditation.Material,
-                            src.Accreditation.GlassRecyclingProcess
-                        )
+                        src.Accreditation == null
+                            ? null
+                            : ConvertMaterialToEprnMaterial(
+                                src.Accreditation.Material,
+                                src.Accreditation == null
+                                    ? null
+                                    : src.Accreditation.GlassRecyclingProcess
+                            )
                     )
             )
             .AfterMap(
                 (prn, spdr) =>
                 {
-                    spdr.StatusUpdatedOn = prn.Status.CurrentStatus switch
+                    spdr.StatusUpdatedOn = prn.Status?.CurrentStatus switch
                     {
-                        StatusName.Cancelled => prn.Status.CancelledAt!.Value,
-                        StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt!.Value,
-                        _ => throw new ArgumentOutOfRangeException(
-                            nameof(prn.Status.CurrentStatus),
-                            prn.Status.CurrentStatus,
-                            "Only Cancelled and AwaitingAcceptance statuses are supported"
-                        ),
+                        StatusName.Cancelled => prn.Status.CancelledAt ?? null,
+                        StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
+                        _ => null,
                     };
                 }
             );
@@ -96,19 +145,19 @@ public class RrepwMappers : Profile
         return config.CreateMapper();
     }
 
-    private static EprnStatus ConvertStatusToEprnStatus(string source)
+    private static EprnStatus? ConvertStatusToEprnStatus(string? source)
     {
         return source switch
         {
             // only interested in these two, anything else should have been filtered out earlier and so is an error here
             StatusName.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
             StatusName.Cancelled => EprnStatus.CANCELLED,
-            _ => throw new ArgumentOutOfRangeException(nameof(source), source, null),
+            _ => null,
         };
     }
 
-    private static string ConvertMaterialToEprnMaterial(
-        string material,
+    private static string? ConvertMaterialToEprnMaterial(
+        string? material,
         string? glassRecyclingProcess
     )
     {
@@ -120,21 +169,17 @@ public class RrepwMappers : Profile
             {
                 RrepwGlassRecyclingProcess.GlassOther => RpdMaterialName.GlassOther,
                 RrepwGlassRecyclingProcess.GlassRemelt => RpdMaterialName.GlassRemelt,
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(glassRecyclingProcess),
-                    glassRecyclingProcess,
-                    null
-                ),
+                _ => null,
             },
             RrepwMaterialName.Paper => RpdMaterialName.PaperBoard,
             RrepwMaterialName.Plastic => RpdMaterialName.Plastic,
             RrepwMaterialName.Steel => RpdMaterialName.Steel,
             RrepwMaterialName.Wood => RpdMaterialName.Wood,
-            _ => throw new ArgumentOutOfRangeException(nameof(material), material, null),
+            _ => null,
         };
     }
 
-    private static string ConvertRegulator(string source)
+    private static string? ConvertRegulator(string? source)
     {
         return source switch
         {
@@ -146,11 +191,11 @@ public class RrepwMappers : Profile
                 RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency,
             RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA =>
                 RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge,
-            _ => throw new ArgumentOutOfRangeException(nameof(source), source, null),
+            _ => null,
         };
     }
 
-    private static string ConvertMaterialToProcessToBeUsed(string material)
+    private static string? ConvertMaterialToProcessToBeUsed(string? material)
     {
         return material switch
         {
@@ -161,7 +206,7 @@ public class RrepwMappers : Profile
             RrepwMaterialName.Plastic => RpdProcesses.R3,
             RrepwMaterialName.Steel => RpdProcesses.R4,
             RrepwMaterialName.Wood => RpdProcesses.R3,
-            _ => throw new ArgumentOutOfRangeException(nameof(material), material, null),
+            _ => null,
         };
     }
 }

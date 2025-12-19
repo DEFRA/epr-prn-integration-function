@@ -7,31 +7,31 @@ namespace EprPrnIntegration.Common.Models.Rrepw;
 public class PackagingRecyclingNote
 {
     [JsonPropertyName("id")]
-    public required string Id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("prnNumber")]
     public string? PrnNumber { get; set; }
 
     [JsonPropertyName("status")]
-    public required Status Status { get; set; }
+    public Status? Status { get; set; }
 
     [JsonPropertyName("issuedByOrganisation")]
-    public required Organisation IssuedByOrganisation { get; set; }
+    public Organisation? IssuedByOrganisation { get; set; }
 
     [JsonPropertyName("issuedToOrganisation")]
-    public required Organisation IssuedToOrganisation { get; set; }
+    public Organisation? IssuedToOrganisation { get; set; }
 
     [JsonPropertyName("accreditation")]
-    public required Accreditation Accreditation { get; set; }
+    public Accreditation? Accreditation { get; set; }
 
     [JsonPropertyName("isDecemberWaste")]
-    public required bool IsDecemberWaste { get; set; }
+    public bool? IsDecemberWaste { get; set; }
 
     [JsonPropertyName("isExport")]
-    public required bool IsExport { get; set; }
+    public bool? IsExport { get; set; }
 
     [JsonPropertyName("tonnageValue")]
-    public required int TonnageValue { get; set; }
+    public int? TonnageValue { get; set; }
 
     [JsonPropertyName("issuerNotes")]
     public string? IssuerNotes { get; set; }
