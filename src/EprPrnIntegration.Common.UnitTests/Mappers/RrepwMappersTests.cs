@@ -77,9 +77,10 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        Assert.Throws<AutoMapperMappingException>(() =>
-            _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
-        );
+        _mapper
+            .Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
+            .PrnStatusId.Should()
+            .BeNull();
     }
 
     [Theory]
@@ -114,6 +115,29 @@ public class RrepwMappersTests
         savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
     }
 
+    [Fact]
+    public void ShouldMapPackagingRecyclingNoteToPrn_MaterialName_Invalid()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.Material = "invalidMaterialName";
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
+        savePrnDetailsRequest.MaterialName.Should().BeNull();
+    }
+
+    [Fact]
+    public void ShouldMapPackagingRecyclingNoteToPrn_GlassRecyclingProcess_Invalid()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.Material = RrepwMaterialName.Glass;
+        prn.Accreditation.GlassRecyclingProcess = "invalidProcess";
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
+        savePrnDetailsRequest.MaterialName.Should().BeNull();
+    }
+
     [Theory]
     [InlineData(RrepwMaterialName.Aluminium, RpdProcesses.R4)]
     [InlineData(RrepwMaterialName.Fibre, RpdProcesses.R3)]
@@ -129,11 +153,21 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
-        prn.Accreditation.GlassRecyclingProcess = RrepwGlassRecyclingProcess.GlassOther;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
             prn
         );
         savePrnDetailsRequest.ProcessToBeUsed.Should().Be(expectedProcessToBeUsed);
+    }
+
+    [Fact]
+    public void ShouldMapPackagingRecyclingNoteToPrn_ProcessToBeUsed_Invalid()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.Material = "invalidMaterialName";
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
+        savePrnDetailsRequest.ProcessToBeUsed.Should().BeNull();
     }
 
     [Theory]
@@ -164,6 +198,17 @@ public class RrepwMappersTests
             prn
         );
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().Be(expectedStr);
+    }
+
+    [Fact]
+    public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator_Invalid()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SubmittedToRegulator = "invalidRegulator";
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
+        );
+        savePrnDetailsRequest.ReprocessorExporterAgency.Should().BeNull();
     }
 
     [Theory]
@@ -199,7 +244,8 @@ public class RrepwMappersTests
     [InlineData(StatusName.AwaitingAuthorisation)]
     [InlineData(StatusName.AwaitingCancellation)]
     [InlineData(StatusName.Rejected)]
-    public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt_Wrong(string status)
+    [InlineData("InvalidStatus")]
+    public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt_Invalid(string status)
     {
         var adt = new DateTime(2024, 12, 08);
         var cdt = new DateTime(2024, 12, 08);
@@ -207,9 +253,10 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        Assert.Throws<AutoMapperMappingException>(() =>
-            _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
+            prn
         );
+        savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
     [Fact]
