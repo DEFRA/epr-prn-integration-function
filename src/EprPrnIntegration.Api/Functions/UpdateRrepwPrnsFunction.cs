@@ -1,6 +1,8 @@
+using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
@@ -18,6 +20,8 @@ public class UpdateRrepwPrnsFunction(
     IPrnServiceV2 prnService,
     IOptions<UpdateRrepwPrnsConfiguration> config)
 {
+    private readonly IMapper _mapper = RrepwMappers.CreateMapper();
+
     [Function("UpdateRrepwPrns")]
     public async Task Run([TimerTrigger("%UpdateRrepwPrns:Trigger%")] TimerInfo myTimer)
     {
@@ -70,7 +74,7 @@ public class UpdateRrepwPrnsFunction(
     {
         try
         {
-            var request = PackagingRecyclingNoteToSavePrnDetailsRequestMapper.Map(prn);
+            var request = _mapper.Map<SavePrnDetailsRequestV2>(prn);
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
