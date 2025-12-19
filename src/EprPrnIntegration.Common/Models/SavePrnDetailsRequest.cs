@@ -33,5 +33,4 @@ public class SavePrnDetailsRequest
     public DateTime? StatusDate { get; set; }
     public Guid? ExternalId { get; set; }
     public string? CreatedByUser { get; set; }
-    public string? SourceSystemId { get; set; }
 }

@@ -40,7 +40,6 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
             ReprocessorAgency = npwdPrn.ReprocessorAgency,
             StatusDate = npwdPrn.StatusDate,
             CreatedByUser = "IntegrationFA",
-            SourceSystemId = null // not from RE EX
         };
     }
 
@@ -60,7 +59,15 @@ public static class NpwdPrnToSavePrnDetailsRequestMapper
 
         var val = evidenceNo.Substring(0, 2).Trim();
 
-        return string.Equals(val, ExporterCodePrefixes.EaExport, StringComparison.InvariantCultureIgnoreCase)
-               || string.Equals(val, ExporterCodePrefixes.SepaExport, StringComparison.InvariantCultureIgnoreCase);
+        return string.Equals(
+                val,
+                ExporterCodePrefixes.EaExport,
+                StringComparison.InvariantCultureIgnoreCase
+            )
+            || string.Equals(
+                val,
+                ExporterCodePrefixes.SepaExport,
+                StringComparison.InvariantCultureIgnoreCase
+            );
     }
 }
