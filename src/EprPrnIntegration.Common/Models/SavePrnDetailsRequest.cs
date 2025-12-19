@@ -1,5 +1,5 @@
-﻿using EprPrnIntegration.Common.Enums;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using EprPrnIntegration.Common.Enums;
 
 namespace EprPrnIntegration.Common.Models;
 
