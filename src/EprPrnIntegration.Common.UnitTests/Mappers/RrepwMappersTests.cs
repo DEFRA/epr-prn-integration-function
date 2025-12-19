@@ -22,7 +22,7 @@ public class RrepwMappersTests
         _fixture.Register(() =>
             _fixture
                 .Build<Status>()
-                .With(o => o.CurrentStatus, StatusName.AwaitingAcceptance)
+                .With(o => o.CurrentStatus, RrepwStatus.AwaitingAcceptance)
                 .Create()
         );
         _fixture.Register(() =>
@@ -41,8 +41,8 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.AwaitingAcceptance, EprnStatus.AWAITINGACCEPTANCE)]
-    [InlineData(StatusName.Cancelled, EprnStatus.CANCELLED)]
+    [InlineData(RrepwStatus.AwaitingAcceptance, EprnStatus.AWAITINGACCEPTANCE)]
+    [InlineData(RrepwStatus.Cancelled, EprnStatus.CANCELLED)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus(
         string status,
         EprnStatus expected
@@ -69,10 +69,10 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.Accepted)]
-    [InlineData(StatusName.AwaitingAuthorisation)]
-    [InlineData(StatusName.AwaitingCancellation)]
-    [InlineData(StatusName.Rejected)]
+    [InlineData(RrepwStatus.Accepted)]
+    [InlineData(RrepwStatus.AwaitingAuthorisation)]
+    [InlineData(RrepwStatus.AwaitingCancellation)]
+    [InlineData(RrepwStatus.Rejected)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_CurrentStatus_Wrong(string status)
     {
         var prn = CreatePackagingRecyclingNote();
@@ -212,8 +212,8 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.AwaitingAcceptance)]
-    [InlineData(StatusName.Cancelled)]
+    [InlineData(RrepwStatus.AwaitingAcceptance)]
+    [InlineData(RrepwStatus.Cancelled)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt(string status)
     {
         var adt = new DateTime(2024, 12, 08);
@@ -227,10 +227,10 @@ public class RrepwMappersTests
         );
         switch (status)
         {
-            case StatusName.Cancelled:
+            case RrepwStatus.Cancelled:
                 savePrnDetailsRequest.StatusUpdatedOn.Should().Be(cdt);
                 break;
-            case StatusName.AwaitingAcceptance:
+            case RrepwStatus.AwaitingAcceptance:
                 savePrnDetailsRequest.StatusUpdatedOn.Should().Be(adt);
                 break;
             default:
@@ -240,10 +240,10 @@ public class RrepwMappersTests
     }
 
     [Theory]
-    [InlineData(StatusName.Accepted)]
-    [InlineData(StatusName.AwaitingAuthorisation)]
-    [InlineData(StatusName.AwaitingCancellation)]
-    [InlineData(StatusName.Rejected)]
+    [InlineData(RrepwStatus.Accepted)]
+    [InlineData(RrepwStatus.AwaitingAuthorisation)]
+    [InlineData(RrepwStatus.AwaitingCancellation)]
+    [InlineData(RrepwStatus.Rejected)]
     [InlineData("InvalidStatus")]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt_Invalid(string status)
     {

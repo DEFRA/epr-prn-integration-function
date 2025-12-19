@@ -1,6 +1,6 @@
 namespace EprPrnIntegration.Common.Models.Rrepw;
 
-public static class StatusName
+public static class RrepwStatus
 {
     public const string AwaitingAuthorisation = "awaiting_authorisation";
     public const string AwaitingAcceptance = "awaiting_acceptance";

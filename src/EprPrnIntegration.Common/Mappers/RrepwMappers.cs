@@ -61,8 +61,8 @@ public class RrepwMappers : Profile
     {
         return prn.Status?.CurrentStatus switch
         {
-            StatusName.Cancelled => prn.Status.CancelledAt ?? null,
-            StatusName.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
+            RrepwStatus.Cancelled => prn.Status.CancelledAt ?? null,
+            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
             _ => null,
         };
     }
@@ -119,8 +119,8 @@ public class RrepwMappers : Profile
         return prn.Status?.CurrentStatus switch
         {
             // only interested in these two, anything else should have been filtered out earlier and so is an error here
-            StatusName.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
-            StatusName.Cancelled => EprnStatus.CANCELLED,
+            RrepwStatus.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
+            RrepwStatus.Cancelled => EprnStatus.CANCELLED,
             _ => null,
         };
     }
