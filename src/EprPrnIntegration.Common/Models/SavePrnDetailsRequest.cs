@@ -1,5 +1,5 @@
-﻿using EprPrnIntegration.Common.Enums;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using EprPrnIntegration.Common.Enums;
 
 namespace EprPrnIntegration.Common.Models;
 
@@ -33,5 +33,4 @@ public class SavePrnDetailsRequest
     public DateTime? StatusDate { get; set; }
     public Guid? ExternalId { get; set; }
     public string? CreatedByUser { get; set; }
-    public string? SourceSystemId { get; set; }
 }
