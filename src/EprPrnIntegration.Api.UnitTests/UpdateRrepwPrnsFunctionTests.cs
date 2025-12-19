@@ -1,12 +1,12 @@
+using System.Globalization;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
-using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -19,16 +19,15 @@ public class UpdateRrepwPrnsFunctionTests
 {
     private readonly Mock<ILogger<UpdateRrepwPrnsFunction>> _loggerMock = new();
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
-    private readonly Mock<IRrepwPrnService> _rrepwPrnServiceMock = new();
+    private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnServiceV2> _prnServiceMock = new();
-    private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly IOptions<UpdateRrepwPrnsConfiguration> _config = Options.Create(new UpdateRrepwPrnsConfiguration { DefaultStartDate = "2024-01-01" });
 
     private readonly UpdateRrepwPrnsFunction _function;
 
     public UpdateRrepwPrnsFunctionTests()
     {
-        _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _rrepwPrnServiceMock.Object, _prnServiceMock.Object, _configurationMock.Object, _config);
+        _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _rrepwServiceMock.Object, _prnServiceMock.Object, _config);
     }
 
     [Fact]
@@ -43,7 +42,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
         await _function.Run(new TimerInfo());
@@ -63,11 +62,9 @@ public class UpdateRrepwPrnsFunctionTests
     [Fact]
     public async Task WhenRrepwPrnServiceThrows_DoesNotProcessPrns()
     {
-        var expectedException = new HttpRequestException("Service unavailable");
-
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(expectedException);
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Service unavailable"));
 
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
@@ -84,7 +81,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(emptyPrnsList);
 
         await _function.Run(new TimerInfo());
@@ -107,7 +104,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
         _prnServiceMock
@@ -148,7 +145,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync(DateTime.MinValue);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
         _prnServiceMock
@@ -171,10 +168,14 @@ public class UpdateRrepwPrnsFunctionTests
             CreatePrn("PRN-002")
         };
 
+        var expectedStartDate = DateTime.SpecifyKind(
+            DateTime.ParseExact(_config.Value.DefaultStartDate, "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Utc
+        );
+
         // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock.Setup(x => x.GetLastUpdate(It.IsAny<string>())).ReturnsAsync((DateTime?)null);
         _lastUpdateServiceMock.Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>())).Returns(Task.CompletedTask);
-        _rrepwPrnServiceMock.Setup(x => x.GetPrns(It.IsAny<CancellationToken>()))
+        _rrepwServiceMock.Setup(x => x.ListPackagingRecyclingNotes(expectedStartDate, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(prns);
 
         await _function.Run(new TimerInfo());

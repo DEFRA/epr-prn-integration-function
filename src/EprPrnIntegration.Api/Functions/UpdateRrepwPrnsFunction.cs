@@ -1,14 +1,11 @@
-using System.Net;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
-using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
-using EprPrnIntegration.Common.RESTServices.RrepwPrnService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -17,9 +14,8 @@ namespace EprPrnIntegration.Api.Functions;
 public class UpdateRrepwPrnsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<UpdateRrepwPrnsFunction> logger,
-    IRrepwPrnService rrepwPrnService,
+    IRrepwService rrepwService,
     IPrnServiceV2 prnService,
-    IConfiguration configuration,
     IOptions<UpdateRrepwPrnsConfiguration> config)
 {
     [Function("UpdateRrepwPrns")]
@@ -30,7 +26,7 @@ public class UpdateRrepwPrnsFunction(
 
         var utcNow = DateTime.UtcNow;
 
-        var prns = await rrepwPrnService.GetPrns(CancellationToken.None);
+        var prns = await rrepwService.ListPackagingRecyclingNotes(lastUpdate, utcNow);
 
         if (!prns.Any())
         {
@@ -61,10 +57,13 @@ public class UpdateRrepwPrnsFunction(
 
     private async Task ProcessPrns(List<PackagingRecyclingNote> prns)
     {
-        await Parallel.ForEachAsync(prns, new ParallelOptions
-        {
-            MaxDegreeOfParallelism = 20
-        }, async (prn, _) => await ProcessPrn(prn));
+        // Items won't often be processed in large volumes,
+        // except in the case of the initial load which will process hundreds of items in a single function run. 
+        // These requests are throttled to stay under CDP's rate limits of 25rps.
+        await RateLimitedParallelProcessor.ProcessAsync(
+            prns,
+            ProcessPrn,
+            20);
     }
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
