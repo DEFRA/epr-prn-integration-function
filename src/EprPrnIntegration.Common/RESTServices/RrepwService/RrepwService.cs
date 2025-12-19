@@ -31,8 +31,9 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         {
             var dateFromQuery = dateFrom.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
             var dateToQuery = dateTo.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            var statuses = string.Join(",", RrepwStatus.AwaitingAcceptance, RrepwStatus.Cancelled);
 
-            var queryString = $"?statuses=awaiting_acceptance,cancelled&dateFrom={dateFromQuery}&dateTo={dateToQuery}";
+            var queryString = $"?statuses={statuses}&dateFrom={dateFromQuery}&dateTo={dateToQuery}";
 
             logger.LogInformation("Fetching packaging recycling notes from {DateFrom} to {DateTo}",
                 dateFromQuery, dateToQuery);
