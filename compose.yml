@@ -177,6 +177,13 @@ services:
       WasteOrganisationsApi__RetryDelaySeconds: "1"
       UpdateWasteOrganisations__Trigger: "1,31 0-7 * * *"
       UpdateWasteOrganisations__DefaultStartDate: "2024-01-01"
+      RrepwApi__BaseUrl: "http://wiremock"
+      RrepwApi__ClientId: "dummy-client-id"
+      RrepwApi__ClientSecret: "dummy-client-secret"
+      RrepwApi__AccessTokenUrl: "http://wiremock/cognito/oauth/token"
+      RrepwApi__TimeoutSeconds: "5"
+      RrepwApi__RetryAttempts: "3"
+      RrepwApi__RetryDelaySeconds: "1"
       AzureWebJobsStorage: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;"
       AzureWebJobsSecretStorageType: "files"
     ports:
