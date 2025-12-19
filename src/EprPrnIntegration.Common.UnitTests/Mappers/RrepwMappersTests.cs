@@ -173,19 +173,19 @@ public class RrepwMappersTests
     [Theory]
     [InlineData(
         RrepwSubmittedToRegulator.EnvironmentAgency_EA,
-        RpdSubmittedToRegulator.EnvironmentAgency
+        RpdReprocessorExporterAgency.EnvironmentAgency
     )]
     [InlineData(
         RrepwSubmittedToRegulator.NaturalResourcesWales_NRW,
-        RpdSubmittedToRegulator.NaturalResourcesWales
+        RpdReprocessorExporterAgency.NaturalResourcesWales
     )]
     [InlineData(
         RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA,
-        RpdSubmittedToRegulator.NorthernIrelandEnvironmentAgency
+        RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency
     )]
     [InlineData(
         RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
-        RpdSubmittedToRegulator.ScottishEnvironmentProtectionAge
+        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAge
     )]
     public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(
         string sourceStr,
