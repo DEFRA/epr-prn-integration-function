@@ -69,7 +69,7 @@ public class UpdateWasteOrganisationsFunction(
     {
         try
         {
-            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer, logger);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
         catch (HttpRequestException ex) when (IsTransient(ex))

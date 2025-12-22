@@ -1,31 +1,41 @@
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
+using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Common.Mappers;
 
 public static class WasteOrganisationsApiUpdateRequestMapper
 {
-    public static WasteOrganisationsApiUpdateRequest Map(UpdatedProducersResponseV2 updatedProducer)
+    public static WasteOrganisationsApiUpdateRequest Map<T>(UpdatedProducersResponseV2 updatedProducer, ILogger<T> logger)
     {
-        if (updatedProducer.PEPRID == null)
+        try
         {
-            throw new ArgumentException("PEPRID is null");
+
+            if (updatedProducer.PEPRID == null)
+            {
+                throw new ArgumentException("PEPRID is null");
+            }
+
+            if (updatedProducer.OrganisationName == null)
+            {
+                throw new ArgumentException("OrganisationName is null");
+            }
+
+            return new WasteOrganisationsApiUpdateRequest
+            {
+                Name = updatedProducer.OrganisationName,
+                TradingName = updatedProducer.TradingName,
+                CompaniesHouseNumber = updatedProducer.CompaniesHouseNumber,
+                BusinessCountry = MapBusinessCountry(updatedProducer.BusinessCountry),
+                Registration = MapRegistration(updatedProducer),
+                Address = MapAddress(updatedProducer),
+            };
         }
-        
-        if (updatedProducer.OrganisationName == null)
+        catch (Exception ex)
         {
-            throw new ArgumentException("OrganisationName is null");
+           logger.LogError(ex, "Exception when mapping producer ({id}), rethrowing", updatedProducer.PEPRID);
+           throw;
         }
-        
-        return new WasteOrganisationsApiUpdateRequest
-        {
-            Name = updatedProducer.OrganisationName,
-            TradingName = updatedProducer.TradingName,
-            CompaniesHouseNumber = updatedProducer.CompaniesHouseNumber,
-            BusinessCountry = MapBusinessCountry(updatedProducer.BusinessCountry),
-            Registration = MapRegistration(updatedProducer),
-            Address = MapAddress(updatedProducer),
-        };
     }
 
     private static Address MapAddress(UpdatedProducersResponseV2 updatedProducer)

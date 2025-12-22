@@ -2,11 +2,15 @@
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers
 {
     public class WasteOrganisationsApiUpdateRequestMapperTests
     {
+        private readonly Mock<ILogger<WasteOrganisationsApiUpdateRequestMapperTests>> _loggerMock = new();
+
         [Fact]
         public void MapsTopLevelFields()
         {
@@ -30,8 +34,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationType = "DP"
             };
             
-            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
-            
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input, _loggerMock.Object);
+
             result.Name.Should().Be("Organisation's Name");
             result.TradingName.Should().Be("Organisation's TradingName");
             result.CompaniesHouseNumber.Should().Be("some-company-number");
@@ -61,7 +65,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 TradingName = "Organisation's TradingName"
             };
             
-            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(input, _loggerMock.Object);
 
             result.Address.Should().BeEquivalentTo(new Address
             {
@@ -92,7 +96,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 BusinessCountry = country
             };
 
-            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer, _loggerMock.Object);
 
             result.BusinessCountry.Should().Be(expectedBusinessCountry);
         }
@@ -113,7 +117,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 RegistrationYear = "2026"
             };
 
-            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+            var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer, _loggerMock.Object);
 
             result.Registration.Should().BeEquivalentTo(new Registration
             {
@@ -133,7 +137,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Status = "foobar",
                 OrganisationType = "DP",
                 RegistrationYear = "2026"
-            }));
+            }, _loggerMock.Object));
         }
         
         [Fact]
@@ -146,7 +150,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Status = "registered",
                 OrganisationType = "foobar",
                 RegistrationYear = "2026"
-            }));
+            }, _loggerMock.Object));
         }
 
         [Fact]
@@ -158,7 +162,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 RegistrationYear = "2026"
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer, _loggerMock.Object));
         }
         
         [Fact]
@@ -170,7 +174,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 RegistrationYear = "2026"
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer, _loggerMock.Object));
         }
 
         [Fact]
@@ -185,7 +189,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 RegistrationYear = "not-a-number"
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer, _loggerMock.Object));
         }
     }
 }
