@@ -4,7 +4,7 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
-public class UpdateRrepwPrnsTests : IntegrationTestBase
+public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 {
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
@@ -14,7 +14,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
 
         await PrnApiStub.AcceptsPrnV2();
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -41,13 +41,13 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
 
         await PrnApiStub.AcceptsPrnV2();
 
-        var before = await LastUpdateService.GetLastUpdate("UpdateRrepwPrns") ?? DateTime.MinValue;
+        var before = await LastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns") ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var after = await LastUpdateService.GetLastUpdate("UpdateRrepwPrns");
+            var after = await LastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns");
 
             after.Should().BeAfter(before);
         });

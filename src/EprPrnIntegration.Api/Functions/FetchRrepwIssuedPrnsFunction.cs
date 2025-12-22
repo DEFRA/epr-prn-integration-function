@@ -13,20 +13,20 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class UpdateRrepwPrnsFunction(
+public class FetchRrepwIssuedPrnsFunction(
     ILastUpdateService lastUpdateService,
-    ILogger<UpdateRrepwPrnsFunction> logger,
+    ILogger<FetchRrepwIssuedPrnsFunction> logger,
     IRrepwService rrepwService,
     IPrnServiceV2 prnService,
-    IOptions<UpdateRrepwPrnsConfiguration> config)
+    IOptions<FetchRrepwIssuedPrnsConfiguration> config)
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
 
-    [Function("UpdateRrepwPrns")]
-    public async Task Run([TimerTrigger("%UpdateRrepwPrns:Trigger%")] TimerInfo myTimer)
+    [Function("FetchRrepwIssuedPrns")]
+    public async Task Run([TimerTrigger("%FetchRrepwIssuedPrns:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await GetLastUpdate();
-        logger.LogInformation("UpdateRrepwPrns resuming with last update time: {ExecutionDateTime}", lastUpdate);
+        logger.LogInformation("FetchRrepwIssuedPrns resuming with last update time: {ExecutionDateTime}", lastUpdate);
 
         var utcNow = DateTime.UtcNow;
 
@@ -42,13 +42,13 @@ public class UpdateRrepwPrnsFunction(
 
         await ProcessPrns(prns);
 
-        await lastUpdateService.SetLastUpdate("UpdateRrepwPrns", utcNow);
-        logger.LogInformation("UpdateRrepwPrns function completed at: {ExecutionDateTime}", DateTime.UtcNow);
+        await lastUpdateService.SetLastUpdate("FetchRrepwIssuedPrns", utcNow);
+        logger.LogInformation("FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}", DateTime.UtcNow);
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateRrepwPrns");
+        var lastUpdate = await lastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns");
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(

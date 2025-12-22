@@ -151,7 +151,7 @@ public static class HostBuilderConfiguration
         services.Configure<NpwdIntegrationConfiguration>(configuration.GetSection(NpwdIntegrationConfiguration.SectionName));
         services.Configure<WasteOrganisationsApiConfiguration>(configuration.GetSection(WasteOrganisationsApiConfiguration.SectionName));
         services.Configure<UpdateWasteOrganisationsConfiguration>(configuration.GetSection(UpdateWasteOrganisationsConfiguration.SectionName));
-        services.Configure<UpdateRrepwPrnsConfiguration>(configuration.GetSection(UpdateRrepwPrnsConfiguration.SectionName));
+        services.Configure<FetchRrepwIssuedPrnsConfiguration>(configuration.GetSection(FetchRrepwIssuedPrnsConfiguration.SectionName));
         services.Configure<RrepwApiConfiguration>(configuration.GetSection(RrepwApiConfiguration.SectionName));
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));

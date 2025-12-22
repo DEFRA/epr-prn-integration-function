@@ -15,17 +15,17 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
-public class UpdateRrepwPrnsFunctionTests
+public class FetchRrepwIssuedPrnsFunctionTests
 {
-    private readonly Mock<ILogger<UpdateRrepwPrnsFunction>> _loggerMock = new();
+    private readonly Mock<ILogger<FetchRrepwIssuedPrnsFunction>> _loggerMock = new();
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnServiceV2> _prnServiceMock = new();
-    private readonly IOptions<UpdateRrepwPrnsConfiguration> _config = Options.Create(new UpdateRrepwPrnsConfiguration { DefaultStartDate = "2024-01-01" });
+    private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" });
 
-    private readonly UpdateRrepwPrnsFunction _function;
+    private readonly FetchRrepwIssuedPrnsFunction _function;
 
-    public UpdateRrepwPrnsFunctionTests()
+    public FetchRrepwIssuedPrnsFunctionTests()
     {
         _function = new(_lastUpdateServiceMock.Object, _loggerMock.Object, _rrepwServiceMock.Object, _prnServiceMock.Object, _config);
     }
@@ -181,7 +181,7 @@ public class UpdateRrepwPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Verify GetLastUpdate was called
-        _lastUpdateServiceMock.Verify(x => x.GetLastUpdate("UpdateRrepwPrns"), Times.Once);
+        _lastUpdateServiceMock.Verify(x => x.GetLastUpdate("FetchRrepwIssuedPrns"), Times.Once);
 
         // Verify PRNs were processed
         _prnServiceMock.Verify(

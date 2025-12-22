@@ -8,7 +8,7 @@ public enum FunctionName
     UpdatePrnsList,
     FetchNpwdIssuedPrnsFunction,
     UpdateWasteOrganisations,
-    UpdateRrepwPrns
+    FetchRrepwIssuedPrns
 }
 
 public static class AzureFunctionInvokerContext
