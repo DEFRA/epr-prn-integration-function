@@ -33,6 +33,17 @@ public class RrepwMappersTests
                 .With(o => o.SubmittedToRegulator, RrepwSubmittedToRegulator.EnvironmentAgency_EA)
                 .Create()
         );
+        _fixture.Register(() =>
+            _fixture
+                .Build<Address>()
+                .With(o => o.Line1, "123 Test Street")
+                .With(o => o.Line2, (string?)null)
+                .With(o => o.Town, (string?)null)
+                .With(o => o.County, (string?)null)
+                .With(o => o.Country, (string?)null)
+                .With(o => o.Postcode, "TE5 7ST")
+                .Create()
+        );
     }
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
@@ -279,11 +290,149 @@ public class RrepwMappersTests
         savePrnDetailsRequest
             .AccreditationYear.Should()
             .Be(prn.Accreditation.AccreditationYear.ToString());
-        savePrnDetailsRequest.ReprocessingSite.Should().Be(prn.Accreditation.SiteAddress!.Line1);
+        savePrnDetailsRequest
+            .ReprocessingSite.Should()
+            .Be(
+                $"{prn.Accreditation.SiteAddress!.Line1}, {prn.Accreditation.SiteAddress!.Postcode}"
+            );
         savePrnDetailsRequest.DecemberWaste.Should().Be(prn.IsDecemberWaste);
         savePrnDetailsRequest.IsExport.Should().Be(prn.IsExport);
         savePrnDetailsRequest.TonnageValue.Should().Be(prn.TonnageValue);
         savePrnDetailsRequest.IssuerNotes.Should().Be(prn.IssuerNotes);
         savePrnDetailsRequest.ObligationYear.Should().Be("2026");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = "Site Line 1",
+            Line2 = "Site Line 2",
+            Town = "Site Town",
+            County = "Site County",
+            Postcode = "S1 1SS",
+            Country = "Site Country",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("Site Line 1, Site Line 2, Site Town, Site County, S1 1SS, Site Country");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSiteTrim()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = "  Site Line 1  ",
+            Line2 = "  Site Line 2  ",
+            Town = "  Site Town  ",
+            County = "  Site County  ",
+            Postcode = "  S1 1SS  ",
+            Country = " Site Country  ",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("Site Line 1, Site Line 2, Site Town, Site County, S1 1SS, Site Country");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_NotAllSet()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = "Site Line 1",
+            Line2 = "Site Line 2",
+            Postcode = "S1 1SS",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("Site Line 1, Site Line 2, S1 1SS");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_AllNull()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = null,
+            Line2 = null,
+            Town = null,
+            County = null,
+            Postcode = null,
+            Country = null,
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_Whitespace()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = " ",
+            Line2 = " ",
+            Town = " ",
+            County = " ",
+            Postcode = " ",
+            Country = " ",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_Empty()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = "",
+            Line2 = "",
+            Town = "",
+            County = "",
+            Postcode = "",
+            Country = "",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_Mix()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = new Address
+        {
+            Line1 = "a      ",
+            Line2 = "  ",
+            Town = "",
+            County = "",
+            Postcode = "     b       ",
+            Country = "     ",
+        };
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be("a, b");
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_AddressNull()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation!.SiteAddress = null;
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be(null);
+    }
+
+    [Fact]
+    public void ShouldGetReprocessingSite_AccreditationNull()
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.Accreditation = null;
+        var site = RrepwMappers.GetReprocessingSite(prn);
+        site.Should().Be(null);
     }
 }
