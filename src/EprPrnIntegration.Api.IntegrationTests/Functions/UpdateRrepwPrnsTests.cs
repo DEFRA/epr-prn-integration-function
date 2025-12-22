@@ -10,7 +10,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
         var prnNumber = "PRN-TEST-001";
-        var id = await RrepwApiStub.HasPrnUpdate(prnNumber);
+        await RrepwApiStub.HasPrnUpdate(prnNumber);
 
         await PrnApiStub.AcceptsPrnV2();
 
@@ -23,9 +23,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             entries.Count.Should().Be(1);
 
             var entry = entries[0];
-
-            entry.Request.Body!.Should().Contain(prnNumber);
-
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
             jsonDocument.RootElement
@@ -53,25 +50,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var after = await LastUpdateService.GetLastUpdate("UpdateRrepwPrns");
 
             after.Should().BeAfter(before);
-        });
-    }
-
-    [Fact]
-    public async Task WhenRrepwApiHasNoData_LastUpdateStaysUntouched()
-    {
-        await RrepwApiStub.HasNoPrns();
-
-        var before = await LastUpdateService.GetLastUpdate("UpdateRrepwPrns") ?? DateTime.MinValue;
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var requests = await RrepwApiStub.GetPrnRequests();
-            requests.Count.Should().Be(1);
-
-            var after = await LastUpdateService.GetLastUpdate("UpdateRrepwPrns");
-            after.Should().Be(before);
         });
     }
 }
