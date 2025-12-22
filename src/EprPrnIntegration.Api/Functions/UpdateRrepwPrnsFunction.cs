@@ -61,13 +61,11 @@ public class UpdateRrepwPrnsFunction(
 
     private async Task ProcessPrns(List<PackagingRecyclingNote> prns)
     {
-        // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run. 
-        // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(
-            prns,
-            ProcessPrn,
-            20);
+        logger.LogInformation("Processing {Count} prns", prns.Count);
+        foreach (var prn in prns)
+        {
+            await ProcessPrn(prn);
+        }
     }
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
