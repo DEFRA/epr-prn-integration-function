@@ -19,6 +19,17 @@ public class PrnApi(WireMockContext wiremock)
         Assert.NotNull(status.Guid);
     }
 
+    public async Task AcceptsPrnV2()
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder.WithRequest(request => request.UsingPost().WithPath("/api/v2/prn/"))
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
     public async Task AcceptsSyncStatus()
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
@@ -59,6 +70,12 @@ public class PrnApi(WireMockContext wiremock)
     public async Task<IList<LogEntryModel>> GetDetailRequests()
     {
         var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v1/prn/prn-details/" };
+        return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public async Task<IList<LogEntryModel>> GetV2Requests()
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v2/prn/" };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 }
