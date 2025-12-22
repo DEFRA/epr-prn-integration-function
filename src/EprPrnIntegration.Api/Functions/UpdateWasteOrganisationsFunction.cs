@@ -56,13 +56,17 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run. 
-        // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(
-            producers,
-            UpdateProducer,
-            20);
+        foreach (var producer in producers)
+        {
+            await UpdateProducer(producer);
+        }
+        // // Items won't often be processed in large volumes,
+        // // except in the case of the initial load which will process hundreds of items in a single function run. 
+        // // These requests are throttled to stay under CDP's rate limits of 25rps.
+        // await RateLimitedParallelProcessor.ProcessAsync(
+        //     producers,
+        //     UpdateProducer,
+        //     20);
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
