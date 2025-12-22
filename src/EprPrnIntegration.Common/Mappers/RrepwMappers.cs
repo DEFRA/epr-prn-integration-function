@@ -71,7 +71,7 @@ public class RrepwMappers : Profile
     {
         if (src.Accreditation?.SiteAddress == null)
             return null;
-        return new List<string?>
+        var strings = new List<string?>
         {
             src.Accreditation.SiteAddress.Line1,
             src.Accreditation.SiteAddress.Line2,
@@ -81,7 +81,8 @@ public class RrepwMappers : Profile
             src.Accreditation.SiteAddress.Country,
         }
             .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Aggregate((current, next) => $"{current}, {next}");
+            .Select(line => line!.Trim());
+        return string.Join(", ", strings);
     }
 
     private static string? GetAccreditationYear(PackagingRecyclingNote src)
