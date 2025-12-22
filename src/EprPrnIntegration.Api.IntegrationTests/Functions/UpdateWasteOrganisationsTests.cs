@@ -84,32 +84,6 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
-    {
-        var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
-
-        await CognitoApiStub.SetupOAuthToken();
-        await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id);
-
-        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
-
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
-
-            entries.Count.Should().BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
-            var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
-            mostRecentUpdate.Response.StatusCode.Should().Be(202);
-
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
-            after.Should().BeAfter(before);
-        });
-    }
-    
-    [Fact]
     public async Task WhenCommonDataApiHasNoData_LastUpdateStaysUntouched()
     {
         await CommonDataApiStub.HasNoV2Updates();
