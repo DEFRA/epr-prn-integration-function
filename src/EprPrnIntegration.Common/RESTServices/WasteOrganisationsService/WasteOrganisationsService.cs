@@ -20,8 +20,9 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
             throw new ArgumentNullException(nameof(config), ExceptionMessages.WasteOrganisationsApiBaseUrlMissing),
             "organisations", 
             logger,
-            HttpClientNames.WasteOrganisations,
-            config.Value.TimeoutSeconds), IWasteOrganisationsService
+            TimeSpan.FromMilliseconds(50),
+            HttpClientNames.WasteOrganisations
+            ), IWasteOrganisationsService
     {
         public async Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation)
         {

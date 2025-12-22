@@ -46,6 +46,36 @@ namespace EprPrnIntegration.Common.RESTServices
             _baseUrl = $"{_baseUrl}/{endPointName}";
             _logger = logger;
         }
+        
+        protected BaseHttpService(
+            IHttpContextAccessor httpContextAccessor,
+            IHttpClientFactory httpClientFactory,
+            string baseUrl,
+            string endPointName,
+            ILogger<BaseHttpService> logger,
+            TimeSpan timeout,
+            string httpClientName = "")
+        {
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+
+            // Initialize _baseUrl in the constructor
+            _baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? throw new ArgumentNullException(nameof(baseUrl)) : baseUrl;
+
+            ArgumentNullException.ThrowIfNull(httpClientFactory);            
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(endPointName);
+
+            _httpClient = string.IsNullOrWhiteSpace(httpClientName) ? httpClientFactory.CreateClient() : httpClientFactory.CreateClient(httpClientName);
+
+            _httpClient.Timeout = timeout;
+
+            _httpClient.DefaultRequestHeaders.Add(Constants.HttpHeaderNames.Accept, "application/json");
+
+            if (_baseUrl.EndsWith('/'))
+                _baseUrl = _baseUrl.TrimEnd('/');
+
+            _baseUrl = $"{_baseUrl}/{endPointName}";
+            _logger = logger;
+        }
 
         protected void SetBearerToken(string token)
         {
