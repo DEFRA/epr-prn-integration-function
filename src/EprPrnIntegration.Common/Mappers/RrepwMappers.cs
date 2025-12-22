@@ -67,9 +67,21 @@ public class RrepwMappers : Profile
         };
     }
 
-    private static string? GetReprocessingSite(PackagingRecyclingNote src)
+    public static string? GetReprocessingSite(PackagingRecyclingNote src)
     {
-        return src.Accreditation?.SiteAddress?.Line1;
+        if (src.Accreditation?.SiteAddress == null)
+            return null;
+        return new List<string?>
+        {
+            src.Accreditation.SiteAddress.Line1,
+            src.Accreditation.SiteAddress.Line2,
+            src.Accreditation.SiteAddress.Town,
+            src.Accreditation.SiteAddress.County,
+            src.Accreditation.SiteAddress.Postcode,
+            src.Accreditation.SiteAddress.Country,
+        }
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Aggregate((current, next) => $"{current}, {next}");
     }
 
     private static string? GetAccreditationYear(PackagingRecyclingNote src)
