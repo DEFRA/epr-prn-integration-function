@@ -38,10 +38,9 @@ public class RrepwMappersTests
                 .Build<Address>()
                 .With(o => o.Line1, "123 Test Street")
                 .With(o => o.Line2, (string?)null)
+                .With(o => o.Town, (string?)null)
                 .With(o => o.County, (string?)null)
                 .With(o => o.Country, (string?)null)
-                .With(o => o.Town, (string?)null)
-                .With(o => o.Line1, "123 Test Street")
                 .With(o => o.Postcode, "TE5 7ST")
                 .Create()
         );
