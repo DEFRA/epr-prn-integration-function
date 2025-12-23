@@ -65,7 +65,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             int pageCount,
             CancellationToken cancellationToken)
         {
-            var url = BuildUrl(statuses, dateFromQuery, dateToQuery, cursor);
+            var url = BuildRoute(statuses, dateFromQuery, dateToQuery, cursor);
 
             logger.LogInformation(
                 "Fetching packaging recycling notes from {DateFrom} to {DateTo}, page {PageCount}",
@@ -87,16 +87,16 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return (items, nextCursor);
         }
 
-        private static string BuildUrl(string statuses, string dateFrom, string dateTo, string? cursor)
+        private static string BuildRoute(string statuses, string dateFrom, string dateTo, string? cursor)
         {
-            var queryString = $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
+            var route = $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
 
             if (!string.IsNullOrEmpty(cursor))
             {
-                queryString += $"&cursor={Uri.EscapeDataString(cursor)}";
+                route += $"&cursor={Uri.EscapeDataString(cursor)}";
             }
 
-            return queryString;
+            return route;
         }
     }
 }
