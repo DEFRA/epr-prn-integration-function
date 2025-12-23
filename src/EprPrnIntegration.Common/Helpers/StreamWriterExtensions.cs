@@ -2,7 +2,11 @@
 
 public static class StreamWriterExtensions
 {
-    public static async Task WriteCsvCellAsync(this StreamWriter writer, string value, bool isLastCell = false)
+    public static async Task WriteCsvCellAsync(
+        this StreamWriter writer,
+        string value,
+        bool isLastCell = false
+    )
     {
         if (value == null)
         {
@@ -10,7 +14,7 @@ public static class StreamWriterExtensions
         }
         else
         {
-             await writer.WriteAsync(value.CleanCsvString());
+            await writer.WriteAsync(value.CleanCsvString());
 
             // Only append a comma if this is not the last cell in the row
             if (!isLastCell)

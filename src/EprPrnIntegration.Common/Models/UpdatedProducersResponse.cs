@@ -21,13 +21,13 @@ namespace EprPrnIntegration.Common.Models
         public string? Status { get; set; }
         public string? BusinessCountry { get; set; }
 
-        public string OrganisationAddress => string.Join(", ", new[] {
-                AddressLine1,
-                AddressLine2,
-                Town,
-                County,
-                Postcode,
-            }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        public string OrganisationAddress =>
+            string.Join(
+                ", ",
+                new[] { AddressLine1, AddressLine2, Town, County, Postcode }.Where(s =>
+                    !string.IsNullOrWhiteSpace(s)
+                )
+            );
 
         public DateTime? UpdatedDateTime { get; set; }
     }

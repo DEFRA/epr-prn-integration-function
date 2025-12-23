@@ -10,9 +10,12 @@ namespace EprPrnIntegration.Common.Client;
 public class NpwdClient(
     IHttpClientFactory httpClientFactory,
     IOptions<NpwdIntegrationConfiguration> npwdIntegrationConfig,
-    ILogger<NpwdClient> logger) : INpwdClient
+    ILogger<NpwdClient> logger
+) : INpwdClient
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.Npwd);
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient(
+        Constants.HttpClientNames.Npwd
+    );
 
     public async Task<HttpResponseMessage> Patch<T>(T updatedProducers, string updatePath)
     {
@@ -52,7 +55,7 @@ public class NpwdClient(
 
         var requestUrl = $"{baseAddress}/{Constants.NpwdApiPath.Prns}?$filter={filter}";
         List<NpwdPrn> issuedPrns = [];
-        while(!string.IsNullOrEmpty(requestUrl))
+        while (!string.IsNullOrEmpty(requestUrl))
         {
             var response = await _httpClient.GetAsync(requestUrl);
             response.EnsureSuccessStatusCode();

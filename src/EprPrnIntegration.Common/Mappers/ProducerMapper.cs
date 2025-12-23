@@ -7,14 +7,16 @@ namespace EprPrnIntegration.Common.Mappers
     public static class ProducerMapper
     {
         public static ProducerDelta Map(
-            List<UpdatedProducersResponse> updatedEprProducers, IConfiguration configuration)
+            List<UpdatedProducersResponse> updatedEprProducers,
+            IConfiguration configuration
+        )
         {
             var entityTypeNames = new Dictionary<string, string>
             {
                 { "CSM", "Scheme Member" },
                 { "SUB", "SUBSIDIARY" },
                 { "DR", "Direct Registrant" },
-                { "CS", "Compliance Scheme" }
+                { "CS", "Compliance Scheme" },
             };
 
             var statusMapping = new Dictionary<string, string>
@@ -24,7 +26,7 @@ namespace EprPrnIntegration.Common.Mappers
                 { "PR-CANCELLED", "Cancelled" },
                 { "PR-NOTREGISTERED", "Not Registered" },
                 { "CSR-REGISTERED", "Registered" },
-                { "CSR-CANCELLED", "Cancelled" }
+                { "CSR-CANCELLED", "Cancelled" },
             };
 
             var producersContext = configuration["ProducersContext"] ?? string.Empty;
@@ -36,32 +38,40 @@ namespace EprPrnIntegration.Common.Mappers
             return new ProducerDelta
             {
                 Context = producersContext,
-                Value = updatedEprProducers.Select(eprProducer =>
-                {
-                    var codes = GetCodes(eprProducer.Status, eprProducer.OrganisationType);
-                    var entityTypeCode = codes.EntityTypeCode;
-                    var statusCode = codes.StatusCode;
-
-                    return new Producer
+                Value = updatedEprProducers
+                    .Select(eprProducer =>
                     {
-                        AddressLine1 = eprProducer.AddressLine1 ?? string.Empty,
-                        AddressLine2 = eprProducer.AddressLine2 ?? string.Empty,
-                        CompanyRegNo = eprProducer.CompaniesHouseNumber ?? string.Empty,
-                        Country = eprProducer.Country ?? string.Empty,
-                        County = eprProducer.County ?? string.Empty,
-                        Town = eprProducer.Town ?? string.Empty,
-                        Postcode = eprProducer.Postcode ?? string.Empty,
-                        EntityTypeCode = entityTypeCode,
-                        EntityTypeName = string.IsNullOrEmpty(entityTypeCode) ? string.Empty : entityTypeNames.GetValueOrDefault(entityTypeCode, string.Empty),
-                        StatusCode = statusCode,
-                        StatusDesc = string.IsNullOrEmpty(statusCode) ? string.Empty : statusMapping.GetValueOrDefault(statusCode, string.Empty),
-                        EPRId = eprProducer.PEPRID ?? string.Empty,
-                        EPRCode = eprProducer.OrganisationId ?? string.Empty,
-                        ProducerName = eprProducer.OrganisationName ?? string.Empty,
-                        Agency = GetAgencyByCountry(eprProducer.BusinessCountry ?? string.Empty),
-                        TradingName = eprProducer.TradingName ?? string.Empty
-                    };
-                }).ToList()
+                        var codes = GetCodes(eprProducer.Status, eprProducer.OrganisationType);
+                        var entityTypeCode = codes.EntityTypeCode;
+                        var statusCode = codes.StatusCode;
+
+                        return new Producer
+                        {
+                            AddressLine1 = eprProducer.AddressLine1 ?? string.Empty,
+                            AddressLine2 = eprProducer.AddressLine2 ?? string.Empty,
+                            CompanyRegNo = eprProducer.CompaniesHouseNumber ?? string.Empty,
+                            Country = eprProducer.Country ?? string.Empty,
+                            County = eprProducer.County ?? string.Empty,
+                            Town = eprProducer.Town ?? string.Empty,
+                            Postcode = eprProducer.Postcode ?? string.Empty,
+                            EntityTypeCode = entityTypeCode,
+                            EntityTypeName = string.IsNullOrEmpty(entityTypeCode)
+                                ? string.Empty
+                                : entityTypeNames.GetValueOrDefault(entityTypeCode, string.Empty),
+                            StatusCode = statusCode,
+                            StatusDesc = string.IsNullOrEmpty(statusCode)
+                                ? string.Empty
+                                : statusMapping.GetValueOrDefault(statusCode, string.Empty),
+                            EPRId = eprProducer.PEPRID ?? string.Empty,
+                            EPRCode = eprProducer.OrganisationId ?? string.Empty,
+                            ProducerName = eprProducer.OrganisationName ?? string.Empty,
+                            Agency = GetAgencyByCountry(
+                                eprProducer.BusinessCountry ?? string.Empty
+                            ),
+                            TradingName = eprProducer.TradingName ?? string.Empty,
+                        };
+                    })
+                    .ToList(),
             };
         }
 
@@ -82,7 +92,10 @@ namespace EprPrnIntegration.Common.Mappers
             return string.Join(", ", addressFields.Where(x => !string.IsNullOrWhiteSpace(x)));
         }
 
-        private static (string StatusCode, string EntityTypeCode) GetCodes(string? status, string? orgType)
+        private static (string StatusCode, string EntityTypeCode) GetCodes(
+            string? status,
+            string? orgType
+        )
         {
             if (string.IsNullOrEmpty(status) || string.IsNullOrEmpty(orgType))
             {

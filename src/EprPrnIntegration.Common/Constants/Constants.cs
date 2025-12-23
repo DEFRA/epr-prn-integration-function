@@ -2,7 +2,8 @@
 {
     public static class Values
     {
-        public const string ExceptionLogMessage = "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
+        public const string ExceptionLogMessage =
+            "GOV UK NOTIFY ERROR. Method: SendEmail, Organisation ID: {OrganisationId}, Template: {TemplateId}";
     }
 
     public static class Constants

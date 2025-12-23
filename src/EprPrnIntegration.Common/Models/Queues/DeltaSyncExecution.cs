@@ -7,5 +7,4 @@ public class DeltaSyncExecution
 
     // Last run datetime
     public DateTime LastSyncDateTime { get; set; }
-
 }
