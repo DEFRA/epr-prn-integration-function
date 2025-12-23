@@ -39,8 +39,4 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="RESTServices\RrepwService\" />
-  </ItemGroup>
-
 </Project>
