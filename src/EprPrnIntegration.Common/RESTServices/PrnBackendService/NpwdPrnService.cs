@@ -89,7 +89,7 @@ public class NpwdPrnService : BaseHttpService, INpwdPrnService
 
     public async Task SaveNpwdPrn(SaveNpwdPrnDetailsRequest request)
     {
-        _logger.LogInformation("Saving PRN with id {EvidenceNo}", request.EvidenceNo);
+        _logger.LogInformation("Saving NPWD PRN with id {EvidenceNo}", request.EvidenceNo);
         await Post($"prn-details", request, CancellationToken.None);
     }
 
