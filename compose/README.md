@@ -46,7 +46,9 @@ docker compose logs <service name>
 
 `local.settings.json` contains config that will point to the dockerised services above. Copy the .example file:
 
-`cp src/EprPrnIntegration.Api/local.settings.json.example cp src/EprPrnIntegration.Api/local.settings.json`
+```
+cp src/EprPrnIntegration.Api/local.settings.json.example src/EprPrnIntegration.Api/local.settings.json
+```
 
 Once you're configured you can spin up the function via your IDE, to attach and set breakpoints.
 
