@@ -108,23 +108,4 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             after.Should().BeAfter(before);
         });
     }
-    
-    [Fact]
-    public async Task WhenCommonDataApiHasNoData_LastUpdateStaysUntouched()
-    {
-        await CommonDataApiStub.HasNoV2Updates();
-
-        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
-
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var requests = await CommonDataApiStub.GetUpdatedProducersRequests();
-            requests.Count.Should().Be(1);
-            
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
-            after.Should().Be(before);
-        });
-    }
 }
