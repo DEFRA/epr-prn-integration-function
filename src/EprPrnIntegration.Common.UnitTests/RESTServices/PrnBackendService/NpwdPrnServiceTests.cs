@@ -64,7 +64,6 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                     EvidenceStatusCode = "Active",
                     StatusDate = new DateTime(2024, 12, 4, 15, 57, 2),
                     ObligationYear = "2025",
-                    SourceSystemId = "SSI",
                 },
                 new()
                 {
@@ -92,10 +91,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             Assert.NotEmpty(result);
             Assert.Equal("001", result[0].EvidenceNo);
             Assert.Equal("Active", result[0].EvidenceStatusCode);
-            Assert.Equal("SSI", result[0].SourceSystemId);
             Assert.Equal("002", result[1].EvidenceNo);
             Assert.Equal("Inactive", result[1].EvidenceStatusCode);
-            Assert.Null(result[1].SourceSystemId);
         }
 
         [Fact]
@@ -311,7 +308,6 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                     StatusName = "Approved",
                     UpdatedOn = "2024-12-04T15:57:02",
                     OrganisationName = "Company A",
-                    SourceSystemId = "SSI",
                 },
                 new()
                 {
@@ -332,10 +328,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             Assert.NotEmpty(result);
             Assert.Equal("001", result[0].PrnNumber);
             Assert.Equal("Approved", result[0].StatusName);
-            Assert.Equal("SSI", result[0].SourceSystemId);
             Assert.Equal("002", result[1].PrnNumber);
             Assert.Equal("Rejected", result[1].StatusName);
-            Assert.Null(result[1].SourceSystemId);
         }
 
         [Fact]

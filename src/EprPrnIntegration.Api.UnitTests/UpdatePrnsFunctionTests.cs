@@ -604,11 +604,7 @@ public class UpdatePrnsFunctionTests
     {
         // Arrange
         var deltaRun = _fixture.Create<DeltaSyncExecution>();
-        var updatePrns = _fixture
-            .Build<UpdatedNpwdPrnsResponseModel>()
-            .With(u => u.SourceSystemId, "")
-            .CreateMany()
-            .ToList();
+        var updatePrns = _fixture.Build<UpdatedNpwdPrnsResponseModel>().CreateMany().ToList();
 
         _mockUtilities
             .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
@@ -722,45 +718,6 @@ public class UpdatePrnsFunctionTests
         );
     }
 
-    [Fact]
-    public async Task Run_FiltersOutReEx()
-    {
-        DeltaSyncExecution deltaRun = new()
-        {
-            SyncType = NpwdDeltaSyncType.UpdatePrns,
-            LastSyncDateTime = DateTime.UtcNow,
-        };
-
-        // create 3 with SourceSystemId as not null
-        var updatePrns = _fixture.Build<UpdatedNpwdPrnsResponseModel>().CreateMany().ToList();
-        // set one to null
-        updatePrns[0].SourceSystemId = null;
-
-        _mockUtilities
-            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
-            .ReturnsAsync(deltaRun);
-
-        _mockPrnService
-            .Setup(s =>
-                s.GetUpdatedNpwdPrns(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
-                    CancellationToken.None
-                )
-            )
-            .ReturnsAsync(updatePrns);
-
-        int prnCount = 0;
-        _mockNpwdClient
-            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
-            .Callback((PrnDelta delta, string _) => prnCount = delta.Value.Count);
-
-        await _function.Run(null!);
-
-        prnCount.Should().Be(1);
-    }
-
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
@@ -779,7 +736,6 @@ public class UpdatePrnsFunctionTests
 
         var updatePrns = _fixture
             .Build<UpdatedNpwdPrnsResponseModel>()
-            .With(u => u.SourceSystemId, "")
             .CreateMany(countOfPrnsReturned)
             .ToList();
 
@@ -827,11 +783,7 @@ public class UpdatePrnsFunctionTests
             LastSyncDateTime = DateTime.UtcNow,
         };
 
-        var updatePrns = _fixture
-            .Build<UpdatedNpwdPrnsResponseModel>()
-            .With(u => u.SourceSystemId, "")
-            .CreateMany()
-            .ToList();
+        var updatePrns = _fixture.CreateMany<UpdatedNpwdPrnsResponseModel>().ToList();
 
         _mockUtilities
             .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))

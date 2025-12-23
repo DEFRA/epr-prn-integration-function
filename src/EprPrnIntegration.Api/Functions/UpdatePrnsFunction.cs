@@ -47,9 +47,7 @@ public class UpdatePrnsFunction(
         logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
 
         // Retrieve data from the common backend
-        var updatedEprPrns = (await GetUpdatedPrnsAsync(fromDate, toDate))
-            ?.FilterNpwdPrns()
-            .ToList();
+        var updatedEprPrns = await GetUpdatedNpwdPrnsAsync(fromDate, toDate);
         if (updatedEprPrns == null)
             return;
 
@@ -154,7 +152,7 @@ public class UpdatePrnsFunction(
     }
 
     // Retrieve data from the common backend
-    private async Task<List<UpdatedNpwdPrnsResponseModel>?> GetUpdatedPrnsAsync(
+    private async Task<List<UpdatedNpwdPrnsResponseModel>?> GetUpdatedNpwdPrnsAsync(
         DateTime fromDate,
         DateTime toDate
     )
@@ -188,22 +186,5 @@ public class UpdatePrnsFunction(
         }
 
         return null;
-    }
-}
-
-public static class PrnExtensions
-{
-    public static IEnumerable<UpdatedNpwdPrnsResponseModel> FilterNpwdPrns(
-        this IEnumerable<UpdatedNpwdPrnsResponseModel> updatedEprPrns
-    )
-    {
-        return updatedEprPrns.Where(prn => string.IsNullOrWhiteSpace(prn.SourceSystemId));
-    }
-
-    public static IEnumerable<UpdatedNpwdPrnsResponseModel> FilterReExPrns(
-        this IEnumerable<UpdatedNpwdPrnsResponseModel> updatedEprPrns
-    )
-    {
-        return updatedEprPrns.Where(prn => !string.IsNullOrWhiteSpace(prn.SourceSystemId));
     }
 }
