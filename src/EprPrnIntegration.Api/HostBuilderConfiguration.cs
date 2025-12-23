@@ -12,6 +12,8 @@ using EprPrnIntegration.Common.RESTServices.CommonService;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.RrepwService;
+using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -54,11 +56,12 @@ public static class HostBuilderConfiguration
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<ICommonDataService, CommonDataService>();
-        services.AddScoped<INpwdPrnService, NpwdPrnService>();
+        services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
+        services.AddScoped<IRrepwService, RrepwService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
@@ -112,18 +115,13 @@ public static class HostBuilderConfiguration
         ApiCallsRetryConfig apiCallsRetryConfig = new();
         configuration.GetSection(ApiCallsRetryConfig.SectioName).Bind(apiCallsRetryConfig);
 
-        WasteOrganisationsApiConfiguration wasteOrganisationsApiConfig = new();
-        configuration
-            .GetSection(WasteOrganisationsApiConfiguration.SectionName)
-            .Bind(wasteOrganisationsApiConfig);
-
         services
             .AddHttpClient(Common.Constants.HttpClientNames.Prn)
             .AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
             .AddPolicyHandler(
                 (services, request) =>
                     GetRetryPolicy(
-                        services.GetService<ILogger<INpwdPrnService>>()!,
+                        services.GetService<ILogger<IPrnService>>()!,
                         apiCallsRetryConfig?.MaxAttempts ?? 3,
                         apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30,
                         Common.Constants.HttpClientNames.Prn
@@ -182,6 +180,10 @@ public static class HostBuilderConfiguration
                     )
             );
 
+        WasteOrganisationsApiConfiguration wasteOrganisationsApiConfig = new();
+        configuration
+            .GetSection(WasteOrganisationsApiConfiguration.SectionName)
+            .Bind(wasteOrganisationsApiConfig);
         services
             .AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
             .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
@@ -192,6 +194,20 @@ public static class HostBuilderConfiguration
                         wasteOrganisationsApiConfig.RetryAttempts,
                         wasteOrganisationsApiConfig.RetryDelaySeconds,
                         Common.Constants.HttpClientNames.WasteOrganisations
+                    )
+            );
+
+        RrepwApiConfiguration rrepwApiConfig = new();
+        configuration.GetSection(RrepwApiConfiguration.SectionName).Bind(rrepwApiConfig);
+        services
+            .AddHttpClient(Common.Constants.HttpClientNames.Rrepw)
+            .AddPolicyHandler(
+                (services, request) =>
+                    GetRetryPolicy(
+                        services.GetService<ILogger<IRrepwService>>()!,
+                        rrepwApiConfig.RetryAttempts,
+                        rrepwApiConfig.RetryDelaySeconds,
+                        Common.Constants.HttpClientNames.Rrepw
                     )
             );
 
@@ -214,6 +230,12 @@ public static class HostBuilderConfiguration
         );
         services.Configure<UpdateWasteOrganisationsConfiguration>(
             configuration.GetSection(UpdateWasteOrganisationsConfiguration.SectionName)
+        );
+        services.Configure<FetchRrepwIssuedPrnsConfiguration>(
+            configuration.GetSection(FetchRrepwIssuedPrnsConfiguration.SectionName)
+        );
+        services.Configure<RrepwApiConfiguration>(
+            configuration.GetSection(RrepwApiConfiguration.SectionName)
         );
         services.Configure<Service>(configuration.GetSection("Service"));
         services.Configure<MessagingConfig>(configuration.GetSection("MessagingConfig"));
@@ -309,7 +331,7 @@ public static class HostBuilderConfiguration
                 async (response, timespan, retryAttempt, context) =>
                 {
                     logger.LogWarning(
-                        "Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previuos request was responded with {StatusCode}",
+                        "Retry attempt {retryAttempt} for service {requestType} with delay {delay} seconds as previous request was responded with {StatusCode}",
                         retryAttempt,
                         requestType,
                         timespan.TotalSeconds,

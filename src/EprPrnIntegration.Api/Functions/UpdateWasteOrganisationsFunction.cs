@@ -72,7 +72,7 @@ public class UpdateWasteOrganisationsFunction(
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
-        catch (HttpRequestException ex) when (IsTransient(ex))
+        catch (HttpRequestException ex) when (ex.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule with the original time window.
             logger.LogError(ex, "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing", ex.StatusCode, producer.PEPRID);
@@ -84,11 +84,5 @@ public class UpdateWasteOrganisationsFunction(
             // to allow investigation.
             logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing with next producer", producer.PEPRID);
         }
-    }
-
-    // 5xx, 408 or 429.
-    private static bool IsTransient(HttpRequestException ex)
-    {
-        return ex.StatusCode is >= HttpStatusCode.InternalServerError or HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
     }
 }
