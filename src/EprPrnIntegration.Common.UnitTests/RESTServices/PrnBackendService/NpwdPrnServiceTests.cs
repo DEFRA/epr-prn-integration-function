@@ -242,7 +242,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                         It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
                         It.IsAny<EventId>(),
                         It.Is<It.IsAnyType>(
-                            (state, type) => ContainsString(state, "Saving Npwd PRN with id 1234")
+                            (state, type) => ContainsString(state, "Saving NPWD PRN with id 1234")
                         ),
                         It.IsAny<Exception>(),
                         It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
@@ -273,7 +273,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                         LogLevel.Information,
                         It.IsAny<EventId>(),
                         It.Is<It.IsAnyType>(
-                            (v, t) => ContainsString(v, "Saving Npwd PRN with id 1234")
+                            (v, t) => ContainsString(v, "Saving NPWD PRN with id 1234")
                         ),
                         null,
                         It.IsAny<Func<It.IsAnyType, Exception?, string>>()
