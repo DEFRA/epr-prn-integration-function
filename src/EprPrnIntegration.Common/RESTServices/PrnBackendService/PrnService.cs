@@ -38,10 +38,7 @@ public class PrnService(
         await Post($"/", request, CancellationToken.None);
     }
 
-    public async Task<List<UpdatedNpwdPrnsResponseModel>> GetUpdatedNpwdPrns(
-        DateTime from,
-        DateTime to
-    )
+    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
     {
         var fromDate = from.ToString(
             "yyyy-MM-ddTHH:mm:ss.fff",
@@ -56,7 +53,7 @@ public class PrnService(
         {
             Query = $"from={fromDate}&to={toDate}",
         };
-        return await Get<List<UpdatedNpwdPrnsResponseModel>>(
+        return await Get<List<PrnUpdateStatus>>(
             uriBuilder.ToString(),
             CancellationToken.None,
             false

@@ -55,7 +55,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<INpwdPrnService, NpwdPrnService>();
-        services.AddScoped<IPrnServiceV2, PrnServiceV2>();
+        services.AddScoped<IPrnService, PrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
@@ -136,7 +136,7 @@ public static class HostBuilderConfiguration
             .AddPolicyHandler(
                 (services, request) =>
                     GetRetryPolicy(
-                        services.GetService<ILogger<IPrnServiceV2>>()!,
+                        services.GetService<ILogger<IPrnService>>()!,
                         apiCallsRetryConfig?.MaxAttempts ?? 3,
                         apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30,
                         Common.Constants.HttpClientNames.PrnV2
