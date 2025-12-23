@@ -57,7 +57,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<ICommonDataService, CommonDataService>();
         services.AddScoped<IPrnService, PrnService>();
-        services.AddScoped<IPrnService, PrnService>();
+        services.AddScoped<INpwdPrnService, NpwdPrnService>();
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
