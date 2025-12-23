@@ -21,9 +21,7 @@ namespace EprPrnIntegration.Tests.Mappers
             _loggerMock = new Mock<ILogger>();
 
             // Default: no explicit DefaultObligationYear configured
-            _configMock
-                .Setup(c => c["DefaultObligationYear"])
-                .Returns((string?)null);
+            _configMock.Setup(c => c["DefaultObligationYear"]).Returns((string?)null);
         }
 
         [Fact]
@@ -58,7 +56,7 @@ namespace EprPrnIntegration.Tests.Mappers
                 ProducerAgency = "AgencyA",
                 RecoveryProcessCode = "R123",
                 ReprocessorAgency = "AgencyB",
-                StatusDate = DateTimeHelper.NewUtcDateTime(2024, 11, 10)
+                StatusDate = DateTimeHelper.NewUtcDateTime(2024, 11, 10),
             };
 
             // Act
@@ -76,7 +74,10 @@ namespace EprPrnIntegration.Tests.Mappers
             Assert.Equal(npwdPrn.DecemberWaste, result.DecemberWaste);
             Assert.Equal(npwdPrn.EvidenceMaterial, result.EvidenceMaterial);
             Assert.Equal(npwdPrn.EvidenceNo, result.EvidenceNo);
-            Assert.Equal(NpwdStatusToPrnStatusMapper.Map(npwdPrn.EvidenceStatusCode!), result.EvidenceStatusCode);
+            Assert.Equal(
+                NpwdStatusToPrnStatusMapper.Map(npwdPrn.EvidenceStatusCode!),
+                result.EvidenceStatusCode
+            );
             Assert.Equal(npwdPrn.EvidenceTonnes, result.EvidenceTonnes);
             Assert.Equal(npwdPrn.IssueDate, result.IssueDate);
             Assert.Equal(Guid.Parse(npwdPrn.IssuedByNPWDCode), result.IssuedByNPWDCode);
@@ -107,11 +108,7 @@ namespace EprPrnIntegration.Tests.Mappers
             // Arrange
             _configMock.Setup(c => c["DefaultObligationYear"]).Returns("2026");
 
-            var npwdPrn = new NpwdPrn
-            {
-                EvidenceNo = "EA123456",
-                ObligationYear = null
-            };
+            var npwdPrn = new NpwdPrn { EvidenceNo = "EA123456", ObligationYear = null };
 
             // Act
             var result = NpwdPrnToSavePrnDetailsRequestMapper.Map(
@@ -131,11 +128,7 @@ namespace EprPrnIntegration.Tests.Mappers
             // Arrange
             _configMock.Setup(c => c["DefaultObligationYear"]).Returns((string?)null);
 
-            var npwdPrn = new NpwdPrn
-            {
-                EvidenceNo = "EA123456",
-                ObligationYear = null
-            };
+            var npwdPrn = new NpwdPrn { EvidenceNo = "EA123456", ObligationYear = null };
 
             // Act
             var result = NpwdPrnToSavePrnDetailsRequestMapper.Map(
@@ -155,11 +148,7 @@ namespace EprPrnIntegration.Tests.Mappers
             // Arrange
             _configMock.Setup(c => c["DefaultObligationYear"]).Returns("not-a-year");
 
-            var npwdPrn = new NpwdPrn
-            {
-                EvidenceNo = "EA123456",
-                ObligationYear = null
-            };
+            var npwdPrn = new NpwdPrn { EvidenceNo = "EA123456", ObligationYear = null };
 
             // Act
             var result = NpwdPrnToSavePrnDetailsRequestMapper.Map(
@@ -174,13 +163,16 @@ namespace EprPrnIntegration.Tests.Mappers
 
             // Optional: verify a warning was logged at least once
             _loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception?>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce);
+                x =>
+                    x.Log(
+                        LogLevel.Warning,
+                        It.IsAny<EventId>(),
+                        It.IsAny<It.IsAnyType>(),
+                        It.IsAny<Exception?>(),
+                        It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                    ),
+                Times.AtLeastOnce
+            );
         }
 
         [Fact]
@@ -192,7 +184,7 @@ namespace EprPrnIntegration.Tests.Mappers
                 EvidenceNo = "EA123456",
                 IssuerNotes = "Some notes",
                 IssuerRef = null,
-                ObligationYear = 2024
+                ObligationYear = 2024,
             };
 
             // Act
@@ -209,11 +201,11 @@ namespace EprPrnIntegration.Tests.Mappers
         }
 
         [Theory]
-        [InlineData("EX123456", true)]   // EA export prefix
+        [InlineData("EX123456", true)] // EA export prefix
         [InlineData("SXPA123456", true)] // SEPA export prefix
         [InlineData("XYZ123456", false)] // Not an export prefix
-        [InlineData("", false)]          // Empty string
-        [InlineData(null, false)]        // Null string
+        [InlineData("", false)] // Empty string
+        [InlineData(null, false)] // Null string
         public void IsExport_ReturnsExpectedResult(string evidenceNo, bool expectedResult)
         {
             // Act

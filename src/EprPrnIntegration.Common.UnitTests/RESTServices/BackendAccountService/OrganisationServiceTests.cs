@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Api.Models;
+﻿using System.Net;
+using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
@@ -10,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
-using System.Net;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
 {
@@ -30,16 +30,22 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             var serviceConfig = new Configuration.Service
             {
                 AccountBaseUrl = "http://localhost:5000/",
-                AccountEndPointName = "api/organisations"
+                AccountEndPointName = "api/organisations",
             };
             _configMock = new Mock<IOptions<Configuration.Service>>();
             _configMock.Setup(c => c.Value).Returns(serviceConfig);
 
             // Create a mock HttpClient
-            var httpClient = new HttpClient(new FakeHttpMessageHandler(
-                                [
-                                    new() { FirstName="Test", LastName="User", Email = "test@example.com" }
-                                ]));
+            var httpClient = new HttpClient(
+                new FakeHttpMessageHandler([
+                    new()
+                    {
+                        FirstName = "Test",
+                        LastName = "User",
+                        Email = "test@example.com",
+                    },
+                ])
+            );
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
@@ -48,7 +54,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
         }
 
         [Fact]
@@ -61,7 +68,9 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                     _httpContextAccessorMock.Object,
                     new HttpClientFactoryMock(new HttpClient()),
                     null,
-                    _configMock.Object));
+                    _configMock.Object
+                )
+            );
 #pragma warning restore CS8625
 
             Assert.Equal("logger", exception.ParamName);
@@ -74,7 +83,11 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             var organisationId = "12345";
             var entityTypeCode = "CS";
             // Act
-            var result = await _organisationService.GetPersonEmailsAsync(organisationId, entityTypeCode, CancellationToken.None);
+            var result = await _organisationService.GetPersonEmailsAsync(
+                organisationId,
+                entityTypeCode,
+                CancellationToken.None
+            );
 
             // Assert
             Assert.NotNull(result);
@@ -89,35 +102,37 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             var from = DateTime.UtcNow.AddDays(-1);
             var to = DateTime.UtcNow;
 
-            var expectedResponse = JsonConvert.SerializeObject(new List<UpdatedProducersResponseModel>
-    {
-        new()
-        {
-            ProducerName = "Producer A",
-            CompaniesHouseNumber = "12345678",
-            TradingName = "Trading A",
-            ReferenceNumber = "REF001",
-            Street = "Test Street",
-            Town = "Test Town",
-            Country = "Test Country",
-            Postcode = "12345",
-            OrganisationId = 1,
-            IsComplianceScheme = true,
-        },
-        new()
-        {
-            ProducerName = "Producer B",
-            CompaniesHouseNumber = "87654321",
-            TradingName = "Trading B",
-            ReferenceNumber = "REF002",
-            Street = "Another Street",
-            Town = "Another Town",
-            Country = "Another Country",
-            Postcode = "54321",
-            OrganisationId = 2,
-            IsComplianceScheme = false,
-        }
-    });
+            var expectedResponse = JsonConvert.SerializeObject(
+                new List<UpdatedProducersResponseModel>
+                {
+                    new()
+                    {
+                        ProducerName = "Producer A",
+                        CompaniesHouseNumber = "12345678",
+                        TradingName = "Trading A",
+                        ReferenceNumber = "REF001",
+                        Street = "Test Street",
+                        Town = "Test Town",
+                        Country = "Test Country",
+                        Postcode = "12345",
+                        OrganisationId = 1,
+                        IsComplianceScheme = true,
+                    },
+                    new()
+                    {
+                        ProducerName = "Producer B",
+                        CompaniesHouseNumber = "87654321",
+                        TradingName = "Trading B",
+                        ReferenceNumber = "REF002",
+                        Street = "Another Street",
+                        Town = "Another Town",
+                        Country = "Another Country",
+                        Postcode = "54321",
+                        OrganisationId = 2,
+                        IsComplianceScheme = false,
+                    },
+                }
+            );
 
             var httpClient = new HttpClient(new MockHttpMessageHandler(expectedResponse));
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
@@ -126,10 +141,15 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
 
             // Act
-            var result = await organisationService.GetUpdatedProducers(from, to, CancellationToken.None);
+            var result = await organisationService.GetUpdatedProducers(
+                from,
+                to,
+                CancellationToken.None
+            );
 
             // Assert
             Assert.NotNull(result);
@@ -160,10 +180,15 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
 
             // Act
-            var result = await organisationService.GetUpdatedProducers(from, to, CancellationToken.None);
+            var result = await organisationService.GetUpdatedProducers(
+                from,
+                to,
+                CancellationToken.None
+            );
 
             // Assert
             Assert.NotNull(result);
@@ -177,9 +202,12 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             var from = DateTime.UtcNow.AddDays(-1);
             var to = DateTime.UtcNow;
 
-            var httpClient = new HttpClient(new MockHttpMessageHandler(
-                responseContent: "Internal Server Error",
-                statusCode: HttpStatusCode.InternalServerError));
+            var httpClient = new HttpClient(
+                new MockHttpMessageHandler(
+                    responseContent: "Internal Server Error",
+                    statusCode: HttpStatusCode.InternalServerError
+                )
+            );
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
@@ -187,11 +215,13 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
 
             // Act & Assert
             await Assert.ThrowsAsync<ResponseCodeException>(() =>
-                organisationService.GetUpdatedProducers(from, to, CancellationToken.None));
+                organisationService.GetUpdatedProducers(from, to, CancellationToken.None)
+            );
         }
 
         [Fact]
@@ -200,14 +230,21 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             // Arrange
             var organisationId = Guid.NewGuid().ToString();
 
-            var httpClient = new HttpClient(new MockHttpMessageHandler(
-                responseContent: "Any valid content",
-                statusCode: HttpStatusCode.OK));
+            var httpClient = new HttpClient(
+                new MockHttpMessageHandler(
+                    responseContent: "Any valid content",
+                    statusCode: HttpStatusCode.OK
+                )
+            );
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
             // Act
-            bool result = await _organisationService.DoesProducerOrComplianceSchemeExistAsync(organisationId, "CS", CancellationToken.None);
+            bool result = await _organisationService.DoesProducerOrComplianceSchemeExistAsync(
+                organisationId,
+                "CS",
+                CancellationToken.None
+            );
 
             // Assert
             result.Should().BeTrue();
@@ -217,14 +254,19 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
         [InlineData(204)]
         [InlineData(400)]
         [InlineData(500)]
-        public async Task DoesProducerOrComplianceSchemeExistAsync_ShouldCallApiAndReturnNotExistsFlag(int statusCode)
+        public async Task DoesProducerOrComplianceSchemeExistAsync_ShouldCallApiAndReturnNotExistsFlag(
+            int statusCode
+        )
         {
             // Arrange
             var organisationId = Guid.NewGuid().ToString();
 
-            var httpClient = new HttpClient(new MockHttpMessageHandler(
-                responseContent: "Invalid content",
-                statusCode: (HttpStatusCode)statusCode));
+            var httpClient = new HttpClient(
+                new MockHttpMessageHandler(
+                    responseContent: "Invalid content",
+                    statusCode: (HttpStatusCode)statusCode
+                )
+            );
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
@@ -232,10 +274,15 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
 
             // Act
-            bool result = await organisationService.DoesProducerOrComplianceSchemeExistAsync(organisationId, "CS", CancellationToken.None);
+            bool result = await organisationService.DoesProducerOrComplianceSchemeExistAsync(
+                organisationId,
+                "CS",
+                CancellationToken.None
+            );
 
             // Assert
             result.Should().BeFalse();
@@ -251,17 +298,23 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             {
                 AccountBaseUrl = "http://localhost:5000/",
                 AccountEndPointName = "api/organisations",
-                TimeoutSeconds = timeoutInSeconds
+                TimeoutSeconds = timeoutInSeconds,
             };
             _configMock.Setup(c => c.Value).Returns(serviceConfig);
 
             // Create a mock HttpClient
-            var httpClient = new HttpClient(new FakeHttpMessageHandler(
-                                [
-                                    new() { FirstName="Test", LastName="User", Email = "test@example.com" }
-                                ]))
+            var httpClient = new HttpClient(
+                new FakeHttpMessageHandler([
+                    new()
+                    {
+                        FirstName = "Test",
+                        LastName = "User",
+                        Email = "test@example.com",
+                    },
+                ])
+            )
             {
-                Timeout = TimeSpan.FromSeconds(timeoutInSeconds)
+                Timeout = TimeSpan.FromSeconds(timeoutInSeconds),
             };
 
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
@@ -271,7 +324,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
                 _httpContextAccessorMock.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
-                _configMock.Object);
+                _configMock.Object
+            );
 
             // Act
             var client = httpClientFactoryMock.CreateClient(HttpClientNames.Account);

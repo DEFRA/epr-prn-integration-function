@@ -13,25 +13,25 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             var input = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
-                
+
                 AddressLine1 = "address1",
                 AddressLine2 = "address2",
                 Town = "town",
                 County = "county",
                 Postcode = "postcode",
                 Country = "UK",
-                
+
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
                 TradingName = "Organisation's TradingName",
 
                 RegistrationYear = "2025",
                 Status = "registered",
-                OrganisationType = "DP"
+                OrganisationType = "DP",
             };
-            
+
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
-            
+
             result.Name.Should().Be("Organisation's Name");
             result.TradingName.Should().Be("Organisation's TradingName");
             result.CompaniesHouseNumber.Should().Be("some-company-number");
@@ -43,14 +43,13 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             var input = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
-                
+
                 AddressLine1 = "address1",
                 AddressLine2 = "address2",
                 Town = "town",
                 County = "county",
                 Postcode = "postcode",
                 Country = "UK",
-                
 
                 Status = "registered",
                 OrganisationType = "DP",
@@ -58,20 +57,24 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
 
                 CompaniesHouseNumber = "some-company-number",
                 OrganisationName = "Organisation's Name",
-                TradingName = "Organisation's TradingName"
+                TradingName = "Organisation's TradingName",
             };
-            
+
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
 
-            result.Address.Should().BeEquivalentTo(new Address
-            {
-                AddressLine1 = "address1",
-                AddressLine2 = "address2",
-                Town = "town",
-                County = "county",
-                Postcode = "postcode",
-                Country = "UK",
-            });
+            result
+                .Address.Should()
+                .BeEquivalentTo(
+                    new Address
+                    {
+                        AddressLine1 = "address1",
+                        AddressLine2 = "address2",
+                        Town = "town",
+                        County = "county",
+                        Postcode = "postcode",
+                        Country = "UK",
+                    }
+                );
         }
 
         [Theory]
@@ -89,7 +92,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Status = "registered",
                 OrganisationType = "DP",
                 RegistrationYear = "2026",
-                BusinessCountry = country
+                BusinessCountry = country,
             };
 
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
@@ -102,7 +105,12 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("Deleted", "DP", "CANCELLED", "LARGE_PRODUCER")]
         [InlineData("Registered", "CS", "REGISTERED", "COMPLIANCE_SCHEME")]
         [InlineData("Deleted", "CS", "CANCELLED", "COMPLIANCE_SCHEME")]
-        public void MapsRegistration(string status, string orgType, string expectedStatus, string expectedRegistrationType)
+        public void MapsRegistration(
+            string status,
+            string orgType,
+            string expectedStatus,
+            string expectedRegistrationType
+        )
         {
             var producer = new UpdatedProducersResponseV2
             {
@@ -110,43 +118,55 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = status,
                 OrganisationType = orgType,
-                RegistrationYear = "2026"
+                RegistrationYear = "2026",
             };
 
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
 
-            result.Registration.Should().BeEquivalentTo(new Registration
-            {
-               Status = expectedStatus,
-               Type = expectedRegistrationType,
-               RegistrationYear = 2026,
-            });
+            result
+                .Registration.Should()
+                .BeEquivalentTo(
+                    new Registration
+                    {
+                        Status = expectedStatus,
+                        Type = expectedRegistrationType,
+                        RegistrationYear = 2026,
+                    }
+                );
         }
 
         [Fact]
         public void ThrowsForUnrecognisedStatus()
         {
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(new UpdatedProducersResponseV2
-            {
-                PEPRID = Guid.NewGuid().ToString(),
-                OrganisationName = Guid.NewGuid().ToString(),
-                Status = "foobar",
-                OrganisationType = "DP",
-                RegistrationYear = "2026"
-            }));
+            Assert.Throws<ArgumentException>(() =>
+                WasteOrganisationsApiUpdateRequestMapper.Map(
+                    new UpdatedProducersResponseV2
+                    {
+                        PEPRID = Guid.NewGuid().ToString(),
+                        OrganisationName = Guid.NewGuid().ToString(),
+                        Status = "foobar",
+                        OrganisationType = "DP",
+                        RegistrationYear = "2026",
+                    }
+                )
+            );
         }
-        
+
         [Fact]
         public void ThrowsForUnrecognisedOrganisationType()
         {
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(new UpdatedProducersResponseV2
-            {
-                PEPRID = Guid.NewGuid().ToString(),
-                OrganisationName = Guid.NewGuid().ToString(),
-                Status = "registered",
-                OrganisationType = "foobar",
-                RegistrationYear = "2026"
-            }));
+            Assert.Throws<ArgumentException>(() =>
+                WasteOrganisationsApiUpdateRequestMapper.Map(
+                    new UpdatedProducersResponseV2
+                    {
+                        PEPRID = Guid.NewGuid().ToString(),
+                        OrganisationName = Guid.NewGuid().ToString(),
+                        Status = "registered",
+                        OrganisationType = "foobar",
+                        RegistrationYear = "2026",
+                    }
+                )
+            );
         }
 
         [Fact]
@@ -155,22 +175,26 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             var producer = new UpdatedProducersResponseV2
             {
                 OrganisationName = "some name",
-                RegistrationYear = "2026"
+                RegistrationYear = "2026",
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() =>
+                WasteOrganisationsApiUpdateRequestMapper.Map(producer)
+            );
         }
-        
+
         [Fact]
         public void ThrowsForMissingOrganisationName()
         {
             var producer = new UpdatedProducersResponseV2
             {
                 PEPRID = Guid.NewGuid().ToString(),
-                RegistrationYear = "2026"
+                RegistrationYear = "2026",
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() =>
+                WasteOrganisationsApiUpdateRequestMapper.Map(producer)
+            );
         }
 
         [Fact]
@@ -182,10 +206,12 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 OrganisationName = Guid.NewGuid().ToString(),
                 Status = "registered",
                 OrganisationType = "DP",
-                RegistrationYear = "not-a-number"
+                RegistrationYear = "not-a-number",
             };
 
-            Assert.Throws<ArgumentException>(() => WasteOrganisationsApiUpdateRequestMapper.Map(producer));
+            Assert.Throws<ArgumentException>(() =>
+                WasteOrganisationsApiUpdateRequestMapper.Map(producer)
+            );
         }
     }
 }

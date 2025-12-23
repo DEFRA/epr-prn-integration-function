@@ -33,7 +33,9 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
-        public async Task AccreditationNo_Should_Have_Error_When_Is_NulllOrEmpty(string? npwdAccreditationNo)
+        public async Task AccreditationNo_Should_Have_Error_When_Is_NulllOrEmpty(
+            string? npwdAccreditationNo
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.AccreditationNo = npwdAccreditationNo;
@@ -70,12 +72,27 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var orgId = Guid.NewGuid();
             npwdPrn.IssuedToEPRId = orgId.ToString();
 
-            _mockOrganisationService.Setup(service => service.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockOrganisationService
+                .Setup(service =>
+                    service.DoesProducerOrComplianceSchemeExistAsync(
+                        npwdPrn.IssuedToEPRId,
+                        It.IsAny<string>(),
+                        It.IsAny<CancellationToken>()
+                    )
+                )
                 .ReturnsAsync(true);
 
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.IssuedToEPRId);
-            _mockOrganisationService.Verify(provider => provider.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockOrganisationService.Verify(
+                provider =>
+                    provider.DoesProducerOrComplianceSchemeExistAsync(
+                        npwdPrn.IssuedToEPRId,
+                        It.IsAny<string>(),
+                        It.IsAny<CancellationToken>()
+                    ),
+                Times.Once
+            );
         }
 
         [Theory]
@@ -94,7 +111,9 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [Theory]
         [InlineData("OrganisationId")]
         [InlineData("05be0802-19ac-4c80-b99d-6452577bf93d")]
-        public async Task IssuedEPRId_Should_Have_Error_When_Not_Guid_Or_Invalid_Guid(string? npwdEprId)
+        public async Task IssuedEPRId_Should_Have_Error_When_Not_Guid_Or_Invalid_Guid(
+            string? npwdEprId
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.IssuedToEPRId = npwdEprId;
@@ -110,7 +129,14 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var orgId = Guid.NewGuid();
             npwdPrn.IssuedToEPRId = orgId.ToString();
 
-            _mockOrganisationService.Setup(service => service.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockOrganisationService
+                .Setup(service =>
+                    service.DoesProducerOrComplianceSchemeExistAsync(
+                        npwdPrn.IssuedToEPRId,
+                        It.IsAny<string>(),
+                        It.IsAny<CancellationToken>()
+                    )
+                )
                 .ThrowsAsync(new Exception());
 
             var result = await _sut.TestValidateAsync(npwdPrn);
@@ -160,7 +186,9 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData("")]
         [InlineData(" ")]
         [InlineData("Zinc")]
-        public async Task EvidenceMaterial_Should_Have_Error_When_Is_NulllOrEmpty_Or_InvalidMaterial(string? npwdMaterial)
+        public async Task EvidenceMaterial_Should_Have_Error_When_Is_NulllOrEmpty_Or_InvalidMaterial(
+            string? npwdMaterial
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceMaterial = npwdMaterial;
@@ -170,11 +198,12 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
 
         // Accreditation Year
         private const int MinAccreditationYear = 2024;
+
         [Fact]
         public async Task AccrediationYear_Should_Not_Have_Error_When_Is_Valid()
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
-            int maxYear =  DateTime.UtcNow.Year + 1;
+            int maxYear = DateTime.UtcNow.Year + 1;
             for (int year = MinAccreditationYear; year < maxYear; year++)
             {
                 npwdPrn.AccreditationYear = year;
@@ -202,12 +231,14 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData("")]
         [InlineData(" ")]
         [InlineData("EV-AWACCEP")]
-        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Null_And_Status_Is_Not_Cancelled(string statusCode)
+        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Null_And_Status_Is_Not_Cancelled(
+            string statusCode
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = null;
-            
+
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldNotHaveValidationErrorFor(x => x.CancelledDate);
         }
@@ -215,7 +246,9 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [Theory]
         [InlineData("EV-CANCEL")]
         [InlineData("ev-cancel")]
-        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Not_Null_And_Status_Is_Cancelled(string statusCode)
+        public async Task CancelledDate_Should_Not_Have_Error_When_Is_Not_Null_And_Status_Is_Cancelled(
+            string statusCode
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = statusCode;
@@ -229,15 +262,20 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [Theory]
         [InlineData("EV-CANCEL")]
         [InlineData("ev-cancel")]
-        public async Task CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled(string statusCode)
+        public async Task CancelledDate_Should_Have_Error_When_Is_Null_And_Status_Is_Cancelled(
+            string statusCode
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = null;
 
             var result = await _sut.TestValidateAsync(npwdPrn);
-            result.ShouldHaveValidationErrorFor(x => x.CancelledDate)
-                .WithErrorMessage("Cancellation date must not be null when PRN has status of EV-CANCEL");
+            result
+                .ShouldHaveValidationErrorFor(x => x.CancelledDate)
+                .WithErrorMessage(
+                    "Cancellation date must not be null when PRN has status of EV-CANCEL"
+                );
         }
 
         [Theory]
@@ -245,15 +283,18 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
         [InlineData("")]
         [InlineData(" ")]
         [InlineData("EV-AWACCEP")]
-        public async Task CancelledDate_Should_Have_Error_When_Is_Not_Null_And_Status_Is_Not_Cancelled(string statusCode)
+        public async Task CancelledDate_Should_Have_Error_When_Is_Not_Null_And_Status_Is_Not_Cancelled(
+            string statusCode
+        )
         {
             var npwdPrn = _fixture.Create<NpwdPrn>();
             npwdPrn.EvidenceStatusCode = statusCode;
             npwdPrn.CancelledDate = DateTime.UtcNow;
 
             var result = await _sut.TestValidateAsync(npwdPrn);
-            result.ShouldHaveValidationErrorFor(x => x.CancelledDate)
-                 .WithErrorMessage("Cancellation date must be null when PRN is not cancelled");
+            result
+                .ShouldHaveValidationErrorFor(x => x.CancelledDate)
+                .WithErrorMessage("Cancellation date must be null when PRN is not cancelled");
         }
 
         // Issue Date
@@ -274,6 +315,5 @@ namespace EprPrnIntegration.Common.UnitTests.Validators
             var result = await _sut.TestValidateAsync(npwdPrn);
             result.ShouldHaveValidationErrorFor(x => x.IssueDate);
         }
-
     }
 }

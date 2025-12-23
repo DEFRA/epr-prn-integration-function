@@ -12,7 +12,9 @@ namespace EprPrnIntegration.Common.Helpers
 
             if (string.IsNullOrWhiteSpace(rawValue))
             {
-                logger.LogWarning("DefaultObligationYear missing or empty. Falling back to default.");
+                logger.LogWarning(
+                    "DefaultObligationYear missing or empty. Falling back to default."
+                );
                 return ObligationYearDefaults.ObligationYear2025;
             }
 
@@ -21,7 +23,10 @@ namespace EprPrnIntegration.Common.Helpers
                 return parsed.ToString();
             }
 
-            logger.LogWarning("DefaultObligationYear '{ConfigValue}' invalid. Falling back to default.", rawValue);
+            logger.LogWarning(
+                "DefaultObligationYear '{ConfigValue}' invalid. Falling back to default.",
+                rawValue
+            );
             return ObligationYearDefaults.ObligationYear2025;
         }
     }

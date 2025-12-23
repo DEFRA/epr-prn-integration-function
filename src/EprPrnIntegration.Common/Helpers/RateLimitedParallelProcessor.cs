@@ -16,26 +16,33 @@ public static class RateLimitedParallelProcessor
         IEnumerable<T> items,
         Func<T, Task> processor,
         int requestsPerSecond,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        using var rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
-        {
-            TokenLimit = requestsPerSecond,
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-            QueueLimit = int.MaxValue,
-            ReplenishmentPeriod = TimeSpan.FromSeconds(1),
-            TokensPerPeriod = requestsPerSecond,
-            AutoReplenishment = true
-        });
+        using var rateLimiter = new TokenBucketRateLimiter(
+            new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = requestsPerSecond,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = int.MaxValue,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(1),
+                TokensPerPeriod = requestsPerSecond,
+                AutoReplenishment = true,
+            }
+        );
 
-        await Parallel.ForEachAsync(items, new ParallelOptions
-        {
-            MaxDegreeOfParallelism = requestsPerSecond,
-            CancellationToken = cancellationToken
-        }, async (item, ct) =>
-        {
-            using var lease = await rateLimiter.AcquireAsync(permitCount: 1, ct);
-            await processor(item);
-        });
+        await Parallel.ForEachAsync(
+            items,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = requestsPerSecond,
+                CancellationToken = cancellationToken,
+            },
+            async (item, ct) =>
+            {
+                using var lease = await rateLimiter.AcquireAsync(permitCount: 1, ct);
+                await processor(item);
+            }
+        );
     }
 }

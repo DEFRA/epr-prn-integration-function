@@ -17,17 +17,25 @@ public class UpdateWasteOrganisationsFunction(
     ILogger<UpdateWasteOrganisationsFunction> logger,
     ICommonDataService commonDataService,
     IWasteOrganisationsService wasteOrganisationsService,
-    IOptions<UpdateWasteOrganisationsConfiguration> config)
+    IOptions<UpdateWasteOrganisationsConfiguration> config
+)
 {
     [Function("UpdateWasteOrganisations")]
     public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await GetLastUpdate();
-        logger.LogInformation("UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}", lastUpdate);
+        logger.LogInformation(
+            "UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}",
+            lastUpdate
+        );
 
         var utcNow = DateTime.UtcNow;
-        
-        var producers = await commonDataService.GetUpdatedProducersV2(lastUpdate, utcNow, CancellationToken.None);
+
+        var producers = await commonDataService.GetUpdatedProducersV2(
+            lastUpdate,
+            utcNow,
+            CancellationToken.None
+        );
 
         if (!producers.Any())
         {
@@ -45,10 +53,14 @@ public class UpdateWasteOrganisationsFunction(
         var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
         if (!lastUpdate.HasValue)
         {
-           return DateTime.SpecifyKind(
-               DateTime.ParseExact(config.Value.DefaultStartDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
-               DateTimeKind.Utc
-           );
+            return DateTime.SpecifyKind(
+                DateTime.ParseExact(
+                    config.Value.DefaultStartDate,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture
+                ),
+                DateTimeKind.Utc
+            );
         }
         return lastUpdate!.Value;
     }
@@ -57,12 +69,9 @@ public class UpdateWasteOrganisationsFunction(
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
         // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run. 
+        // except in the case of the initial load which will process hundreds of items in a single function run.
         // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(
-            producers,
-            UpdateProducer,
-            20);
+        await RateLimitedParallelProcessor.ProcessAsync(producers, UpdateProducer, 20);
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
@@ -75,14 +84,23 @@ public class UpdateWasteOrganisationsFunction(
         catch (HttpRequestException ex) when (ex.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule with the original time window.
-            logger.LogError(ex, "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing", ex.StatusCode, producer.PEPRID);
+            logger.LogError(
+                ex,
+                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing",
+                ex.StatusCode,
+                producer.PEPRID
+            );
             throw;
         }
         catch (Exception ex)
         {
             // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
             // to allow investigation.
-            logger.LogError(ex, "Failed to update organisation {OrganisationId}, continuing with next producer", producer.PEPRID);
+            logger.LogError(
+                ex,
+                "Failed to update organisation {OrganisationId}, continuing with next producer",
+                producer.PEPRID
+            );
         }
     }
 }

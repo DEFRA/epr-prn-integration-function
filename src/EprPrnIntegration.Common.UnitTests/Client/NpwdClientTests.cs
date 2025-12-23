@@ -1,4 +1,5 @@
-﻿using AutoFixture;
+﻿using System.Net;
+using AutoFixture;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -10,7 +11,6 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using System.Net;
 
 namespace EprPrnIntegration.Common.UnitTests.Client
 {
@@ -36,26 +36,35 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
             // Mock HttpMessageHandler
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            httpMessageHandlerMock.Protected()
+            httpMessageHandlerMock
+                .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent("Success")
-                });
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent("Success"),
+                    }
+                );
 
             _httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
-                BaseAddress = new Uri("http://localhost")
+                BaseAddress = new Uri("http://localhost"),
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock
+                .Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(_httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
         }
 
         [Fact]
@@ -68,8 +77,8 @@ namespace EprPrnIntegration.Common.UnitTests.Client
                 {
                     ProducerName = "Test Producer",
                     CompanyRegNo = "12345678",
-                    Postcode = "12345"
-                }
+                    Postcode = "12345",
+                },
             };
 
             // Act
@@ -87,26 +96,35 @@ namespace EprPrnIntegration.Common.UnitTests.Client
         {
             // Arrange
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            httpMessageHandlerMock.Protected()
+            httpMessageHandlerMock
+                .Protected()
                 .SetupSequence<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Content = new StringContent("Error")
-                });
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        Content = new StringContent("Error"),
+                    }
+                );
 
             var httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
-                BaseAddress = new Uri("http://localhost")
+                BaseAddress = new Uri("http://localhost"),
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock
+                .Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
             // Act
             var response = await _npwdClient.Patch(new List<Producer>(), NpwdApiPath.Producers);
 
@@ -126,9 +144,15 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
             // Act & Assert
-            await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.Patch(new List<Producer>(), NpwdApiPath.Producers));
+            await Assert.ThrowsAsync<UriFormatException>(() =>
+                _npwdClient.Patch(new List<Producer>(), NpwdApiPath.Producers)
+            );
         }
 
         [Fact]
@@ -140,7 +164,11 @@ namespace EprPrnIntegration.Common.UnitTests.Client
 
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
 
             // Act & Assert
             await Assert.ThrowsAsync<UriFormatException>(() => _npwdClient.GetIssuedPrns("1 eq 1"));
@@ -171,44 +199,62 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            httpMessageHandlerMock.Protected()
+            httpMessageHandlerMock
+                .Protected()
                 .SetupSequence<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(jsonResponse1)
-                })
-                .ReturnsAsync(new HttpResponseMessage
-                                {
-                                    StatusCode = HttpStatusCode.OK,
-                                    Content = new StringContent(jsonReponse2)
-                                });
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent(jsonResponse1),
+                    }
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent(jsonReponse2),
+                    }
+                );
 
             var httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
-                BaseAddress = new Uri(baseUrl)
+                BaseAddress = new Uri(baseUrl),
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock
+                .Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
 
             var result = await _npwdClient.GetIssuedPrns(filter);
             // Act & Assert
-            httpMessageHandlerMock.Protected()
-            .Verify(
-                "SendAsync",
-                Times.Exactly(2),
-                ItExpr.Is<HttpRequestMessage>(
-                    req => req.Method == HttpMethod.Get
-                           && req.RequestUri == expectedRequestUri),
-                ItExpr.IsAny<CancellationToken>());
+            httpMessageHandlerMock
+                .Protected()
+                .Verify(
+                    "SendAsync",
+                    Times.Exactly(2),
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get && req.RequestUri == expectedRequestUri
+                    ),
+                    ItExpr.IsAny<CancellationToken>()
+                );
 
-            result.Should().BeEquivalentTo([..npwdGetIssuedPrnsResponse.Value, ..npwdGetIssuedPrnsResponse.Value]);
+            result
+                .Should()
+                .BeEquivalentTo([
+                    .. npwdGetIssuedPrnsResponse.Value,
+                    .. npwdGetIssuedPrnsResponse.Value,
+                ]);
         }
 
         [Fact]
@@ -224,26 +270,35 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            httpMessageHandlerMock.Protected()
+            httpMessageHandlerMock
+                .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.ServiceUnavailable,
-                    Content = new StringContent("ServerUnavialbe")
-                });
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.ServiceUnavailable,
+                        Content = new StringContent("ServerUnavialbe"),
+                    }
+                );
 
             var httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
-                BaseAddress = new Uri(baseUrl)
+                BaseAddress = new Uri(baseUrl),
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock
+                .Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
 
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(() => _npwdClient.GetIssuedPrns(filter));
@@ -258,27 +313,36 @@ namespace EprPrnIntegration.Common.UnitTests.Client
             _npwdIntegrationConfigMock.Setup(m => m.Value).Returns(_npwdConfig);
 
             var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-            httpMessageHandlerMock.Protected()
+            httpMessageHandlerMock
+                .Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent("Success")
-                });
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent("Success"),
+                    }
+                );
 
             var httpClient = new HttpClient(httpMessageHandlerMock.Object)
             {
                 BaseAddress = new Uri("http://localhost"),
-                Timeout = TimeSpan.FromSeconds(timeoutInSeconds)
+                Timeout = TimeSpan.FromSeconds(timeoutInSeconds),
             };
 
-            _httpClientFactoryMock.Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
+            _httpClientFactoryMock
+                .Setup(factory => factory.CreateClient(HttpClientNames.Npwd))
                 .Returns(httpClient);
 
-            _npwdClient = new NpwdClient(_httpClientFactoryMock.Object, _npwdIntegrationConfigMock.Object, _mockLogger.Object);
+            _npwdClient = new NpwdClient(
+                _httpClientFactoryMock.Object,
+                _npwdIntegrationConfigMock.Object,
+                _mockLogger.Object
+            );
 
             // Act
             var client = _httpClientFactoryMock.Object.CreateClient(HttpClientNames.Npwd);

@@ -13,7 +13,10 @@ namespace EprPrnIntegration.Tests.Mappers
         [InlineData("EV-AWACCEP", EprnStatus.AWAITINGACCEPTANCE)]
         [InlineData("EV-AWACCEP-EPR", EprnStatus.AWAITINGACCEPTANCE)]
         [InlineData("ev-accep", EprnStatus.ACCEPTED)] // Testing lower case
-        public void Map_ValidStatuses_ReturnsExpectedEnum(string npwdStatus, EprnStatus expectedStatus)
+        public void Map_ValidStatuses_ReturnsExpectedEnum(
+            string npwdStatus,
+            EprnStatus expectedStatus
+        )
         {
             // Act
             var result = NpwdStatusToPrnStatusMapper.Map(npwdStatus);

@@ -20,7 +20,13 @@ namespace EprPrnIntegration.Common.Validators
 
             // 3.EprID not blank
             // 4.EprID - need to verify from pEPR whether given Id exists in pEPR whether its an organisation or Compliance
-            RuleFor(prn => prn.IssuedToEPRId).MustAsync(async (prn, id, cancellation) => await BeValidIssuedToEPRIdAsync(prn, id)).WithMessage("IssuedToEPRId must match an existing PEPR organisation or compliance scheme");
+            RuleFor(prn => prn.IssuedToEPRId)
+                .MustAsync(
+                    async (prn, id, cancellation) => await BeValidIssuedToEPRIdAsync(prn, id)
+                )
+                .WithMessage(
+                    "IssuedToEPRId must match an existing PEPR organisation or compliance scheme"
+                );
 
             // 5.Tonnage - is integer greater than zero
             RuleFor(prn => prn.EvidenceTonnes).GreaterThan(0);
@@ -29,9 +35,23 @@ namespace EprPrnIntegration.Common.Validators
             RuleFor(prn => prn.EvidenceMaterial).NotNull().NotEmpty();
 
             // 6b.and should be a text value and should match Material Names List
-            var validMaterials = new List<string>() { "Aluminium", "Glass Other", "Glass Re-melt", "Paper/board", "Plastic", "Steel", "Wood" };
+            var validMaterials = new List<string>()
+            {
+                "Aluminium",
+                "Glass Other",
+                "Glass Re-melt",
+                "Paper/board",
+                "Plastic",
+                "Steel",
+                "Wood",
+            };
             RuleFor(prn => prn.EvidenceMaterial)
-                .Must(material => validMaterials.Contains(material ?? string.Empty, StringComparer.OrdinalIgnoreCase))
+                .Must(material =>
+                    validMaterials.Contains(
+                        material ?? string.Empty,
+                        StringComparer.OrdinalIgnoreCase
+                    )
+                )
                 .WithMessage("Material must be one of: " + String.Join(", ", validMaterials));
 
             // 7.AccreditationYear: Should should be valid 4 digit integer(Year)
@@ -40,17 +60,18 @@ namespace EprPrnIntegration.Common.Validators
             RuleFor(prn => prn.AccreditationYear).InclusiveBetween(minYear, maxYear);
 
             // 8.If the status is cancelled then there should be a valid date in field Cancelled Date.
-            RuleFor(prn => prn.CancelledDate).NotNull()
+            RuleFor(prn => prn.CancelledDate)
+                .NotNull()
                 .When(prn => prn?.EvidenceStatusCode?.ToUpper() == "EV-CANCEL")
                 .WithMessage("Cancellation date must not be null when PRN has status of EV-CANCEL");
 
-            RuleFor(prn => prn.CancelledDate).Null()
+            RuleFor(prn => prn.CancelledDate)
+                .Null()
                 .When(prn => prn?.EvidenceStatusCode?.ToUpper() != "EV-CANCEL")
                 .WithMessage("Cancellation date must be null when PRN is not cancelled");
 
             // 9.IssueDate not blank
             RuleFor(prn => prn.IssueDate).NotNull();
-
         }
 
         // ensure IssuedToEPRId exits as an organisation or compliance scheme in pEPR
@@ -65,14 +86,18 @@ namespace EprPrnIntegration.Common.Validators
             {
                 try
                 {
-                    return await _organisationService.DoesProducerOrComplianceSchemeExistAsync(npwdPrn.IssuedToEPRId, npwdPrn.IssuedToEntityTypeCode ?? string.Empty, new CancellationToken());
+                    return await _organisationService.DoesProducerOrComplianceSchemeExistAsync(
+                        npwdPrn.IssuedToEPRId,
+                        npwdPrn.IssuedToEntityTypeCode ?? string.Empty,
+                        new CancellationToken()
+                    );
                 }
                 catch
                 {
                     return false;
                 }
             }
-            
+
             return false;
         }
     }

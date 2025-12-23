@@ -1,8 +1,8 @@
 ﻿namespace EprPrnIntegration.Common.Models.Npwd
 {
-    using Newtonsoft.Json;
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using Newtonsoft.Json;
 
     [ExcludeFromCodeCoverage]
     public class Evidence
@@ -79,5 +79,4 @@
         [JsonProperty(nameof(StatusDate))]
         public DateTime StatusDate { get; set; }
     }
-
 }

@@ -9,7 +9,7 @@ namespace EprPrnIntegration.Common.Middleware;
 [ExcludeFromCodeCoverage]
 public class OrganisationServiceAuthorisationHandler : DelegatingHandler
 {
-    private readonly TokenRequestContext _tokenRequestContext;    
+    private readonly TokenRequestContext _tokenRequestContext;
     private readonly DefaultAzureCredential? _credentials;
 
     public OrganisationServiceAuthorisationHandler(IOptions<Configuration.Service> config)
@@ -23,12 +23,21 @@ public class OrganisationServiceAuthorisationHandler : DelegatingHandler
         _credentials = new DefaultAzureCredential();
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         if (_credentials != null)
         {
-            var tokenResult = await _credentials.GetTokenAsync(_tokenRequestContext, cancellationToken);
-            request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, tokenResult.Token);
+            var tokenResult = await _credentials.GetTokenAsync(
+                _tokenRequestContext,
+                cancellationToken
+            );
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                Constants.HttpHeaderNames.Bearer,
+                tokenResult.Token
+            );
         }
 
         return await base.SendAsync(request, cancellationToken);

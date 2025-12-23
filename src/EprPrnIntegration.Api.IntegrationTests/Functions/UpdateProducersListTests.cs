@@ -17,7 +17,10 @@ public class UpdateProducersListTests : IntegrationTestBase
         {
             var requests = await NpwdApiStub.GetProducersPatchRequests();
 
-            Assert.Contains(requests, entry => entry.Request.Body!.Contains("Acme Manufacturing Ltd"));
+            Assert.Contains(
+                requests,
+                entry => entry.Request.Body!.Contains("Acme Manufacturing Ltd")
+            );
         });
     }
 }

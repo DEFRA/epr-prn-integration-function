@@ -1,3 +1,4 @@
+using System.Net;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -11,7 +12,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Net;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -22,7 +22,8 @@ public class UpdateProducersFunction(
     IConfiguration configuration,
     IUtilities utilities,
     IOptions<FeatureManagementConfiguration> featureConfig,
-    IEmailService emailService)
+    IEmailService emailService
+)
 {
     [Function("UpdateProducersList")]
     public async Task Run([TimerTrigger("%UpdateProducersTrigger%")] TimerInfo myTimer)
@@ -34,7 +35,10 @@ public class UpdateProducersFunction(
             return;
         }
 
-        logger.LogInformation("UpdateProducersList function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        logger.LogInformation(
+            "UpdateProducersList function executed at: {ExecutionDateTime}",
+            DateTime.UtcNow
+        );
 
         var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatedProducers);
 
@@ -46,19 +50,33 @@ public class UpdateProducersFunction(
         var updatedEprProducers = await FetchUpdatedProducers(fromDate, toDate);
         if (updatedEprProducers.Count.Equals(0))
         {
-            logger.LogWarning("No updated producers retrieved for time period {FromDate} to {ToDate}.", fromDate, toDate);
+            logger.LogWarning(
+                "No updated producers retrieved for time period {FromDate} to {ToDate}.",
+                fromDate,
+                toDate
+            );
             return;
         }
 
         updatedEprProducers = updatedEprProducers.OrderBy(x => x.UpdatedDateTime).ToList();
 
-        if (int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize) && batchSize > 0 && batchSize < updatedEprProducers.Count)
+        if (
+            int.TryParse(configuration["UpdateProducersBatchSize"], out var batchSize)
+            && batchSize > 0
+            && batchSize < updatedEprProducers.Count
+        )
         {
-            logger.LogInformation("Batching {BatchSize} of {ProducersCount} producers", batchSize, updatedEprProducers.Count);
+            logger.LogInformation(
+                "Batching {BatchSize} of {ProducersCount} producers",
+                batchSize,
+                updatedEprProducers.Count
+            );
             updatedEprProducers = updatedEprProducers.Take(batchSize).ToList();
         }
 
-        var newestProducerStatusDate = updatedEprProducers.Select(x => x.UpdatedDateTime).LastOrDefault();
+        var newestProducerStatusDate = updatedEprProducers
+            .Select(x => x.UpdatedDateTime)
+            .LastOrDefault();
         if (newestProducerStatusDate.GetValueOrDefault() > DateTime.MinValue)
         {
             toDate = newestProducerStatusDate.GetValueOrDefault().ToUniversalTime();
@@ -68,15 +86,23 @@ public class UpdateProducersFunction(
 
         try
         {
-            logger.LogInformation("Sending total of {ProducerCount} producer to npwd for updating", updatedEprProducers.Count);
+            logger.LogInformation(
+                "Sending total of {ProducerCount} producer to npwd for updating",
+                updatedEprProducers.Count
+            );
 
-            var pEprApiResponse = await npwdClient.Patch(npwdUpdatedProducers, NpwdApiPath.Producers);
+            var pEprApiResponse = await npwdClient.Patch(
+                npwdUpdatedProducers,
+                NpwdApiPath.Producers
+            );
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
                 logger.LogInformation(
-                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.", fromDate,
-                    toDate);
+                    "Producers list successfully updated in NPWD for time period {FromDate} to {ToDate}.",
+                    fromDate,
+                    toDate
+                );
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
 
@@ -87,17 +113,27 @@ public class UpdateProducersFunction(
                 var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
                 logger.LogError(
                     "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                    pEprApiResponse.StatusCode, responseBody);
+                    pEprApiResponse.StatusCode,
+                    responseBody
+                );
 
-                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                if (
+                    pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError
+                    || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout
+                )
                 {
-                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                    emailService.SendErrorEmailToNpwd(
+                        $"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}"
+                    );
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"An error was encountered on attempting to call NPWD API {NpwdApiPath.Producers}");
+            logger.LogError(
+                ex,
+                $"An error was encountered on attempting to call NPWD API {NpwdApiPath.Producers}"
+            );
         }
     }
 
@@ -106,31 +142,42 @@ public class UpdateProducersFunction(
         foreach (var producer in updatedProducers)
         {
             Dictionary<string, string> eventData = new()
-                {
-                    { CustomEventFields.OrganisationName, producer.ProducerName },
-                    { CustomEventFields.OrganisationId, producer.EPRCode },
-                    { CustomEventFields.Date, DateTime.UtcNow.ToString() },
-                    { CustomEventFields.OrganisationAddress, ProducerMapper.MapAddress(producer)},
-                    { CustomEventFields.OrganisationType, producer.EntityTypeCode },
-                    { CustomEventFields.OrganisationStatus, producer.StatusCode },
-                    { CustomEventFields.OrganisationEprId, producer.EPRId },
-                    { CustomEventFields.OrganisationRegNo, producer.CompanyRegNo }
-                };
+            {
+                { CustomEventFields.OrganisationName, producer.ProducerName },
+                { CustomEventFields.OrganisationId, producer.EPRCode },
+                { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+                { CustomEventFields.OrganisationAddress, ProducerMapper.MapAddress(producer) },
+                { CustomEventFields.OrganisationType, producer.EntityTypeCode },
+                { CustomEventFields.OrganisationStatus, producer.StatusCode },
+                { CustomEventFields.OrganisationEprId, producer.EPRId },
+                { CustomEventFields.OrganisationRegNo, producer.CompanyRegNo },
+            };
 
             utilities.AddCustomEvent(CustomEvents.UpdateProducer, eventData);
         }
     }
 
-    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedProducersResponse>> FetchUpdatedProducers(
+        DateTime fromDate,
+        DateTime toDate
+    )
     {
         try
         {
-            return await commonDataService.GetUpdatedProducers(fromDate, toDate, CancellationToken.None);
+            return await commonDataService.GetUpdatedProducers(
+                fromDate,
+                toDate,
+                CancellationToken.None
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,
-                "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.", fromDate, toDate);
+            logger.LogError(
+                ex,
+                "Failed to retrieve data from accounts backend for time period {FromDate} to {ToDate}.",
+                fromDate,
+                toDate
+            );
             throw;
         }
     }

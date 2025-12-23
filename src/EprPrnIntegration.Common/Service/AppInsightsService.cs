@@ -1,14 +1,16 @@
-﻿using Azure.Identity;
+﻿using System.Diagnostics.CodeAnalysis;
+using Azure.Identity;
 using Azure.Monitor.Query;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models.Npwd;
 using Microsoft.Extensions.Options;
-using System.Diagnostics.CodeAnalysis;
 
 namespace EprPrnIntegration.Common.Service;
 
-[ExcludeFromCodeCoverage(Justification = "Azure Default Credentials and LogsQueryClient are difficult to Mock")]
+[ExcludeFromCodeCoverage(
+    Justification = "Azure Default Credentials and LogsQueryClient are difficult to Mock"
+)]
 public class AppInsightsService : IAppInsightsService
 {
     private readonly IOptions<AppInsightsConfig> _appInsightsConfig;
@@ -30,7 +32,8 @@ public class AppInsightsService : IAppInsightsService
         LogsQueryClient client = new(new DefaultAzureCredential());
         string resourceId = _appInsightsConfig.Value.ResourceId;
 
-        string query = @$"customEvents
+        string query =
+            @$"customEvents
                             | where name in ('{CustomEvents.IssuedPrn}')
                             | extend prn = parse_json(customDimensions)
                             | extend {prn_Number} = prn['{CustomEventFields.PrnNumber}'], 
@@ -40,7 +43,11 @@ public class AppInsightsService : IAppInsightsService
                             | project {prn_Number}, {status}, {report_Date}, {org_Name}";
 
         // run the query on the Application Insights resource
-        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(TimeSpan.FromDays(1)));
+        var customLogs = await client.QueryResourceAsync(
+            new Azure.Core.ResourceIdentifier(resourceId),
+            query,
+            new QueryTimeRange(TimeSpan.FromDays(1))
+        );
 
         if (customLogs != null)
         {
@@ -53,7 +60,7 @@ public class AppInsightsService : IAppInsightsService
                         PrnNumber = row[prn_Number]?.ToString() ?? string.Empty,
                         PrnStatus = row[status]?.ToString() ?? string.Empty,
                         UploadedDate = row[report_Date]?.ToString() ?? string.Empty,
-                        OrganisationName = row[org_Name]?.ToString() ?? string.Empty
+                        OrganisationName = row[org_Name]?.ToString() ?? string.Empty,
                     };
 
                     prns.Add(prn);
@@ -64,7 +71,9 @@ public class AppInsightsService : IAppInsightsService
         return prns;
     }
 
-    public async Task<List<UpdatedOrganisationReconciliationSummary>> GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync()
+    public async Task<
+        List<UpdatedOrganisationReconciliationSummary>
+    > GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync()
     {
         var orgs = new List<UpdatedOrganisationReconciliationSummary>();
 
@@ -82,7 +91,8 @@ public class AppInsightsService : IAppInsightsService
         var client = new LogsQueryClient(new DefaultAzureCredential());
         string resourceId = _appInsightsConfig.Value.ResourceId;
 
-        string query = @$"customEvents
+        string query =
+            @$"customEvents
                             | where name in ('{CustomEvents.UpdateProducer}')
                             | extend org = parse_json(customDimensions)
                             | extend {organisationName} = org['{CustomEventFields.OrganisationName}'], 
@@ -96,7 +106,11 @@ public class AppInsightsService : IAppInsightsService
                             | project {organisationName}, {organisationId}, {organisationAddress}, {updatedDate}, {organisationType}, {status}, {pEPRId}, {companyRegNo}";
 
         // run the query on the Application Insights resource
-        var customLogs = await client.QueryResourceAsync(new Azure.Core.ResourceIdentifier(resourceId), query, new QueryTimeRange(queryPeriod));
+        var customLogs = await client.QueryResourceAsync(
+            new Azure.Core.ResourceIdentifier(resourceId),
+            query,
+            new QueryTimeRange(queryPeriod)
+        );
 
         if (customLogs != null)
         {

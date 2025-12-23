@@ -9,12 +9,18 @@ namespace EprPrnIntegration.Common.Client;
 [ExcludeFromCodeCoverage]
 public class PassThruNotificationClient(ILogger<INotificationClient> logger) : INotificationClient
 {
-    public EmailNotificationResponse SendEmail(string emailAddress, string templateId,
+    public EmailNotificationResponse SendEmail(
+        string emailAddress,
+        string templateId,
         Dictionary<string, dynamic> personalisation = null!,
-        string clientReference = null!, string emailReplyToId = null!, string oneClickUnsubscribeURL = null!)
+        string clientReference = null!,
+        string emailReplyToId = null!,
+        string oneClickUnsubscribeURL = null!
+    )
     {
         logger.LogError(
-            "PassThruNotificationClient::SendEmail is a dummy implementation intended for local testing. If you're reading this log from a cloud workload, the system is misconfigured.");
+            "PassThruNotificationClient::SendEmail is a dummy implementation intended for local testing. If you're reading this log from a cloud workload, the system is misconfigured."
+        );
 
         return new EmailNotificationResponse();
     }
@@ -49,8 +55,10 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
         throw new NotImplementedException();
     }
 
-    public TemplatePreviewResponse GenerateTemplatePreview(string templateId,
-        Dictionary<string, dynamic> personalisation = null!)
+    public TemplatePreviewResponse GenerateTemplatePreview(
+        string templateId,
+        Dictionary<string, dynamic> personalisation = null!
+    )
     {
         throw new NotImplementedException();
     }
@@ -65,8 +73,13 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
         throw new NotImplementedException();
     }
 
-    public NotificationList GetNotifications(string templateType = "", string status = "", string reference = "",
-        string olderThanId = "", bool includeSpreadsheetUploads = false)
+    public NotificationList GetNotifications(
+        string templateType = "",
+        string status = "",
+        string reference = "",
+        string olderThanId = "",
+        bool includeSpreadsheetUploads = false
+    )
     {
         throw new NotImplementedException();
     }
@@ -86,22 +99,31 @@ public class PassThruNotificationClient(ILogger<INotificationClient> logger) : I
         throw new NotImplementedException();
     }
 
-    public SmsNotificationResponse SendSms(string mobileNumber, string templateId,
+    public SmsNotificationResponse SendSms(
+        string mobileNumber,
+        string templateId,
         Dictionary<string, dynamic> personalisation = null!,
-        string clientReference = null!, string smsSenderId = null!)
+        string clientReference = null!,
+        string smsSenderId = null!
+    )
     {
         throw new NotImplementedException();
     }
 
-
-    public LetterNotificationResponse SendLetter(string templateId, Dictionary<string, dynamic> personalisation,
-        string clientReference = null!)
+    public LetterNotificationResponse SendLetter(
+        string templateId,
+        Dictionary<string, dynamic> personalisation,
+        string clientReference = null!
+    )
     {
         throw new NotImplementedException();
     }
 
-    public LetterNotificationResponse SendPrecompiledLetter(string clientReference, byte[] pdfContents,
-        string postage = null!)
+    public LetterNotificationResponse SendPrecompiledLetter(
+        string clientReference,
+        byte[] pdfContents,
+        string postage = null!
+    )
     {
         throw new NotImplementedException();
     }

@@ -7,6 +7,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
         Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default
+        );
     }
 }

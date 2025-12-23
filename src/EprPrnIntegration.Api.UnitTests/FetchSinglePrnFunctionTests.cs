@@ -22,7 +22,11 @@ public class FetchSinglePrnFunctionTests
 
     public FetchSinglePrnFunctionTests()
     {
-        _function = new FetchSinglePrnFunction(_serviceBusProviderMock.Object, _npwdClientMock.Object, _loggerMock.Object);
+        _function = new FetchSinglePrnFunction(
+            _serviceBusProviderMock.Object,
+            _npwdClientMock.Object,
+            _loggerMock.Object
+        );
     }
 
     [Fact]
@@ -30,7 +34,9 @@ public class FetchSinglePrnFunctionTests
     {
         // Arrange
         var request = new DefaultHttpContext().Request;
-        request.Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = (string?)null }));
+        request.Body = new MemoryStream(
+            JsonSerializer.SerializeToUtf8Bytes(new { PrnNumber = (string?)null })
+        );
 
         // Act
         var result = await _function.Run(request);
@@ -47,13 +53,16 @@ public class FetchSinglePrnFunctionTests
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
 
-        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+        var jsonPayload = JsonSerializer.Serialize(
+            new FetchSinglePrnRequest { PrnNumber = prnNumber }
+        );
         var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
         requestBodyStream.Seek(0, SeekOrigin.Begin);
         request.Body = requestBodyStream;
         request.ContentType = "application/json";
 
-        _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+        _npwdClientMock
+            .Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
             .ReturnsAsync(new List<NpwdPrn>());
 
         // Act
@@ -70,15 +79,18 @@ public class FetchSinglePrnFunctionTests
         // Arrange
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
-        
-        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+
+        var jsonPayload = JsonSerializer.Serialize(
+            new FetchSinglePrnRequest { PrnNumber = prnNumber }
+        );
         var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
         requestBodyStream.Seek(0, SeekOrigin.Begin);
         request.Body = requestBodyStream;
         request.ContentType = "application/json";
 
         var fetchedPrn = new NpwdPrn { EvidenceNo = prnNumber };
-        _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+        _npwdClientMock
+            .Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
             .ReturnsAsync(new List<NpwdPrn> { fetchedPrn });
 
         // Act
@@ -87,7 +99,13 @@ public class FetchSinglePrnFunctionTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal($"{prnNumber} is produced to the queue to be processed.", okResult.Value);
-        _serviceBusProviderMock.Verify(provider => provider.SendFetchedNpwdPrnsToQueue(It.Is<List<NpwdPrn>>(prns => prns.Contains(fetchedPrn))), Times.Once);
+        _serviceBusProviderMock.Verify(
+            provider =>
+                provider.SendFetchedNpwdPrnsToQueue(
+                    It.Is<List<NpwdPrn>>(prns => prns.Contains(fetchedPrn))
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -97,13 +115,16 @@ public class FetchSinglePrnFunctionTests
         var prnNumber = "ER12345678";
         var request = new DefaultHttpContext().Request;
 
-        var jsonPayload = JsonSerializer.Serialize(new FetchSinglePrnRequest { PrnNumber = prnNumber });
+        var jsonPayload = JsonSerializer.Serialize(
+            new FetchSinglePrnRequest { PrnNumber = prnNumber }
+        );
         var requestBodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonPayload));
         requestBodyStream.Seek(0, SeekOrigin.Begin);
         request.Body = requestBodyStream;
         request.ContentType = "application/json";
 
-        _npwdClientMock.Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
+        _npwdClientMock
+            .Setup(client => client.GetIssuedPrns(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Test exception"));
 
         // Act

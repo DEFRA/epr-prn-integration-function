@@ -8,7 +8,7 @@ public static class DateTimeHelper
 {
     public static DateTime NewUtcDateTime(int year, int month, int day)
     {
-        return new DateTime(year, month, day, 0 ,0 ,0 ,DateTimeKind.Utc);  
+        return new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
     }
 
     public static DateTime Parse(string dateTime)
