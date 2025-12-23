@@ -29,7 +29,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                     new Configuration.Service
                     {
                         PrnBaseUrl = "http://localhost:5575/",
-                        PrnEndPointNameV2 = "api/v2/prn",
+                        PrnEndPointNameV2 = "api/v2",
                     }
                 );
         }
@@ -94,11 +94,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             mockConfig
                 .Setup(c => c.Value)
                 .Returns(
-                    new Configuration.Service
-                    {
-                        PrnBaseUrl = null,
-                        PrnEndPointNameV2 = "api/v2/prn",
-                    }
+                    new Configuration.Service { PrnBaseUrl = null, PrnEndPointNameV2 = "api/v2/" }
                 );
 
             // Act & Assert

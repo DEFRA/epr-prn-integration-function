@@ -35,7 +35,7 @@ public class PrnService(
     public async Task SavePrn(SavePrnDetailsRequest request)
     {
         logger.LogInformation("Saving RREPW PRN with id {PrnNumber}", request.PrnNumber);
-        await Post($"/", request, CancellationToken.None);
+        await Post($"prn", request, CancellationToken.None);
     }
 
     public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
