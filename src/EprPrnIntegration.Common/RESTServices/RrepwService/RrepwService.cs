@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.RrepwService
 {
+    [ExcludeFromCodeCoverage(Justification = "This will have test coverage via integration tests.")]
     public class RrepwService(
         IHttpContextAccessor httpContextAccessor,
         IHttpClientFactory httpClientFactory,
@@ -17,7 +19,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         : BaseHttpService(httpContextAccessor, httpClientFactory,
             config.Value.BaseUrl ??
             throw new ArgumentNullException(nameof(config), ExceptionMessages.RrepwApiBaseUrlMissing),
-            "v1/packaging-recycling-notes",
+            "v1",
             logger,
             HttpClientNames.Rrepw,
             config.Value.TimeoutSeconds), IRrepwService
@@ -38,24 +40,14 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             do
             {
                 pageCount++;
-                var queryString = BuildQueryString(statuses, dateFromQuery, dateToQuery, cursor);
+                var (items, nextCursor) = await FetchPage(statuses, dateFromQuery, dateToQuery, cursor, pageCount, cancellationToken);
 
-                logger.LogInformation(
-                    "Fetching packaging recycling notes from {DateFrom} to {DateTo}, page {PageCount}",
-                    dateFromQuery, dateToQuery, pageCount);
-
-                var response = await Get<ListPackagingRecyclingNotesResponse>(queryString, cancellationToken, includeTrailingSlash: false);
-
-                if (response.Items != null && response.Items.Count > 0)
+                if (items.Count > 0)
                 {
-                    allItems.AddRange(response.Items);
-                    logger.LogInformation(
-                        "Retrieved {ItemCount} items on page {PageCount}, total items so far: {TotalCount}",
-                        response.Items.Count, pageCount, allItems.Count);
+                    allItems.AddRange(items);
                 }
 
-                cursor = response.HasMore ? response.NextCursor : null;
-
+                cursor = nextCursor;
             } while (!string.IsNullOrEmpty(cursor));
 
             logger.LogInformation(
@@ -65,9 +57,39 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return allItems;
         }
 
-        private static string BuildQueryString(string statuses, string dateFrom, string dateTo, string? cursor)
+        private async Task<(List<PackagingRecyclingNote> Items, string? NextCursor)> FetchPage(
+            string statuses,
+            string dateFromQuery,
+            string dateToQuery,
+            string? cursor,
+            int pageCount,
+            CancellationToken cancellationToken)
         {
-            var queryString = $"?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
+            var url = BuildUrl(statuses, dateFromQuery, dateToQuery, cursor);
+
+            logger.LogInformation(
+                "Fetching packaging recycling notes from {DateFrom} to {DateTo}, page {PageCount}",
+                dateFromQuery, dateToQuery, pageCount);
+
+            var response = await Get<ListPackagingRecyclingNotesResponse>(url, cancellationToken, includeTrailingSlash: false);
+
+            var items = response.Items ?? new List<PackagingRecyclingNote>();
+
+            if (items.Count > 0)
+            {
+                logger.LogInformation(
+                    "Retrieved {ItemCount} items on page {PageCount}",
+                    items.Count, pageCount);
+            }
+
+            var nextCursor = response.HasMore ? response.NextCursor : null;
+
+            return (items, nextCursor);
+        }
+
+        private static string BuildUrl(string statuses, string dateFrom, string dateTo, string? cursor)
+        {
+            var queryString = $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
 
             if (!string.IsNullOrEmpty(cursor))
             {
