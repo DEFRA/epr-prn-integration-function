@@ -59,7 +59,9 @@ public class RrepwApi(WireMockContext wiremock)
                             tonnageValue = 100,
                             issuerNotes = "Test notes"
                         }
-                    }
+                    },
+                    hasMore = false,
+                    nextCursor = (string?)null
                 }))
         );
 
@@ -75,7 +77,9 @@ public class RrepwApi(WireMockContext wiremock)
             builder.WithRequest(request => request.UsingGet().WithPath("/v1/packaging-recycling-notes/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(new
                 {
-                    items = Array.Empty<object>()
+                    items = Array.Empty<object>(),
+                    hasMore = false,
+                    nextCursor = (string?)null
                 }))
         );
 
