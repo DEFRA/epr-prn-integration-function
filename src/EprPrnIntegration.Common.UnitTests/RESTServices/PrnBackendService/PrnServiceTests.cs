@@ -11,16 +11,16 @@ using Moq;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
-    public class PrnServiceV2Tests
+    public class PrnServiceTests
     {
         private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
         private readonly Mock<IOptions<Configuration.Service>> _mockConfig;
-        private readonly Mock<ILogger<PrnServiceV2>> _loggerMock;
+        private readonly Mock<ILogger<PrnService>> _loggerMock;
 
-        public PrnServiceV2Tests()
+        public PrnServiceTests()
         {
             _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            _loggerMock = new Mock<ILogger<PrnServiceV2>>();
+            _loggerMock = new Mock<ILogger<PrnService>>();
             _mockConfig = new Mock<IOptions<Configuration.Service>>();
 
             _mockConfig
@@ -103,7 +103,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new PrnServiceV2(
+                new PrnService(
                     _mockHttpContextAccessor.Object,
                     new HttpClientFactoryMock(new HttpClient()),
                     _loggerMock.Object,
@@ -131,7 +131,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new PrnServiceV2(
+                new PrnService(
                     _mockHttpContextAccessor.Object,
                     new HttpClientFactoryMock(new HttpClient()),
                     _loggerMock.Object,
@@ -145,7 +145,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             );
         }
 
-        private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(
+        private (PrnService service, MockHttpMessageHandler handler) CreatePrnServiceV2(
             string responseContent = "",
             System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK
         )
@@ -154,7 +154,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var httpClient = new HttpClient(mockHandler);
             var httpClientFactoryMock = new HttpClientFactoryMock(httpClient);
 
-            var service = new PrnServiceV2(
+            var service = new PrnService(
                 _mockHttpContextAccessor.Object,
                 httpClientFactoryMock,
                 _loggerMock.Object,
