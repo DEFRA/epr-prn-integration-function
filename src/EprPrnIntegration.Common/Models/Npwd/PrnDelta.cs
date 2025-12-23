@@ -8,5 +8,5 @@ public class PrnDelta
     public string Context { get; set; } = default!;
 
     [JsonProperty("value")]
-    public List<UpdatedPrnsResponseModel> Value { get; set; } = default!;
+    public List<UpdatedNpwdPrnsResponseModel> Value { get; set; } = default!;
 }

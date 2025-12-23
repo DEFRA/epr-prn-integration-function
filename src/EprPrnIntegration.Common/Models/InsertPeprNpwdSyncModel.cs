@@ -5,13 +5,14 @@
         public required string EvidenceNo { get; set; }
         public required string EvidenceStatus { get; set; }
 
-
-        public static explicit operator InsertPeprNpwdSyncModel(UpdatedPrnsResponseModel syncedPrns)
+        public static explicit operator InsertPeprNpwdSyncModel(
+            UpdatedNpwdPrnsResponseModel syncedPrns
+        )
         {
             return new InsertPeprNpwdSyncModel()
             {
                 EvidenceNo = syncedPrns.EvidenceNo,
-                EvidenceStatus = MapToPeprStatus(syncedPrns.EvidenceStatusCode)
+                EvidenceStatus = MapToPeprStatus(syncedPrns.EvidenceStatusCode),
             };
         }
 
@@ -21,7 +22,9 @@
             {
                 "EV-ACCEP" => "ACCEPTED",
                 "EV-ACANCEL" => "REJECTED",
-                _ => throw new InvalidDataException($"Unexpected Status sent to npwd {evidenceStatusCode}")
+                _ => throw new InvalidDataException(
+                    $"Unexpected Status sent to npwd {evidenceStatusCode}"
+                ),
             };
         }
     }

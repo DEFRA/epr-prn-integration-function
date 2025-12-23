@@ -8,11 +8,15 @@ namespace EprPrnIntegration.Common.Mappers;
 
 public static class NpwdPrnToSavePrnDetailsRequestMapper
 {
-    public static SavePrnDetailsRequest Map(NpwdPrn npwdPrn, IConfiguration config, ILogger logger)
+    public static SaveNpwdPrnDetailsRequest Map(
+        NpwdPrn npwdPrn,
+        IConfiguration config,
+        ILogger logger
+    )
     {
         var resolvedYear = ObligationYearResolver.GetDefaultObligationYear(config, logger);
 
-        return new SavePrnDetailsRequest
+        return new SaveNpwdPrnDetailsRequest
         {
             AccreditationNo = npwdPrn.AccreditationNo,
             AccreditationYear = npwdPrn.AccreditationYear.ToString(),

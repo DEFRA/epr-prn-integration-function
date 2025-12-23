@@ -12,7 +12,9 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public PrnMapperTests()
         {
             _configurationMock = new Mock<IConfiguration>();
-            _configurationMock.Setup(c => c["PrnsContext"]).Returns("https://fat.npwd.org.uk/odata/PRNs/$delta");
+            _configurationMock
+                .Setup(c => c["PrnsContext"])
+                .Returns("https://fat.npwd.org.uk/odata/PRNs/$delta");
         }
 
         [Fact]
@@ -33,7 +35,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void Map_EmptyList_ReturnsEmptyPrnDelta()
         {
             // Arrange
-            var updatedPrns = new List<UpdatedPrnsResponseModel>();
+            var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>();
 
             // Act
             var result = PrnMapper.Map(updatedPrns, _configurationMock.Object);
@@ -49,20 +51,20 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void Map_ValidInput_MapsToPrnDelta()
         {
             // Arrange
-            var updatedPrns = new List<UpdatedPrnsResponseModel>
+            var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel
+                new UpdatedNpwdPrnsResponseModel
                 {
                     EvidenceNo = "12345",
                     EvidenceStatusCode = "EV-ACANCEL",
-                    ObligationYear = "2025"
+                    ObligationYear = "2025",
                 },
-                new UpdatedPrnsResponseModel
+                new UpdatedNpwdPrnsResponseModel
                 {
                     EvidenceNo = "67890",
                     EvidenceStatusCode = "EV-ACCEP",
-                    ObligationYear = "2025"
-                }
+                    ObligationYear = "2025",
+                },
             };
 
             // Act
@@ -84,14 +86,14 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public void Map_ValidInput_EmptyEvidenceStatusCode_SuccessfulMapping()
         {
             // Arrange
-            var updatedPrns = new List<UpdatedPrnsResponseModel>
+            var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
             {
-                new UpdatedPrnsResponseModel
+                new UpdatedNpwdPrnsResponseModel
                 {
                     EvidenceNo = "12345",
                     EvidenceStatusCode = "",
-                    ObligationYear = "2025"
-                }
+                    ObligationYear = "2025",
+                },
             };
 
             // Act

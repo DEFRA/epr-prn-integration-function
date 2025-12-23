@@ -7,13 +7,13 @@ namespace EprPrnIntegration.Common.UnitTests.Models
     public class InsertPeprNpwdSyncModelTests
     {
         private readonly Fixture _fixture = new();
-        
+
         [Theory]
-        [InlineData("EV-ACCEP","ACCEPTED")]
-        [InlineData("EV-ACANCEL","REJECTED")]
+        [InlineData("EV-ACCEP", "ACCEPTED")]
+        [InlineData("EV-ACANCEL", "REJECTED")]
         public void Correctly_Map_UpdatePrnsResponseModel(string npwdStatus, string peprStatus)
         {
-            var updatePrn = _fixture.Create<UpdatedPrnsResponseModel>();
+            var updatePrn = _fixture.Create<UpdatedNpwdPrnsResponseModel>();
             updatePrn.EvidenceStatusCode = npwdStatus;
 
             var insertSync = (InsertPeprNpwdSyncModel)updatePrn;
@@ -25,9 +25,12 @@ namespace EprPrnIntegration.Common.UnitTests.Models
         [Fact]
         public void Throws_InvalidDataException_IfUnknownStatus()
         {
-            var updatePrn = _fixture.Create<UpdatedPrnsResponseModel>();
+            var updatePrn = _fixture.Create<UpdatedNpwdPrnsResponseModel>();
 
-            FluentActions.Invoking(() => (InsertPeprNpwdSyncModel)updatePrn).Should().Throw<InvalidDataException>();
+            FluentActions
+                .Invoking(() => (InsertPeprNpwdSyncModel)updatePrn)
+                .Should()
+                .Throw<InvalidDataException>();
         }
     }
 }

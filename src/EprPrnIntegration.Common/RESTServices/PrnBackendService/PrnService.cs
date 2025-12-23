@@ -1,78 +1,62 @@
-﻿using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
-public class PrnService : BaseHttpService, IPrnService
+public class PrnService(
+    IHttpContextAccessor httpContextAccessor,
+    IHttpClientFactory httpClientFactory,
+    ILogger<PrnService> logger,
+    IOptions<Configuration.Service> config
+)
+    : BaseHttpService(
+        httpContextAccessor,
+        httpClientFactory,
+        config.Value.PrnBaseUrl
+            ?? throw new ArgumentNullException(
+                nameof(config),
+                ExceptionMessages.PrnServiceBaseUrlMissing
+            ),
+        config.Value.PrnEndPointNameV2
+            ?? throw new ArgumentNullException(
+                nameof(config),
+                ExceptionMessages.PrnServiceEndPointNameV2Missing
+            ),
+        logger,
+        HttpClientNames.PrnV2,
+        config.Value.TimeoutSeconds
+    ),
+        IPrnService
 {
-    private readonly ILogger<PrnService> _logger;
-
-    public PrnService(
-        IHttpContextAccessor httpContextAccessor,
-        IHttpClientFactory httpClientFactory,
-        ILogger<PrnService> logger,
-        IOptions<Configuration.Service> config)
-        : base(httpContextAccessor, httpClientFactory,
-            config.Value.PrnBaseUrl ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceBaseUrlMissing),
-            config.Value.PrnEndPointName ?? throw new ArgumentNullException(nameof(config), ExceptionMessages.PrnServiceEndPointNameMissing), 
-            logger,
-            HttpClientNames.Prn,
-            config.Value.TimeoutSeconds)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<List<UpdatedPrnsResponseModel>> GetUpdatedPrns(DateTime from, DateTime to,
-       CancellationToken cancellationToken)
-    {
-        var fromDate = from.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
-        var toDate = to.ToString("yyyy-MM-ddTHH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
-        _logger.LogInformation("Getting updated PRN's.");
-        return await Get<List<UpdatedPrnsResponseModel>>($"ModifiedPrnsByDate?from={fromDate}&to={toDate}",
-            cancellationToken, false);
-    }
-
-    public async Task InsertPeprNpwdSyncPrns(IEnumerable<UpdatedPrnsResponseModel> npwdUpdatedPrns)
-    {
-        _logger.LogInformation("Inserting Sync Prns in common prn backend");
-        try
-        {
-            var syncedPrns = new List<InsertPeprNpwdSyncModel>();
-            foreach(var updateprn in  npwdUpdatedPrns)
-            {
-                syncedPrns.Add((InsertPeprNpwdSyncModel)updateprn);
-            }
-            await Post("updatesyncstatus", syncedPrns, default);
-            _logger.LogInformation("Sync data inserted");
-        }
-        catch (Exception ex)
-        {
-
-            _logger.LogError(ex, "Insert of sync data failed with ex: {exceptionMessage} with sync prns: {npwdUpdatedPrns}"
-                , ex.Message,JsonSerializer.Serialize(npwdUpdatedPrns));
-        }
-    }
-
     public async Task SavePrn(SavePrnDetailsRequest request)
     {
-        _logger.LogInformation("Saving PRN with id {EvidenceNo}", request.EvidenceNo);
-        await Post($"prn-details", request, CancellationToken.None);
+        logger.LogInformation("Saving RREPW PRN with id {PrnNumber}", request.PrnNumber);
+        await Post($"prn", request, CancellationToken.None);
     }
 
-    public async Task<List<ReconcileUpdatedPrnsResponseModel>> GetReconciledUpdatedPrns()
+    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
     {
-        var nowDateTime = DateTime.UtcNow;
-        var fromDate = nowDateTime.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-        var toDate = nowDateTime.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-     
-        _logger.LogInformation("Getting Reconciled updated PRN's for date range from {FromDate} to {ToDate}", fromDate, toDate);
-
-        return await Get<List<ReconcileUpdatedPrnsResponseModel>?>($"syncstatuses?from={fromDate}&to={toDate}", 
-            CancellationToken.None, false) ?? [];
+        var fromDate = from.ToString(
+            "yyyy-MM-ddTHH:mm:ss.fff",
+            System.Globalization.CultureInfo.InvariantCulture
+        );
+        var toDate = to.ToString(
+            "yyyy-MM-ddTHH:mm:ss.fff",
+            System.Globalization.CultureInfo.InvariantCulture
+        );
+        logger.LogInformation("Getting updated PRN's.");
+        var uriBuilder = new UriBuilder(new Uri("modified-prns", UriKind.Relative))
+        {
+            Query = $"from={fromDate}&to={toDate}",
+        };
+        return await Get<List<PrnUpdateStatus>>(
+            uriBuilder.ToString(),
+            CancellationToken.None,
+            false
+        );
     }
 }

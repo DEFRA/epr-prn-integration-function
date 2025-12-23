@@ -17,8 +17,9 @@ public class FetchRrepwIssuedPrnsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<FetchRrepwIssuedPrnsFunction> logger,
     IRrepwService rrepwService,
-    IPrnServiceV2 prnService,
-    IOptions<FetchRrepwIssuedPrnsConfiguration> config)
+    IPrnService prnService,
+    IOptions<FetchRrepwIssuedPrnsConfiguration> config
+)
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
 
@@ -26,7 +27,10 @@ public class FetchRrepwIssuedPrnsFunction(
     public async Task Run([TimerTrigger("%FetchRrepwIssuedPrns:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await GetLastUpdate();
-        logger.LogInformation("FetchRrepwIssuedPrns resuming with last update time: {ExecutionDateTime}", lastUpdate);
+        logger.LogInformation(
+            "FetchRrepwIssuedPrns resuming with last update time: {ExecutionDateTime}",
+            lastUpdate
+        );
 
         var utcNow = DateTime.UtcNow;
 
@@ -43,7 +47,10 @@ public class FetchRrepwIssuedPrnsFunction(
         await ProcessPrns(prns);
 
         await lastUpdateService.SetLastUpdate("FetchRrepwIssuedPrns", utcNow);
-        logger.LogInformation("FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}", DateTime.UtcNow);
+        logger.LogInformation(
+            "FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}",
+            DateTime.UtcNow
+        );
     }
 
     private async Task<DateTime> GetLastUpdate()
@@ -52,7 +59,11 @@ public class FetchRrepwIssuedPrnsFunction(
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
-                DateTime.ParseExact(config.Value.DefaultStartDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                DateTime.ParseExact(
+                    config.Value.DefaultStartDate,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture
+                ),
                 DateTimeKind.Utc
             );
         }
@@ -72,21 +83,30 @@ public class FetchRrepwIssuedPrnsFunction(
     {
         try
         {
-            var request = _mapper.Map<SavePrnDetailsRequestV2>(prn);
+            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
         catch (HttpRequestException ex) when (ex.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule.
-            logger.LogError(ex, "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing", ex.StatusCode, prn.PrnNumber);
+            logger.LogError(
+                ex,
+                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing",
+                ex.StatusCode,
+                prn.PrnNumber
+            );
             throw;
         }
         catch (Exception ex)
         {
             // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
             // to allow investigation.
-            logger.LogError(ex, "Failed to save PRN {PrnNumber}, continuing with next PRN", prn.PrnNumber);
+            logger.LogError(
+                ex,
+                "Failed to save PRN {PrnNumber}, continuing with next PRN",
+                prn.PrnNumber
+            );
         }
     }
 }
