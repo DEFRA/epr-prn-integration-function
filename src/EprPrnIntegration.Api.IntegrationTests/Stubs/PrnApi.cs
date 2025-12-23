@@ -12,7 +12,8 @@ public class PrnApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingPost().WithPath("/api/v1/prn/prn-details/"))
+            builder
+                .WithRequest(request => request.UsingPost().WithPath("/api/v1/prn/prn-details/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
@@ -23,7 +24,8 @@ public class PrnApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingPost().WithPath("/api/v2/prn/"))
+            builder
+                .WithRequest(request => request.UsingPost().WithPath("/api/v2/prn/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
@@ -34,7 +36,10 @@ public class PrnApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingPost().WithPath("/api/v1/prn/updatesyncstatus/"))
+            builder
+                .WithRequest(request =>
+                    request.UsingPost().WithPath("/api/v1/prn/updatesyncstatus/")
+                )
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
@@ -45,16 +50,25 @@ public class PrnApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingGet().WithPath("/api/v1/prn/ModifiedPrnsByDate"))
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(new[]
-                {
-                    new
-                    {
-                        evidenceNo,
-                        evidenceStatusCode = "EV-ACCEP",
-                        statusDate = "2025-01-15T10:30:00Z"
-                    }
-                }))
+            builder
+                .WithRequest(request =>
+                    request.UsingGet().WithPath("/api/v1/prn/ModifiedPrnsByDate")
+                )
+                .WithResponse(response =>
+                    response
+                        .WithStatusCode(HttpStatusCode.OK)
+                        .WithBodyAsJson(
+                            new[]
+                            {
+                                new
+                                {
+                                    evidenceNo,
+                                    evidenceStatusCode = "EV-ACCEP",
+                                    statusDate = "2025-01-15T10:30:00Z",
+                                },
+                            }
+                        )
+                )
         );
 
         var status = await mappingBuilder.BuildAndPostAsync();
@@ -63,13 +77,21 @@ public class PrnApi(WireMockContext wiremock)
 
     public async Task<IList<LogEntryModel>> GetUpdateSyncStatusRequests()
     {
-        var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v1/prn/updatesyncstatus/" };
+        var requestsModel = new RequestModel
+        {
+            Methods = ["POST"],
+            Path = "/api/v1/prn/updatesyncstatus/",
+        };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 
     public async Task<IList<LogEntryModel>> GetDetailRequests()
     {
-        var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v1/prn/prn-details/" };
+        var requestsModel = new RequestModel
+        {
+            Methods = ["POST"],
+            Path = "/api/v1/prn/prn-details/",
+        };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 

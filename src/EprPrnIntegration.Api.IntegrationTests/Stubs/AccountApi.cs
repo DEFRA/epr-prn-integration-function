@@ -10,7 +10,10 @@ public class AccountApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingGet().WithPath("/api/organisations/validate-issued-epr-id"))
+            builder
+                .WithRequest(request =>
+                    request.UsingGet().WithPath("/api/organisations/validate-issued-epr-id")
+                )
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
         );
 
@@ -22,16 +25,25 @@ public class AccountApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingGet().WithPath("/api/organisations/person-emails"))
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(new[]
-                {
-                    new
-                    {
-                        FirstName = "firstName",
-                        LastName = "lastName",
-                        Email = "fake-email-person@fake-email.domain.co.uk"
-                    }
-                }))
+            builder
+                .WithRequest(request =>
+                    request.UsingGet().WithPath("/api/organisations/person-emails")
+                )
+                .WithResponse(response =>
+                    response
+                        .WithStatusCode(HttpStatusCode.OK)
+                        .WithBodyAsJson(
+                            new[]
+                            {
+                                new
+                                {
+                                    FirstName = "firstName",
+                                    LastName = "lastName",
+                                    Email = "fake-email-person@fake-email.domain.co.uk",
+                                },
+                            }
+                        )
+                )
         );
 
         var status = await mappingBuilder.BuildAndPostAsync();
