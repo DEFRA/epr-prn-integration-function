@@ -1,28 +1,28 @@
-﻿using AutoFixture;
+﻿using System.Net;
+using AutoFixture;
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Npwd;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using EprPrnIntegration.Common.Client;
-using EprPrnIntegration.Common.Models;
+using FluentAssertions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.Net;
 using Xunit;
-using EprPrnIntegration.Common.Constants;
-using FluentAssertions;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
 public class UpdatePrnsFunctionTests
 {
-    private readonly Mock<IPrnService> _mockPrnService;
+    private readonly Mock<INpwdPrnService> _mockPrnService;
     private readonly Mock<INpwdClient> _mockNpwdClient;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
@@ -34,7 +34,7 @@ public class UpdatePrnsFunctionTests
 
     public UpdatePrnsFunctionTests()
     {
-        _mockPrnService = new Mock<IPrnService>();
+        _mockPrnService = new Mock<INpwdPrnService>();
         _mockNpwdClient = new Mock<INpwdClient>();
         _mockConfiguration = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
@@ -53,14 +53,9 @@ public class UpdatePrnsFunctionTests
         );
 
         // Turn the feature flag on
-        var config = new FeatureManagementConfiguration
-        {
-            RunIntegration = true
-        };
+        var config = new FeatureManagementConfiguration { RunIntegration = true };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
-
     }
-
 
     [Fact]
     public async Task Run_ShouldLogWarning_WhenNoUpdatedPrnsRetrieved()
@@ -68,56 +63,99 @@ public class UpdatePrnsFunctionTests
         // Arrange
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
-
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel>());
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(new List<UpdatedNpwdPrnsResponseModel>());
 
         // Act
         await _function.Run(null!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Warning,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "No updated Prns are retrieved from common database")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Warning,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (v, t) =>
+                            ContainsString(v, "No updated Prns are retrieved from common database")
+                    ),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_ShouldLogSuccess_WhenPrnListUpdatedSuccessfully()
     {
         // Arrange
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
         // Act
         await _function.Run(null!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Prns list successfully updated in NPWD")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (v, t) => ContainsString(v, "Prns list successfully updated in NPWD")
+                    ),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -126,34 +164,66 @@ public class UpdatePrnsFunctionTests
         // Arrange
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
 
         // Act
         await _function.Run(null!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to update Prns list in NPWD")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Status Code: BadRequest")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (v, t) => ContainsString(v, "Failed to update Prns list in NPWD")
+                    ),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Status Code: BadRequest")),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -162,32 +232,53 @@ public class UpdatePrnsFunctionTests
         // Arrange
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ThrowsAsync(new Exception("Service error"));
 
         // Act
         await _function.Run(null!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to retrieve data from common backend")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (v, t) => ContainsString(v, "Failed to retrieve data from common backend")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
 
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "form time period")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "form time period")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -196,77 +287,130 @@ public class UpdatePrnsFunctionTests
         // Arrange
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ThrowsAsync(new Exception("Client error"));
 
         // Act
         await _function.Run(null!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Failed to patch NpwdUpdatedPrns")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (v, t) => ContainsString(v, "Failed to patch NpwdUpdatedPrns")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_Ends_When_Feature_Flag_Is_False()
     {
         // Arrange
-        var config = new FeatureManagementConfiguration
-        {
-            RunIntegration = false
-        };
+        var config = new FeatureManagementConfiguration { RunIntegration = false };
         _mockFeatureConfig.Setup(c => c.Value).Returns(config);
 
         // Act
         await _function.Run(new TimerInfo());
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((state, type) => ContainsString(state, "UpdatePrnsList function is disabled by feature flag")),
-            It.IsAny<Exception>(),
-            It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
-        ), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    It.Is<LogLevel>(logLevel => logLevel == LogLevel.Information),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (state, type) =>
+                            ContainsString(
+                                state,
+                                "UpdatePrnsList function is disabled by feature flag"
+                            )
+                    ),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_SendsDeltaSyncExecutionToQueue()
     {
         // Arrange
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
-
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
         // Mock DeltaSyncExecution
         var deltaSyncExecution = new DeltaSyncExecution
         {
             SyncType = NpwdDeltaSyncType.UpdatePrns,
-            LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
+            LastSyncDateTime = DateTime.UtcNow.AddHours(-1),
         };
 
         _mockUtilities
@@ -278,9 +422,13 @@ public class UpdatePrnsFunctionTests
 
         // Assert
         _mockUtilities.Verify(
-            provider => provider.SetDeltaSyncExecution(
-                It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns), It.IsAny<DateTime>()),
-            Times.Once);
+            provider =>
+                provider.SetDeltaSyncExecution(
+                    It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns),
+                    It.IsAny<DateTime>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
@@ -289,96 +437,160 @@ public class UpdatePrnsFunctionTests
         // Arrange
         var defaultDatetime = "2024-01-01";
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                LastSyncDateTime = DateTimeHelper.Parse(defaultDatetime),
-                SyncType = NpwdDeltaSyncType.UpdatePrns
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    LastSyncDateTime = DateTimeHelper.Parse(defaultDatetime),
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                }
+            );
 
         // Act
         await _function.Run(null!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
-        _mockPrnService.Verify(service =>
-            service.GetUpdatedPrns(DateTimeHelper.Parse(defaultDatetime), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockPrnService.Verify(
+            service =>
+                service.GetUpdatedNpwdPrns(
+                    DateTimeHelper.Parse(defaultDatetime),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_CallsInsertSyncData_WhenPatchToNpwdIsSuccessful()
     {
-
         var deltaRun = _fixture.Create<DeltaSyncExecution>();
-        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
+        var updatePrns = _fixture.CreateMany<UpdatedNpwdPrnsResponseModel>().ToList();
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         // Act
         await _function.Run(default!);
 
-        _mockPrnService.Verify(service =>
-            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Once);
+        _mockPrnService.Verify(
+            service =>
+                service.InsertPeprNpwdSyncPrns(
+                    It.IsAny<IEnumerable<UpdatedNpwdPrnsResponseModel>>()
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_NoCallsToInsertSyncData_WhenPatchToNpwdFails()
     {
-
         var deltaRun = _fixture.Create<DeltaSyncExecution>();
-        var updatePrns = _fixture.CreateMany<UpdatedPrnsResponseModel>().ToList();
+        var updatePrns = _fixture.CreateMany<UpdatedNpwdPrnsResponseModel>().ToList();
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadGateway));
 
         // Act
         await _function.Run(default!);
 
         // Assert: Verify that DeltaSyncExecution is created using the default date from config
-        _mockPrnService.Verify(service =>
-            service.InsertPeprNpwdSyncPrns(It.IsAny<IEnumerable<UpdatedPrnsResponseModel>>()), Times.Never);
+        _mockPrnService.Verify(
+            service =>
+                service.InsertPeprNpwdSyncPrns(
+                    It.IsAny<IEnumerable<UpdatedNpwdPrnsResponseModel>>()
+                ),
+            Times.Never
+        );
     }
 
     [Theory]
     [InlineData(System.Net.HttpStatusCode.InternalServerError)]
     [InlineData(System.Net.HttpStatusCode.RequestTimeout)]
     [InlineData(System.Net.HttpStatusCode.GatewayTimeout)]
-    public async Task Run_SendsErrorEmail_EmailToNpwd_When_ServerSide_Error_Occurs(System.Net.HttpStatusCode statusCode)
+    public async Task Run_SendsErrorEmail_EmailToNpwd_When_ServerSide_Error_Occurs(
+        System.Net.HttpStatusCode statusCode
+    )
     {
         // Arrange
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<UpdatedPrnsResponseModel> { new UpdatedPrnsResponseModel { EvidenceNo = "123", EvidenceStatusCode = "Active", ObligationYear = "2025" } });
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new List<UpdatedNpwdPrnsResponseModel>
+                {
+                    new UpdatedNpwdPrnsResponseModel
+                    {
+                        EvidenceNo = "123",
+                        EvidenceStatusCode = "Active",
+                        ObligationYear = "2025",
+                    },
+                }
+            );
 
         _mockUtilities
             .Setup(provider => provider.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns))
-            .ReturnsAsync(new DeltaSyncExecution
-            {
-                SyncType = NpwdDeltaSyncType.UpdatePrns,
-                LastSyncDateTime = DateTime.UtcNow.AddHours(-1) // Set last sync date
-            });
+            .ReturnsAsync(
+                new DeltaSyncExecution
+                {
+                    SyncType = NpwdDeltaSyncType.UpdatePrns,
+                    LastSyncDateTime = DateTime.UtcNow.AddHours(-1), // Set last sync date
+                }
+            );
 
-        _mockNpwdClient.Setup(x => x.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
-            .ReturnsAsync(new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") });
-
+        _mockNpwdClient
+            .Setup(x => x.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+            .ReturnsAsync(
+                new HttpResponseMessage(statusCode) { Content = new StringContent("Server Error") }
+            );
 
         // Act
         await _function.Run(null!);
@@ -392,70 +604,93 @@ public class UpdatePrnsFunctionTests
     {
         // Arrange
         var deltaRun = _fixture.Create<DeltaSyncExecution>();
-        var updatePrns = _fixture.Build<UpdatedPrnsResponseModel>().With(u => u.SourceSystemId, "").CreateMany().ToList();
+        var updatePrns = _fixture
+            .Build<UpdatedNpwdPrnsResponseModel>()
+            .With(u => u.SourceSystemId, "")
+            .CreateMany()
+            .ToList();
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
         // Act
         await _function.Run(new());
 
-        _mockUtilities.Verify(u => u.AddCustomEvent(It.Is<string>(s => s == CustomEvents.UpdatePrn),
-            It.Is<Dictionary<string, string>>(
-                data => data["EvidenceNo"] == updatePrns[0].EvidenceNo
-                && data["EvidenceStatusCode"] == updatePrns[0].EvidenceStatusCode
-                && data["StatusDate"] == updatePrns[0].StatusDate.GetValueOrDefault().ToUniversalTime().ToString())), Times.Once);
+        _mockUtilities.Verify(
+            u =>
+                u.AddCustomEvent(
+                    It.Is<string>(s => s == CustomEvents.UpdatePrn),
+                    It.Is<Dictionary<string, string>>(data =>
+                        data["EvidenceNo"] == updatePrns[0].EvidenceNo
+                        && data["EvidenceStatusCode"] == updatePrns[0].EvidenceStatusCode
+                        && data["StatusDate"]
+                            == updatePrns[0]
+                                .StatusDate.GetValueOrDefault()
+                                .ToUniversalTime()
+                                .ToString()
+                    )
+                ),
+            Times.Once
+        );
     }
 
     [Fact]
     public async Task Run_BatchesPrns_WhenNumberOfPrnsExceedsBatchSize()
     {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("2");
+        _mockConfiguration.Setup(config => config["UpdatePrnsMaxRows"]).Returns("2");
 
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
+        DeltaSyncExecution deltaRun = new()
+        {
+            SyncType = NpwdDeltaSyncType.UpdatePrns,
+            LastSyncDateTime = DateTime.UtcNow,
+        };
 
-        var firstPrn = new UpdatedPrnsResponseModel
+        var firstPrn = new UpdatedNpwdPrnsResponseModel
         {
             EvidenceNo = "A",
             EvidenceStatusCode = "ACCEPTED",
             StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(2)),
-            ObligationYear = "2025"
+            ObligationYear = "2025",
         };
 
-        var secondPrn = new UpdatedPrnsResponseModel
+        var secondPrn = new UpdatedNpwdPrnsResponseModel
         {
             EvidenceNo = "B",
             EvidenceStatusCode = "ACCEPTED",
             StatusDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)),
-            ObligationYear = "2025"
+            ObligationYear = "2025",
         };
 
-        var thirdPrn = new UpdatedPrnsResponseModel
+        var thirdPrn = new UpdatedNpwdPrnsResponseModel
         {
             EvidenceNo = "C",
             EvidenceStatusCode = "ACCEPTED",
             StatusDate = DateTime.UtcNow,
-            ObligationYear = "2025"
+            ObligationYear = "2025",
         };
 
-        var updatePrns = new List<UpdatedPrnsResponseModel> { firstPrn, secondPrn, thirdPrn };
+        var updatePrns = new List<UpdatedNpwdPrnsResponseModel> { firstPrn, secondPrn, thirdPrn };
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
         int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
             .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
 
@@ -463,41 +698,61 @@ public class UpdatePrnsFunctionTests
         await _function.Run(default!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching 2 of 3 Prns")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching 2 of 3 Prns")),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
 
         prnCount.Should().Be(2);
 
         _mockUtilities.Verify(
-            provider => provider.SetDeltaSyncExecution(
-                It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns), secondPrn.StatusDate.Value),
-            Times.Once);
-
+            provider =>
+                provider.SetDeltaSyncExecution(
+                    It.Is<DeltaSyncExecution>(d => d.SyncType == NpwdDeltaSyncType.UpdatePrns),
+                    secondPrn.StatusDate.Value
+                ),
+            Times.Once
+        );
     }
-
 
     [Fact]
     public async Task Run_FiltersOutReEx()
     {
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
+        DeltaSyncExecution deltaRun = new()
+        {
+            SyncType = NpwdDeltaSyncType.UpdatePrns,
+            LastSyncDateTime = DateTime.UtcNow,
+        };
 
         // create 3 with SourceSystemId as not null
-        var updatePrns = _fixture.Build<UpdatedPrnsResponseModel>().CreateMany().ToList();
+        var updatePrns = _fixture.Build<UpdatedNpwdPrnsResponseModel>().CreateMany().ToList();
         // set one to null
         updatePrns[0].SourceSystemId = null;
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), CancellationToken.None))
+        _mockPrnService
+            .Setup(s =>
+                s.GetUpdatedNpwdPrns(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    CancellationToken.None
+                )
+            )
             .ReturnsAsync(updatePrns);
 
         int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
             .Callback((PrnDelta delta, string _) => prnCount = delta.Value.Count);
 
@@ -505,29 +760,40 @@ public class UpdatePrnsFunctionTests
 
         prnCount.Should().Be(1);
     }
-    
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
-    public async Task Run_DoesNotBatchPrns_WhenNumberOfPrnsLessThanOrEqualToBatchSize(int countOfPrnsReturned)
+    public async Task Run_DoesNotBatchPrns_WhenNumberOfPrnsLessThanOrEqualToBatchSize(
+        int countOfPrnsReturned
+    )
     {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("3");
+        _mockConfiguration.Setup(config => config["UpdatePrnsMaxRows"]).Returns("3");
 
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
+        DeltaSyncExecution deltaRun = new()
+        {
+            SyncType = NpwdDeltaSyncType.UpdatePrns,
+            LastSyncDateTime = DateTime.UtcNow,
+        };
 
-        var updatePrns = _fixture.Build<UpdatedPrnsResponseModel>().With(u => u.SourceSystemId, "").CreateMany(countOfPrnsReturned).ToList();
+        var updatePrns = _fixture
+            .Build<UpdatedNpwdPrnsResponseModel>()
+            .With(u => u.SourceSystemId, "")
+            .CreateMany(countOfPrnsReturned)
+            .ToList();
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
         int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
             .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
 
@@ -535,36 +801,49 @@ public class UpdatePrnsFunctionTests
         await _function.Run(default!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Never
+        );
 
         prnCount.Should().Be(countOfPrnsReturned);
-
     }
 
     [Fact]
     public async Task Run_DoesNotBatchPrns_WhenBatchSizeIsZero()
     {
-        _mockConfiguration
-            .Setup(config => config["UpdatePrnsMaxRows"])
-            .Returns("0");
+        _mockConfiguration.Setup(config => config["UpdatePrnsMaxRows"]).Returns("0");
 
-        DeltaSyncExecution deltaRun = new() { SyncType = NpwdDeltaSyncType.UpdatePrns, LastSyncDateTime = DateTime.UtcNow };
+        DeltaSyncExecution deltaRun = new()
+        {
+            SyncType = NpwdDeltaSyncType.UpdatePrns,
+            LastSyncDateTime = DateTime.UtcNow,
+        };
 
-        var updatePrns = _fixture.Build<UpdatedPrnsResponseModel>().With(u => u.SourceSystemId, "").CreateMany().ToList();
+        var updatePrns = _fixture
+            .Build<UpdatedNpwdPrnsResponseModel>()
+            .With(u => u.SourceSystemId, "")
+            .CreateMany()
+            .ToList();
 
-        _mockUtilities.Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
+        _mockUtilities
+            .Setup(m => m.GetDeltaSyncExecution(It.IsAny<NpwdDeltaSyncType>()))
             .ReturnsAsync(deltaRun);
 
-        _mockPrnService.Setup(s => s.GetUpdatedPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
+        _mockPrnService
+            .Setup(s => s.GetUpdatedNpwdPrns(It.IsAny<DateTime>(), It.IsAny<DateTime>(), default))
             .ReturnsAsync(updatePrns);
 
         int prnCount = 0;
-        _mockNpwdClient.Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
+        _mockNpwdClient
+            .Setup(c => c.Patch(It.IsAny<PrnDelta>(), It.IsAny<string>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
             .Callback((PrnDelta delta, string v) => prnCount = delta.Value.Count);
 
@@ -572,15 +851,19 @@ public class UpdatePrnsFunctionTests
         await _function.Run(default!);
 
         // Assert
-        _loggerMock.Verify(logger => logger.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
+        _loggerMock.Verify(
+            logger =>
+                logger.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "Batching")),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Never
+        );
 
         prnCount.Should().Be(3);
-
     }
 
     private static bool ContainsString(object obj, string value)

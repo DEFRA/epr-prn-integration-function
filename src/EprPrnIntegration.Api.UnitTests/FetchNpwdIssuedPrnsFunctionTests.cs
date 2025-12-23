@@ -35,7 +35,7 @@ namespace EprPrnIntegration.Api.UnitTests
         private readonly Mock<IOrganisationService> _mockOrganisationService;
         private readonly Mock<IEmailService> _mockEmailService;
         private readonly Mock<IValidator<NpwdPrn>> _mockValidator;
-        private readonly Mock<IPrnService> _mockPrnService;
+        private readonly Mock<INpwdPrnService> _mockPrnService;
         private readonly Mock<IUtilities> _mockPrnUtilities;
         private readonly Mock<IConfiguration> _mockConfiguration;
 
@@ -49,7 +49,7 @@ namespace EprPrnIntegration.Api.UnitTests
             _mockOrganisationService = new Mock<IOrganisationService>();
             _mockEmailService = new Mock<IEmailService>();
             _mockValidator = new Mock<IValidator<NpwdPrn>>();
-            _mockPrnService = new Mock<IPrnService>();
+            _mockPrnService = new Mock<INpwdPrnService>();
             _mockPrnUtilities = new Mock<IUtilities>();
             _mockConfiguration = new Mock<IConfiguration>();
 
@@ -613,7 +613,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 .Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             _mockPrnService
-                .Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Setup(service => service.SaveNpwdPrn(It.IsAny<SaveNpwdPrnDetailsRequest>()))
                 .ThrowsAsync(new Exception("Error saving PRN"));
 
             // Act
@@ -649,7 +649,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 .Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             _mockPrnService
-                .Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Setup(service => service.SaveNpwdPrn(It.IsAny<SaveNpwdPrnDetailsRequest>()))
                 .Returns(Task.CompletedTask);
 
             _mockOrganisationService
@@ -696,7 +696,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 .Setup(x => x.ValidateAsync(It.IsAny<NpwdPrn>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
             _mockPrnService
-                .Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Setup(service => service.SaveNpwdPrn(It.IsAny<SaveNpwdPrnDetailsRequest>()))
                 .Returns(Task.CompletedTask);
 
             _mockOrganisationService
@@ -741,7 +741,7 @@ namespace EprPrnIntegration.Api.UnitTests
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
 
             _mockPrnService
-                .Setup(service => service.SavePrn(It.IsAny<SavePrnDetailsRequest>()))
+                .Setup(service => service.SaveNpwdPrn(It.IsAny<SaveNpwdPrnDetailsRequest>()))
                 .Returns(Task.CompletedTask);
 
             _mockOrganisationService

@@ -3,7 +3,7 @@
 namespace EprPrnIntegration.Common.Models;
 
 [ExcludeFromCodeCoverage]
-public class UpdatedPrnsResponseModel
+public class UpdatedNpwdPrnsResponseModel
 {
     public required string EvidenceNo { get; set; }
     public required string EvidenceStatusCode { get; set; }

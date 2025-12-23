@@ -61,9 +61,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
     }
 
@@ -71,12 +69,10 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_WithNulls()
     {
         var prn = new PackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest
             .Should()
-            .BeEquivalentTo(new SavePrnDetailsRequestV2 { ObligationYear = "2026" });
+            .BeEquivalentTo(new SavePrnDetailsRequest { ObligationYear = "2026" });
     }
 
     [Theory]
@@ -89,7 +85,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
         _mapper
-            .Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(prn)
+            .Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn)
             .PrnStatusId.Should()
             .BeNull();
     }
@@ -120,9 +116,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
     }
 
@@ -131,9 +125,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -143,9 +135,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = RrepwMaterialName.Glass;
         prn.Accreditation.GlassRecyclingProcess = "invalidProcess";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -164,9 +154,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.ProcessToBeUsed.Should().Be(expectedProcessToBeUsed);
     }
 
@@ -175,9 +163,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.ProcessToBeUsed.Should().BeNull();
     }
 
@@ -205,9 +191,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = sourceStr;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().Be(expectedStr);
     }
 
@@ -216,9 +200,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = "invalidRegulator";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().BeNull();
     }
 
@@ -233,9 +215,7 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         switch (status)
         {
             case RrepwStatus.Cancelled:
@@ -264,9 +244,7 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
@@ -274,9 +252,7 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
         var prn = CreatePackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequestV2>(
-            prn
-        );
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
         savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
         savePrnDetailsRequest.PrnNumber.Should().Be(prn.PrnNumber);
         savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status!.AuthorisedBy!.FullName);

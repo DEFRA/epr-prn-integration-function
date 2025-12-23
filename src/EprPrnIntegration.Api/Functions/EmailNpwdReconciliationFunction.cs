@@ -16,7 +16,8 @@ public class EmailNpwdReconciliationFunction(
     IOptions<FeatureManagementConfiguration> featureConfig,
     ILogger<EmailNpwdReconciliationFunction> logger,
     IUtilities utilities,
-    IPrnService prnService)
+    INpwdPrnService prnService
+)
 {
     [Function("EmailNpwdReconciliation")]
     public async Task Run([TimerTrigger("%EmailNpwdReconciliationTrigger%")] TimerInfo myTimer)
@@ -38,23 +39,36 @@ public class EmailNpwdReconciliationFunction(
 
     public async Task EmailUpdatedPrnReconciliationAsync()
     {
-        logger.LogInformation("EmailUpdatedPrnReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        logger.LogInformation(
+            "EmailUpdatedPrnReconciliationAsync function executed at: {ExecutionDateTime}",
+            DateTime.UtcNow
+        );
 
         try
         {
-            var reconciledPrns = await prnService.GetReconciledUpdatedPrns();
+            var reconciledPrns = await prnService.GetReconciledUpdatedNpwdPrns();
 
             var csvData = new Dictionary<string, List<string>>
             {
                 { CustomEventFields.PrnNumber, reconciledPrns.Select(x => x.PrnNumber).ToList() },
-                { CustomEventFields.OutgoingStatus, reconciledPrns.Select(x => x.StatusName).ToList() },
+                {
+                    CustomEventFields.OutgoingStatus,
+                    reconciledPrns.Select(x => x.StatusName).ToList()
+                },
                 { CustomEventFields.Date, reconciledPrns.Select(x => x.UpdatedOn).ToList() },
-                { CustomEventFields.OrganisationName, reconciledPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
+                {
+                    CustomEventFields.OrganisationName,
+                    reconciledPrns.Select(x => x.OrganisationName.CleanCsvString()).ToList()
+                },
             };
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
-            emailService.SendUpdatedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, csvContent, reconciledPrns.Count);
+            emailService.SendUpdatedPrnsReconciliationEmailToNpwd(
+                DateTime.UtcNow,
+                csvContent,
+                reconciledPrns.Count
+            );
         }
         catch (Exception ex)
         {
@@ -64,7 +78,10 @@ public class EmailNpwdReconciliationFunction(
 
     public async Task EmailNpwdIssuedPrnsReconciliationAsync()
     {
-        logger.LogInformation("EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}", DateTime.UtcNow);
+        logger.LogInformation(
+            "EmailNpwdIssuedPrnsReconciliationAsync function executed at: {ExecutionDateTime}",
+            DateTime.UtcNow
+        );
 
         try
         {
@@ -75,12 +92,19 @@ public class EmailNpwdReconciliationFunction(
                 { CustomEventFields.PrnNumber, prns.Select(x => x.PrnNumber).ToList() },
                 { CustomEventFields.IncomingStatus, prns.Select(x => x.PrnStatus).ToList() },
                 { CustomEventFields.Date, prns.Select(x => x.UploadedDate).ToList() },
-                { CustomEventFields.OrganisationName, prns.Select(x => x.OrganisationName.CleanCsvString()).ToList() },
+                {
+                    CustomEventFields.OrganisationName,
+                    prns.Select(x => x.OrganisationName.CleanCsvString()).ToList()
+                },
             };
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
-            emailService.SendIssuedPrnsReconciliationEmailToNpwd(DateTime.UtcNow, prns.Count, csvContent);
+            emailService.SendIssuedPrnsReconciliationEmailToNpwd(
+                DateTime.UtcNow,
+                prns.Count,
+                csvContent
+            );
         }
         catch (Exception ex)
         {
@@ -90,37 +114,78 @@ public class EmailNpwdReconciliationFunction(
 
     public async Task EmailNpwdUpdatedOrganisationsAsync()
     {
-        logger.LogInformation("{FunctionName} function executed at: {ExecutionDateTime}", nameof(EmailNpwdUpdatedOrganisationsAsync), DateTime.UtcNow);
+        logger.LogInformation(
+            "{FunctionName} function executed at: {ExecutionDateTime}",
+            nameof(EmailNpwdUpdatedOrganisationsAsync),
+            DateTime.UtcNow
+        );
 
         try
         {
             // Force a non-null list
-            List<UpdatedOrganisationReconciliationSummary> updatedOrgs = await appInsightsService
-                .GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync() ?? [];
+            List<UpdatedOrganisationReconciliationSummary> updatedOrgs =
+                await appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync()
+                ?? [];
 
-            logger.LogInformation("Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}", 
-                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync), updatedOrgs.Count, DateTime.UtcNow);
+            logger.LogInformation(
+                "Count of updated organisations fetched from {AppInsightSvcFunctionName} =  {UpdatedOrgCount} at {UpdatedDateTime}",
+                nameof(appInsightsService.GetUpdatedOrganisationsCustomEventLogsLast24hrsAsync),
+                updatedOrgs.Count,
+                DateTime.UtcNow
+            );
 
             var csvData = new Dictionary<string, List<string>>
             {
-                { CustomEventFields.OrganisationName, updatedOrgs.Select(x => x.Name ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationId, updatedOrgs.Select(x => x.Id ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationAddress, updatedOrgs.Select(x => x.Address ?? string.Empty).ToList() },
-                { CustomEventFields.Date, updatedOrgs.Select(x => x.Date ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationType, updatedOrgs.Select(x => x.OrganisationType ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationStatus, updatedOrgs.Select(x => x.Status ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationEprId, updatedOrgs.Select(x => x.PEPRId ?? string.Empty).ToList() },
-                { CustomEventFields.OrganisationRegNo, updatedOrgs.Select(x => x.CompanyRegNo ?? string.Empty).ToList() }
+                {
+                    CustomEventFields.OrganisationName,
+                    updatedOrgs.Select(x => x.Name ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationId,
+                    updatedOrgs.Select(x => x.Id ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationAddress,
+                    updatedOrgs.Select(x => x.Address ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.Date,
+                    updatedOrgs.Select(x => x.Date ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationType,
+                    updatedOrgs.Select(x => x.OrganisationType ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationStatus,
+                    updatedOrgs.Select(x => x.Status ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationEprId,
+                    updatedOrgs.Select(x => x.PEPRId ?? string.Empty).ToList()
+                },
+                {
+                    CustomEventFields.OrganisationRegNo,
+                    updatedOrgs.Select(x => x.CompanyRegNo ?? string.Empty).ToList()
+                },
             };
 
             var csvContent = utilities.CreateCsvContent(csvData);
 
             var dataRowsCount = updatedOrgs.Count;
-            emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(DateTime.UtcNow, dataRowsCount, csvContent);
+            emailService.SendUpdatedOrganisationsReconciliationEmailToNpwd(
+                DateTime.UtcNow,
+                dataRowsCount,
+                csvContent
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed running {FunctionName}", nameof(EmailNpwdUpdatedOrganisationsAsync));
+            logger.LogError(
+                ex,
+                "Failed running {FunctionName}",
+                nameof(EmailNpwdUpdatedOrganisationsAsync)
+            );
         }
     }
 }

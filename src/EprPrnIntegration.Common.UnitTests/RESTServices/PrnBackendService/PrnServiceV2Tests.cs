@@ -1,13 +1,13 @@
+using System.Text.Json;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using EprPrnIntegration.Common.UnitTests.Helpers;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using System.Text.Json;
-using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {
@@ -23,13 +23,17 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             _loggerMock = new Mock<ILogger<PrnServiceV2>>();
             _mockConfig = new Mock<IOptions<Configuration.Service>>();
 
-            _mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
-            {
-                PrnBaseUrl = "http://localhost:5575/",
-                PrnEndPointNameV2 = "api/v2/prn"
-            });
+            _mockConfig
+                .Setup(c => c.Value)
+                .Returns(
+                    new Configuration.Service
+                    {
+                        PrnBaseUrl = "http://localhost:5575/",
+                        PrnEndPointNameV2 = "api/v2/prn",
+                    }
+                );
         }
-       
+
         [Fact]
         public async Task SavePrn_ShouldCallServiceWithCorrectRequest()
         {
@@ -38,7 +42,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var statusUpdatedOn = DateTime.UtcNow;
             var request = CreateSavePrnDetailsRequest(
                 organisationId: organisationId,
-                statusUpdatedOn: statusUpdatedOn);
+                statusUpdatedOn: statusUpdatedOn
+            );
             var (sut, mockHandler) = CreatePrnServiceV2();
 
             // Act
@@ -51,8 +56,11 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             // Verify the payload
             Assert.NotNull(mockHandler.LastRequestContent);
-            var sentRequest = JsonSerializer.Deserialize<SavePrnDetailsRequestV2>(mockHandler.LastRequestContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
+            var sentRequest = JsonSerializer.Deserialize<SavePrnDetailsRequest>(
+                mockHandler.LastRequestContent,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
             sentRequest.Should().BeEquivalentTo(request);
         }
 
@@ -83,11 +91,15 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockConfig = new Mock<IOptions<Configuration.Service>>();
-            mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
-            {
-                PrnBaseUrl = null,
-                PrnEndPointNameV2 = "api/v2/prn"
-            });
+            mockConfig
+                .Setup(c => c.Value)
+                .Returns(
+                    new Configuration.Service
+                    {
+                        PrnBaseUrl = null,
+                        PrnEndPointNameV2 = "api/v2/prn",
+                    }
+                );
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
@@ -107,11 +119,15 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockConfig = new Mock<IOptions<Configuration.Service>>();
-            mockConfig.Setup(c => c.Value).Returns(new Configuration.Service
-            {
-                PrnBaseUrl = "http://localhost:5575/",
-                PrnEndPointNameV2 = null
-            });
+            mockConfig
+                .Setup(c => c.Value)
+                .Returns(
+                    new Configuration.Service
+                    {
+                        PrnBaseUrl = "http://localhost:5575/",
+                        PrnEndPointNameV2 = null,
+                    }
+                );
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
@@ -123,10 +139,16 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                 )
             );
 
-            Assert.Contains("PrnService EndPointNameV2 configuration is missing", exception.Message);
+            Assert.Contains(
+                "PrnService EndPointNameV2 configuration is missing",
+                exception.Message
+            );
         }
-        
-        private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(string responseContent = "", System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK)
+
+        private (PrnServiceV2 service, MockHttpMessageHandler handler) CreatePrnServiceV2(
+            string responseContent = "",
+            System.Net.HttpStatusCode statusCode = System.Net.HttpStatusCode.OK
+        )
         {
             var mockHandler = new MockHttpMessageHandler(responseContent, statusCode);
             var httpClient = new HttpClient(mockHandler);
@@ -142,11 +164,12 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             return (service, mockHandler);
         }
 
-        private SavePrnDetailsRequestV2 CreateSavePrnDetailsRequest(
+        private SavePrnDetailsRequest CreateSavePrnDetailsRequest(
             Guid? organisationId = null,
-            DateTime? statusUpdatedOn = null)
+            DateTime? statusUpdatedOn = null
+        )
         {
-            return new SavePrnDetailsRequestV2
+            return new SavePrnDetailsRequest
             {
                 SourceSystemId = "RREPW",
                 PrnNumber = "PRN-1234",
@@ -164,7 +187,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                 IsExport = false,
                 TonnageValue = 100,
                 ProcessToBeUsed = "Recycling",
-                ObligationYear = "2024"
+                ObligationYear = "2024",
             };
         }
     }

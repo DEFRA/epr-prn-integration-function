@@ -8,5 +8,5 @@ public interface ICoreServices
 {
     INpwdClient NpwdClient { get; }
     IOrganisationService OrganisationService { get; }
-    IPrnService PrnService { get; }
+    INpwdPrnService PrnService { get; }
 }

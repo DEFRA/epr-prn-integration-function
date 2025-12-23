@@ -14,15 +14,18 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
+public class UpdatePrnsFunction(
+    INpwdPrnService prnService,
+    INpwdClient npwdClient,
     ILogger<UpdatePrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
-    IUtilities utilities, IEmailService emailService)
+    IUtilities utilities,
+    IEmailService emailService
+)
 {
     [Function("UpdatePrnsList")]
-    public async Task Run(
-    [TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("%UpdatePrnsTrigger%")] TimerInfo myTimer)
     {
         bool isOn = featureConfig.Value.RunIntegration ?? false;
         if (!isOn)
@@ -31,7 +34,10 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
             return;
         }
 
-        logger.LogInformation("UpdatePrnsList function executed at: {DateTimeNow}", DateTime.UtcNow);
+        logger.LogInformation(
+            "UpdatePrnsList function executed at: {DateTimeNow}",
+            DateTime.UtcNow
+        );
 
         var deltaRun = await utilities.GetDeltaSyncExecution(NpwdDeltaSyncType.UpdatePrns);
 
@@ -41,18 +47,27 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
         logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
 
         // Retrieve data from the common backend
-        var updatedEprPrns = (await GetUpdatedPrnsAsync(fromDate, toDate))?
-            .FilterNpwdPrns()
+        var updatedEprPrns = (await GetUpdatedPrnsAsync(fromDate, toDate))
+            ?.FilterNpwdPrns()
             .ToList();
-        if (updatedEprPrns == null) return;
+        if (updatedEprPrns == null)
+            return;
 
         // owing to performance limitations (timeouts) on external service, limit number of rows sent in a batch
-        if (int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows) && maxRows > 0 && maxRows < updatedEprPrns.Count)
+        if (
+            int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows)
+            && maxRows > 0
+            && maxRows < updatedEprPrns.Count
+        )
         {
-            logger.LogInformation("Batching {BatchSize} of {PrnCount} Prns", maxRows, updatedEprPrns.Count);
+            logger.LogInformation(
+                "Batching {BatchSize} of {PrnCount} Prns",
+                maxRows,
+                updatedEprPrns.Count
+            );
 
             updatedEprPrns = updatedEprPrns.OrderBy(x => x.StatusDate).Take(maxRows).ToList();
-                
+
             var newestPrnStatusDate = updatedEprPrns.Select(x => x.StatusDate).LastOrDefault();
             if (newestPrnStatusDate.GetValueOrDefault() > DateTime.MinValue)
             {
@@ -65,16 +80,23 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
         try
         {
-            logger.LogInformation("Sending total of {PrnCount} prns to npwd for updating", updatedEprPrns.Count);
+            logger.LogInformation(
+                "Sending total of {PrnCount} prns to npwd for updating",
+                updatedEprPrns.Count
+            );
 
             var pEprApiResponse = await npwdClient.Patch(npwdUpdatedPrns, NpwdApiPath.Prns);
 
             if (pEprApiResponse.IsSuccessStatusCode)
             {
-                logger.LogInformation("Prns list successfully updated in NPWD for time period {FromDate} to {DateTime}.", fromDate, toDate);
+                logger.LogInformation(
+                    "Prns list successfully updated in NPWD for time period {FromDate} to {DateTime}.",
+                    fromDate,
+                    toDate
+                );
 
                 await utilities.SetDeltaSyncExecution(deltaRun, toDate);
- 
+
                 // Insert sync data into common prn backend
                 await prnService.InsertPeprNpwdSyncPrns(npwdUpdatedPrns.Value);
 
@@ -83,56 +105,86 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
             else
             {
                 var responseBody = await pEprApiResponse.Content.ReadAsStringAsync();
-                
+
                 logger.LogError(
                     "Failed to update producer lists. error code {StatusCode} and raw response body: {ResponseBody}",
-                    pEprApiResponse.StatusCode, responseBody);
+                    pEprApiResponse.StatusCode,
+                    responseBody
+                );
 
-                logger.LogError("Failed to update Prns list in NPWD. Status Code: {StatusCode}", pEprApiResponse.StatusCode);
+                logger.LogError(
+                    "Failed to update Prns list in NPWD. Status Code: {StatusCode}",
+                    pEprApiResponse.StatusCode
+                );
 
-                if (pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout)
+                if (
+                    pEprApiResponse.StatusCode >= HttpStatusCode.InternalServerError
+                    || pEprApiResponse.StatusCode == HttpStatusCode.RequestTimeout
+                )
                 {
-                    emailService.SendErrorEmailToNpwd($"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}");
+                    emailService.SendErrorEmailToNpwd(
+                        $"Failed to update producer lists. error code {pEprApiResponse.StatusCode} and raw response body: {responseBody}"
+                    );
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to patch NpwdUpdatedPrns for {NpwdUpdatedPrns}", npwdUpdatedPrns.ToString());
+            logger.LogError(
+                ex,
+                "Failed to patch NpwdUpdatedPrns for {NpwdUpdatedPrns}",
+                npwdUpdatedPrns.ToString()
+            );
         }
     }
 
-    private void LogCustomEvents(IEnumerable<UpdatedPrnsResponseModel> npwdUpdatedPrns)
+    private void LogCustomEvents(IEnumerable<UpdatedNpwdPrnsResponseModel> npwdUpdatedPrns)
     {
         foreach (var prn in npwdUpdatedPrns)
         {
             Dictionary<string, string> eventData = new()
-                {
-                    { "EvidenceNo", prn.EvidenceNo },
-                    { "EvidenceStatusCode", prn.EvidenceStatusCode },
-                    { "StatusDate", prn.StatusDate.GetValueOrDefault().ToUniversalTime().ToString() }
-                };
+            {
+                { "EvidenceNo", prn.EvidenceNo },
+                { "EvidenceStatusCode", prn.EvidenceStatusCode },
+                { "StatusDate", prn.StatusDate.GetValueOrDefault().ToUniversalTime().ToString() },
+            };
 
             utilities.AddCustomEvent(CustomEvents.UpdatePrn, eventData);
         }
     }
 
     // Retrieve data from the common backend
-    private async Task<List<UpdatedPrnsResponseModel>?> GetUpdatedPrnsAsync(DateTime fromDate, DateTime toDate)
+    private async Task<List<UpdatedNpwdPrnsResponseModel>?> GetUpdatedPrnsAsync(
+        DateTime fromDate,
+        DateTime toDate
+    )
     {
         try
         {
-            var updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate, CancellationToken.None);
+            var updatedEprPrns = await prnService.GetUpdatedNpwdPrns(
+                fromDate,
+                toDate,
+                CancellationToken.None
+            );
             if (updatedEprPrns != null && updatedEprPrns.Count > 0)
             {
                 return updatedEprPrns;
             }
 
-            logger.LogWarning("No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.", fromDate, toDate);
+            logger.LogWarning(
+                "No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.",
+                fromDate,
+                toDate
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.", fromDate, toDate);
+            logger.LogError(
+                ex,
+                "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.",
+                fromDate,
+                toDate
+            );
         }
 
         return null;
@@ -141,11 +193,16 @@ public class UpdatePrnsFunction(IPrnService prnService, INpwdClient npwdClient,
 
 public static class PrnExtensions
 {
-    public static IEnumerable<UpdatedPrnsResponseModel> FilterNpwdPrns(this IEnumerable<UpdatedPrnsResponseModel> updatedEprPrns)
+    public static IEnumerable<UpdatedNpwdPrnsResponseModel> FilterNpwdPrns(
+        this IEnumerable<UpdatedNpwdPrnsResponseModel> updatedEprPrns
+    )
     {
         return updatedEprPrns.Where(prn => string.IsNullOrWhiteSpace(prn.SourceSystemId));
     }
-    public static IEnumerable<UpdatedPrnsResponseModel> FilterReExPrns(this IEnumerable<UpdatedPrnsResponseModel> updatedEprPrns)
+
+    public static IEnumerable<UpdatedNpwdPrnsResponseModel> FilterReExPrns(
+        this IEnumerable<UpdatedNpwdPrnsResponseModel> updatedEprPrns
+    )
     {
         return updatedEprPrns.Where(prn => !string.IsNullOrWhiteSpace(prn.SourceSystemId));
     }

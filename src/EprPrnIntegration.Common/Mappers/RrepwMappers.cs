@@ -11,7 +11,7 @@ public class RrepwMappers : Profile
     public RrepwMappers()
     {
         // all fields required here have been validated as not null prior to this mapping
-        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequestV2>()
+        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequest>()
             .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(
                 spdr => spdr.PrnStatusId,
