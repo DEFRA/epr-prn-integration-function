@@ -51,6 +51,17 @@ public class UpdatePrnsFunction(
         if (updatedEprPrns == null)
             return;
 
+        foreach (var prn in updatedEprPrns)
+        {
+            logger.LogDebug(
+                "Updating PRN in NPWD: prn number (evidence no): {Prn} status code: {StatusCode} status date: {StatusDate} obligation year: {ObligationYear}",
+                prn.EvidenceNo,
+                prn.EvidenceStatusCode,
+                prn.StatusDate,
+                prn.ObligationYear
+            );
+        }
+
         // owing to performance limitations (timeouts) on external service, limit number of rows sent in a batch
         if (
             int.TryParse(configuration["UpdatePrnsMaxRows"], out int maxRows)
