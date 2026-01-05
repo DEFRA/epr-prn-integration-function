@@ -14,10 +14,10 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class UpdatePrnsFunction(
+public class UpdateNpwdPrnsFunction(
     INpwdPrnService prnService,
     INpwdClient npwdClient,
-    ILogger<UpdatePrnsFunction> logger,
+    ILogger<UpdateNpwdPrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
     IUtilities utilities,

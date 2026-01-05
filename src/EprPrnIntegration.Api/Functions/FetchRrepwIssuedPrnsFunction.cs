@@ -22,8 +22,9 @@ public class FetchRrepwIssuedPrnsFunction(
 )
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
+    public const string FunctionId = "FetchRrepwIssuedPrns";
 
-    [Function("FetchRrepwIssuedPrns")]
+    [Function(FunctionId)]
     public async Task Run([TimerTrigger("%FetchRrepwIssuedPrns:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await GetLastUpdate();
@@ -46,7 +47,7 @@ public class FetchRrepwIssuedPrnsFunction(
 
         await ProcessPrns(prns);
 
-        await lastUpdateService.SetLastUpdate("FetchRrepwIssuedPrns", utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionId, utcNow);
         logger.LogInformation(
             "FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}",
             DateTime.UtcNow
@@ -55,7 +56,7 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns");
+        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionId);
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
@@ -67,7 +68,7 @@ public class FetchRrepwIssuedPrnsFunction(
                 DateTimeKind.Utc
             );
         }
-        return lastUpdate!.Value;
+        return lastUpdate.Value;
     }
 
     private async Task ProcessPrns(List<PackagingRecyclingNote> prns)

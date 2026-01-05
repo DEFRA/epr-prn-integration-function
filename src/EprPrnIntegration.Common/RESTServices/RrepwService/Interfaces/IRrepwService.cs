@@ -1,3 +1,4 @@
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 
 namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
@@ -7,6 +8,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
         Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default
+        );
+        Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns);
     }
 }
