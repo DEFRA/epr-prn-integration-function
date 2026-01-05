@@ -61,7 +61,18 @@ public static class HostBuilderConfiguration
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
-        services.AddScoped<IRrepwService, RrepwService>();
+
+        // Register RRepw service - use stubbed version if configured
+        RrepwApiConfiguration rrepwConfig = new();
+        configuration.GetSection(RrepwApiConfiguration.SectionName).Bind(rrepwConfig);
+        if (rrepwConfig.UseStubbedData)
+        {
+            services.AddScoped<IRrepwService, StubbedRrepwService>();
+        }
+        else
+        {
+            services.AddScoped<IRrepwService, RrepwService>();
+        }
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IEmailService, EmailService>();
         services.AddScoped<IUtilities, Utilities>();
