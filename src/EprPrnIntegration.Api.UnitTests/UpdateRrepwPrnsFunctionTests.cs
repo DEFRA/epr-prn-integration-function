@@ -143,7 +143,7 @@ public class UpdateRrepwPrnsFunctionTests
     }
 
     [Fact]
-    public async Task ProcessesMultiplePrns_CatchesExceptions()
+    public async Task ProcessesMultiplePrns_CatchesExceptionsFromGetUpdatedPrns()
     {
         var prns = new List<PrnUpdateStatus>
         {
@@ -162,6 +162,47 @@ public class UpdateRrepwPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
         _rrepwServiceMock.Verify(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()), Times.Never);
+        _lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            Times.Never
+        );
+        _loggerMock.Verify(
+            x =>
+                x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    ex,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task ProcessesMultiplePrns_CatchesExceptionsFromUpdatePrns()
+    {
+        var prns = new List<PrnUpdateStatus>
+        {
+            CreatePrnUpdateStatus("PRN-001"),
+            CreatePrnUpdateStatus("PRN-002"),
+            CreatePrnUpdateStatus("PRN-003"),
+        };
+        var fromDate = DateTime.UtcNow.AddHours(-3);
+        var ex = new Exception("Test");
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(UpdateRrepwPrnsFunction.FunctionId))
+            .ReturnsAsync(fromDate);
+        _prnServiceMock
+            .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
+            .ReturnsAsync(prns);
+        _rrepwServiceMock.Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>())).Throws(ex);
+
+        await _function.Run(new TimerInfo());
+        _lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            Times.Never
+        );
         _loggerMock.Verify(
             x =>
                 x.Log(
