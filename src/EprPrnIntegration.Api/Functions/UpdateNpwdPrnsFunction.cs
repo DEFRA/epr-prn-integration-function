@@ -181,7 +181,7 @@ public class UpdateNpwdPrnsFunction(
             }
 
             logger.LogWarning(
-                "No updated Prns are retrieved for common database for time period {FromDate} to {ToDate}.",
+                "No updated Prns are retrieved from common database for time period {FromDate} to {ToDate}.",
                 fromDate,
                 toDate
             );
@@ -190,7 +190,7 @@ public class UpdateNpwdPrnsFunction(
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve data for common backend for time period {FromDate} to {ToDate}.",
+                "Failed to retrieve data from common backend for time period {FromDate} to {ToDate}.",
                 fromDate,
                 toDate
             );

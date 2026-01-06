@@ -273,7 +273,7 @@ public class UpdateNpwdPrnsFunctionTests
                 logger.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "form time period")),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "for time period")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
