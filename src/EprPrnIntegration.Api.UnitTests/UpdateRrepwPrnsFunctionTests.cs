@@ -95,9 +95,10 @@ public class UpdateRrepwPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        _prnServiceMock
-            .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
-            .ReturnsAsync(prns);
+        _prnServiceMock.Verify(
+            x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
     }
 
     [Fact]
