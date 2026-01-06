@@ -10,6 +10,9 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
             DateTime dateTo,
             CancellationToken cancellationToken = default
         );
+<<<<<<< HEAD
         Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns);
+=======
+>>>>>>> origin/main
     }
 }

@@ -39,6 +39,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             CancellationToken cancellationToken = default
         )
         {
+<<<<<<< HEAD
             var dateFromQuery = dateFrom.ToUniversalDate();
             var dateToQuery = dateTo.ToUniversalDate();
             var statuses = new List<string>
@@ -46,6 +47,13 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 RrepwStatus.AwaitingAcceptance,
                 RrepwStatus.Cancelled,
             };
+=======
+            var dateFromQuery = dateFrom
+                .ToUniversalTime()
+                .ToString("O", CultureInfo.InvariantCulture);
+            var dateToQuery = dateTo.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            var statuses = string.Join(",", RrepwStatus.AwaitingAcceptance, RrepwStatus.Cancelled);
+>>>>>>> origin/main
 
             var allItems = new List<PackagingRecyclingNote>();
             string? cursor = null;
@@ -120,9 +128,23 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return (items, nextCursor);
         }
 
+<<<<<<< HEAD
         public async Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
         {
             foreach (var prn in rrepwUpdatedPrns)
+=======
+        private static string BuildRoute(
+            string statuses,
+            string dateFrom,
+            string dateTo,
+            string? cursor
+        )
+        {
+            var route =
+                $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
+
+            if (!string.IsNullOrEmpty(cursor))
+>>>>>>> origin/main
             {
                 if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
                 {

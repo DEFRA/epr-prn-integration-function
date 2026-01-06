@@ -3,6 +3,18 @@ using EprPrnIntegration.Common.Configuration;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
+<<<<<<< HEAD
+=======
+public enum FunctionName
+{
+    UpdateProducersList,
+    UpdatePrnsList,
+    FetchNpwdIssuedPrnsFunction,
+    UpdateWasteOrganisations,
+    FetchRrepwIssuedPrns,
+}
+
+>>>>>>> origin/main
 public static class AzureFunctionInvokerContext
 {
     private static readonly HttpClient HttpClient;
