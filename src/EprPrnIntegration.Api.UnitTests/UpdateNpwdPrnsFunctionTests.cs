@@ -20,29 +20,29 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
 
-public class UpdatePrnsFunctionTests
+public class UpdateNpwdPrnsFunctionTests
 {
     private readonly Mock<INpwdPrnService> _mockPrnService;
     private readonly Mock<INpwdClient> _mockNpwdClient;
     private readonly Mock<IConfiguration> _mockConfiguration;
-    private readonly Mock<ILogger<UpdatePrnsFunction>> _loggerMock;
+    private readonly Mock<ILogger<UpdateNpwdPrnsFunction>> _loggerMock;
     private Mock<IOptions<FeatureManagementConfiguration>> _mockFeatureConfig;
     private Mock<IUtilities> _mockUtilities;
     private readonly Fixture _fixture = new();
     private readonly Mock<IEmailService> _emailService;
-    private UpdatePrnsFunction _function;
+    private UpdateNpwdPrnsFunction _function;
 
-    public UpdatePrnsFunctionTests()
+    public UpdateNpwdPrnsFunctionTests()
     {
         _mockPrnService = new Mock<INpwdPrnService>();
         _mockNpwdClient = new Mock<INpwdClient>();
         _mockConfiguration = new Mock<IConfiguration>();
-        _loggerMock = new Mock<ILogger<UpdatePrnsFunction>>();
+        _loggerMock = new Mock<ILogger<UpdateNpwdPrnsFunction>>();
         _mockFeatureConfig = new Mock<IOptions<FeatureManagementConfiguration>>();
         _mockUtilities = new Mock<IUtilities>();
         _emailService = new Mock<IEmailService>();
 
-        _function = new UpdatePrnsFunction(
+        _function = new UpdateNpwdPrnsFunction(
             _mockPrnService.Object,
             _mockNpwdClient.Object,
             _loggerMock.Object,
@@ -273,7 +273,7 @@ public class UpdatePrnsFunctionTests
                 logger.Log(
                     LogLevel.Error,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "form time period")),
+                    It.Is<It.IsAnyType>((v, t) => ContainsString(v, "for time period")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),

@@ -1,7 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Enums;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -38,11 +39,13 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             CancellationToken cancellationToken = default
         )
         {
-            var dateFromQuery = dateFrom
-                .ToUniversalTime()
-                .ToString("O", CultureInfo.InvariantCulture);
-            var dateToQuery = dateTo.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
-            var statuses = string.Join(",", RrepwStatus.AwaitingAcceptance, RrepwStatus.Cancelled);
+            var dateFromQuery = dateFrom.ToUniversalDate();
+            var dateToQuery = dateTo.ToUniversalDate();
+            var statuses = new List<string>
+            {
+                RrepwStatus.AwaitingAcceptance,
+                RrepwStatus.Cancelled,
+            };
 
             var allItems = new List<PackagingRecyclingNote>();
             string? cursor = null;
@@ -78,7 +81,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         }
 
         private async Task<(List<PackagingRecyclingNote> Items, string? NextCursor)> FetchPage(
-            string statuses,
+            List<string> statuses,
             string dateFromQuery,
             string dateToQuery,
             string? cursor,
@@ -86,7 +89,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             CancellationToken cancellationToken
         )
         {
-            var url = BuildRoute(statuses, dateFromQuery, dateToQuery, cursor);
+            var url = RrepwRoutes.ListPrnsRoute(statuses, dateFromQuery, dateToQuery, cursor);
 
             logger.LogInformation(
                 "Fetching packaging recycling notes from {DateFrom} to {DateTo}, page {PageCount}",
@@ -101,7 +104,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 includeTrailingSlash: false
             );
 
-            var items = response.Items ?? new List<PackagingRecyclingNote>();
+            var items = response.Items ?? [];
 
             if (items.Count > 0)
             {
@@ -117,22 +120,45 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return (items, nextCursor);
         }
 
-        private static string BuildRoute(
-            string statuses,
-            string dateFrom,
-            string dateTo,
-            string? cursor
-        )
+        public async Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
         {
-            var route =
-                $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
-
-            if (!string.IsNullOrEmpty(cursor))
+            foreach (var prn in rrepwUpdatedPrns)
             {
-                route += $"&cursor={Uri.EscapeDataString(cursor)}";
+                if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
+                {
+                    logger.LogWarning(
+                        "Skipping PRN update due to missing SourceSystemId {PrnNumber}.",
+                        prn.PrnNumber
+                    );
+                    continue;
+                }
+                if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
+                {
+                    logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
+                    await Post(
+                        RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
+                        new { acceptedAt = prn.StatusDate },
+                        CancellationToken.None
+                    );
+                }
+                else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
+                {
+                    logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
+                    await Post(
+                        RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
+                        new { rejectedAt = prn.StatusDate },
+                        CancellationToken.None
+                    );
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Incorrect PRN status {PrnStatusId} for PRN {PrnNumber}; skipping.",
+                        prn.PrnStatusId,
+                        prn.PrnNumber
+                    );
+                }
             }
-
-            return route;
         }
     }
 }

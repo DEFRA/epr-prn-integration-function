@@ -1,3 +1,4 @@
+using EprPrnIntegration.Common.Configuration;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
@@ -14,7 +15,9 @@ public class FetchNpwdIssuedPrnsFunctionIntegrationTest : IntegrationTestBase
             AccountApiStub.HasPersonEmailForEpr()
         );
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchNpwdIssuedPrnsFunction);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.FetchNpwdIssuedPrnsFunction
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

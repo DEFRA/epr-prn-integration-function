@@ -1,15 +1,7 @@
 using System.Text;
+using EprPrnIntegration.Common.Configuration;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
-
-public enum FunctionName
-{
-    UpdateProducersList,
-    UpdatePrnsList,
-    FetchNpwdIssuedPrnsFunction,
-    UpdateWasteOrganisations,
-    FetchRrepwIssuedPrns,
-}
 
 public static class AzureFunctionInvokerContext
 {
@@ -24,9 +16,9 @@ public static class AzureFunctionInvokerContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    public static async Task InvokeAzureFunction(FunctionName functionName)
+    public static async Task InvokeAzureFunction(string functionName)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, functionName.ToString())
+        var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),
         };

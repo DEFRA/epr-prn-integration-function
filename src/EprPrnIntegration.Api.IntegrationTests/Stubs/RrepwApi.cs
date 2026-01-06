@@ -1,5 +1,6 @@
 using System.Net;
 using WireMock.Admin.Mappings;
+using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
 using Xunit;
 
@@ -91,5 +92,78 @@ public class RrepwApi(WireMockContext wiremock)
 
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
+    }
+
+    public async Task AcceptsPrnAccept()
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request =>
+                    request
+                        .UsingPost()
+                        .WithPath(
+                            new MatcherModel
+                            {
+                                Name = "RegexMatcher",
+                                Pattern = @"/v1/packaging-recycling-notes/.+/accept",
+                            }
+                        )
+                )
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task AcceptsPrnReject()
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request =>
+                    request
+                        .UsingPost()
+                        .WithPath(
+                            new MatcherModel
+                            {
+                                Name = "RegexMatcher",
+                                Pattern = @"/v1/packaging-recycling-notes/.+/reject",
+                            }
+                        )
+                )
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task<IList<LogEntryModel>> GetPrnAcceptRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"] };
+        var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+        return allRequests.Where(r => r.Request.Path?.Contains("/accept") == true).ToList();
+    }
+
+    public async Task<IList<LogEntryModel>> GetPrnRejectRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"] };
+        var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+        return allRequests.Where(r => r.Request.Path?.Contains("/reject") == true).ToList();
+    }
+
+    public async Task<IList<LogEntryModel>> GetPrnPatchRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["POST"] };
+        var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+        return allRequests
+            .Where(r =>
+                r.Request.Path?.Contains("/v1/packaging-recycling-notes/") == true
+                && (
+                    r.Request.Path?.Contains("/accept") == true
+                    || r.Request.Path?.Contains("/reject") == true
+                )
+            )
+            .ToList();
     }
 }

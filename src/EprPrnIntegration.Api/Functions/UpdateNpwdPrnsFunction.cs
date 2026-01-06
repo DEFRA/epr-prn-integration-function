@@ -14,10 +14,10 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Api.Functions;
 
-public class UpdatePrnsFunction(
+public class UpdateNpwdPrnsFunction(
     INpwdPrnService prnService,
     INpwdClient npwdClient,
-    ILogger<UpdatePrnsFunction> logger,
+    ILogger<UpdateNpwdPrnsFunction> logger,
     IConfiguration configuration,
     IOptions<FeatureManagementConfiguration> featureConfig,
     IUtilities utilities,
@@ -181,7 +181,7 @@ public class UpdatePrnsFunction(
             }
 
             logger.LogWarning(
-                "No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.",
+                "No updated Prns are retrieved from common database for time period {FromDate} to {ToDate}.",
                 fromDate,
                 toDate
             );
@@ -190,7 +190,7 @@ public class UpdatePrnsFunction(
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.",
+                "Failed to retrieve data from common backend for time period {FromDate} to {ToDate}.",
                 fromDate,
                 toDate
             );

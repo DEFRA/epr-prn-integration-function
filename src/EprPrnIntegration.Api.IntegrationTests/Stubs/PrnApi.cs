@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Models;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
@@ -99,5 +100,20 @@ public class PrnApi(WireMockContext wiremock)
     {
         var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v2/prn/" };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public async Task HasUpdatedPrns(List<PrnUpdateStatus> payload)
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request => request.UsingGet().WithPath("/api/v2/prn/modified-prns"))
+                .WithResponse(response =>
+                    response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(payload)
+                )
+        );
+
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
     }
 }

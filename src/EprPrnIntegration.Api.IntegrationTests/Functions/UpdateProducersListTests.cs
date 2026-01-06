@@ -1,3 +1,4 @@
+using EprPrnIntegration.Common.Configuration;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;

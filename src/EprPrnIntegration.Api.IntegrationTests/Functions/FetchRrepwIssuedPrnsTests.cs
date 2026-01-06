@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EprPrnIntegration.Common.Configuration;
 using FluentAssertions;
 using Xunit;
 

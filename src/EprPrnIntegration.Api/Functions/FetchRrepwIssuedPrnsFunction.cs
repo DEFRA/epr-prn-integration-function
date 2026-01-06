@@ -23,12 +23,15 @@ public class FetchRrepwIssuedPrnsFunction(
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
 
-    [Function("FetchRrepwIssuedPrns")]
-    public async Task Run([TimerTrigger("%FetchRrepwIssuedPrns:Trigger%")] TimerInfo myTimer)
+    [Function(FunctionName.FetchRrepwIssuedPrns)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.FetchRrepwIssuedPrns}:Trigger%")] TimerInfo myTimer
+    )
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
-            "FetchRrepwIssuedPrns resuming with last update time: {ExecutionDateTime}",
+            "{FunctionId} resuming with last update time: {ExecutionDateTime}",
+            FunctionName.FetchRrepwIssuedPrns,
             lastUpdate
         );
 
@@ -46,16 +49,17 @@ public class FetchRrepwIssuedPrnsFunction(
 
         await ProcessPrns(prns);
 
-        await lastUpdateService.SetLastUpdate("FetchRrepwIssuedPrns", utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, utcNow);
         logger.LogInformation(
-            "FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}",
+            "{FunctionId} function completed at: {ExecutionDateTime}",
+            FunctionName.FetchRrepwIssuedPrns,
             DateTime.UtcNow
         );
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns");
+        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
@@ -67,7 +71,7 @@ public class FetchRrepwIssuedPrnsFunction(
                 DateTimeKind.Utc
             );
         }
-        return lastUpdate!.Value;
+        return lastUpdate.Value;
     }
 
     private async Task ProcessPrns(List<PackagingRecyclingNote> prns)

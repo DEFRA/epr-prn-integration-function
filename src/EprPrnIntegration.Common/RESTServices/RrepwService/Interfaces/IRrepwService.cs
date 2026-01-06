@@ -1,3 +1,4 @@
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 
 namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
@@ -9,5 +10,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
             DateTime dateTo,
             CancellationToken cancellationToken = default
         );
+        Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns);
     }
 }

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -49,16 +50,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
-        _lastUpdateServiceMock
-            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
-            .Returns(Task.CompletedTask);
+
         _rrepwServiceMock
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
+                    ItEx.IsCloseTo(DateTime.MinValue),
+                    ItEx.IsCloseTo(DateTime.UtcNow),
                     It.IsAny<CancellationToken>()
                 )
             )
@@ -79,7 +78,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             Times.Once
         );
         _lastUpdateServiceMock.Verify(
-            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -88,7 +88,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task WhenRrepwPrnServiceThrows_DoesNotProcessPrns()
     {
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
             .Setup(x =>
@@ -117,11 +117,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
         var emptyPrnsList = new List<PackagingRecyclingNote>();
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
-        _lastUpdateServiceMock
-            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
-            .Returns(Task.CompletedTask);
         _rrepwServiceMock
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
@@ -154,21 +151,18 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
-        _lastUpdateServiceMock
-            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
-            .Returns(Task.CompletedTask);
+
         _rrepwServiceMock
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
+                    ItEx.IsCloseTo(DateTime.MinValue),
+                    ItEx.IsCloseTo(DateTime.UtcNow),
                     It.IsAny<CancellationToken>()
                 )
             )
             .ReturnsAsync(prns);
-
         _prnServiceMock
             .Setup(x =>
                 x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails"))
@@ -195,7 +189,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Verify last update WAS still set despite one failure
         _lastUpdateServiceMock.Verify(
-            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -218,11 +213,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
-        _lastUpdateServiceMock
-            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
-            .Returns(Task.CompletedTask);
         _rrepwServiceMock
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
@@ -265,11 +257,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync((DateTime?)null);
-        _lastUpdateServiceMock
-            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
-            .Returns(Task.CompletedTask);
+
         _rrepwServiceMock
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
@@ -283,14 +273,18 @@ public class FetchRrepwIssuedPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Verify GetLastUpdate was called
-        _lastUpdateServiceMock.Verify(x => x.GetLastUpdate("FetchRrepwIssuedPrns"), Times.Once);
+        _lastUpdateServiceMock.Verify(
+            x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns),
+            Times.Once
+        );
 
         // Verify PRNs were processed
         _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Exactly(2));
 
         // Verify last update was set
         _lastUpdateServiceMock.Verify(
-            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
