@@ -101,7 +101,6 @@ public class PrnApi(WireMockContext wiremock)
         var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v2/prn/" };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
-<<<<<<< HEAD
 
     public async Task HasUpdatedPrns(List<PrnUpdateStatus> payload)
     {
@@ -117,6 +116,4 @@ public class PrnApi(WireMockContext wiremock)
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
     }
-=======
->>>>>>> origin/main
 }
