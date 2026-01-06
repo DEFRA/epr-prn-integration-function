@@ -49,6 +49,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         AccreditationNumber = "STUB-ACC-001",
                         AccreditationYear = 2026,
                         Material = RrepwMaterialName.Plastic,
+                        SubmittedToRegulator = RrepwSubmittedToRegulator.EnvironmentAgency_EA,
+                        SiteAddress = new() { Line1 = "123 stub street", Postcode = "ABC 123" },
                     },
                     IsDecemberWaste = false,
                     IsExport = false,
