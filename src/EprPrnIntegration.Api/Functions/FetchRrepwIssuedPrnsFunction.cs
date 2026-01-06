@@ -22,15 +22,16 @@ public class FetchRrepwIssuedPrnsFunction(
 )
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
-    public const string FunctionId = "FetchRrepwIssuedPrns";
 
-    [Function(FunctionId)]
-    public async Task Run([TimerTrigger($"%{FunctionId}:Trigger%")] TimerInfo myTimer)
+    [Function(FunctionName.FetchRrepwIssuedPrns)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.FetchRrepwIssuedPrns}:Trigger%")] TimerInfo myTimer
+    )
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
             "{FunctionId} resuming with last update time: {ExecutionDateTime}",
-            FunctionId,
+            FunctionName.FetchRrepwIssuedPrns,
             lastUpdate
         );
 
@@ -48,17 +49,17 @@ public class FetchRrepwIssuedPrnsFunction(
 
         await ProcessPrns(prns);
 
-        await lastUpdateService.SetLastUpdate(FunctionId, utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, utcNow);
         logger.LogInformation(
             "{FunctionId} function completed at: {ExecutionDateTime}",
-            FunctionId,
+            FunctionName.FetchRrepwIssuedPrns,
             DateTime.UtcNow
         );
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionId);
+        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
