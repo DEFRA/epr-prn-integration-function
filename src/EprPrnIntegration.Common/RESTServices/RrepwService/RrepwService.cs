@@ -15,21 +15,32 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         IHttpContextAccessor httpContextAccessor,
         IHttpClientFactory httpClientFactory,
         ILogger<RrepwService> logger,
-        IOptions<RrepwApiConfiguration> config)
-        : BaseHttpService(httpContextAccessor, httpClientFactory,
-            config.Value.BaseUrl ??
-            throw new ArgumentNullException(nameof(config), ExceptionMessages.RrepwApiBaseUrlMissing),
+        IOptions<RrepwApiConfiguration> config
+    )
+        : BaseHttpService(
+            httpContextAccessor,
+            httpClientFactory,
+            config.Value.BaseUrl
+                ?? throw new ArgumentNullException(
+                    nameof(config),
+                    ExceptionMessages.RrepwApiBaseUrlMissing
+                ),
             "v1",
             logger,
             HttpClientNames.Rrepw,
-            config.Value.TimeoutSeconds), IRrepwService
+            config.Value.TimeoutSeconds
+        ),
+            IRrepwService
     {
         public async Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
             DateTime dateTo,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
-            var dateFromQuery = dateFrom.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
+            var dateFromQuery = dateFrom
+                .ToUniversalTime()
+                .ToString("O", CultureInfo.InvariantCulture);
             var dateToQuery = dateTo.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
             var statuses = string.Join(",", RrepwStatus.AwaitingAcceptance, RrepwStatus.Cancelled);
 
@@ -40,7 +51,14 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             do
             {
                 pageCount++;
-                var (items, nextCursor) = await FetchPage(statuses, dateFromQuery, dateToQuery, cursor, pageCount, cancellationToken);
+                var (items, nextCursor) = await FetchPage(
+                    statuses,
+                    dateFromQuery,
+                    dateToQuery,
+                    cursor,
+                    pageCount,
+                    cancellationToken
+                );
 
                 if (items.Count > 0)
                 {
@@ -52,7 +70,9 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
 
             logger.LogInformation(
                 "Completed fetching packaging recycling notes. Total pages: {PageCount}, Total items: {TotalCount}",
-                pageCount, allItems.Count);
+                pageCount,
+                allItems.Count
+            );
 
             return allItems;
         }
@@ -63,15 +83,23 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             string dateToQuery,
             string? cursor,
             int pageCount,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken
+        )
         {
             var url = BuildRoute(statuses, dateFromQuery, dateToQuery, cursor);
 
             logger.LogInformation(
                 "Fetching packaging recycling notes from {DateFrom} to {DateTo}, page {PageCount}",
-                dateFromQuery, dateToQuery, pageCount);
+                dateFromQuery,
+                dateToQuery,
+                pageCount
+            );
 
-            var response = await Get<ListPackagingRecyclingNotesResponse>(url, cancellationToken, includeTrailingSlash: false);
+            var response = await Get<ListPackagingRecyclingNotesResponse>(
+                url,
+                cancellationToken,
+                includeTrailingSlash: false
+            );
 
             var items = response.Items ?? new List<PackagingRecyclingNote>();
 
@@ -79,7 +107,9 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             {
                 logger.LogInformation(
                     "Retrieved {ItemCount} items on page {PageCount}",
-                    items.Count, pageCount);
+                    items.Count,
+                    pageCount
+                );
             }
 
             var nextCursor = response.HasMore ? response.NextCursor : null;
@@ -87,9 +117,15 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return (items, nextCursor);
         }
 
-        private static string BuildRoute(string statuses, string dateFrom, string dateTo, string? cursor)
+        private static string BuildRoute(
+            string statuses,
+            string dateFrom,
+            string dateTo,
+            string? cursor
+        )
         {
-            var route = $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
+            var route =
+                $"packaging-recycling-notes?statuses={statuses}&dateFrom={dateFrom}&dateTo={dateTo}";
 
             if (!string.IsNullOrEmpty(cursor))
             {
