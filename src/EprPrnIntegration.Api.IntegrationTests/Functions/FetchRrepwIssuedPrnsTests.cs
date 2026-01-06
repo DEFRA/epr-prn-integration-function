@@ -25,9 +25,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             var entry = entries[0];
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
-            jsonDocument.RootElement
-                .GetProperty("prnNumber")
-                .GetString().Should().Be(prnNumber);
+            jsonDocument.RootElement.GetProperty("prnNumber").GetString().Should().Be(prnNumber);
 
             entry.Response.StatusCode.Should().Be(202);
         });
@@ -40,7 +38,8 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
         await PrnApiStub.AcceptsPrnV2();
 
-        var before = await LastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns") ?? DateTime.MinValue;
+        var before =
+            await LastUpdateService.GetLastUpdate("FetchRrepwIssuedPrns") ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -59,12 +58,14 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await RrepwApiStub.HasPrnUpdates(
             ["PRN-PAGE1-001", "PRN-PAGE1-002"],
             cursor: null,
-            nextCursor: "cursor-page-2");
+            nextCursor: "cursor-page-2"
+        );
 
         await RrepwApiStub.HasPrnUpdates(
             ["PRN-PAGE2-001", "PRN-PAGE2-002"],
             cursor: "cursor-page-2",
-            nextCursor: null);
+            nextCursor: null
+        );
 
         await PrnApiStub.AcceptsPrnV2();
 
@@ -87,8 +88,10 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
             var expectedPrnNumbers = new[]
             {
-                "PRN-PAGE1-001", "PRN-PAGE1-002",
-                "PRN-PAGE2-001", "PRN-PAGE2-002",
+                "PRN-PAGE1-001",
+                "PRN-PAGE1-002",
+                "PRN-PAGE2-001",
+                "PRN-PAGE2-002",
             };
 
             receivedPrnNumbers.Should().BeEquivalentTo(expectedPrnNumbers.OrderBy(prn => prn));
