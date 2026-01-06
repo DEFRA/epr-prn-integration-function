@@ -179,6 +179,8 @@ services:
       UpdateWasteOrganisations__DefaultStartDate: "2024-01-01"
       FetchRrepwIssuedPrns__Trigger: "0 0 19 * * 1-5"
       FetchRrepwIssuedPrns__DefaultStartDate: "2024-01-01"
+      UpdateRrepwPrnsList__Trigger: "0 0 20 * * 1-5"
+      UpdateRrepwPrnsList__DefaultStartDate: "2024-01-01"
       RrepwApi__BaseUrl: "http://wiremock"
       RrepwApi__ClientId: "dummy-client-id"
       RrepwApi__ClientSecret: "dummy-client-secret"

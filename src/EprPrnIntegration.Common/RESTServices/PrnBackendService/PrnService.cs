@@ -35,26 +35,15 @@ public class PrnService(
     public async Task SavePrn(SavePrnDetailsRequest request)
     {
         logger.LogInformation("Saving RREPW PRN with id {PrnNumber}", request.PrnNumber);
-        await Post($"prn", request, CancellationToken.None);
+        await Post("prn", request, CancellationToken.None);
     }
 
     public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
     {
-        var fromDate = from.ToString(
-            "yyyy-MM-ddTHH:mm:ss.fff",
-            System.Globalization.CultureInfo.InvariantCulture
-        );
-        var toDate = to.ToString(
-            "yyyy-MM-ddTHH:mm:ss.fff",
-            System.Globalization.CultureInfo.InvariantCulture
-        );
         logger.LogInformation("Getting updated PRN's.");
-        var uriBuilder = new UriBuilder(new Uri("modified-prns", UriKind.Relative))
-        {
-            Query = $"from={fromDate}&to={toDate}",
-        };
+
         return await Get<List<PrnUpdateStatus>>(
-            uriBuilder.ToString(),
+            PrnRoutes.ModifiedPrnsRoute(from, to),
             CancellationToken.None,
             false
         );

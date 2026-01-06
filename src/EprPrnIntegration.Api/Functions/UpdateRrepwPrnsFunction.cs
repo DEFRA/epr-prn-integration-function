@@ -17,19 +17,17 @@ public class UpdateRrepwPrnsFunction(
     IOptions<UpdateRrepwPrnsConfiguration> config
 )
 {
-    public const string FunctionId = "UpdateRrepwPrnsList";
-
-    // todo integration tests
-
-    [Function(FunctionId)]
-    public async Task Run([TimerTrigger($"%{FunctionId}:Trigger%")] TimerInfo _)
+    [Function(FunctionName.UpdateRrepwPrnsList)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.UpdateRrepwPrnsList}:Trigger%")] TimerInfo _
+    )
     {
         List<PrnUpdateStatus>? updatedEprPrns = null;
         try
         {
             logger.LogInformation(
                 "{FunctionId} function executed at: {DateTimeNow}",
-                FunctionId,
+                FunctionName.UpdateRrepwPrnsList,
                 DateTime.UtcNow
             );
 
@@ -43,7 +41,10 @@ public class UpdateRrepwPrnsFunction(
 
             await UpdatePrns(updatedEprPrns, fromDate, toDate);
 
-            await lastUpdateService.SetLastUpdate(FunctionId, DateTime.UtcNow);
+            await lastUpdateService.SetLastUpdate(
+                FunctionName.UpdateRrepwPrnsList,
+                DateTime.UtcNow
+            );
         }
         catch (Exception ex)
         {
@@ -80,7 +81,7 @@ public class UpdateRrepwPrnsFunction(
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionId);
+        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionName.UpdateRrepwPrnsList);
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(

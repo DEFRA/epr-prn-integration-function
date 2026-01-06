@@ -1,3 +1,4 @@
+using EprPrnIntegration.Common.Configuration;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
@@ -10,7 +11,8 @@ public class UpdatePrnsListTests : IntegrationTestBase
         await Task.WhenAll(
             PrnApiStub.HasUpdateFor("PRN001234567"),
             PrnApiStub.AcceptsSyncStatus(),
-            NpwdApiStub.AcceptsPrnPatch());
+            NpwdApiStub.AcceptsPrnPatch()
+        );
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
 

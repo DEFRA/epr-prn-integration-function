@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EprPrnIntegration.Common.Configuration;
 using FluentAssertions;
 using Xunit;
 
@@ -14,8 +15,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
-        
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
+
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
@@ -28,20 +31,24 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
-            jsonDocument.RootElement
-                .GetProperty("registration")
+            jsonDocument
+                .RootElement.GetProperty("registration")
                 .GetProperty("type")
-                .GetString().Should().Be("COMPLIANCE_SCHEME");
-            
-            jsonDocument.RootElement
-                .GetProperty("registration")
+                .GetString()
+                .Should()
+                .Be("COMPLIANCE_SCHEME");
+
+            jsonDocument
+                .RootElement.GetProperty("registration")
                 .GetProperty("status")
-                .GetString().Should().Be("REGISTERED");
-            
+                .GetString()
+                .Should()
+                .Be("REGISTERED");
+
             entry.Response.StatusCode.Should().Be(202);
         });
     }
-    
+
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
@@ -50,9 +57,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
-        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -70,7 +80,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -78,7 +90,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries.Count.Should().Be(1);
             entries[0].Request.Body!.Should().Contain("acme-resilient");
-            
+
             entries[0].Response.StatusCode.Should().Be(202);
         });
     }
@@ -91,15 +103,20 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id);
 
-        var before = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateWasteOrganisations);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
-            entries.Count.Should().BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
+            entries
+                .Count.Should()
+                .BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
