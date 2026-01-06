@@ -10,15 +10,12 @@ public class HealthCheckFunction
 {
     [Function("HealthCheck")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequestData req
+    )
     {
         var response = req.CreateResponse(HttpStatusCode.OK);
 
-        var healthStatus = new
-        {
-            Status = "Healthy",
-            Timestamp = DateTime.UtcNow
-        };
+        var healthStatus = new { Status = "Healthy", Timestamp = DateTime.UtcNow };
 
         await response.WriteAsJsonAsync(healthStatus);
 
