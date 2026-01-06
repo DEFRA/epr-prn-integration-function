@@ -1,4 +1,5 @@
-﻿using AutoFixture;
+﻿using System.Globalization;
+using AutoFixture;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
@@ -10,7 +11,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.Protected;
 using Xunit;
 
 namespace EprPrnIntegration.Api.UnitTests;
@@ -41,7 +41,11 @@ public class UpdateRrepwPrnsFunctionTests
 
     private PrnUpdateStatus CreatePrnUpdateStatus(string prnId)
     {
-        return _fixture.Build<PrnUpdateStatus>().With(p => p.PrnNumber, prnId).Create();
+        return _fixture
+            .Build<PrnUpdateStatus>()
+            .With(p => p.PrnNumber, prnId)
+            .With(p => p.StatusDate, DateTime.UtcNow.AddHours(-1))
+            .Create();
     }
 
     [Fact]
@@ -67,48 +71,6 @@ public class UpdateRrepwPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         _rrepwServiceMock.Verify(x => x.UpdatePrns(prns), Times.Once);
-
-        _lastUpdateServiceMock.Verify(
-            x =>
-                x.SetLastUpdate(
-                    UpdateRrepwPrnsFunction.FunctionId,
-                    ItEx.IsCloseTo(DateTime.UtcNow)
-                ),
-            Times.Once
-        );
-    }
-
-    [Fact]
-    public async Task ProcessesMultiplePrns_Limit()
-    {
-        _config.Value.UpdateRrepwPrnsMaxRows = 2;
-        var prns = new List<PrnUpdateStatus>
-        {
-            CreatePrnUpdateStatus("PRN-001"),
-            CreatePrnUpdateStatus("PRN-002"),
-            CreatePrnUpdateStatus("PRN-003"),
-        };
-        prns[0].StatusDate = DateTime.UtcNow.AddHours(-3);
-        prns[1].StatusDate = DateTime.UtcNow.AddHours(-2);
-        prns[2].StatusDate = DateTime.UtcNow.AddHours(-1);
-
-        _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(UpdateRrepwPrnsFunction.FunctionId))
-            .ReturnsAsync(DateTime.MinValue);
-
-        _prnServiceMock
-            .Setup(x =>
-                x.GetUpdatedPrns(ItEx.IsCloseTo(DateTime.MinValue), ItEx.IsCloseTo(DateTime.UtcNow))
-            )
-            .ReturnsAsync(prns);
-
-        await _function.Run(new TimerInfo());
-
-        _rrepwServiceMock.Verify(
-            x =>
-                x.UpdatePrns(It.Is<List<PrnUpdateStatus>>(l => l[0] == prns[0] && l[1] == prns[1])),
-            Times.Once
-        );
 
         _lastUpdateServiceMock.Verify(
             x =>
@@ -211,6 +173,56 @@ public class UpdateRrepwPrnsFunctionTests
                     It.IsAny<It.IsAnyType>(),
                     ex,
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task WhenNoBlobStorageValueExists_UsesDefaultStartDateFromConfiguration()
+    {
+        var prns = new List<PrnUpdateStatus>
+        {
+            CreatePrnUpdateStatus("PRN-001"),
+            CreatePrnUpdateStatus("PRN-002"),
+            CreatePrnUpdateStatus("PRN-003"),
+        };
+
+        var expectedStartDate = DateTime.SpecifyKind(
+            DateTime.ParseExact(
+                _config.Value.DefaultStartDate,
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture
+            ),
+            DateTimeKind.Utc
+        );
+
+        // Setup: GetLastUpdate returns null (no blob storage value)
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(UpdateRrepwPrnsFunction.FunctionId))
+            .ReturnsAsync((DateTime?)null);
+
+        _prnServiceMock
+            .Setup(x =>
+                x.GetUpdatedPrns(ItEx.IsCloseTo(new DateTime(2024, 01, 01)), It.IsAny<DateTime>())
+            )
+            .ReturnsAsync(prns);
+
+        await _function.Run(new TimerInfo());
+
+        _rrepwServiceMock.Verify(m => m.UpdatePrns(prns));
+        // Verify GetLastUpdate was called
+        _lastUpdateServiceMock.Verify(
+            x => x.GetLastUpdate(UpdateRrepwPrnsFunction.FunctionId),
+            Times.Once
+        );
+
+        // Verify last update was set
+        _lastUpdateServiceMock.Verify(
+            x =>
+                x.SetLastUpdate(
+                    UpdateRrepwPrnsFunction.FunctionId,
+                    ItEx.IsCloseTo(DateTime.UtcNow)
                 ),
             Times.Once
         );

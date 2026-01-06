@@ -1,6 +1,4 @@
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Constants;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
@@ -21,14 +19,17 @@ public class UpdateRrepwPrnsFunction(
 {
     public const string FunctionId = "UpdateRrepwPrnsList";
 
+    // todo integration tests
+
     [Function(FunctionId)]
-    public async Task Run([TimerTrigger("%UpdateRrepwPrnsTrigger%")] TimerInfo _)
+    public async Task Run([TimerTrigger($"%{FunctionId}:Trigger%")] TimerInfo _)
     {
         List<PrnUpdateStatus>? updatedEprPrns = null;
         try
         {
             logger.LogInformation(
-                "UpdateRrepwPrnsList function executed at: {DateTimeNow}",
+                "{FunctionId} function executed at: {DateTimeNow}",
+                FunctionId,
                 DateTime.UtcNow
             );
 
@@ -40,13 +41,9 @@ public class UpdateRrepwPrnsFunction(
             if (updatedEprPrns == null)
                 return;
 
-            updatedEprPrns = LimitRecords(updatedEprPrns);
-
             await UpdatePrns(updatedEprPrns, fromDate, toDate);
 
             await lastUpdateService.SetLastUpdate(FunctionId, DateTime.UtcNow);
-
-            // todo do we need this LogCustomEvents(updatedEprPrns);
         }
         catch (Exception ex)
         {
@@ -81,34 +78,6 @@ public class UpdateRrepwPrnsFunction(
         );
     }
 
-    /// <summary>
-    /// Limit the number of records sent to RREPW
-    /// </summary>
-    private List<PrnUpdateStatus> LimitRecords(List<PrnUpdateStatus> updatedEprPrns)
-    {
-        // owing to performance limitations (timeouts) on external service, limit number of rows sent in a batch
-        // todo do we need this?
-        if (
-            config.Value.UpdateRrepwPrnsMaxRows > 0
-            && config.Value.UpdateRrepwPrnsMaxRows < updatedEprPrns.Count
-        )
-        {
-            logger.LogInformation(
-                "Batching {BatchSize} of {PrnCount} Prns",
-                config.Value.UpdateRrepwPrnsMaxRows,
-                updatedEprPrns.Count
-            );
-
-            updatedEprPrns =
-            [
-                .. updatedEprPrns
-                    .OrderBy(x => x.StatusDate)
-                    .Take(config.Value.UpdateRrepwPrnsMaxRows),
-            ];
-        }
-        return updatedEprPrns;
-    }
-
     private async Task<DateTime> GetLastUpdate()
     {
         var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionId);
@@ -126,24 +95,9 @@ public class UpdateRrepwPrnsFunction(
         return lastUpdate.Value;
     }
 
-    // do we need this? private void LogCustomEvents(IEnumerable<PrnUpdateStatus> rrepwUpdatedPrns)
-    // {
-    //     foreach (var prn in rrepwUpdatedPrns)
-    //     {
-    //         Dictionary<string, string> eventData = new()
-    //         {
-    //             { "PrnNumber", prn.PrnNumber },
-    //             { "PrnStatusId", prn.PrnStatusId.ToString() },
-    //             { "StatusDate", prn.StatusDate.GetValueOrDefault().ToUniversalTime().ToString() },
-    //             { "SourceSystemId", prn.SourceSystemId.ToString() },
-    //             { "AccreditationYear", prn.AccreditationYear.ToString() },
-    //         };
-
-    //         utilities.AddCustomEvent(CustomEvents.UpdatePrn, eventData);
-    //     }
-    // }
-
-    // Retrieve data from the common backend
+    /// <summary>
+    /// Retrieve data from the common backend
+    /// </summary>
     private async Task<List<PrnUpdateStatus>?> GetUpdatedRrepwPrnsAsync(
         DateTime fromDate,
         DateTime toDate

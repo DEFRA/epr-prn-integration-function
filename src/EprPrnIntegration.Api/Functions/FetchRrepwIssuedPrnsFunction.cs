@@ -25,11 +25,12 @@ public class FetchRrepwIssuedPrnsFunction(
     public const string FunctionId = "FetchRrepwIssuedPrns";
 
     [Function(FunctionId)]
-    public async Task Run([TimerTrigger("%FetchRrepwIssuedPrns:Trigger%")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger($"%{FunctionId}:Trigger%")] TimerInfo myTimer)
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
-            "FetchRrepwIssuedPrns resuming with last update time: {ExecutionDateTime}",
+            "{FunctionId} resuming with last update time: {ExecutionDateTime}",
+            FunctionId,
             lastUpdate
         );
 
@@ -49,7 +50,8 @@ public class FetchRrepwIssuedPrnsFunction(
 
         await lastUpdateService.SetLastUpdate(FunctionId, utcNow);
         logger.LogInformation(
-            "FetchRrepwIssuedPrns function completed at: {ExecutionDateTime}",
+            "{FunctionId} function completed at: {ExecutionDateTime}",
+            FunctionId,
             DateTime.UtcNow
         );
     }

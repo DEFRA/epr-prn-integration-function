@@ -8,7 +8,8 @@ public enum FunctionName
     UpdatePrnsList,
     FetchNpwdIssuedPrnsFunction,
     UpdateWasteOrganisations,
-    FetchRrepwIssuedPrns
+    FetchRrepwIssuedPrns,
+    UpdateRrepwPrnsList,
 }
 
 public static class AzureFunctionInvokerContext
@@ -17,10 +18,7 @@ public static class AzureFunctionInvokerContext
 
     static AzureFunctionInvokerContext()
     {
-        HttpClient = new HttpClient
-        {
-            BaseAddress = new Uri($"{BaseUri}/admin/functions/")
-        };
+        HttpClient = new HttpClient { BaseAddress = new Uri($"{BaseUri}/admin/functions/") };
 
         HttpClient.DefaultRequestHeaders.Add("x-functions-key", "this-is-a-dummy-value");
     }
@@ -31,11 +29,7 @@ public static class AzureFunctionInvokerContext
     {
         var request = new HttpRequestMessage(HttpMethod.Post, functionName.ToString())
         {
-            Content = new StringContent(
-                "{}",
-                Encoding.UTF8,
-                "application/json"
-            )
+            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
         };
 
         var response = await HttpClient.SendAsync(request);
@@ -43,5 +37,6 @@ public static class AzureFunctionInvokerContext
         response.EnsureSuccessStatusCode();
     }
 
-    public static async Task<HttpResponseMessage> Get(string requestUri) => await HttpClient.GetAsync(requestUri);
+    public static async Task<HttpResponseMessage> Get(string requestUri) =>
+        await HttpClient.GetAsync(requestUri);
 }

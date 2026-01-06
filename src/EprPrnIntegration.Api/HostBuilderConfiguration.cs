@@ -234,6 +234,9 @@ public static class HostBuilderConfiguration
         services.Configure<FetchRrepwIssuedPrnsConfiguration>(
             configuration.GetSection(FetchRrepwIssuedPrnsConfiguration.SectionName)
         );
+        services.Configure<UpdateRrepwPrnsConfiguration>(
+            configuration.GetSection(UpdateRrepwPrnsConfiguration.SectionName)
+        );
         services.Configure<RrepwApiConfiguration>(
             configuration.GetSection(RrepwApiConfiguration.SectionName)
         );
