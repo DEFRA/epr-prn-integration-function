@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -60,6 +61,16 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             };
 
             return Task.FromResult(stubbedData);
+        }
+
+        public Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
+        {
+            logger.LogInformation(
+                "Using stubbed RRepw service. UpdatePrns called with {Count} PRNs (no-op): {@PrnUpdates}",
+                rrepwUpdatedPrns.Count,
+                rrepwUpdatedPrns
+            );
+            return Task.CompletedTask;
         }
     }
 }
