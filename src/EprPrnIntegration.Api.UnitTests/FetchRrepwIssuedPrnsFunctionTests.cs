@@ -50,7 +50,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
 
         _rrepwServiceMock
@@ -79,10 +79,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
         _lastUpdateServiceMock.Verify(
             x =>
-                x.SetLastUpdate(
-                    FetchRrepwIssuedPrnsFunction.FunctionId,
-                    ItEx.IsCloseTo(DateTime.UtcNow)
-                ),
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -91,7 +88,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task WhenRrepwPrnServiceThrows_DoesNotProcessPrns()
     {
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
             .Setup(x =>
@@ -120,7 +117,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         var emptyPrnsList = new List<PackagingRecyclingNote>();
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
             .Setup(x =>
@@ -154,7 +151,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
 
         _rrepwServiceMock
@@ -193,10 +190,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         // Verify last update WAS still set despite one failure
         _lastUpdateServiceMock.Verify(
             x =>
-                x.SetLastUpdate(
-                    FetchRrepwIssuedPrnsFunction.FunctionId,
-                    ItEx.IsCloseTo(DateTime.UtcNow)
-                ),
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -219,7 +213,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
             .Setup(x =>
@@ -263,7 +257,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId))
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync((DateTime?)null);
 
         _rrepwServiceMock
@@ -280,7 +274,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Verify GetLastUpdate was called
         _lastUpdateServiceMock.Verify(
-            x => x.GetLastUpdate(FetchRrepwIssuedPrnsFunction.FunctionId),
+            x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns),
             Times.Once
         );
 
@@ -290,10 +284,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         // Verify last update was set
         _lastUpdateServiceMock.Verify(
             x =>
-                x.SetLastUpdate(
-                    FetchRrepwIssuedPrnsFunction.FunctionId,
-                    ItEx.IsCloseTo(DateTime.UtcNow)
-                ),
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
