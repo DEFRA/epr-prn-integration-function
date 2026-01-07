@@ -21,11 +21,7 @@ public class PrnService(
                 nameof(config),
                 ExceptionMessages.PrnServiceBaseUrlMissing
             ),
-        config.Value.PrnEndPointNameV2
-            ?? throw new ArgumentNullException(
-                nameof(config),
-                ExceptionMessages.PrnServiceEndPointNameV2Missing
-            ),
+        "api/v2",
         logger,
         HttpClientNames.PrnV2,
         config.Value.TimeoutSeconds
