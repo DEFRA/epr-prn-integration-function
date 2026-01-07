@@ -31,6 +31,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     {
                         CurrentStatus = RrepwStatus.AwaitingAcceptance,
                         AuthorisedAt = DateTime.UtcNow.AddDays(-1),
+                        AuthorisedBy = new() { FullName = "Stub Signatory" },
                     },
                     IssuedByOrganisation = new Organisation
                     {
