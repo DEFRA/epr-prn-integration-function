@@ -92,7 +92,7 @@ public class FetchRrepwIssuedPrnsFunction(
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
-        catch (ServiceException ex) when (ex.StatusCode.IsTransient(logger))
+        catch (ServiceException ex) when (ex.StatusCode.IsTransient())
         {
             // Transient error after Polly retries exhausted - terminate function to retry on next schedule.
             logger.LogError(

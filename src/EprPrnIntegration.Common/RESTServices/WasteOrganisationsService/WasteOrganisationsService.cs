@@ -14,18 +14,28 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
         IHttpContextAccessor httpContextAccessor,
         IHttpClientFactory httpClientFactory,
         ILogger<WasteOrganisationsService> logger,
-        IOptions<WasteOrganisationsApiConfiguration> config)
-        : BaseHttpService(httpContextAccessor, httpClientFactory,
-            config.Value.BaseUrl ??
-            throw new ArgumentNullException(nameof(config), ExceptionMessages.WasteOrganisationsApiBaseUrlMissing),
-            "organisations", 
+        IOptions<WasteOrganisationsApiConfiguration> config
+    )
+        : BaseHttpService(
+            httpContextAccessor,
+            httpClientFactory,
+            config.Value.BaseUrl
+                ?? throw new ArgumentNullException(
+                    nameof(config),
+                    ExceptionMessages.WasteOrganisationsApiBaseUrlMissing
+                ),
             logger,
             HttpClientNames.WasteOrganisations,
-            config.Value.TimeoutSeconds), IWasteOrganisationsService
+            config.Value.TimeoutSeconds
+        ),
+            IWasteOrganisationsService
     {
-        public async Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation)
+        public async Task UpdateOrganisation(
+            string id,
+            WasteOrganisationsApiUpdateRequest organisation
+        )
         {
-            await Put($"{id}", organisation, CancellationToken.None);
+            await PutAsync($"organisations/{id}", organisation, CancellationToken.None);
         }
     }
 }

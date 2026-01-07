@@ -26,7 +26,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     nameof(config),
                     ExceptionMessages.RrepwApiBaseUrlMissing
                 ),
-            "v1",
             logger,
             HttpClientNames.Rrepw,
             config.Value.TimeoutSeconds
@@ -35,8 +34,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
     {
         public async Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
-            DateTime dateTo,
-            CancellationToken cancellationToken = default
+            DateTime dateTo
         )
         {
             var dateFromQuery = dateFrom.ToUniversalDate();
@@ -59,8 +57,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     dateFromQuery,
                     dateToQuery,
                     cursor,
-                    pageCount,
-                    cancellationToken
+                    pageCount
                 );
 
                 if (items.Count > 0)
@@ -85,8 +82,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             string dateFromQuery,
             string dateToQuery,
             string? cursor,
-            int pageCount,
-            CancellationToken cancellationToken
+            int pageCount
         )
         {
             var url = RrepwRoutes.ListPrnsRoute(statuses, dateFromQuery, dateToQuery, cursor);
@@ -98,11 +94,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 pageCount
             );
 
-            var response = await Get<ListPackagingRecyclingNotesResponse>(
-                url,
-                cancellationToken,
-                includeTrailingSlash: false
-            );
+            var response = await GetAsync<ListPackagingRecyclingNotesResponse>(url);
 
             var items = response.Items ?? [];
 
@@ -135,19 +127,17 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
                 {
                     logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
-                    await Post(
+                    await PostAsync(
                         RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
-                        new { acceptedAt = prn.StatusDate },
-                        CancellationToken.None
+                        new { acceptedAt = prn.StatusDate }
                     );
                 }
                 else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
                 {
                     logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
-                    await Post(
+                    await PostAsync(
                         RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
-                        new { rejectedAt = prn.StatusDate },
-                        CancellationToken.None
+                        new { rejectedAt = prn.StatusDate }
                     );
                 }
                 else

@@ -86,7 +86,7 @@ public class UpdateWasteOrganisationsFunction(
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
-        catch (ServiceException ex) when (ex.StatusCode.IsTransient(logger))
+        catch (ServiceException ex) when (ex.StatusCode.IsTransient())
         {
             // Allow the function to terminate and resume on the next schedule with the original time window.
             logger.LogError(

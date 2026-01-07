@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
-public class NpwdPrnService : BaseHttpService, INpwdPrnService
+public class NpwdPrnService : BaseHttpServiceOld, INpwdPrnService
 {
     private readonly ILogger<NpwdPrnService> _logger;
 
