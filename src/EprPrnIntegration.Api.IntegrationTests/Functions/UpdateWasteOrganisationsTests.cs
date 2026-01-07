@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using FluentAssertions;
@@ -101,7 +102,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
 
         await CognitoApiStub.SetupOAuthToken();
-        await WasteOrganisationsApiStub.AcceptsOrganisationWithTransientFailures(id);
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            id,
+            3
+        );
 
         var before =
             await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
@@ -116,13 +120,45 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries
                 .Count.Should()
-                .BeGreaterOrEqualTo(1, "request should eventually succeed after retry");
+                .Be(4, "Should be three failures in a row then a success,so four requests");
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
 
             var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
             after.Should().BeAfter(before);
+        });
+    }
+
+    [Fact]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Failures()
+    {
+        var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
+
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            id,
+            4
+        );
+
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+
+            entries.Count.Should().Be(4, "Should be four failures in a row,so four requests");
+            var mostRecentUpdate = entries.Last();
+            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
+            mostRecentUpdate.Response.StatusCode.Should().Be(503);
+
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().NotBeAfter(before);
         });
     }
 }

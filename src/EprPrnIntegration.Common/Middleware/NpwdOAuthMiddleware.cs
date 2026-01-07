@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using Microsoft.Identity.Client;
+using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using EprPrnIntegration.Common.Configuration;
+using Microsoft.Identity.Client;
 
 namespace EprPrnIntegration.Common.Middleware;
 
@@ -15,7 +15,10 @@ public class NpwdOAuthMiddleware : DelegatingHandler
     private readonly ILogger<NpwdOAuthMiddleware> _logger;
     private string? _accessToken;
 
-    public NpwdOAuthMiddleware(IOptions<NpwdIntegrationConfiguration> npwdConfig, ILogger<NpwdOAuthMiddleware> logger)
+    public NpwdOAuthMiddleware(
+        IOptions<NpwdIntegrationConfiguration> npwdConfig,
+        ILogger<NpwdOAuthMiddleware> logger
+    )
     {
         _logger = logger;
         _npwdIntegrationConfig = npwdConfig.Value;
@@ -29,7 +32,8 @@ public class NpwdOAuthMiddleware : DelegatingHandler
 
         try
         {
-            _confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(_npwdIntegrationConfig.ClientId)
+            _confidentialClientApplication = ConfidentialClientApplicationBuilder
+                .Create(_npwdIntegrationConfig.ClientId)
                 .WithClientSecret(_npwdIntegrationConfig.ClientSecret)
                 .WithAuthority(_npwdIntegrationConfig.Authority)
                 .Build();
@@ -37,11 +41,17 @@ public class NpwdOAuthMiddleware : DelegatingHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "NpwdOAuthMiddleware failed");
-            throw new TypeInitializationException(fullTypeName: $"Failed to initialize {nameof(NpwdOAuthMiddleware)}", innerException: ex);
+            throw new TypeInitializationException(
+                fullTypeName: $"Failed to initialize {nameof(NpwdOAuthMiddleware)}",
+                innerException: ex
+            );
         }
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -49,24 +59,30 @@ public class NpwdOAuthMiddleware : DelegatingHandler
             {
                 return await base.SendAsync(request, cancellationToken);
             }
-            
+
             if (string.IsNullOrEmpty(_accessToken))
             {
-                var result = await _confidentialClientApplication.AcquireTokenForClient([_npwdIntegrationConfig.Scope])
-                    .WithExtraQueryParameters(new Dictionary<string, string>()
-                    {
-                        {"resource", _npwdIntegrationConfig.AccessTokenUrl },
-                    })
+                var result = await _confidentialClientApplication
+                    .AcquireTokenForClient([_npwdIntegrationConfig.Scope])
+                    .WithExtraQueryParameters(
+                        new Dictionary<string, string>()
+                        {
+                            { "resource", _npwdIntegrationConfig.AccessTokenUrl },
+                        }
+                    )
                     .ExecuteAsync(cancellationToken);
-                
+
                 _accessToken = result.AccessToken;
             }
 
-            request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, _accessToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                Constants.HttpHeaderNames.Bearer,
+                _accessToken
+            );
 
             return await base.SendAsync(request, cancellationToken);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "SendAsync failed");
             return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError);

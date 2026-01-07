@@ -1,5 +1,6 @@
 using System.Net;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
@@ -20,12 +21,14 @@ public class UpdateWasteOrganisationsFunction(
     IOptions<UpdateWasteOrganisationsConfiguration> config
 )
 {
-    [Function("UpdateWasteOrganisations")]
-    public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
+    [Function(FunctionName.UpdateWasteOrganisations)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.UpdateWasteOrganisations}:Trigger%")] TimerInfo myTimer
+    )
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
-            "UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}",
+            $"%{FunctionName.UpdateWasteOrganisations} resuming with last update time: {{ExecutionDateTime}}",
             lastUpdate
         );
 
@@ -45,12 +48,14 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionName.UpdateWasteOrganisations, utcNow);
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        var lastUpdate = await lastUpdateService.GetLastUpdate(
+            FunctionName.UpdateWasteOrganisations
+        );
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
@@ -81,7 +86,7 @@ public class UpdateWasteOrganisationsFunction(
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
-        catch (HttpRequestException ex) when (ex.IsTransient())
+        catch (ServiceException ex) when (ex.StatusCode.IsTransient(logger))
         {
             // Allow the function to terminate and resume on the next schedule with the original time window.
             logger.LogError(

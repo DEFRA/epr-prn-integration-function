@@ -99,6 +99,10 @@ services:
       dockerfile: EprPrnIntegration.Api/Dockerfile
       platforms:
         - linux/amd64
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
     depends_on:
       asb:
         condition: service_healthy

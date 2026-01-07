@@ -1,5 +1,6 @@
 using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
@@ -91,9 +92,9 @@ public class FetchRrepwIssuedPrnsFunction(
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
-        catch (HttpRequestException ex) when (ex.IsTransient())
+        catch (ServiceException ex) when (ex.StatusCode.IsTransient(logger))
         {
-            // Allow the function to terminate and resume on the next schedule.
+            // Transient error after Polly retries exhausted - terminate function to retry on next schedule.
             logger.LogError(
                 ex,
                 "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing",
@@ -104,8 +105,7 @@ public class FetchRrepwIssuedPrnsFunction(
         }
         catch (Exception ex)
         {
-            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
-            // to allow investigation.
+            // Non-transient errors are not recoverable; log and continue with next PRN.
             logger.LogError(
                 ex,
                 "Failed to save PRN {PrnNumber}, continuing with next PRN",
