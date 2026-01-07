@@ -34,12 +34,12 @@ public class PrnService(
         await Post("prn", request, CancellationToken.None);
     }
 
-    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
+    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
     {
         logger.LogInformation("Getting updated PRN's.");
 
         return await Get<List<PrnUpdateStatus>>(
-            PrnRoutes.ModifiedPrnsRoute(from, to),
+            PrnRoutes.ModifiedPrnsRoute(fromDate, toDate),
             CancellationToken.None,
             false
         );
