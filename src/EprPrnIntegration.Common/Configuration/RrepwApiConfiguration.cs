@@ -13,4 +13,5 @@ public class RrepwApiConfiguration
     public int TimeoutSeconds { get; set; } = 30;
     public int RetryAttempts { get; set; } = 3;
     public int RetryDelaySeconds { get; set; } = 5;
+    public bool UseStubbedData { get; set; }
 }
