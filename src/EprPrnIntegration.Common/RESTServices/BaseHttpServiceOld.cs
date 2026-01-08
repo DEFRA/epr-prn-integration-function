@@ -9,6 +9,9 @@ using Newtonsoft.Json.Linq;
 
 namespace EprPrnIntegration.Common.RESTServices
 {
+    /// <summary>
+    /// do not use this, it is bad and will be phased out with NPWD use BaseHttpService
+    /// </summary>
     [ExcludeFromCodeCoverage]
     public abstract class BaseHttpServiceOld
     {
