@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
+[ExcludeFromCodeCoverage(Justification = "This has integration tests")]
 public class PrnService(
     IHttpContextAccessor httpContextAccessor,
     IHttpClientFactory httpClientFactory,
