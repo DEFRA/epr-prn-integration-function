@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -143,7 +145,7 @@ public abstract class BaseHttpService
     )
     {
         var url = BuildUrl(path);
-        using var request = new HttpRequestMessage(method, url);
+        var request = new HttpRequestMessage(method, url);
 
         if (payload != null)
         {
@@ -162,22 +164,49 @@ public abstract class BaseHttpService
                 (int)response.StatusCode,
                 responseBody
             );
-            throw new ServiceException(
-                $"HTTP {method} to {url} failed with {(int)response.StatusCode} {response.StatusCode}: {responseBody}",
-                response.StatusCode
-            );
+            if (response.StatusCode.IsTransient())
+            {
+                throw new HttpRequestTransientException(
+                    "HTTP {Method} to {Url} failed with {StatusCode}: {ResponseBody}",
+                    null,
+                    response.StatusCode
+                );
+            }
         }
 
         return response;
     }
 
+    // todo unit test this, why is it needed?
     private string BuildUrl(string path)
     {
-        if (string.IsNullOrWhiteSpace(path))
-            return _baseUrl + "/";
+        // Use Uri to properly join base URL with path
+        var baseUri = new Uri(_baseUrl.TrimEnd('/') + "/");
 
-        return _baseUrl + "/" + path.Trim('/') + "/";
+        if (string.IsNullOrWhiteSpace(path))
+            return baseUri.ToString();
+
+        var trimmedPath = path.TrimStart('/');
+        var result = new Uri(baseUri, trimmedPath);
+
+        // Add trailing slash for paths without query strings (API convention)
+        if (string.IsNullOrEmpty(result.Query) && !result.AbsolutePath.EndsWith('/'))
+            return result.ToString().TrimEnd('/') + "/";
+
+        return result.ToString();
     }
 
     #endregion
+}
+
+public class HttpRequestTransientException : HttpRequestException
+{
+    public HttpRequestTransientException() { }
+
+    public HttpRequestTransientException(
+        string? message,
+        Exception? inner,
+        HttpStatusCode? statusCode
+    )
+        : base(message, inner, statusCode) { }
 }

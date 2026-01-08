@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -92,9 +93,8 @@ public class FetchRrepwIssuedPrnsFunction(
             await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
         }
-        catch (ServiceException ex) when (ex.StatusCode.IsTransient())
+        catch (HttpRequestTransientException ex)
         {
-            // Transient error after Polly retries exhausted - terminate function to retry on next schedule.
             logger.LogError(
                 ex,
                 "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing",

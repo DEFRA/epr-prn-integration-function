@@ -96,15 +96,25 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Fact]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable, 3)]
+    [InlineData(HttpStatusCode.RequestTimeout, 1)]
+    [InlineData(HttpStatusCode.InternalServerError, 1)]
+    [InlineData(HttpStatusCode.BadGateway, 1)]
+    [InlineData(HttpStatusCode.TooManyRequests, 1)]
+    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated(
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
     {
         var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
             id,
-            3
+            failureCount,
+            failureResponse
         );
 
         var before =
@@ -120,7 +130,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries
                 .Count.Should()
-                .Be(4, "Should be three failures in a row then a success,so four requests");
+                .Be(
+                    failureCount + 1,
+                    "Should be three failures in a row then a success,so four requests"
+                );
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
@@ -130,15 +143,24 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Fact]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Failures()
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Failures(
+        HttpStatusCode failureResponse
+    )
     {
         var id = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
             id,
-            4
+            4,
+            failureResponse
         );
 
         var before =

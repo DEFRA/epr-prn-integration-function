@@ -27,7 +27,8 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
 
     public async Task WithOrganisationsEndpointRecoveringFromTransientFailures(
         string id,
-        int failureCount
+        int failureCount,
+        HttpStatusCode failureResponse = HttpStatusCode.ServiceUnavailable
     )
     {
         var scenarioName = "WasteOrgTransientFailure-" + Guid.NewGuid();
@@ -39,6 +40,7 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
                     .WithPath($"/organisations/{id}/")
                     .WithHeader("Authorization", "Bearer *"),
             response => response.WithStatusCode(HttpStatusCode.Accepted),
+            response => response.WithStatusCode(failureResponse),
             failureCount
         );
     }

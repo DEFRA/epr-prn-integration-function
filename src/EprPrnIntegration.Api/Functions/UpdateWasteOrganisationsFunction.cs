@@ -4,6 +4,7 @@ using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -86,7 +87,7 @@ public class UpdateWasteOrganisationsFunction(
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
             await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
         }
-        catch (ServiceException ex) when (ex.StatusCode.IsTransient())
+        catch (HttpRequestTransientException ex)
         {
             // Allow the function to terminate and resume on the next schedule with the original time window.
             logger.LogError(

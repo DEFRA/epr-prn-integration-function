@@ -58,8 +58,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
                     ItEx.IsCloseTo(DateTime.MinValue),
-                    ItEx.IsCloseTo(DateTime.UtcNow),
-                    It.IsAny<CancellationToken>()
+                    ItEx.IsCloseTo(DateTime.UtcNow)
                 )
             )
             .ReturnsAsync(prns);
@@ -92,13 +91,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
-            .Setup(x =>
-                x.ListPackagingRecyclingNotes(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ThrowsAsync(new HttpRequestException("Service unavailable"));
 
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
@@ -121,13 +114,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
-            .Setup(x =>
-                x.ListPackagingRecyclingNotes(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(emptyPrnsList);
 
         await _function.Run(new TimerInfo());
@@ -159,8 +146,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x =>
                 x.ListPackagingRecyclingNotes(
                     ItEx.IsCloseTo(DateTime.MinValue),
-                    ItEx.IsCloseTo(DateTime.UtcNow),
-                    It.IsAny<CancellationToken>()
+                    ItEx.IsCloseTo(DateTime.UtcNow)
                 )
             )
             .ReturnsAsync(prns);
@@ -217,13 +203,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
         _rrepwServiceMock
-            .Setup(x =>
-                x.ListPackagingRecyclingNotes(
-                    It.IsAny<DateTime>(),
-                    It.IsAny<DateTime>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
         _prnServiceMock
@@ -262,13 +242,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .ReturnsAsync((DateTime?)null);
 
         _rrepwServiceMock
-            .Setup(x =>
-                x.ListPackagingRecyclingNotes(
-                    expectedStartDate,
-                    It.IsAny<DateTime>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
+            .Setup(x => x.ListPackagingRecyclingNotes(expectedStartDate, It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
         await _function.Run(new TimerInfo());
@@ -294,9 +268,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task StubbedRrepwService_WorksWithMappersAndFunction()
     {
         // Arrange - use concrete StubbedRrepwService instead of mock
-        var stubbedRrepwService = new StubbedRrepwService(
-            Mock.Of<ILogger<StubbedRrepwService>>()
-        );
+        var stubbedRrepwService = new StubbedRrepwService(Mock.Of<ILogger<StubbedRrepwService>>());
 
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();

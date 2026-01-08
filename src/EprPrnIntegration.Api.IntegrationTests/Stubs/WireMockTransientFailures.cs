@@ -11,6 +11,7 @@ public static class WireMockTransientFailures
         this WireMockContext wireMock,
         Func<RequestModelBuilder, RequestModelBuilder> configureRequest,
         Func<ResponseModelBuilder, ResponseModelBuilder> configureSuccessResponse,
+        Func<ResponseModelBuilder, ResponseModelBuilder> configureFailureResponse,
         int failureCount = 2
     )
     {
@@ -27,9 +28,7 @@ public static class WireMockTransientFailures
             {
                 var mappingBuilder = builder
                     .WithRequest(r => configureRequest(r))
-                    .WithResponse(response =>
-                        response.WithStatusCode(HttpStatusCode.ServiceUnavailable)
-                    )
+                    .WithResponse(r => configureFailureResponse(r))
                     .WithScenario(scenarioName)
                     .WithSetStateTo(nextState);
 

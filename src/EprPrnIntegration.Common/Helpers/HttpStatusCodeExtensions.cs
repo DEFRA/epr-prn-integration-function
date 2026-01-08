@@ -4,7 +4,7 @@ namespace EprPrnIntegration.Common.Helpers;
 
 public static class HttpStatusCodeExtensions
 {
-    public static bool IsTransient(this HttpStatusCode? statusCode)
+    public static bool IsTransient(this HttpStatusCode statusCode)
     {
         return statusCode
             is >= HttpStatusCode.InternalServerError

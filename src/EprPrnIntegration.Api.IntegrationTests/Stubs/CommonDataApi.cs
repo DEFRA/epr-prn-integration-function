@@ -187,6 +187,7 @@ public class CommonDataApi(WireMockContext wireMock)
         await wireMock.WithEndpointRecoveringFromTransientFailures(
             request => request.UsingGet().WithPath("/api/producer-details/updated-producers"),
             response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(responseData),
+            response => response.WithStatusCode(HttpStatusCode.ServiceUnavailable),
             3
         );
 

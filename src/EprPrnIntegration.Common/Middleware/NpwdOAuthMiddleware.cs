@@ -11,7 +11,7 @@ namespace EprPrnIntegration.Common.Middleware;
 public class NpwdOAuthMiddleware : DelegatingHandler
 {
     private readonly NpwdIntegrationConfiguration _npwdIntegrationConfig;
-    private readonly IConfidentialClientApplication _confidentialClientApplication;
+    private readonly IConfidentialClientApplication? _confidentialClientApplication = null;
     private readonly ILogger<NpwdOAuthMiddleware> _logger;
     private string? _accessToken;
 
