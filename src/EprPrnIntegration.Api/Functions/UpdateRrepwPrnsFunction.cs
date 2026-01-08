@@ -17,17 +17,15 @@ public class UpdateRrepwPrnsFunction(
     IOptions<UpdateRrepwPrnsConfiguration> config
 )
 {
-    [Function(FunctionName.UpdateRrepwPrnsList)]
-    public async Task Run(
-        [TimerTrigger($"%{FunctionName.UpdateRrepwPrnsList}:Trigger%")] TimerInfo _
-    )
+    [Function(FunctionName.UpdateRrepwPrns)]
+    public async Task Run([TimerTrigger($"%{FunctionName.UpdateRrepwPrns}:Trigger%")] TimerInfo _)
     {
         List<PrnUpdateStatus>? updatedEprPrns = null;
         try
         {
             logger.LogInformation(
                 "{FunctionId} function executed at: {DateTimeNow}",
-                FunctionName.UpdateRrepwPrnsList,
+                FunctionName.UpdateRrepwPrns,
                 DateTime.UtcNow
             );
 
@@ -41,10 +39,7 @@ public class UpdateRrepwPrnsFunction(
 
             await UpdatePrns(updatedEprPrns, fromDate, toDate);
 
-            await lastUpdateService.SetLastUpdate(
-                FunctionName.UpdateRrepwPrnsList,
-                DateTime.UtcNow
-            );
+            await lastUpdateService.SetLastUpdate(FunctionName.UpdateRrepwPrns, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
@@ -81,7 +76,7 @@ public class UpdateRrepwPrnsFunction(
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionName.UpdateRrepwPrnsList);
+        var lastUpdate = await lastUpdateService.GetLastUpdate(FunctionName.UpdateRrepwPrns);
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(

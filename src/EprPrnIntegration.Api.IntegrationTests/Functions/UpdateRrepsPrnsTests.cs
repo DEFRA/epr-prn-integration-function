@@ -8,7 +8,7 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
-public class UpdateRrepwPrnsListTests : IntegrationTestBase
+public class UpdateRrepwPrnsTests : IntegrationTestBase
 {
     private readonly Fixture _fixture = new();
 
@@ -26,7 +26,7 @@ public class UpdateRrepwPrnsListTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrnAccept();
 
         // Act: Invoke the function
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrnsList);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
 
         // Assert: Verify the accept request was sent to RREPW
         await AsyncWaiter.WaitForAsync(async () =>
@@ -66,7 +66,7 @@ public class UpdateRrepwPrnsListTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrnReject();
 
         // Act: Invoke the function
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrnsList);
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
 
         // Assert: Verify the reject request was sent to RREPW
         await AsyncWaiter.WaitForAsync(async () =>
