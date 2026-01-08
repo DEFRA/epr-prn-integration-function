@@ -294,9 +294,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task StubbedRrepwService_WorksWithMappersAndFunction()
     {
         // Arrange - use concrete StubbedRrepwService instead of mock
-        var stubbedRrepwService = new StubbedRrepwService(
-            Mock.Of<ILogger<StubbedRrepwService>>()
-        );
+        var stubbedRrepwService = new StubbedRrepwService(Mock.Of<ILogger<StubbedRrepwService>>());
 
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
