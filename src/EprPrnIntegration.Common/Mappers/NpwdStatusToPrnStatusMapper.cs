@@ -1,6 +1,7 @@
 ﻿using EprPrnIntegration.Common.Enums;
 
 namespace EprPrnIntegration.Common.Mappers;
+
 public static class NpwdStatusToPrnStatusMapper
 {
     public static EprnStatus? Map(string npwdStatus)

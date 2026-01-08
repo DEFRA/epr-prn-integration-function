@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EprPrnIntegration.Common.Exceptions;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using EprPrnIntegration.Common.Exceptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace EprPrnIntegration.Common.RESTServices
 {
@@ -24,21 +24,30 @@ namespace EprPrnIntegration.Common.RESTServices
             string endPointName,
             ILogger<BaseHttpService> logger,
             string httpClientName = "",
-            int timeoutSeconds = 100)
+            int timeoutSeconds = 100
+        )
         {
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _httpContextAccessor =
+                httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
             // Initialize _baseUrl in the constructor
-            _baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? throw new ArgumentNullException(nameof(baseUrl)) : baseUrl;
+            _baseUrl = string.IsNullOrWhiteSpace(baseUrl)
+                ? throw new ArgumentNullException(nameof(baseUrl))
+                : baseUrl;
 
-            ArgumentNullException.ThrowIfNull(httpClientFactory);            
+            ArgumentNullException.ThrowIfNull(httpClientFactory);
             ArgumentNullException.ThrowIfNullOrWhiteSpace(endPointName);
 
-            _httpClient = string.IsNullOrWhiteSpace(httpClientName) ? httpClientFactory.CreateClient() : httpClientFactory.CreateClient(httpClientName);
+            _httpClient = string.IsNullOrWhiteSpace(httpClientName)
+                ? httpClientFactory.CreateClient()
+                : httpClientFactory.CreateClient(httpClientName);
 
             _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
-            _httpClient.DefaultRequestHeaders.Add(Constants.HttpHeaderNames.Accept, "application/json");
+            _httpClient.DefaultRequestHeaders.Add(
+                Constants.HttpHeaderNames.Accept,
+                "application/json"
+            );
 
             if (_baseUrl.EndsWith('/'))
                 _baseUrl = _baseUrl.TrimEnd('/');
@@ -49,13 +58,20 @@ namespace EprPrnIntegration.Common.RESTServices
 
         protected void SetBearerToken(string token)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                token
+            );
         }
 
         /// <summary>
         /// Performs an Http GET returning the specified object
         /// </summary>
-        protected virtual async Task<T> Get<T>(string url, CancellationToken cancellationToken, bool includeTrailingSlash = true)
+        protected virtual async Task<T> Get<T>(
+            string url,
+            CancellationToken cancellationToken,
+            bool includeTrailingSlash = true
+        )
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -76,7 +92,11 @@ namespace EprPrnIntegration.Common.RESTServices
             return await Send<T>(CreateMessage(url, null, HttpMethod.Get), cancellationToken);
         }
 
-        protected virtual async Task<bool> GetOk(string url, CancellationToken cancellationToken, bool includeTrailingSlash = true)
+        protected virtual async Task<bool> GetOk(
+            string url,
+            CancellationToken cancellationToken,
+            bool includeTrailingSlash = true
+        )
         {
             if (string.IsNullOrEmpty(url))
             {
@@ -111,7 +131,11 @@ namespace EprPrnIntegration.Common.RESTServices
         /// <summary>
         /// Performs an Http POST returning the specified object
         /// </summary>
-        protected virtual async Task<T> Post<T>(string url, object? payload, CancellationToken cancellationToken)
+        protected virtual async Task<T> Post<T>(
+            string url,
+            object? payload,
+            CancellationToken cancellationToken
+        )
         {
             url = ReturnUrl(url);
             return await Send<T>(CreateMessage(url, payload, HttpMethod.Post), cancellationToken);
@@ -129,7 +153,11 @@ namespace EprPrnIntegration.Common.RESTServices
         /// <summary>
         /// Performs an Http PUT returning the specified object
         /// </summary>
-        protected async Task<T> Put<T>(string url, object? payload, CancellationToken cancellationToken)
+        protected async Task<T> Put<T>(
+            string url,
+            object? payload,
+            CancellationToken cancellationToken
+        )
         {
             url = ReturnUrl(url);
             return await Send<T>(CreateMessage(url, payload, HttpMethod.Put), cancellationToken);
@@ -147,7 +175,11 @@ namespace EprPrnIntegration.Common.RESTServices
         /// <summary>
         /// Performs an Http DELETE returning the specified object
         /// </summary>
-        protected async Task<T> Delete<T>(string url, object? payload, CancellationToken cancellationToken)
+        protected async Task<T> Delete<T>(
+            string url,
+            object? payload,
+            CancellationToken cancellationToken
+        )
         {
             url = ReturnUrl(url);
             return await Send<T>(CreateMessage(url, payload, HttpMethod.Delete), cancellationToken);
@@ -156,7 +188,11 @@ namespace EprPrnIntegration.Common.RESTServices
         /// <summary>
         /// Performs an Http DELETE without returning any data
         /// </summary>
-        protected async Task Delete(string url, object? payload, CancellationToken cancellationToken)
+        protected async Task Delete(
+            string url,
+            object? payload,
+            CancellationToken cancellationToken
+        )
         {
             url = ReturnUrl(url);
             await Send(CreateMessage(url, payload, HttpMethod.Delete), cancellationToken);
@@ -165,13 +201,10 @@ namespace EprPrnIntegration.Common.RESTServices
         private static HttpRequestMessage CreateMessage(
             string url,
             object? payload,
-            HttpMethod httpMethod)
+            HttpMethod httpMethod
+        )
         {
-            var msg = new HttpRequestMessage
-            {
-                RequestUri = new Uri(url),
-                Method = httpMethod
-            };
+            var msg = new HttpRequestMessage { RequestUri = new Uri(url), Method = httpMethod };
 
             if (payload != null)
             {
@@ -181,7 +214,10 @@ namespace EprPrnIntegration.Common.RESTServices
             return msg;
         }
 
-        private async Task<T> Send<T>(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
+        private async Task<T> Send<T>(
+            HttpRequestMessage requestMessage,
+            CancellationToken cancellationToken
+        )
         {
             var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
 
@@ -212,7 +248,11 @@ namespace EprPrnIntegration.Common.RESTServices
                 throw new ResponseCodeException(response.StatusCode, content!);
             }
         }
-        private async Task Send(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
+
+        private async Task Send(
+            HttpRequestMessage requestMessage,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
@@ -221,22 +261,42 @@ namespace EprPrnIntegration.Common.RESTServices
                 if (!response.IsSuccessStatusCode)
                 {
                     var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogError("API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
-                        response.StatusCode, responseBody);
+                    _logger.LogError(
+                        "API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
+                        response.StatusCode,
+                        responseBody
+                    );
 
-                    throw new ServiceException($"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. " +
-                                               $"Message: {responseBody}");
+                    throw new ServiceException(
+                        $"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. "
+                            + $"Message: {responseBody}"
+                    );
                 }
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "HTTP request failed {BaseAddress}. Exception: {Message}", _httpClient.BaseAddress, ex.Message);
-                throw new ServiceException($"Error occurred while sending HTTP request  {_httpClient.BaseAddress}.", ex);
+                _logger.LogError(
+                    ex,
+                    "HTTP request failed {BaseAddress}. Exception: {Message}",
+                    _httpClient.BaseAddress,
+                    ex.Message
+                );
+                throw new ServiceException(
+                    $"Error occurred while sending HTTP request  {_httpClient.BaseAddress}.",
+                    ex
+                );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error occurred during HTTP request {BaseAddress}.", _httpClient.BaseAddress);
-                throw new ServiceException($"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.", ex);
+                _logger.LogError(
+                    ex,
+                    "Unexpected error occurred during HTTP request {BaseAddress}.",
+                    _httpClient.BaseAddress
+                );
+                throw new ServiceException(
+                    $"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.",
+                    ex
+                );
             }
         }
 

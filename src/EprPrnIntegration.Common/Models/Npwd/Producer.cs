@@ -48,10 +48,13 @@ public class Producer
 
     [JsonPropertyName("StatusCode")]
     public string StatusCode { get; set; } = default!;
+
     [JsonPropertyName("StatusDesc")]
     public string StatusDesc { get; set; } = default!;
+
     [JsonPropertyName("Agency")]
     public string Agency { get; set; } = default!;
+
     [JsonPropertyName("TradingName")]
     public string TradingName { get; set; } = default!;
 }

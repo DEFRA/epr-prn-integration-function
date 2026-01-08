@@ -1,15 +1,18 @@
-﻿using EprPrnIntegration.Common.Models;
+﻿using System.Globalization;
+using System.Text;
+using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
-using System.Globalization;
-using System.Text;
 
 namespace EprPrnIntegration.Common.Helpers;
 
-public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration configuration, TelemetryClient telemetryClient) 
-    : IUtilities
+public class Utilities(
+    IServiceBusProvider serviceBusProvider,
+    IConfiguration configuration,
+    TelemetryClient telemetryClient
+) : IUtilities
 {
     public async Task<DeltaSyncExecution> GetDeltaSyncExecution(NpwdDeltaSyncType syncType)
     {
@@ -23,13 +26,14 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
             return deltaMessage;
         }
 
-        DateTime.TryParseExact(configuration["DefaultLastRunDate"], "yyyy-MM-dd",
-                       CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime lastSyncDateTime);
-        return new DeltaSyncExecution
-        {
-            LastSyncDateTime = lastSyncDateTime,
-            SyncType = syncType
-        };
+        DateTime.TryParseExact(
+            configuration["DefaultLastRunDate"],
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateTime lastSyncDateTime
+        );
+        return new DeltaSyncExecution { LastSyncDateTime = lastSyncDateTime, SyncType = syncType };
     }
 
     public async Task SetDeltaSyncExecution(DeltaSyncExecution syncExecution, DateTime latestRun)
@@ -45,11 +49,11 @@ public class Utilities(IServiceBusProvider serviceBusProvider, IConfiguration co
     {
         telemetryClient.TrackEvent(eventName, eventData);
     }
-    
+
     public string CreateCsvContent(Dictionary<string, List<string>> data)
     {
         var contentBuilder = new StringBuilder();
-        
+
         contentBuilder.AppendLine(string.Join(",", data.Keys));
 
         var rowCount = data.Values.Max(values => values.Count);

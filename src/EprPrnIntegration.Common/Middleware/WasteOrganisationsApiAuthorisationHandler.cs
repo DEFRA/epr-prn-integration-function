@@ -9,12 +9,16 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
-[SuppressMessage("Critical Code Smell", "S2696:Instance members should not write to \"static\" fields", Justification = "Static cache is intentional for thread-safe token caching across all instances using semaphore-based double-checked locking pattern")]
+[SuppressMessage(
+    "Critical Code Smell",
+    "S2696:Instance members should not write to \"static\" fields",
+    Justification = "Static cache is intentional for thread-safe token caching across all instances using semaphore-based double-checked locking pattern"
+)]
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
-    ILogger<WasteOrganisationsApiAuthorisationHandler> logger)
-    : DelegatingHandler
+    ILogger<WasteOrganisationsApiAuthorisationHandler> logger
+) : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
     private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
@@ -22,7 +26,8 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (string.IsNullOrEmpty(_config.ClientId) || string.IsNullOrEmpty(_config.ClientSecret))
         {
@@ -30,7 +35,10 @@ public class WasteOrganisationsApiAuthorisationHandler(
         }
 
         var token = await GetCognitoTokenAsync(cancellationToken);
-        request.Headers.Authorization = new AuthenticationHeaderValue(Constants.HttpHeaderNames.Bearer, token);
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            Constants.HttpHeaderNames.Bearer,
+            token
+        );
 
         return await base.SendAsync(request, cancellationToken);
     }
@@ -89,7 +97,9 @@ public class WasteOrganisationsApiAuthorisationHandler(
         _cachedToken = null;
     }
 
-    private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(CancellationToken cancellationToken)
+    private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(
+        CancellationToken cancellationToken
+    )
     {
         logger.LogInformation("Fetching Cognito access token");
         var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
@@ -98,13 +108,16 @@ public class WasteOrganisationsApiAuthorisationHandler(
         var httpClient = httpClientFactory.CreateClient();
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _config.AccessTokenUrl);
-        tokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", encodedCredentials);
+        tokenRequest.Headers.Authorization = new AuthenticationHeaderValue(
+            "Basic",
+            encodedCredentials
+        );
 
         var formData = new Dictionary<string, string>
         {
             { "grant_type", "client_credentials" },
             { "client_id", _config.ClientId },
-            { "client_secret", _config.ClientSecret }
+            { "client_secret", _config.ClientSecret },
         };
 
         tokenRequest.Content = new FormUrlEncodedContent(formData);

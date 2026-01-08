@@ -19,7 +19,8 @@ public static class AsyncWaiter
             }
             catch (Exception)
             {
-                if (timer.Elapsed > timeoutTimespan) throw;
+                if (timer.Elapsed > timeoutTimespan)
+                    throw;
                 await Task.Delay(s_defaultDelay);
             }
     }

@@ -14,8 +14,9 @@ public static class HttpRequestExceptionExtensions
     /// </returns>
     public static bool IsTransient(this HttpRequestException exception)
     {
-        return exception.StatusCode is >= HttpStatusCode.InternalServerError
-            or HttpStatusCode.RequestTimeout
-            or HttpStatusCode.TooManyRequests;
+        return exception.StatusCode
+            is >= HttpStatusCode.InternalServerError
+                or HttpStatusCode.RequestTimeout
+                or HttpStatusCode.TooManyRequests;
     }
 }
