@@ -77,7 +77,12 @@ public class UpdateWasteOrganisationsFunction(
         // Items won't often be processed in large volumes,
         // except in the case of the initial load which will process hundreds of items in a single function run.
         // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(producers, UpdateProducer, 20);
+        // todo remove rate limiter
+        //await RateLimitedParallelProcessor.ProcessAsync(producers, UpdateProducer, 20);
+        foreach (var producer in producers)
+        {
+            await UpdateProducer(producer);
+        }
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
