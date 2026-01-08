@@ -5,6 +5,7 @@ using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Middleware;
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -24,6 +25,7 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
     private readonly Mock<ILogger<WasteOrganisationsApiAuthorisationHandler>> _loggerMock;
     private readonly Mock<HttpMessageHandler> _innerHandlerMock;
     private readonly WasteOrganisationsApiConfiguration _config;
+    private readonly IMemoryCache _memoryCache;
 
     public WasteOrganisationsApiAuthorisationHandlerTests()
     {
@@ -31,6 +33,7 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         _configMock = new Mock<IOptions<WasteOrganisationsApiConfiguration>>();
         _loggerMock = new Mock<ILogger<WasteOrganisationsApiAuthorisationHandler>>();
         _innerHandlerMock = new Mock<HttpMessageHandler>();
+        _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _config = new WasteOrganisationsApiConfiguration
         {
@@ -40,15 +43,11 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         };
 
         _configMock.Setup(c => c.Value).Returns(_config);
-
-        // Clear the cached token before each test
-        WasteOrganisationsApiAuthorisationHandler.ClearCachedToken();
     }
 
     public void Dispose()
     {
-        // Clear the cached token after each test
-        WasteOrganisationsApiAuthorisationHandler.ClearCachedToken();
+        _memoryCache?.Dispose();
     }
 
     [Fact]
@@ -62,7 +61,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -92,7 +92,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -128,7 +129,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -164,7 +166,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -199,7 +202,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -227,7 +231,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -259,7 +264,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,
@@ -311,7 +317,8 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _memoryCache
         )
         {
             InnerHandler = _innerHandlerMock.Object,

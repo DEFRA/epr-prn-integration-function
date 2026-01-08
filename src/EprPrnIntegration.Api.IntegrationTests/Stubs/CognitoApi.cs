@@ -29,7 +29,7 @@ public class CognitoApi(WireMockContext wireMock)
                             {
                                 access_token = accessToken,
                                 token_type = "Bearer",
-                                expires_in = 3600,
+                                expires_in = 1,
                             }
                         )
                 )

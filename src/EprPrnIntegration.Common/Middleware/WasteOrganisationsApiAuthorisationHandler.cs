@@ -1,28 +1,24 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
-[SuppressMessage(
-    "Critical Code Smell",
-    "S2696:Instance members should not write to \"static\" fields",
-    Justification = "Static cache is intentional for thread-safe token caching across all instances using semaphore-based double-checked locking pattern"
-)]
 public class WasteOrganisationsApiAuthorisationHandler(
     IOptions<WasteOrganisationsApiConfiguration> config,
     IHttpClientFactory httpClientFactory,
-    ILogger<WasteOrganisationsApiAuthorisationHandler> logger
+    ILogger<WasteOrganisationsApiAuthorisationHandler> logger,
+    IMemoryCache memoryCache
 ) : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
     private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
-    private static string? _cachedToken;
+    private const string TokenCacheKey = "WasteOrganisationsApi_AccessToken";
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -46,23 +42,19 @@ public class WasteOrganisationsApiAuthorisationHandler(
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
         // Fast path: check cache without locking
-        if (_cachedToken != null)
+        if (memoryCache.TryGetValue(TokenCacheKey, out string? cachedToken))
         {
-            return _cachedToken;
+            return cachedToken!;
         }
 
         // Slow path: acquire semaphore to prevent thundering herd
         //
-        // Why SemaphoreSlim instead of IMemoryCache.GetOrCreateAsync()?
+        // Why SemaphoreSlim with IMemoryCache?
         // - IMemoryCache.GetOrCreateAsync() does NOT prevent thundering herd (known issue: aspnet/Caching#218)
         //   See: https://github.com/aspnet/Caching/issues/218
         // - Multiple concurrent requests would all execute the factory function
         // - SemaphoreSlim ensures only ONE token fetch happens for concurrent requests
-        //
-        // Why not use token expiration/IMemoryCache?
-        // - Function lifetime (running on cron) is much shorter than token TTL (typically 1 hour)
-        // - Simple static cache is sufficient for the duration of a single function execution
-        // - Usage pattern: process a list and make multiple API requests per item
+        // - IMemoryCache provides automatic expiration handling based on token lifetime
         //
         // Why no built-in AWS helper?
         // - Amazon.Extensions.CognitoAuthentication only supports user authentication, not OAuth client credentials
@@ -75,26 +67,28 @@ public class WasteOrganisationsApiAuthorisationHandler(
         try
         {
             // Double-check cache after acquiring semaphore
-            if (_cachedToken != null)
+            if (memoryCache.TryGetValue(TokenCacheKey, out cachedToken))
             {
-                return _cachedToken;
+                return cachedToken!;
             }
 
             logger.LogInformation("Obtaining fresh Cognito access token");
             var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
-            _cachedToken = tokenResponse.AccessToken!;
+            var token = tokenResponse.AccessToken!;
 
-            return _cachedToken;
+            // Cache the token with expiration
+            // Use 90% of token lifetime to ensure we refresh before actual expiration
+            var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
+            var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
+
+            memoryCache.Set(TokenCacheKey, token, cacheExpiration);
+
+            return token;
         }
         finally
         {
             TokenSemaphore.Release();
         }
-    }
-
-    public static void ClearCachedToken()
-    {
-        _cachedToken = null;
     }
 
     private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(
