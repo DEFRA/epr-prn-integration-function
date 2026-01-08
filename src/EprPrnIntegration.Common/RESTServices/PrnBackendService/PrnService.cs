@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.PrnBackendService;
 
+[ExcludeFromCodeCoverage(Justification = "This has integration tests")]
 public class PrnService(
     IHttpContextAccessor httpContextAccessor,
     IHttpClientFactory httpClientFactory,
@@ -21,11 +23,7 @@ public class PrnService(
                 nameof(config),
                 ExceptionMessages.PrnServiceBaseUrlMissing
             ),
-        config.Value.PrnEndPointNameV2
-            ?? throw new ArgumentNullException(
-                nameof(config),
-                ExceptionMessages.PrnServiceEndPointNameV2Missing
-            ),
+        "api/v2",
         logger,
         HttpClientNames.PrnV2,
         config.Value.TimeoutSeconds
@@ -38,12 +36,12 @@ public class PrnService(
         await Post("prn", request, CancellationToken.None);
     }
 
-    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime from, DateTime to)
+    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
     {
         logger.LogInformation("Getting updated PRN's.");
 
         return await Get<List<PrnUpdateStatus>>(
-            PrnRoutes.ModifiedPrnsRoute(from, to),
+            PrnRoutes.ModifiedPrnsRoute(fromDate, toDate),
             CancellationToken.None,
             false
         );

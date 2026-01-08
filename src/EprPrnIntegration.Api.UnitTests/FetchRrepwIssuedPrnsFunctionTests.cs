@@ -6,6 +6,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.RrepwService;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
@@ -285,6 +286,51 @@ public class FetchRrepwIssuedPrnsFunctionTests
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task StubbedRrepwService_WorksWithMappersAndFunction()
+    {
+        // Arrange - use concrete StubbedRrepwService instead of mock
+        var stubbedRrepwService = new StubbedRrepwService(Mock.Of<ILogger<StubbedRrepwService>>());
+
+        var lastUpdateServiceMock = new Mock<ILastUpdateService>();
+        var prnServiceMock = new Mock<IPrnService>();
+
+        lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .ReturnsAsync(DateTime.MinValue);
+
+        var function = new FetchRrepwIssuedPrnsFunction(
+            lastUpdateServiceMock.Object,
+            Mock.Of<ILogger<FetchRrepwIssuedPrnsFunction>>(),
+            stubbedRrepwService,
+            prnServiceMock.Object,
+            _config
+        );
+
+        // Act
+        await function.Run(new TimerInfo());
+
+        // Assert - verify the stubbed PRN was processed and mapped correctly
+        prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req =>
+                        req.PrnNumber == "STUB-12345"
+                        && req.AccreditationYear == "2026"
+                        && req.MaterialName != null
+                        && req.ProcessToBeUsed != null
+                    )
+                ),
+            Times.Once
+        );
+
+        // Verify last update was set
+        lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
     }

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
@@ -25,13 +25,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             _mockConfig
                 .Setup(c => c.Value)
-                .Returns(
-                    new Configuration.Service
-                    {
-                        PrnBaseUrl = "http://localhost:5575/",
-                        PrnEndPointNameV2 = "api/v2",
-                    }
-                );
+                .Returns(new Configuration.Service { PrnBaseUrl = "http://localhost:5575/" });
         }
 
         [Fact]
@@ -91,11 +85,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         {
             // Arrange
             var mockConfig = new Mock<IOptions<Configuration.Service>>();
-            mockConfig
-                .Setup(c => c.Value)
-                .Returns(
-                    new Configuration.Service { PrnBaseUrl = null, PrnEndPointNameV2 = "api/v2/" }
-                );
+            mockConfig.Setup(c => c.Value).Returns(new Configuration.Service { PrnBaseUrl = null });
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
@@ -108,37 +98,6 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             );
 
             Assert.Contains("PrnService BaseUrl configuration is missing", exception.Message);
-        }
-
-        [Fact]
-        public void Constructor_ShouldThrowArgumentNullException_WhenPrnEndPointNameV2IsNull()
-        {
-            // Arrange
-            var mockConfig = new Mock<IOptions<Configuration.Service>>();
-            mockConfig
-                .Setup(c => c.Value)
-                .Returns(
-                    new Configuration.Service
-                    {
-                        PrnBaseUrl = "http://localhost:5575/",
-                        PrnEndPointNameV2 = null,
-                    }
-                );
-
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() =>
-                new PrnService(
-                    _mockHttpContextAccessor.Object,
-                    new HttpClientFactoryMock(new HttpClient()),
-                    _loggerMock.Object,
-                    mockConfig.Object
-                )
-            );
-
-            Assert.Contains(
-                "PrnService EndPointNameV2 configuration is missing",
-                exception.Message
-            );
         }
 
         private (PrnService service, MockHttpMessageHandler handler) CreatePrnServiceV2(
