@@ -18,14 +18,14 @@ namespace EprPrnIntegration.Common.RESTServices
         protected readonly string _baseUrl;
         protected readonly HttpClient _httpClient;
         protected IHttpContextAccessor _httpContextAccessor;
-        private readonly ILogger<BaseHttpService> _logger;
+        private readonly ILogger<BaseHttpServiceOld> _logger;
 
         protected BaseHttpServiceOld(
             IHttpContextAccessor httpContextAccessor,
             IHttpClientFactory httpClientFactory,
             string baseUrl,
             string endPointName,
-            ILogger<BaseHttpService> logger,
+            ILogger<BaseHttpServiceOld> logger,
             string httpClientName = "",
             int timeoutSeconds = 100
         )

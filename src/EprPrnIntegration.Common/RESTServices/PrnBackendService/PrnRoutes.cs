@@ -12,7 +12,7 @@ namespace EprPrnIntegration.Common.RESTServices.PrnBackendService
                 "yyyy-MM-ddTHH:mm:ss.fff",
                 System.Globalization.CultureInfo.InvariantCulture
             );
-            return $"api/v2/prn/modified-prns?dateFrom={fromDate}&dateTo={toDate}";
+            return $"api/v2/prn/modified-prns?from={fromDate}&to={toDate}";
         }
     }
 }
