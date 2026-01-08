@@ -74,13 +74,8 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run.
-        // These requests are throttled to stay under CDP's rate limits of 25rps.
         foreach (var producer in producers)
-        {
             await UpdateProducer(producer);
-        }
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
@@ -108,7 +103,7 @@ public class UpdateWasteOrganisationsFunction(
         if (response.StatusCode.IsTransient())
         {
             throw new ServiceException(
-                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, terminating",
+                "{StatusCode} response when updating organisation {OrganisationId}, terminating",
                 response.StatusCode
             );
         }
