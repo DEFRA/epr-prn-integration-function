@@ -10,6 +10,8 @@ namespace EprPrnIntegration.Common.Service
         Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo);
         Task SendDeltaSyncExecutionToQueue(DeltaSyncExecution deltaSyncExecution);
         Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType);
-        Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler);
+        Task<List<T>> ProcessFetchedPrns<T>(
+            Func<ServiceBusReceivedMessage, Task<T?>> messageHandler
+        );
     }
 }

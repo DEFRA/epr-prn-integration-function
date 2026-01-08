@@ -26,7 +26,11 @@ public class UpdatedProducersResponseModel
     public int? ProducerTypeId { get; set; }
     public string ExternalId { get; set; } = default!;
 
-    public string OrganisationAddress => string.Join(", ", new[] {
+    public string OrganisationAddress =>
+        string.Join(
+            ", ",
+            new[]
+            {
                 SubBuildingName,
                 BuildingNumber,
                 BuildingName,
@@ -34,5 +38,6 @@ public class UpdatedProducersResponseModel
                 Town,
                 County,
                 Postcode,
-            }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            }.Where(s => !string.IsNullOrWhiteSpace(s))
+        );
 }

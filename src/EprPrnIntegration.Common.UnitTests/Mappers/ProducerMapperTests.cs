@@ -15,7 +15,9 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         public ProducerMapperTests()
         {
             _configurationMock = new Mock<IConfiguration>();
-            _configurationMock.Setup(c => c["ProducersContext"]).Returns("https://fat.npwd.org.uk/odata/Producers/$delta");
+            _configurationMock
+                .Setup(c => c["ProducersContext"])
+                .Returns("https://fat.npwd.org.uk/odata/Producers/$delta");
         }
 
         [Fact]
@@ -58,16 +60,16 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("CS Added", "S", "CSR-REGISTERED")]
         [InlineData("CS Deleted", "S", "CSR-CANCELLED")]
         [InlineData("Some Unmatched Status", "Some Organisation Type", "")]
-        public void MapToDelta_MapsCorrectStatusCode(string status, string orgType, string expectedStatusCode)
+        public void MapToDelta_MapsCorrectStatusCode(
+            string status,
+            string orgType,
+            string expectedStatusCode
+        )
         {
             // Arrange
             var updatedProducers = new List<UpdatedProducersResponse>
             {
-                new UpdatedProducersResponse
-                {
-                    Status = status,
-                    OrganisationType = orgType
-                }
+                new UpdatedProducersResponse { Status = status, OrganisationType = orgType },
             };
 
             // Act
@@ -95,7 +97,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                     Postcode = "12345",
                     Status = "DR Registered",
                     OrganisationType = "DR",
-                }
+                },
             };
 
             // Act
@@ -122,15 +124,15 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [InlineData("Wales", "Natural Resources Wales")]
         [InlineData("Scotland", "Scottish Environment Protection Agency")]
         [InlineData("Unknown Country", "")]
-        public void GetAgencyByCountry_ReturnsCorrectAgency(string businessCountry, string expectedAgency)
+        public void GetAgencyByCountry_ReturnsCorrectAgency(
+            string businessCountry,
+            string expectedAgency
+        )
         {
             // Arrange
             var updatedProducers = new List<UpdatedProducersResponse>
             {
-                new UpdatedProducersResponse
-                {
-                    BusinessCountry = businessCountry
-                }
+                new UpdatedProducersResponse { BusinessCountry = businessCountry },
             };
 
             // Act
@@ -146,21 +148,21 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         {
             // Arrange
             var updatedProducers = new List<UpdatedProducersResponse>
-                                    {
-                                        new UpdatedProducersResponse
-                                        {
-                                            TradingName = "CAR COLSTON FILLING STATION LTD",
-                                            CompaniesHouseNumber = "12345678",
-                                            AddressLine1 = "SubBuilding A",
-                                            AddressLine2 = "Building A",
-                                            Town = "Town A",
-                                            County = "County A",
-                                            Country = "Country A",
-                                            Postcode = "12345",
-                                            Status = "DR Registered",
-                                            OrganisationType = "DR",
-                                        }
-                                    };
+            {
+                new UpdatedProducersResponse
+                {
+                    TradingName = "CAR COLSTON FILLING STATION LTD",
+                    CompaniesHouseNumber = "12345678",
+                    AddressLine1 = "SubBuilding A",
+                    AddressLine2 = "Building A",
+                    Town = "Town A",
+                    County = "County A",
+                    Country = "Country A",
+                    Postcode = "12345",
+                    Status = "DR Registered",
+                    OrganisationType = "DR",
+                },
+            };
 
             // Act
             var result = ProducerMapper.Map(updatedProducers, _configurationMock.Object);
@@ -193,13 +195,17 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Assert
             Assert.NotNull(result);
 
-            var expectedOutput = string.Join(", ", new[] { 
-                input.AddressLine1,
-                input.AddressLine2,
-                input.Town,
-                input.County,
-                input.Postcode }
-            .Where(x => !string.IsNullOrEmpty(x)));
+            var expectedOutput = string.Join(
+                ", ",
+                new[]
+                {
+                    input.AddressLine1,
+                    input.AddressLine2,
+                    input.Town,
+                    input.County,
+                    input.Postcode,
+                }.Where(x => !string.IsNullOrEmpty(x))
+            );
 
             Assert.Equal(expectedOutput, result);
         }

@@ -1,5 +1,5 @@
-﻿using EprPrnIntegration.Common.Helpers;
-using System.Text;
+﻿using System.Text;
+using EprPrnIntegration.Common.Helpers;
 
 namespace EprPrnIntegration.Common.UnitTests.Helpers;
 

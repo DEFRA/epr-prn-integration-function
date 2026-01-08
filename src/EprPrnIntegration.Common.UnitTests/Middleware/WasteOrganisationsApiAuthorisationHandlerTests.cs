@@ -12,7 +12,11 @@ using Moq.Protected;
 
 namespace EprPrnIntegration.Common.UnitTests.Middleware;
 
-[SuppressMessage("Design", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Test class has no finalizer; SuppressFinalize is unnecessary")]
+[SuppressMessage(
+    "Design",
+    "CA1816:Dispose methods should call SuppressFinalize",
+    Justification = "Test class has no finalizer; SuppressFinalize is unnecessary"
+)]
 public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
 {
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
@@ -32,7 +36,7 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         {
             ClientId = "test-client-id",
             ClientSecret = "test-client-secret",
-            AccessTokenUrl = "https://cognito.example.com/oauth/token"
+            AccessTokenUrl = "https://cognito.example.com/oauth/token",
         };
 
         _configMock.Setup(c => c.Value).Returns(_config);
@@ -58,9 +62,10 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
@@ -87,15 +92,18 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
 
         // Act
-        var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"));
+        var response = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+        );
 
         // Assert
         capturedTokenRequest.Should().NotBeNull();
@@ -120,15 +128,18 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
 
         // Act
-        var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"));
+        var response = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+        );
 
         // Assert
         capturedTokenRequest.Should().NotBeNull();
@@ -153,17 +164,24 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
 
         // Act
-        var response1 = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test1"));
-        var response2 = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test2"));
-        var response3 = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test3"));
+        var response1 = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test1")
+        );
+        var response2 = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test2")
+        );
+        var response3 = await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test3")
+        );
 
         // Assert
         tokenFetchCount.Should().Be(1, "token should only be fetched once and then cached");
@@ -181,16 +199,18 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
+        );
 
         exception.Message.Should().Be("Failed to retrieve access token from Cognito");
     }
@@ -201,29 +221,35 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         // Arrange
         SetupCognitoResponse(
             errorContent: "Invalid credentials",
-            statusCode: HttpStatusCode.Unauthorized);
+            statusCode: HttpStatusCode.Unauthorized
+        );
 
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(
-            () => client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")));
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
+        );
     }
-    
+
     [Theory]
     [InlineData(null, "test-client-secret")]
     [InlineData("", "test-client-secret")]
     [InlineData("test-client-id", null)]
     [InlineData("test-client-id", "")]
-    public async Task WhenCredentialsAreMissing_ShouldSkipAuthAndCallBaseHandler(string? clientId, string? clientSecret)
+    public async Task WhenCredentialsAreMissing_ShouldSkipAuthAndCallBaseHandler(
+        string? clientId,
+        string? clientSecret
+    )
     {
         // Arrange
         _config.ClientId = clientId!;
@@ -233,9 +259,10 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
         var handler = new WasteOrganisationsApiAuthorisationHandler(
             _configMock.Object,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object
+        )
         {
-            InnerHandler = _innerHandlerMock.Object
+            InnerHandler = _innerHandlerMock.Object,
         };
 
         var client = new HttpClient(handler);
@@ -251,22 +278,27 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
 
     private void SetupHttpStubResponse()
     {
-        _innerHandlerMock.Protected()
+        _innerHandlerMock
+            .Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("success")
-            });
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("success"),
+                }
+            );
     }
 
     private void SetupCognitoResponse(
         string? accessToken = "test-token",
         string? errorContent = null,
         HttpStatusCode statusCode = HttpStatusCode.OK,
-        Action<HttpRequestMessage, CancellationToken>? callback = null)
+        Action<HttpRequestMessage, CancellationToken>? callback = null
+    )
     {
         string content;
         if (errorContent != null)
@@ -279,37 +311,46 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
             {
                 access_token = accessToken,
                 token_type = "Bearer",
-                expires_in = 3600
+                expires_in = 3600,
             };
             content = JsonSerializer.Serialize(tokenResponse);
         }
 
         var cognitoHandlerMock = new Mock<HttpMessageHandler>();
-        var setup = cognitoHandlerMock.Protected()
+        var setup = cognitoHandlerMock
+            .Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>());
+                ItExpr.IsAny<CancellationToken>()
+            );
 
         if (callback != null)
         {
-            setup.Callback(callback)
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = statusCode,
-                    Content = new StringContent(content)
-                });
+            setup
+                .Callback(callback)
+                .ReturnsAsync(
+                    new HttpResponseMessage
+                    {
+                        StatusCode = statusCode,
+                        Content = new StringContent(content),
+                    }
+                );
         }
         else
         {
-            setup.ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = statusCode,
-                Content = new StringContent(content)
-            });
+            setup.ReturnsAsync(
+                new HttpResponseMessage
+                {
+                    StatusCode = statusCode,
+                    Content = new StringContent(content),
+                }
+            );
         }
 
         var cognitoClient = new HttpClient(cognitoHandlerMock.Object);
-        _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(cognitoClient);
+        _httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(cognitoClient);
     }
 }

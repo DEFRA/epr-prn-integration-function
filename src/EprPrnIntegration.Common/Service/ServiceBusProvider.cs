@@ -11,14 +11,17 @@ namespace EprPrnIntegration.Common.Service
     public class ServiceBusProvider(
         ILogger<ServiceBusProvider> logger,
         ServiceBusClient serviceBusClient,
-        IOptions<ServiceBusConfiguration> config) : IServiceBusProvider
+        IOptions<ServiceBusConfiguration> config
+    ) : IServiceBusProvider
     {
         public async Task SendFetchedNpwdPrnsToQueue(List<NpwdPrn> prns)
         {
             ServiceBusMessageBatch? messageBatch = null;
             try
             {
-                await using var sender = serviceBusClient.CreateSender(config.Value.FetchPrnQueueName);
+                await using var sender = serviceBusClient.CreateSender(
+                    config.Value.FetchPrnQueueName
+                );
                 messageBatch = await sender.CreateMessageBatchAsync();
                 foreach (var prn in prns)
                 {
@@ -26,30 +29,50 @@ namespace EprPrnIntegration.Common.Service
                     var message = new ServiceBusMessage(jsonPrn);
                     if (!messageBatch.TryAddMessage(message))
                     {
-                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {Count}", messageBatch.Count);
+                        logger.LogInformation(
+                            "SendFetchedNpwdPrnsToQueue - Batch overflow sending this batch with message count {Count}",
+                            messageBatch.Count
+                        );
                         await sender.SendMessagesAsync(messageBatch);
 
-                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Disposing current batch and creating new batch");
+                        logger.LogInformation(
+                            "SendFetchedNpwdPrnsToQueue - Disposing current batch and creating new batch"
+                        );
                         messageBatch.Dispose();
                         messageBatch = await sender.CreateMessageBatchAsync();
 
-                        logger.LogInformation("SendFetchedNpwdPrnsToQueue - Adding message in new batch");
+                        logger.LogInformation(
+                            "SendFetchedNpwdPrnsToQueue - Adding message in new batch"
+                        );
                         if (!messageBatch.TryAddMessage(message))
                         {
-                            throw new InvalidOperationException("SendFetchedNpwdPrnsToQueue - Could not add message into new batch");
+                            throw new InvalidOperationException(
+                                "SendFetchedNpwdPrnsToQueue - Could not add message into new batch"
+                            );
                         }
                     }
                 }
                 if (messageBatch.Count > 0)
                 {
-                    logger.LogInformation("SendFetchedNpwdPrnsToQueue - Sending final batch with message count {Count}", messageBatch.Count);
+                    logger.LogInformation(
+                        "SendFetchedNpwdPrnsToQueue - Sending final batch with message count {Count}",
+                        messageBatch.Count
+                    );
                     await sender.SendMessagesAsync(messageBatch);
                 }
-                logger.LogInformation("SendFetchedNpwdPrnsToQueue - total {Count} messages has been published to the queue: {Queue}", messageBatch.Count, config.Value.FetchPrnQueueName);
+                logger.LogInformation(
+                    "SendFetchedNpwdPrnsToQueue - total {Count} messages has been published to the queue: {Queue}",
+                    messageBatch.Count,
+                    config.Value.FetchPrnQueueName
+                );
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {Exception}", ex);
+                logger.LogError(
+                    ex,
+                    "SendFetchedNpwdPrnsToQueue failed to add message on Queue with exception: {Exception}",
+                    ex
+                );
                 throw;
             }
         }
@@ -64,27 +87,39 @@ namespace EprPrnIntegration.Common.Service
                 var executionMessage = JsonSerializer.Serialize(deltaSyncExecution);
                 var message = new ServiceBusMessage(executionMessage)
                 {
-                    ContentType = "application/json"
+                    ContentType = "application/json",
                 };
-                
+
                 await sender.SendMessageAsync(message);
-                logger.LogInformation("SendDeltaSyncExecutionToQueue - A message has been published to the queue: {Queue}", queueName);
+                logger.LogInformation(
+                    "SendDeltaSyncExecutionToQueue - A message has been published to the queue: {Queue}",
+                    queueName
+                );
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "SendDeltaSyncExecutionToQueue failed to add message on Queue with exception: {Exception}", ex);
+                logger.LogError(
+                    ex,
+                    "SendDeltaSyncExecutionToQueue failed to add message on Queue with exception: {Exception}",
+                    ex
+                );
                 throw;
             }
         }
-        
-        public async Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(NpwdDeltaSyncType syncType)
+
+        public async Task<DeltaSyncExecution?> GetDeltaSyncExecutionFromQueue(
+            NpwdDeltaSyncType syncType
+        )
         {
             var queueName = GetDeltaSyncQueueName(syncType);
             try
             {
                 await using var receiver = serviceBusClient.CreateReceiver(queueName);
 
-                var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                var messages = await receiver.ReceiveMessagesAsync(
+                    int.MaxValue,
+                    TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1)
+                );
 
                 if (messages == null || messages.Count == 0)
                 {
@@ -93,7 +128,9 @@ namespace EprPrnIntegration.Common.Service
                 }
 
                 var latestMessage = messages.OrderByDescending(m => m.SequenceNumber).First();
-                var deltaSync = DeserializeMessage<DeltaSyncExecution>(latestMessage.Body.ToString());
+                var deltaSync = DeserializeMessage<DeltaSyncExecution>(
+                    latestMessage.Body.ToString()
+                );
 
                 foreach (var message in messages)
                 {
@@ -104,16 +141,25 @@ namespace EprPrnIntegration.Common.Service
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "GetDeltaSyncExecutionFromQueue failed with exception: {Exception}", ex);
+                logger.LogError(
+                    ex,
+                    "GetDeltaSyncExecutionFromQueue failed with exception: {Exception}",
+                    ex
+                );
                 throw;
             }
         }
 
-        public async Task SendMessageToErrorQueue(ServiceBusReceivedMessage receivedMessage, string evidenceNo)
+        public async Task SendMessageToErrorQueue(
+            ServiceBusReceivedMessage receivedMessage,
+            string evidenceNo
+        )
         {
             try
             {
-                await using var errorQueueSender = serviceBusClient.CreateSender(config.Value.ErrorPrnQueue);
+                await using var errorQueueSender = serviceBusClient.CreateSender(
+                    config.Value.ErrorPrnQueue
+                );
 
                 var errorMessage = new ServiceBusMessage(receivedMessage.Body)
                 {
@@ -121,7 +167,7 @@ namespace EprPrnIntegration.Common.Service
                     MessageId = receivedMessage.MessageId,
                     CorrelationId = receivedMessage.CorrelationId,
                     Subject = receivedMessage.Subject,
-                    To = receivedMessage.To
+                    To = receivedMessage.To,
                 };
 
                 foreach (var property in receivedMessage.ApplicationProperties)
@@ -130,28 +176,45 @@ namespace EprPrnIntegration.Common.Service
                 }
 
                 await errorQueueSender.SendMessageAsync(errorMessage);
-                logger.LogInformation("Message with EvidenceNo: {EvidenceNo} sent to error queue.", evidenceNo);
+                logger.LogInformation(
+                    "Message with EvidenceNo: {EvidenceNo} sent to error queue.",
+                    evidenceNo
+                );
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to send message to error queue with exception: {ExceptionMessage}", ex.Message);
+                logger.LogError(
+                    ex,
+                    "Failed to send message to error queue with exception: {ExceptionMessage}",
+                    ex.Message
+                );
             }
         }
 
-        public async Task<List<T>> ProcessFetchedPrns<T>(Func<ServiceBusReceivedMessage, Task<T?>> messageHandler)
+        public async Task<List<T>> ProcessFetchedPrns<T>(
+            Func<ServiceBusReceivedMessage, Task<T?>> messageHandler
+        )
         {
             var invalidPrns = new List<T>();
 
             try
             {
-                await using var receiver = serviceBusClient.CreateReceiver(config.Value.FetchPrnQueueName, new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.PeekLock });
+                await using var receiver = serviceBusClient.CreateReceiver(
+                    config.Value.FetchPrnQueueName,
+                    new ServiceBusReceiverOptions() { ReceiveMode = ServiceBusReceiveMode.PeekLock }
+                );
 
                 while (true)
                 {
-                    var messages = await receiver.ReceiveMessagesAsync(30, TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1));
+                    var messages = await receiver.ReceiveMessagesAsync(
+                        30,
+                        TimeSpan.FromSeconds(config.Value.MaxWaitTimeInSeconds ?? 1)
+                    );
                     if (!messages.Any())
                     {
-                        logger.LogInformation("No messages found in the queue. Exiting the processing loop.");
+                        logger.LogInformation(
+                            "No messages found in the queue. Exiting the processing loop."
+                        );
                         break;
                     }
                     foreach (var message in messages)
@@ -167,15 +230,22 @@ namespace EprPrnIntegration.Common.Service
                         }
                         catch (Exception ex)
                         {
-                            logger.LogError(ex, "Failed to process message with id: {MessageId}", message.MessageId);
+                            logger.LogError(
+                                ex,
+                                "Failed to process message with id: {MessageId}",
+                                message.MessageId
+                            );
                         }
-
                     }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to receive messages from queue: {QueueName}", config.Value.FetchPrnQueueName);
+                logger.LogError(
+                    ex,
+                    "Failed to receive messages from queue: {QueueName}",
+                    config.Value.FetchPrnQueueName
+                );
             }
 
             return invalidPrns;
@@ -187,7 +257,7 @@ namespace EprPrnIntegration.Common.Service
                 NpwdDeltaSyncType.UpdatedProducers => config.Value.UpdateProducerDeltaSyncQueueName,
                 NpwdDeltaSyncType.UpdatePrns => config.Value.UpdatePrnDeltaSyncQueueName,
                 NpwdDeltaSyncType.FetchNpwdIssuedPrns => config.Value.FetchPrnDeltaSyncQueueName,
-                _ => throw new ArgumentOutOfRangeException(nameof(syncType), syncType, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(syncType), syncType, null),
             };
 
         private T? DeserializeMessage<T>(string messageBody)
@@ -198,7 +268,11 @@ namespace EprPrnIntegration.Common.Service
             }
             catch (JsonException ex)
             {
-                logger.LogError(ex, "Failed to deserialize message body: {MessageBody}", messageBody);
+                logger.LogError(
+                    ex,
+                    "Failed to deserialize message body: {MessageBody}",
+                    messageBody
+                );
                 return default;
             }
         }
