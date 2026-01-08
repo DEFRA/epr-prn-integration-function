@@ -124,8 +124,7 @@ public abstract class BaseHttpService
         return response;
     }
 
-    // todo unit test this, why is it needed?
-    private string BuildUrl(string path)
+    internal string BuildUrl(string path)
     {
         // Use Uri to properly join base URL with path
         var baseUri = new Uri(_baseUrl.TrimEnd('/') + "/");
