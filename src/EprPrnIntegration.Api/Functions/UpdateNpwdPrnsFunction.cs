@@ -53,7 +53,7 @@ public class UpdateNpwdPrnsFunction(
 
         foreach (var prn in updatedEprPrns)
         {
-            logger.LogDebug(
+            logger.LogInformation(
                 "Updating PRN in NPWD: prn number (evidence no): {Prn} status code: {StatusCode} status date: {StatusDate} obligation year: {ObligationYear}",
                 prn.EvidenceNo,
                 prn.EvidenceStatusCode,
