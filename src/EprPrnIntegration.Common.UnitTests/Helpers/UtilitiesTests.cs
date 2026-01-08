@@ -1,4 +1,5 @@
-﻿using EprPrnIntegration.Common.Helpers;
+﻿using System.Text;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
@@ -8,7 +9,6 @@ using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using System.Text;
 
 namespace EprPrnIntegration.Common.UnitTests.Helpers;
 
@@ -27,13 +27,17 @@ public class UtilitiesTests
 
         TelemetryConfiguration configuration = new()
         {
-            TelemetryChannel = _mockTelemetryChannel.Object
+            TelemetryChannel = _mockTelemetryChannel.Object,
         };
 
         configuration.TelemetryInitializers.Add(new OperationCorrelationTelemetryInitializer());
         TelemetryClient telemetryClient = new(configuration);
 
-        _utilities = new Utilities(_serviceBusProviderMock.Object, _configurationMock.Object, telemetryClient);
+        _utilities = new Utilities(
+            _serviceBusProviderMock.Object,
+            _configurationMock.Object,
+            telemetryClient
+        );
     }
 
     [Fact]
@@ -44,7 +48,8 @@ public class UtilitiesTests
         var defaultLastRunDate = "2024-01-01";
         _configurationMock.Setup(c => c["DefaultLastRunDate"]).Returns(defaultLastRunDate);
 
-        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock
+            .Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync((DeltaSyncExecution?)null);
 
         // Act
@@ -64,10 +69,11 @@ public class UtilitiesTests
         var expectedExecution = new DeltaSyncExecution
         {
             SyncType = syncType,
-            LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
+            LastSyncDateTime = DateTime.UtcNow.AddHours(-1),
         };
 
-        _serviceBusProviderMock.Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
+        _serviceBusProviderMock
+            .Setup(provider => provider.GetDeltaSyncExecutionFromQueue(syncType))
             .ReturnsAsync(expectedExecution);
 
         // Act
@@ -86,11 +92,12 @@ public class UtilitiesTests
         var syncExecution = new DeltaSyncExecution
         {
             SyncType = NpwdDeltaSyncType.UpdatedProducers,
-            LastSyncDateTime = DateTime.UtcNow.AddHours(-1)
+            LastSyncDateTime = DateTime.UtcNow.AddHours(-1),
         };
         var latestRun = DateTime.UtcNow;
 
-        _serviceBusProviderMock.Setup(provider => provider.SendDeltaSyncExecutionToQueue(syncExecution))
+        _serviceBusProviderMock
+            .Setup(provider => provider.SendDeltaSyncExecutionToQueue(syncExecution))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -98,16 +105,19 @@ public class UtilitiesTests
 
         // Assert
         Assert.Equal(latestRun, syncExecution.LastSyncDateTime);
-        _serviceBusProviderMock.Verify(provider => provider.SendDeltaSyncExecutionToQueue(syncExecution), Times.Once);
+        _serviceBusProviderMock.Verify(
+            provider => provider.SendDeltaSyncExecutionToQueue(syncExecution),
+            Times.Once
+        );
     }
 
     [Fact]
     public void AddCustomEvent_CallsTelementryClient()
     {
-        _utilities.AddCustomEvent("Event", new Dictionary<string, string>()
-        {
-            {"test1", "test1" }
-        });
+        _utilities.AddCustomEvent(
+            "Event",
+            new Dictionary<string, string>() { { "test1", "test1" } }
+        );
 
         _mockTelemetryChannel.Verify(t => t.Send(It.IsAny<ITelemetry>()), Times.Once);
     }
@@ -119,7 +129,7 @@ public class UtilitiesTests
         var data = new Dictionary<string, List<string>>
         {
             { "Column1", ["Value1", "Value2"] },
-            { "Column2", ["ValueA", "ValueB"] }
+            { "Column2", ["ValueA", "ValueB"] },
         };
 
         var expectedCsv = "Column1,Column2\nValue1,ValueA\nValue2,ValueB\n";
@@ -142,7 +152,7 @@ public class UtilitiesTests
         var data = new Dictionary<string, List<string>>
         {
             { "Column1", ["Value1", "Value2", "Value3"] },
-            { "Column2", ["ValueA"] }
+            { "Column2", ["ValueA"] },
         };
 
         var expectedCsv = "Column1,Column2\nValue1,ValueA\nValue2,\nValue3,\n";
@@ -162,11 +172,7 @@ public class UtilitiesTests
     public void CreateCsvContent_ReturnsHeaderOnly_WhenDataIsEmpty()
     {
         // Arrange
-        var data = new Dictionary<string, List<string>>
-        {
-            { "Column1", [] },
-            { "Column2", [] }
-        };
+        var data = new Dictionary<string, List<string>> { { "Column1", [] }, { "Column2", [] } };
 
         var expectedCsv = "Column1,Column2\n";
 
@@ -188,10 +194,11 @@ public class UtilitiesTests
         var data = new Dictionary<string, List<string>>
         {
             { "Column1", ["Value1", "Value, with, commas"] },
-            { "Column2", ["ValueA", "\"QuotedValue\""] }
+            { "Column2", ["ValueA", "\"QuotedValue\""] },
         };
 
-        var expectedCsv = "Column1,Column2\nValue1,ValueA\n\"Value, with, commas\",\"\"\"QuotedValue\"\"\"\n";
+        var expectedCsv =
+            "Column1,Column2\nValue1,ValueA\n\"Value, with, commas\",\"\"\"QuotedValue\"\"\"\n";
 
         // Act
         var result = _utilities.CreateCsvContent(data);
@@ -232,10 +239,12 @@ public class UtilitiesTests
         DateTime pollingDateTime = expectedDateTime.AddSeconds(seconds);
 
         // Act
-        DateTime actualDateTime = _utilities.OffsetDateTimeWithLag(pollingDateTime, seconds.ToString());
+        DateTime actualDateTime = _utilities.OffsetDateTimeWithLag(
+            pollingDateTime,
+            seconds.ToString()
+        );
 
         // Assert
         expectedDateTime.Should().Be(actualDateTime);
     }
-
 }

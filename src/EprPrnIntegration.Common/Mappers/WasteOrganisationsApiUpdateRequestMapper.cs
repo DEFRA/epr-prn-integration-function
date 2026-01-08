@@ -11,12 +11,12 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         {
             throw new ArgumentException("PEPRID is null");
         }
-        
+
         if (updatedProducer.OrganisationName == null)
         {
             throw new ArgumentException("OrganisationName is null");
         }
-        
+
         return new WasteOrganisationsApiUpdateRequest
         {
             Name = updatedProducer.OrganisationName,
@@ -37,7 +37,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             Town = updatedProducer.Town,
             County = updatedProducer.County,
             Postcode = updatedProducer.Postcode,
-            Country = updatedProducer.Country
+            Country = updatedProducer.Country,
         };
     }
 
@@ -49,7 +49,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             "Northern Ireland" => "GB-NIR",
             "Scotland" => "GB-SCT",
             "Wales" => "GB-WLS",
-            _ => null
+            _ => null,
         };
     }
 
@@ -59,26 +59,30 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         {
             "DP" => "LARGE_PRODUCER",
             "CS" => "COMPLIANCE_SCHEME",
-            _ => throw new ArgumentException($"Unknown registration type {updatedProducer.OrganisationType}")
+            _ => throw new ArgumentException(
+                $"Unknown registration type {updatedProducer.OrganisationType}"
+            ),
         };
 
         var status = updatedProducer.Status?.ToLowerInvariant() switch
         {
             "registered" => "REGISTERED",
             "deleted" => "CANCELLED",
-            _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}")
+            _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}"),
         };
 
         if (!int.TryParse(updatedProducer.RegistrationYear, out var registrationYear))
         {
-            throw new ArgumentException($"RegistrationYear '{updatedProducer.RegistrationYear}' is not a valid integer");
+            throw new ArgumentException(
+                $"RegistrationYear '{updatedProducer.RegistrationYear}' is not a valid integer"
+            );
         }
 
         return new Registration
         {
             Status = status,
             Type = type,
-            RegistrationYear = registrationYear
+            RegistrationYear = registrationYear,
         };
     }
 }

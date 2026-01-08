@@ -14,6 +14,5 @@ public static class StringExtensions
             escapedValue = value;
         }
         return escapedValue;
-
     }
 }

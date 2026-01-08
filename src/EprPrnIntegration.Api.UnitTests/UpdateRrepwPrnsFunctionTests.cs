@@ -59,7 +59,7 @@ public class UpdateRrepwPrnsFunctionTests
         };
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList))
+            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync(DateTime.MinValue);
 
         _prnServiceMock
@@ -73,7 +73,7 @@ public class UpdateRrepwPrnsFunctionTests
         _rrepwServiceMock.Verify(x => x.UpdatePrns(prns), Times.Once);
 
         _lastUpdateServiceMock.Verify(
-            x => x.SetLastUpdate(FunctionName.UpdateRrepwPrnsList, ItEx.IsCloseTo(DateTime.UtcNow)),
+            x => x.SetLastUpdate(FunctionName.UpdateRrepwPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -90,7 +90,7 @@ public class UpdateRrepwPrnsFunctionTests
         var fromDate = DateTime.UtcNow.AddHours(-3);
 
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList))
+            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync(fromDate);
 
         await _function.Run(new TimerInfo());
@@ -113,7 +113,7 @@ public class UpdateRrepwPrnsFunctionTests
         var fromDate = DateTime.UtcNow.AddHours(-3);
         var ex = new Exception("Test");
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList))
+            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync(fromDate);
         _prnServiceMock
             .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
@@ -150,7 +150,7 @@ public class UpdateRrepwPrnsFunctionTests
         var fromDate = DateTime.UtcNow.AddHours(-3);
         var ex = new Exception("Test");
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList))
+            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync(fromDate);
         _prnServiceMock
             .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
@@ -196,7 +196,7 @@ public class UpdateRrepwPrnsFunctionTests
 
         // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList))
+            .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync((DateTime?)null);
 
         _prnServiceMock
@@ -210,13 +210,13 @@ public class UpdateRrepwPrnsFunctionTests
         _rrepwServiceMock.Verify(m => m.UpdatePrns(prns));
         // Verify GetLastUpdate was called
         _lastUpdateServiceMock.Verify(
-            x => x.GetLastUpdate(FunctionName.UpdateRrepwPrnsList),
+            x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns),
             Times.Once
         );
 
         // Verify last update was set
         _lastUpdateServiceMock.Verify(
-            x => x.SetLastUpdate(FunctionName.UpdateRrepwPrnsList, ItEx.IsCloseTo(DateTime.UtcNow)),
+            x => x.SetLastUpdate(FunctionName.UpdateRrepwPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }

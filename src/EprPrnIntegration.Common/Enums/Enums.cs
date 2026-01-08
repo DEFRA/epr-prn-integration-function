@@ -5,6 +5,6 @@
         ACCEPTED = 1,
         REJECTED,
         CANCELLED,
-        AWAITINGACCEPTANCE
+        AWAITINGACCEPTANCE,
     }
 }
