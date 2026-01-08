@@ -9,23 +9,20 @@ using Newtonsoft.Json.Linq;
 
 namespace EprPrnIntegration.Common.RESTServices
 {
-    /// <summary>
-    /// Don't use this without. BaseHttpService is the place to be.
-    /// </summary>
     [ExcludeFromCodeCoverage]
     public abstract class BaseHttpServiceOld
     {
         protected readonly string _baseUrl;
         protected readonly HttpClient _httpClient;
         protected IHttpContextAccessor _httpContextAccessor;
-        private readonly ILogger<BaseHttpServiceOld> _logger;
+        private readonly ILogger<BaseHttpService> _logger;
 
         protected BaseHttpServiceOld(
             IHttpContextAccessor httpContextAccessor,
             IHttpClientFactory httpClientFactory,
             string baseUrl,
             string endPointName,
-            ILogger<BaseHttpServiceOld> logger,
+            ILogger<BaseHttpService> logger,
             string httpClientName = "",
             int timeoutSeconds = 100
         )
@@ -257,10 +254,25 @@ namespace EprPrnIntegration.Common.RESTServices
             CancellationToken cancellationToken
         )
         {
-            HttpResponseMessage response;
             try
             {
-                response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+                var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                    _logger.LogError(
+                        "API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
+                        response.StatusCode,
+                        responseBody
+                    );
+
+                    throw new ServiceException(
+                        $"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. "
+                            + $"Message: {responseBody}",
+                        response.StatusCode
+                    );
+                }
             }
             catch (HttpRequestException ex)
             {
@@ -287,21 +299,6 @@ namespace EprPrnIntegration.Common.RESTServices
                     $"Unexpected error occurred while processing the HTTP request  {_httpClient.BaseAddress}.",
                     null,
                     ex
-                );
-            }
-            if (!response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError(
-                    "API call failed. Status Code: {StatusCode}. Response Body: {ResponseBody}",
-                    response.StatusCode,
-                    responseBody
-                );
-
-                throw new ServiceException(
-                    $"Error occurred calling API {_httpClient.BaseAddress} with error code: {response.StatusCode}. "
-                        + $"Message: {responseBody}",
-                    response.StatusCode
                 );
             }
         }
