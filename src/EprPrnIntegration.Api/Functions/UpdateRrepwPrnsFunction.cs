@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
@@ -107,7 +108,10 @@ public class UpdateRrepwPrnsFunction(
         try
         {
             logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
-            var updatedEprPrns = await prnService.GetUpdatedPrns(fromDate, toDate);
+            var response = await prnService.GetUpdatedPrns(fromDate, toDate);
+            response.EnsureSuccessStatusCode();
+
+            var updatedEprPrns = await response.Content.ReadFromJsonAsync<List<PrnUpdateStatus>>();
             if (updatedEprPrns != null && updatedEprPrns.Count > 0)
                 return updatedEprPrns;
 

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
@@ -94,9 +95,11 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 pageCount
             );
 
-            var response = await GetAsync<ListPackagingRecyclingNotesResponse>(url);
+            var httpResponse = await GetAsync(url);
+            httpResponse.EnsureSuccessStatusCode();
 
-            var items = response.Items ?? [];
+            var response = await httpResponse.Content.ReadFromJsonAsync<ListPackagingRecyclingNotesResponse>();
+            var items = response?.Items ?? [];
 
             if (items.Count > 0)
             {
@@ -107,7 +110,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 );
             }
 
-            var nextCursor = response.HasMore ? response.NextCursor : null;
+            var nextCursor = response?.HasMore == true ? response.NextCursor : null;
 
             return (items, nextCursor);
         }

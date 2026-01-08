@@ -30,12 +30,12 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
         ),
             IWasteOrganisationsService
     {
-        public async Task UpdateOrganisation(
+        public async Task<HttpResponseMessage> UpdateOrganisation(
             string id,
             WasteOrganisationsApiUpdateRequest organisation
         )
         {
-            await PutAsync($"organisations/{id}", organisation, CancellationToken.None);
+            return await PutAsync($"organisations/{id}", organisation, CancellationToken.None);
         }
     }
 }

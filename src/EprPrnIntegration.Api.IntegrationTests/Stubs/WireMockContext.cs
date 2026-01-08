@@ -14,6 +14,7 @@ public class WireMockContext : IAsyncLifetime
     {
         await WireMockAdminApi.ResetMappingsAsync();
         await WireMockAdminApi.ResetRequestsAsync();
+        await WireMockAdminApi.ResetScenariosAsync();
     }
 
     public Task DisposeAsync()

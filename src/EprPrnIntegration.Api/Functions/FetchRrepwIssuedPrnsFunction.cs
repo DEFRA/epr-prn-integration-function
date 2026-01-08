@@ -1,11 +1,9 @@
 using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
-using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -87,30 +85,35 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
-        try
+        var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+        var response = await prnService.SavePrn(request);
+
+        if (response.IsSuccessStatusCode)
         {
-            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-            await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
+            return;
         }
-        catch (HttpRequestTransientException ex)
+
+        // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
+        if (response.StatusCode.IsTransient())
         {
             logger.LogError(
-                ex,
-                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing",
-                ex.StatusCode,
+                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
+                response.StatusCode,
                 prn.PrnNumber
             );
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // Non-transient errors are not recoverable; log and continue with next PRN.
-            logger.LogError(
-                ex,
-                "Failed to save PRN {PrnNumber}, continuing with next PRN",
-                prn.PrnNumber
+            throw new HttpRequestException(
+                $"Transient error {response.StatusCode} saving PRN {prn.PrnNumber}",
+                null,
+                response.StatusCode
             );
         }
+
+        // Non-transient errors are not recoverable; log and continue with next PRN
+        logger.LogError(
+            "Failed to save PRN {PrnNumber} with status {StatusCode}, continuing with next PRN",
+            prn.PrnNumber,
+            response.StatusCode
+        );
     }
 }

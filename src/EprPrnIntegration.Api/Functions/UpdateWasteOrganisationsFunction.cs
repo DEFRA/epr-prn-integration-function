@@ -82,21 +82,14 @@ public class UpdateWasteOrganisationsFunction(
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
+        HttpResponseMessage response;
         try
         {
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
-        }
-        catch (HttpRequestTransientException ex)
-        {
-            // Allow the function to terminate and resume on the next schedule with the original time window.
-            logger.LogError(
-                ex,
-                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing",
-                ex.StatusCode,
-                producer.PEPRID
+            response = await wasteOrganisationsService.UpdateOrganisation(
+                producer.PEPRID!,
+                request
             );
-            throw;
         }
         catch (Exception ex)
         {
@@ -106,6 +99,14 @@ public class UpdateWasteOrganisationsFunction(
                 ex,
                 "Failed to update organisation {OrganisationId}, continuing with next producer",
                 producer.PEPRID
+            );
+            return;
+        }
+        if (response.StatusCode.IsTransient())
+        {
+            throw new ServiceException(
+                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, terminating",
+                response.StatusCode
             );
         }
     }

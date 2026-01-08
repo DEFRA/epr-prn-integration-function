@@ -97,7 +97,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable, 3)]
+    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
     [InlineData(HttpStatusCode.RequestTimeout, 1)]
     [InlineData(HttpStatusCode.InternalServerError, 1)]
     [InlineData(HttpStatusCode.BadGateway, 1)]
@@ -132,7 +132,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Count.Should()
                 .Be(
                     failureCount + 1,
-                    "Should be three failures in a row then a success,so four requests"
+                    $"Should be {failureCount} failures in a row then a success,so {failureCount + 1} requests"
                 );
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
@@ -150,7 +150,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.BadGateway)]
     [InlineData(HttpStatusCode.TooManyRequests)]
     [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Failures(
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Retries(
         HttpStatusCode failureResponse
     )
     {
@@ -174,10 +174,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         {
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
-            entries.Count.Should().Be(4, "Should be four failures in a row,so four requests");
+            entries
+                .Count.Should()
+                .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
-            mostRecentUpdate.Response.StatusCode.Should().Be(503);
+            mostRecentUpdate.Response.StatusCode.Should().Be((int)failureResponse);
 
             var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
             after.Should().NotBeAfter(before);

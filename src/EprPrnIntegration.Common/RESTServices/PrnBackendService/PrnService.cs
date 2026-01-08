@@ -27,16 +27,15 @@ public class PrnService(
     ),
         IPrnService
 {
-    public async Task SavePrn(SavePrnDetailsRequest request)
+    public async Task<HttpResponseMessage> SavePrn(SavePrnDetailsRequest request)
     {
         logger.LogInformation("Saving RREPW PRN with id {PrnNumber}", request.PrnNumber);
-        await PostAsync("api/v2/prn", request, CancellationToken.None);
+        return await PostAsync("api/v2/prn", request, CancellationToken.None);
     }
 
-    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
+    public async Task<HttpResponseMessage> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
     {
         logger.LogInformation("Getting updated PRN's.");
-
-        return await GetAsync<List<PrnUpdateStatus>>(PrnRoutes.ModifiedPrnsRoute(fromDate, toDate));
+        return await GetAsync(PrnRoutes.ModifiedPrnsRoute(fromDate, toDate));
     }
 }
