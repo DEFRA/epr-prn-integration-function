@@ -25,6 +25,26 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         Assert.NotNull(status.Guid);
     }
 
+    public async Task WithOrganisationsEndpointWIthNonTransientFailure(
+        string id,
+        HttpStatusCode failureResponse = HttpStatusCode.BadRequest
+    )
+    {
+        var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request =>
+                    request
+                        .UsingPut()
+                        .WithPath($"/organisations/{id}/")
+                        .WithHeader("Authorization", "Bearer *")
+                )
+                .WithResponse(response => response.WithStatusCode(failureResponse))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
     public async Task WithOrganisationsEndpointRecoveringFromTransientFailures(
         string id,
         int failureCount,

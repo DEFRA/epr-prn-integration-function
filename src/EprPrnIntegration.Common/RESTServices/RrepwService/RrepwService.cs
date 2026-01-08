@@ -98,7 +98,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             var httpResponse = await GetAsync(url);
             httpResponse.EnsureSuccessStatusCode();
 
-            var response = await httpResponse.Content.ReadFromJsonAsync<ListPackagingRecyclingNotesResponse>();
+            var response =
+                await httpResponse.Content.ReadFromJsonAsync<ListPackagingRecyclingNotesResponse>();
             var items = response?.Items ?? [];
 
             if (items.Count > 0)

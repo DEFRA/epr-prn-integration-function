@@ -3,12 +3,14 @@ using System.Net;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -49,6 +51,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             CreatePrn("PRN-002"),
             CreatePrn("PRN-003"),
         };
+
+        SetupSavePrns(prns);
 
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
@@ -134,10 +138,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
         var prns = new List<PackagingRecyclingNote>
         {
             CreatePrn("PRN-001"),
-            CreatePrn("PRN-002-fails"),
             CreatePrn("PRN-003"),
+            CreatePrn("PRN-002-fails"),
         };
-
+        SetupSavePrns(prns.Take(2));
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
@@ -154,9 +158,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x =>
                 x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails"))
             )
-            .ThrowsAsync(
-                new HttpRequestException("Missing credentials", null, HttpStatusCode.Unauthorized)
-            );
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Unauthorized));
 
         await _function.Run(new TimerInfo());
 
@@ -199,6 +201,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             CreatePrn("PRN-002-transient"),
         };
 
+        SetupSavePrns(prns.Take(1));
+
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync(DateTime.MinValue);
@@ -210,7 +214,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x =>
                 x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-transient"))
             )
-            .ThrowsAsync(new HttpRequestException($"Error: {statusCode}", null, statusCode));
+            .ReturnsAsync(new HttpResponseMessage(statusCode));
 
         // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
@@ -222,11 +226,23 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
+    private void SetupSavePrns(IEnumerable<PackagingRecyclingNote> prns)
+    {
+        foreach (var prn in prns)
+        {
+            _prnServiceMock
+                .Setup(x =>
+                    x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == prn.PrnNumber))
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+        }
+    }
+
     [Fact]
     public async Task WhenNoBlobStorageValueExists_UsesDefaultStartDateFromConfiguration()
     {
         var prns = new List<PackagingRecyclingNote> { CreatePrn("PRN-001"), CreatePrn("PRN-002") };
-
+        SetupSavePrns(prns);
         var expectedStartDate = DateTime.SpecifyKind(
             DateTime.ParseExact(
                 _config.Value.DefaultStartDate,
@@ -277,6 +293,18 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.MinValue);
 
+        prnServiceMock
+            .Setup(x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req =>
+                        req.PrnNumber == "STUB-12345"
+                        && req.AccreditationYear == "2026"
+                        && req.MaterialName != null
+                        && req.ProcessToBeUsed != null
+                    )
+                )
+            )
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
         var function = new FetchRrepwIssuedPrnsFunction(
             lastUpdateServiceMock.Object,
             Mock.Of<ILogger<FetchRrepwIssuedPrnsFunction>>(),
@@ -287,20 +315,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Act
         await function.Run(new TimerInfo());
-
-        // Assert - verify the stubbed PRN was processed and mapped correctly
-        prnServiceMock.Verify(
-            x =>
-                x.SavePrn(
-                    It.Is<SavePrnDetailsRequest>(req =>
-                        req.PrnNumber == "STUB-12345"
-                        && req.AccreditationYear == "2026"
-                        && req.MaterialName != null
-                        && req.ProcessToBeUsed != null
-                    )
-                ),
-            Times.Once
-        );
 
         // Verify last update was set
         lastUpdateServiceMock.Verify(

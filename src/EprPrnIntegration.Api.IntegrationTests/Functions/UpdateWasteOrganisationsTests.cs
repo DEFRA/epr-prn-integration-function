@@ -225,4 +225,37 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries.Should().BeEmpty();
         });
     }
+
+    [Fact]
+    public async Task WhenWasteOrganisationsApiHasNonTransientFailure_ContinuesWithNextOrganisation()
+    {
+        var ids = await CommonDataApiStub.HasV2UpdateFor("acme-transient", 2);
+
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[0]);
+
+            entries.Count.Should().Be(1, "Should only be one failed attempt");
+            entries[0].Request.Body!.Should().Contain("acme-transient");
+            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+            entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
+            entries.Count.Should().Be(1);
+            entries[0].Request.Body!.Should().Contain("acme-transient");
+            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
+
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().BeAfter(before);
+        });
+    }
 }

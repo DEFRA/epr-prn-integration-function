@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
@@ -58,26 +59,20 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             sentRequest.Should().BeEquivalentTo(request);
         }
 
-        [Fact]
-        public async Task SavePrn_ShouldThrowException_WhenPostFails()
+        [Theory]
+        [InlineData(HttpStatusCode.BadRequest)]
+        [InlineData(HttpStatusCode.InternalServerError)]
+        [InlineData(HttpStatusCode.TooManyRequests)]
+        [InlineData(HttpStatusCode.BadGateway)]
+        [InlineData(HttpStatusCode.Unauthorized)]
+        [InlineData(HttpStatusCode.Forbidden)]
+        public async Task SavePrn_ShouldReturnStatusCode_WhenPostFails(HttpStatusCode statusCode)
         {
-            // Arrange
             var request = CreateSavePrnDetailsRequest();
-            var (sut, _) = CreatePrnServiceV2("", System.Net.HttpStatusCode.BadRequest);
+            var (sut, _) = CreatePrnServiceV2("", statusCode);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
-        }
-
-        [Fact]
-        public async Task SavePrn_ShouldThrowException_WhenServerError()
-        {
-            // Arrange
-            var request = CreateSavePrnDetailsRequest();
-            var (sut, _) = CreatePrnServiceV2("", System.Net.HttpStatusCode.InternalServerError);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<ServiceException>(() => sut.SavePrn(request));
+            var response = await sut.SavePrn(request);
+            response.StatusCode.Should().Be(statusCode);
         }
 
         [Fact]
