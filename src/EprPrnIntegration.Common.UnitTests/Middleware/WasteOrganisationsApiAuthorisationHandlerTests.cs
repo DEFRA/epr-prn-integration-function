@@ -293,6 +293,108 @@ public class WasteOrganisationsApiAuthorisationHandlerTests : IDisposable
             );
     }
 
+    [Fact]
+    public async Task WhenCachedTokenExpires_ShouldFetchNewToken()
+    {
+        // Arrange
+        var firstToken = "first-token-expires-soon";
+        var secondToken = "second-token-fresh";
+
+        SetupCognitoResponseWithSequence(
+            firstAccessToken: firstToken,
+            firstExpiresIn: 1, // Token expires in 1 second
+            secondAccessToken: secondToken,
+            secondExpiresIn: 3600
+        );
+        SetupHttpStubResponse();
+
+        var handler = new WasteOrganisationsApiAuthorisationHandler(
+            _configMock.Object,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object
+        )
+        {
+            InnerHandler = _innerHandlerMock.Object,
+        };
+
+        var client = new HttpClient(handler);
+
+        // Act - First request
+        var request1 = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test1");
+        await client.SendAsync(request1);
+
+        // Assert - First token is used
+        request1.Headers.Authorization.Should().NotBeNull();
+        request1.Headers.Authorization!.Parameter.Should().Be(firstToken);
+
+        // Wait for token to expire
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        // Act - Second request after token expired
+        var request2 = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test2");
+        await client.SendAsync(request2);
+
+        // Assert - Should have fetched a new token
+        request2.Headers.Authorization.Should().NotBeNull();
+        request2
+            .Headers.Authorization!.Parameter.Should()
+            .Be(secondToken, "expired token should be refreshed");
+    }
+
+    private void SetupCognitoResponseWithSequence(
+        string firstAccessToken = "first-token",
+        int firstExpiresIn = 3600,
+        string secondAccessToken = "second-token",
+        int secondExpiresIn = 3600
+    )
+    {
+        var callCount = 0;
+
+        var cognitoHandlerMock = new Mock<HttpMessageHandler>();
+        cognitoHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .Callback<HttpRequestMessage, CancellationToken>(
+                (req, ct) =>
+                {
+                    callCount++;
+                }
+            )
+            .ReturnsAsync(() =>
+            {
+                var tokenResponse =
+                    callCount == 1
+                        ? new
+                        {
+                            access_token = firstAccessToken,
+                            token_type = "Bearer",
+                            expires_in = firstExpiresIn,
+                        }
+                        : new
+                        {
+                            access_token = secondAccessToken,
+                            token_type = "Bearer",
+                            expires_in = secondExpiresIn,
+                        };
+
+                var content = JsonSerializer.Serialize(tokenResponse);
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(content),
+                };
+            });
+
+        var cognitoClient = new HttpClient(cognitoHandlerMock.Object);
+        _httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(cognitoClient);
+    }
+
     private void SetupCognitoResponse(
         string? accessToken = "test-token",
         string? errorContent = null,
