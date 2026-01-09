@@ -182,7 +182,7 @@ public class RrepwMappersTests
     )]
     [InlineData(
         RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
-        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAge
+        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency
     )]
     public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(
         string sourceStr,

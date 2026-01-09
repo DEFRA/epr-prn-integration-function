@@ -217,7 +217,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .ReturnsAsync(new HttpResponseMessage(statusCode));
 
         // Act & Assert - expect the exception to be rethrown
-        await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+        await Assert.ThrowsAsync<ServiceException>(() => _function.Run(new TimerInfo()));
 
         // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(

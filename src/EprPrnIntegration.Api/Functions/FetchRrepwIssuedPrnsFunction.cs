@@ -1,6 +1,5 @@
 using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -85,35 +84,14 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
-        var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-        var response = await prnService.SavePrn(request);
-
-        if (response.IsSuccessStatusCode)
-        {
-            logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
-            return;
-        }
-
-        // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
-        if (response.StatusCode.IsTransient())
-        {
-            logger.LogError(
-                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
-                response.StatusCode,
-                prn.PrnNumber
-            );
-            throw new HttpRequestException(
-                $"Transient error {response.StatusCode} saving PRN {prn.PrnNumber}",
-                null,
-                response.StatusCode
-            );
-        }
-
-        // Non-transient errors are not recoverable; log and continue with next PRN
-        logger.LogError(
-            "Failed to save PRN {PrnNumber} with status {StatusCode}, continuing with next PRN",
-            prn.PrnNumber,
-            response.StatusCode
+        await HttpHelper.HandleTransientErrors(
+            async () =>
+            {
+                var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+                return await prnService.SavePrn(request);
+            },
+            logger,
+            $"Saving PRN {prn.PrnNumber}"
         );
     }
 }

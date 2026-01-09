@@ -1,5 +1,6 @@
 using System.Net;
 using EprPrnIntegration.Common.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
@@ -28,6 +29,68 @@ public class PrnApi(WireMockContext wiremock)
             builder
                 .WithRequest(request => request.UsingPost().WithPath("/api/v2/prn/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task AcceptsPrnV2ForId(string id)
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request =>
+                    request
+                        .UsingPost()
+                        .WithPath("/api/v2/prn/")
+                        .WithBody(body =>
+                            body.WithMatcher(matcher =>
+                                matcher
+                                    .WithName("JsonPartialMatcher")
+                                    .WithPattern($"{{\"prnNumber\":\"{id}\"}}")
+                            )
+                        )
+                )
+                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task AcceptsPrnV2WithTransientFailures(
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
+    {
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request => request.UsingPost().WithPath("/api/v2/prn/"),
+            response => response.WithStatusCode(HttpStatusCode.Accepted),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
+        );
+    }
+
+    public async Task AcceptsPrnV2WithNonTransientFailure(
+        string id,
+        HttpStatusCode failureResponse = HttpStatusCode.BadRequest
+    )
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request =>
+                    request
+                        .UsingPost()
+                        .WithPath("/api/v2/prn/")
+                        .WithBody(body =>
+                            body.WithMatcher(matcher =>
+                                matcher
+                                    .WithName("JsonPartialMatcher")
+                                    .WithPattern($"{{\"prnNumber\":\"{id}\"}}")
+                            )
+                        )
+                )
+                .WithResponse(response => response.WithStatusCode(failureResponse))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
@@ -96,7 +159,7 @@ public class PrnApi(WireMockContext wiremock)
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 
-    public async Task<IList<LogEntryModel>> GetV2Requests()
+    public async Task<IList<LogEntryModel>> GetPrnDetailsUpdateV2()
     {
         var requestsModel = new RequestModel { Methods = ["POST"], Path = "/api/v2/prn/" };
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);

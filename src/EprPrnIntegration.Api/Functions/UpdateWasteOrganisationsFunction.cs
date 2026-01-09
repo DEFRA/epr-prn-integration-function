@@ -1,10 +1,6 @@
-using System.Net;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Exceptions;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -80,32 +76,17 @@ public class UpdateWasteOrganisationsFunction(
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
-        HttpResponseMessage response;
-        try
-        {
-            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            response = await wasteOrganisationsService.UpdateOrganisation(
-                producer.PEPRID!,
-                request
-            );
-        }
-        catch (Exception ex)
-        {
-            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
-            // to allow investigation.
-            logger.LogError(
-                ex,
-                "Failed to update organisation {OrganisationId}, continuing with next producer",
-                producer.PEPRID
-            );
-            return;
-        }
-        if (response.StatusCode.IsTransient())
-        {
-            throw new ServiceException(
-                "{StatusCode} response when updating organisation {OrganisationId}, terminating",
-                response.StatusCode
-            );
-        }
+        await HttpHelper.HandleTransientErrors(
+            async () =>
+            {
+                var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+                return await wasteOrganisationsService.UpdateOrganisation(
+                    producer.PEPRID!,
+                    request
+                );
+            },
+            logger,
+            $"Saving Organisation {producer.PEPRID}"
+        );
     }
 }
