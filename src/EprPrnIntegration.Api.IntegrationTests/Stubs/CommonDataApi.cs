@@ -164,7 +164,11 @@ public class CommonDataApi(WireMockContext wireMock)
         return await wireMock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 
-    public async Task<string> HasV2UpdateWithTransientFailures(string name)
+    public async Task<string> HasV2UpdateWithTransientFailures(
+        string name,
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
     {
         var id = Guid.NewGuid().ToString();
 
@@ -193,8 +197,8 @@ public class CommonDataApi(WireMockContext wireMock)
         await wireMock.WithEndpointRecoveringFromTransientFailures(
             request => request.UsingGet().WithPath("/api/producer-details/updated-producers"),
             response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(responseData),
-            response => response.WithStatusCode(HttpStatusCode.ServiceUnavailable),
-            3
+            response => response.WithStatusCode(failureResponse),
+            failureCount
         );
 
         return id;

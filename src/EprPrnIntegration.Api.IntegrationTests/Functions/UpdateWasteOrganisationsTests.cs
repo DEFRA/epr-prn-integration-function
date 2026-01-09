@@ -73,14 +73,28 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Fact]
-    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
+    [InlineData(HttpStatusCode.RequestTimeout, 1)]
+    [InlineData(HttpStatusCode.InternalServerError, 1)]
+    [InlineData(HttpStatusCode.BadGateway, 1)]
+    [InlineData(HttpStatusCode.TooManyRequests, 1)]
+    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
+    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi(
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
     {
-        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures("acme-resilient");
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
+            "acme-resilient",
+            failureResponse,
+            failureCount
+        );
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
         );
@@ -93,6 +107,43 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries[0].Request.Body!.Should().Contain("acme-resilient");
 
             entries[0].Response.StatusCode.Should().Be(202);
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().BeAfter(before);
+        });
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.RequestTimeout)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndGivesUpAfter3Retries(
+        HttpStatusCode failureResponse
+    )
+    {
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
+            "acme-resilient",
+            failureResponse,
+            4
+        );
+        var before =
+            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id);
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(
+            FunctionName.UpdateWasteOrganisations
+        );
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+
+            entries.Count.Should().Be(0);
+            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            after.Should().NotBeAfter(before);
         });
     }
 
