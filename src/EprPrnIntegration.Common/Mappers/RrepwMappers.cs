@@ -58,7 +58,7 @@ public class RrepwMappers : Profile
                 (prn, spdr) =>
                 {
                     spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
-                    spdr.StatusUpdatedOn = GetIssueDate(prn);
+                    spdr.IssueDate = prn.Status?.AuthorisedAt;
                 }
             );
     }
@@ -68,16 +68,6 @@ public class RrepwMappers : Profile
         return prn.Status?.CurrentStatus switch
         {
             RrepwStatus.Cancelled => prn.Status.CancelledAt,
-            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt,
-            _ => null,
-        };
-    }
-
-    private static DateTime? GetIssueDate(PackagingRecyclingNote prn)
-    {
-        return prn.Status?.CurrentStatus switch
-        {
-            RrepwStatus.Cancelled => null,
             RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt,
             _ => null,
         };
