@@ -17,7 +17,6 @@ public class WasteOrganisationsApiAuthorisationHandler(
 ) : DelegatingHandler
 {
     private readonly WasteOrganisationsApiConfiguration _config = config.Value;
-    private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
     private const string TokenCacheKey = "WasteOrganisationsApi_AccessToken";
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -41,54 +40,24 @@ public class WasteOrganisationsApiAuthorisationHandler(
 
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        // Fast path: check cache without locking
-        if (memoryCache.TryGetValue(TokenCacheKey, out string? cachedToken))
-        {
-            return cachedToken!;
-        }
+        return await memoryCache.GetOrCreateAsync(
+                TokenCacheKey,
+                async entry =>
+                {
+                    logger.LogInformation("Obtaining fresh Cognito access token");
+                    var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
+                    var token = tokenResponse.AccessToken!;
 
-        // Slow path: acquire semaphore to prevent thundering herd
-        //
-        // Why SemaphoreSlim with IMemoryCache?
-        // - IMemoryCache.GetOrCreateAsync() does NOT prevent thundering herd (known issue: aspnet/Caching#218)
-        //   See: https://github.com/aspnet/Caching/issues/218
-        // - Multiple concurrent requests would all execute the factory function
-        // - SemaphoreSlim ensures only ONE token fetch happens for concurrent requests
-        // - IMemoryCache provides automatic expiration handling based on token lifetime
-        //
-        // Why no built-in AWS helper?
-        // - Amazon.Extensions.CognitoAuthentication only supports user authentication, not OAuth client credentials
-        // - Cognito requires non-standard Basic auth on token endpoint, incompatible with generic OAuth libraries
-        // - The preferred Duende.IdentityModel (https://docs.duendesoftware.com/identitymodel/) requires commercial
-        //   licensing (https://duendesoftware.com/products/identitymodel) for production use
-        // - This double-checked locking + SemaphoreSlim pattern is the standard approach for async lazy initialization
-        //   See: https://blog.stephencleary.com/2012/08/asynchronous-lazy-initialization.html
-        await TokenSemaphore.WaitAsync(cancellationToken);
-        try
-        {
-            // Double-check cache after acquiring semaphore
-            if (memoryCache.TryGetValue(TokenCacheKey, out cachedToken))
-            {
-                return cachedToken!;
-            }
+                    // Cache the token with expiration
+                    // Use 90% of token lifetime to ensure we refresh before actual expiration
+                    var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
+                    var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
 
-            logger.LogInformation("Obtaining fresh Cognito access token");
-            var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
-            var token = tokenResponse.AccessToken!;
+                    entry.AbsoluteExpirationRelativeToNow = cacheExpiration;
 
-            // Cache the token with expiration
-            // Use 90% of token lifetime to ensure we refresh before actual expiration
-            var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
-            var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
-
-            memoryCache.Set(TokenCacheKey, token, cacheExpiration);
-
-            return token;
-        }
-        finally
-        {
-            TokenSemaphore.Release();
-        }
+                    return token;
+                }
+            ) ?? throw new InvalidOperationException("Failed to retrieve access token from cache");
     }
 
     private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(
