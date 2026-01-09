@@ -1,10 +1,6 @@
-using System.Net;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Exceptions;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
