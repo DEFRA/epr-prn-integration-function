@@ -20,8 +20,8 @@ public static class WireMockTransientFailures
         // Set up failure mappings: each failure transitions to the next state
         for (var i = 0; i < failureCount; i++)
         {
-            var currentState = i == 0 ? null : $"Attempt{i}";
-            var nextState = $"Attempt{i + 1}";
+            var currentState = i == 0 ? null : $"{scenarioName}Attempt{i}";
+            var nextState = $"{scenarioName}Attempt{i + 1}";
 
             var failureMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
             failureMapping.Given(builder =>
@@ -43,7 +43,7 @@ public static class WireMockTransientFailures
         }
 
         // Final mapping: return success when in the last failure state
-        var finalState = $"Attempt{failureCount}";
+        var finalState = $"{scenarioName}Attempt{failureCount}";
         var successMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
         successMapping.Given(builder =>
             builder
