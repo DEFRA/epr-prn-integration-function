@@ -257,7 +257,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             var entries = await PrnApiStub.GetPrnDetailsUpdateV2();
 
             entries.Count.Should().Be(2);
-            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadGateway);
+            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
             var after = await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);

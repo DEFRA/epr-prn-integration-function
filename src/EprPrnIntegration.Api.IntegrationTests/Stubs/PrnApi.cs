@@ -46,9 +46,8 @@ public class PrnApi(WireMockContext wiremock)
                         .WithBody(body =>
                             body.WithMatcher(matcher =>
                                 matcher
-                                    .WithName("JsonPathMatcher")
-                                    .WithPattern("$.PrnNumber")
-                                    .WithPatterns(id)
+                                    .WithName("JsonPartialMatcher")
+                                    .WithPattern($"{{\"prnNumber\":\"{id}\"}}")
                             )
                         )
                 )
@@ -86,9 +85,8 @@ public class PrnApi(WireMockContext wiremock)
                         .WithBody(body =>
                             body.WithMatcher(matcher =>
                                 matcher
-                                    .WithName("JsonPathMatcher")
-                                    .WithPattern("$.PrnNumber")
-                                    .WithPatterns(id)
+                                    .WithName("JsonPartialMatcher")
+                                    .WithPattern($"{{\"prnNumber\":\"{id}\"}}")
                             )
                         )
                 )
