@@ -11,7 +11,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedWasteOrganisationToApi()
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme");
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
@@ -28,7 +29,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             var entry = entries[0];
 
-            entry.Request.Body!.Should().Contain("acme");
+            entry.Request.Body!.Should().Contain(orgName);
 
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
@@ -53,13 +54,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme");
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
 
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
@@ -67,7 +70,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
 
             after.Should().BeAfter(before);
         });
@@ -85,8 +90,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         int failureCount
     )
     {
+        var orgName = Guid.NewGuid().ToString();
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-            "acme-resilient",
+            orgName,
             failureResponse,
             failureCount
         );
@@ -94,7 +100,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
         );
@@ -104,10 +111,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain("acme-resilient");
+            entries[0].Request.Body!.Should().Contain(orgName);
 
             entries[0].Response.StatusCode.Should().Be(202);
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().BeAfter(before);
         });
     }
@@ -123,13 +132,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         HttpStatusCode failureResponse
     )
     {
+        var orgName = Guid.NewGuid().ToString();
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-            "acme-resilient",
+            orgName,
             failureResponse,
             4
         );
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
@@ -142,7 +153,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().Be(0);
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().NotBeAfter(before);
         });
     }
@@ -159,7 +172,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         int failureCount
     )
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -169,7 +183,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         );
 
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
@@ -186,10 +201,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                     $"Should be {failureCount} failures in a row then a success,so {failureCount + 1} requests"
                 );
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
+            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
 
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().BeAfter(before);
         });
     }
@@ -205,7 +222,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         HttpStatusCode failureResponse
     )
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme-transient");
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -215,7 +233,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         );
 
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
@@ -229,10 +248,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Count.Should()
                 .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
+            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
             mostRecentUpdate.Response.StatusCode.Should().Be((int)failureResponse);
 
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().NotBeAfter(before);
         });
     }
@@ -240,7 +261,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasTransientFailure_DoesNotContinueWithNextOrganisation()
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme-transient", 2);
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName, 2);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -250,7 +272,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         );
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
@@ -264,12 +287,14 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Count.Should()
                 .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain("acme-transient");
+            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
             mostRecentUpdate
                 .Response.StatusCode.Should()
                 .Be((int)HttpStatusCode.ServiceUnavailable);
 
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().NotBeAfter(before);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
@@ -280,13 +305,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasNonTransientFailure_ContinuesWithNextOrganisation()
     {
-        var ids = await CommonDataApiStub.HasV2UpdateFor("acme-transient", 2);
+        var orgName = Guid.NewGuid().ToString();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName, 2);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
         var before =
-            await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations") ?? DateTime.MinValue;
+            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
+            ?? DateTime.MinValue;
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(
             FunctionName.UpdateWasteOrganisations
@@ -297,15 +324,17 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[0]);
 
             entries.Count.Should().Be(1, "Should only be one failed attempt");
-            entries[0].Request.Body!.Should().Contain("acme-transient");
+            entries[0].Request.Body!.Should().Contain(orgName);
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
             entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain("acme-transient");
+            entries[0].Request.Body!.Should().Contain(orgName);
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
-            var after = await LastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+            var after = await LastUpdateService.GetLastUpdate(
+                FunctionName.UpdateWasteOrganisations
+            );
             after.Should().BeAfter(before);
         });
     }
