@@ -133,7 +133,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            await AfterShouldBeAfterBefore(before, FunctionName.UpdateRrepwPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
 
@@ -163,7 +163,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before, FunctionName.UpdateRrepwPrns);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
 
@@ -189,7 +189,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            await AfterShouldBeAfterBefore(before, FunctionName.UpdateRrepwPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
 
@@ -215,7 +215,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before, FunctionName.UpdateRrepwPrns);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
 
@@ -241,7 +241,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            await AfterShouldBeAfterBefore(before, FunctionName.UpdateRrepwPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
 }

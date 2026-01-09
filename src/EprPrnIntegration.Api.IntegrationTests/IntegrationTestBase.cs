@@ -44,13 +44,13 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         return await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
     }
 
-    protected async Task AfterShouldBeAfterBefore(DateTime before, string functionName)
+    protected async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
     {
         var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().BeAfter(before);
     }
 
-    protected async Task AfterShouldNotBeAfterBefore(DateTime before, string functionName)
+    protected async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
     {
         var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);

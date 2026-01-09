@@ -8,28 +8,6 @@ namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
 public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 {
-    private async Task<DateTime> GetLastUpdate()
-    {
-        return await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-    }
-
-    private async Task AfterShouldBeAfterBefore(DateTime before)
-    {
-        var after =
-            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-        after.Should().BeAfter(before);
-    }
-
-    private async Task AfterShouldNotBeAfterBefore(DateTime before)
-    {
-        var after =
-            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-        after.Should().NotBeAfter(before);
-    }
-
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
@@ -68,7 +46,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -142,7 +120,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -168,7 +146,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -190,7 +168,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count - 1; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
-            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -212,7 +190,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -235,7 +213,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
-            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
+            await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 }
