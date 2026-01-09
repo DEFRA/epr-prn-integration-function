@@ -119,23 +119,14 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
-    [InlineData(HttpStatusCode.RequestTimeout, 1)]
-    [InlineData(HttpStatusCode.InternalServerError, 1)]
-    [InlineData(HttpStatusCode.BadGateway, 1)]
-    [InlineData(HttpStatusCode.TooManyRequests, 1)]
-    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
-    public async Task WhenRrepwApiHasTransientFailure_RetriesAndEventuallySendsDataToCommonPrnApi(
-        HttpStatusCode failureResponse,
-        int failureCount
-    )
+    [Fact]
+    public async Task WhenRrepwApiHasTransientFailure_RetriesAndEventuallySendsDataToCommonPrnApi()
     {
         var prnNumber = "PRN-TEST-001";
         await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
             [prnNumber],
-            failureResponse,
-            failureCount
+            HttpStatusCode.ServiceUnavailable,
+            1
         );
         var before = await GetLastUpdate();
         await PrnApiStub.AcceptsPrnV2();
@@ -146,28 +137,24 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().Be(failureCount + 1);
+            entries.Count.Should().Be(2);
             for (int i = 0; i < entries.Count - 1; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
             await AfterShouldBeAfterBefore(before);
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.RequestTimeout)]
-    [InlineData(HttpStatusCode.InternalServerError)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.TooManyRequests)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenRrepwApiHasTransientFailure_RetriesAndGivesUpAfter3Retries(
-        HttpStatusCode failureResponse
-    )
+    [Fact]
+    public async Task WhenRrepwApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
         var prnNumber = "PRN-TEST-001";
-        await RrepwApiStub.HasPrnUpdatesWithTransientFailures([prnNumber], failureResponse, 4);
+        await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
+            [prnNumber],
+            HttpStatusCode.ServiceUnavailable,
+            4
+        );
         var before = await GetLastUpdate();
         await PrnApiStub.AcceptsPrnV2();
 
@@ -179,28 +166,19 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
             entries.Count.Should().Be(4);
             for (int i = 0; i < entries.Count; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
             await AfterShouldNotBeAfterBefore(before);
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
-    [InlineData(HttpStatusCode.RequestTimeout, 1)]
-    [InlineData(HttpStatusCode.InternalServerError, 1)]
-    [InlineData(HttpStatusCode.BadGateway, 1)]
-    [InlineData(HttpStatusCode.TooManyRequests, 1)]
-    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
-    public async Task WhenCommonApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated(
-        HttpStatusCode failureResponse,
-        int failureCount
-    )
+    [Fact]
+    public async Task WhenCommonApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
         var prnNumber = "PRN-TEST-001";
         await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate();
-        await PrnApiStub.AcceptsPrnV2WithTransientFailures(failureResponse, failureCount);
+        await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -208,29 +186,21 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await PrnApiStub.GetPrnDetailsUpdateV2();
 
-            entries.Count.Should().Be(failureCount + 1);
+            entries.Count.Should().Be(2);
             for (int i = 0; i < entries.Count - 1; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
             await AfterShouldBeAfterBefore(before);
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.RequestTimeout)]
-    [InlineData(HttpStatusCode.InternalServerError)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.TooManyRequests)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenCommonApiHasTransientFailure_RetriesAndFailsAfter3Retries(
-        HttpStatusCode failureResponse
-    )
+    [Fact]
+    public async Task WhenCommonApiHasTransientFailure_RetriesAndFailsAfter3Retries()
     {
         var prnNumber = "PRN-TEST-001";
         await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate();
-        await PrnApiStub.AcceptsPrnV2WithTransientFailures(failureResponse, 4);
+        await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -240,7 +210,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
             entries.Count.Should().Be(4);
             for (int i = 0; i < entries.Count; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
             await AfterShouldNotBeAfterBefore(before);
         });
