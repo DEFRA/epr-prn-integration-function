@@ -13,12 +13,7 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request =>
-                    request
-                        .UsingPut()
-                        .WithPath($"/organisations/{id}/")
-                        .WithHeader("Authorization", "Bearer *")
-                )
+                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
@@ -33,12 +28,7 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request =>
-                    request
-                        .UsingPut()
-                        .WithPath($"/organisations/{id}/")
-                        .WithHeader("Authorization", "Bearer *")
-                )
+                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
                 .WithResponse(response => response.WithStatusCode(failureResponse))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
