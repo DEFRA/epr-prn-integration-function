@@ -179,4 +179,18 @@ public class PrnApi(WireMockContext wiremock)
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
     }
+
+    public async Task HasUpdatedPrnsWithTransientFailures(
+        List<PrnUpdateStatus> payload,
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
+    {
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request => request.UsingGet().WithPath("/api/v2/prn/modified-prns"),
+            response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(payload),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
+        );
+    }
 }

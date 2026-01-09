@@ -143,6 +143,25 @@ public class RrepwApi(WireMockContext wiremock)
         Assert.NotNull(status.Guid);
     }
 
+    public async Task AcceptsPrnAcceptWithFailures(HttpStatusCode failureResponse, int failureCount)
+    {
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request =>
+                request
+                    .UsingPost()
+                    .WithPath(
+                        new MatcherModel
+                        {
+                            Name = "RegexMatcher",
+                            Pattern = @"/v1/packaging-recycling-notes/.+/accept",
+                        }
+                    ),
+            response => response.WithStatusCode(HttpStatusCode.OK),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
+        );
+    }
+
     public async Task AcceptsPrnReject()
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
@@ -163,6 +182,25 @@ public class RrepwApi(WireMockContext wiremock)
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
+    }
+
+    public async Task AcceptsPrnRejectWithTransientFailures(int failureResponse, int failureCount)
+    {
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request =>
+                request
+                    .UsingPost()
+                    .WithPath(
+                        new MatcherModel
+                        {
+                            Name = "RegexMatcher",
+                            Pattern = @"/v1/packaging-recycling-notes/.+/reject",
+                        }
+                    ),
+            response => response.WithStatusCode(HttpStatusCode.OK),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
+        );
     }
 
     public async Task<IList<LogEntryModel>> GetPrnRequests()

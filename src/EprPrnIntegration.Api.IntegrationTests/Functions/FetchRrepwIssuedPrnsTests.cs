@@ -8,28 +8,6 @@ namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
 public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 {
-    private async Task<DateTime> GetLastUpdate()
-    {
-        return await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-    }
-
-    private async Task AfterShouldBeAfterBefore(DateTime before)
-    {
-        var after =
-            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-        after.Should().BeAfter(before);
-    }
-
-    private async Task AfterShouldNotBeAfterBefore(DateTime before)
-    {
-        var after =
-            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
-            ?? DateTime.MinValue;
-        after.Should().NotBeAfter(before);
-    }
-
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
@@ -62,13 +40,13 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
         await PrnApiStub.AcceptsPrnV2();
 
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            await AfterShouldBeAfterBefore(before);
+            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -128,7 +106,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable,
             1
         );
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
@@ -142,7 +120,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            await AfterShouldBeAfterBefore(before);
+            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -155,7 +133,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable,
             4
         );
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
@@ -168,7 +146,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before);
+            await AfterShouldNotBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -177,7 +155,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     {
         var prnNumber = "PRN-TEST-001";
         await RrepwApiStub.HasPrnUpdates([prnNumber]);
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
@@ -190,7 +168,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count - 1; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
-            await AfterShouldBeAfterBefore(before);
+            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -199,7 +177,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     {
         var prnNumber = "PRN-TEST-001";
         await RrepwApiStub.HasPrnUpdates([prnNumber]);
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
@@ -212,7 +190,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             for (int i = 0; i < entries.Count; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
-            await AfterShouldNotBeAfterBefore(before);
+            await AfterShouldNotBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 
@@ -221,7 +199,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     {
         var prnNumbers = new string[] { "PRN-TEST-001", "PRN-TEST-002" };
         await RrepwApiStub.HasPrnUpdates(prnNumbers);
-        var before = await GetLastUpdate();
+        var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithNonTransientFailure(prnNumbers[0]);
         await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
 
@@ -235,7 +213,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
             entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
-            await AfterShouldBeAfterBefore(before);
+            await AfterShouldBeAfterBefore(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
 }
