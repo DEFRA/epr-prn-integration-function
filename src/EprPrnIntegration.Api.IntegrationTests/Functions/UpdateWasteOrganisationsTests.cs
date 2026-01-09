@@ -11,8 +11,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedWasteOrganisationToApi()
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
@@ -29,7 +28,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             var entry = entries[0];
 
-            entry.Request.Body!.Should().Contain(orgName);
+            entry.Request.Body!.Should().Contain(ids[0] + "_name");
 
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
@@ -54,8 +53,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
@@ -90,9 +88,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         int failureCount
     )
     {
-        var orgName = Guid.NewGuid().ToString();
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-            orgName,
             failureResponse,
             failureCount
         );
@@ -111,7 +107,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain(orgName);
+            entries[0].Request.Body!.Should().Contain(id + "_name");
 
             entries[0].Response.StatusCode.Should().Be(202);
             var after = await LastUpdateService.GetLastUpdate(
@@ -132,12 +128,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         HttpStatusCode failureResponse
     )
     {
-        var orgName = Guid.NewGuid().ToString();
-        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-            orgName,
-            failureResponse,
-            4
-        );
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(failureResponse, 4);
         var before =
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
@@ -172,8 +163,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         int failureCount
     )
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -201,7 +191,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                     $"Should be {failureCount} failures in a row then a success,so {failureCount + 1} requests"
                 );
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
+            mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
 
             var after = await LastUpdateService.GetLastUpdate(
@@ -222,8 +212,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         HttpStatusCode failureResponse
     )
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName);
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -248,7 +237,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Count.Should()
                 .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
+            mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
             mostRecentUpdate.Response.StatusCode.Should().Be((int)failureResponse);
 
             var after = await LastUpdateService.GetLastUpdate(
@@ -261,8 +250,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasTransientFailure_DoesNotContinueWithNextOrganisation()
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName, 2);
+        var ids = await CommonDataApiStub.HasV2UpdateFor(2);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
@@ -287,7 +275,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Count.Should()
                 .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
-            mostRecentUpdate.Request.Body!.Should().Contain(orgName);
+            mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
             mostRecentUpdate
                 .Response.StatusCode.Should()
                 .Be((int)HttpStatusCode.ServiceUnavailable);
@@ -305,8 +293,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasNonTransientFailure_ContinuesWithNextOrganisation()
     {
-        var orgName = Guid.NewGuid().ToString();
-        var ids = await CommonDataApiStub.HasV2UpdateFor(orgName, 2);
+        var ids = await CommonDataApiStub.HasV2UpdateFor(2);
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
@@ -324,12 +311,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[0]);
 
             entries.Count.Should().Be(1, "Should only be one failed attempt");
-            entries[0].Request.Body!.Should().Contain(orgName);
+            entries[0].Request.Body!.Should().Contain(ids[0] + "_name");
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
             entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain(orgName);
+            entries[0].Request.Body!.Should().Contain(ids[0] + "_name");
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
             var after = await LastUpdateService.GetLastUpdate(
