@@ -8,6 +8,28 @@ namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
 public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 {
+    private async Task<DateTime> GetLastUpdate()
+    {
+        return await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
+            ?? DateTime.MinValue;
+    }
+
+    private async Task AfterShouldBeAfterBefore(DateTime before)
+    {
+        var after =
+            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
+            ?? DateTime.MinValue;
+        after.Should().BeAfter(before);
+    }
+
+    private async Task AfterShouldNotBeAfterBefore(DateTime before)
+    {
+        var after =
+            await LastUpdateService.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns)
+            ?? DateTime.MinValue;
+        after.Should().NotBeAfter(before);
+    }
+
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
