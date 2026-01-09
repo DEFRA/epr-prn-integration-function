@@ -1,7 +1,5 @@
 using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Exceptions;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -86,47 +84,14 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
-        HttpResponseMessage response;
-        try
-        {
-            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-            response = await prnService.SavePrn(request);
-
-            if (response.IsSuccessStatusCode)
+        await HttpHelper.HandleTransientErrors(
+            async () =>
             {
-                logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Exception when saving PRN {PrnNumber}, continuing with next PRN",
-                prn.PrnNumber
-            );
-            return;
-        }
-
-        // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
-        if (response.StatusCode.IsTransient())
-        {
-            logger.LogError(
-                "Transient error: ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
-                response.StatusCode,
-                prn.PrnNumber
-            );
-            throw new ServiceException(
-                $"Transient error {response.StatusCode} saving PRN {prn.PrnNumber}",
-                response.StatusCode
-            );
-        }
-
-        // Non-transient errors are not recoverable; log and continue with next PRN
-        logger.LogError(
-            "Failed to save PRN {PrnNumber} with status {StatusCode}, continuing with next PRN",
-            prn.PrnNumber,
-            response.StatusCode
+                var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+                return await prnService.SavePrn(request);
+            },
+            logger,
+            $"Saving PRN {prn.PrnNumber}"
         );
     }
 }

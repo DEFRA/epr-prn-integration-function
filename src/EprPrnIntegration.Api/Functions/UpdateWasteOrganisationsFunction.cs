@@ -80,46 +80,17 @@ public class UpdateWasteOrganisationsFunction(
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
-        HttpResponseMessage response;
-        try
-        {
-            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            response = await wasteOrganisationsService.UpdateOrganisation(
-                producer.PEPRID!,
-                request
-            );
-            if (response.IsSuccessStatusCode)
+        await HttpHelper.HandleTransientErrors(
+            async () =>
             {
-                logger.LogInformation(
-                    "Successfully saved Organisation {OrganisationId}",
-                    producer.PEPRID
+                var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+                return await wasteOrganisationsService.UpdateOrganisation(
+                    producer.PEPRID!,
+                    request
                 );
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
-            // to allow investigation.
-            logger.LogError(
-                ex,
-                "Failed to update organisation {OrganisationId}, continuing with next producer",
-                producer.PEPRID
-            );
-            return;
-        }
-        if (response.StatusCode.IsTransient())
-        {
-            throw new ServiceException(
-                $"{response.StatusCode} response when updating organisation {producer.PEPRID}, terminating",
-                response.StatusCode
-            );
-        }
-        // Non-transient errors are not recoverable; log and continue with next PRN
-        logger.LogError(
-            "{StatusCode} response when updating organisation {OrganisationId}, continuing with next organisation",
-            response.StatusCode,
-            producer.PEPRID
+            },
+            logger,
+            $"Saving Organisation {producer.PEPRID}"
         );
     }
 }
