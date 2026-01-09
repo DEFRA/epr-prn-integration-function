@@ -50,10 +50,7 @@ public class RrepwMappers : Profile
                 o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src))
             )
             .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
-            .ForMember(
-                spdr => spdr.MaterialName,
-                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
-            )
+            .ForMember(spdr => spdr.MaterialName, o => o.MapFrom(src => GetAuthorizedAt(src)))
             .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
             .AfterMap(
                 (prn, spdr) =>
