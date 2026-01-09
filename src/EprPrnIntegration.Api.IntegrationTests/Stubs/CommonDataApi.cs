@@ -49,7 +49,7 @@ public class CommonDataApi(WireMockContext wireMock)
         Assert.NotNull(status.Guid);
     }
 
-    public async Task<List<string>> HasV2UpdateFor(string name, int organisationCount = 1)
+    public async Task<List<string>> HasV2UpdateFor(int organisationCount = 1)
     {
         var ids = new List<string>();
 
@@ -63,7 +63,7 @@ public class CommonDataApi(WireMockContext wireMock)
                 return new
                 {
                     peprid = id,
-                    organisationName = name,
+                    organisationName = id + "_name",
                     tradingName = "Acme Plastics",
                     organisationType = "CS",
                     status = "registered",
@@ -165,19 +165,17 @@ public class CommonDataApi(WireMockContext wireMock)
     }
 
     public async Task<string> HasV2UpdateWithTransientFailures(
-        string name,
         HttpStatusCode failureResponse,
         int failureCount
     )
     {
         var id = Guid.NewGuid().ToString();
-
         var responseData = new[]
         {
             new
             {
                 peprid = id,
-                organisationName = name,
+                organisationName = id + "_name",
                 tradingName = "Acme Plastics",
                 organisationType = "CS",
                 status = "registered",
@@ -200,7 +198,6 @@ public class CommonDataApi(WireMockContext wireMock)
             response => response.WithStatusCode(failureResponse),
             failureCount
         );
-
         return id;
     }
 }
