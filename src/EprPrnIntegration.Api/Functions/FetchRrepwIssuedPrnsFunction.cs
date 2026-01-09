@@ -1,5 +1,6 @@
 using AutoMapper;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
@@ -85,12 +86,25 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
-        var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-        var response = await prnService.SavePrn(request);
-
-        if (response.IsSuccessStatusCode)
+        HttpResponseMessage response;
+        try
         {
-            logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
+            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+            response = await prnService.SavePrn(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Exception when saving PRN {PrnNumber}, continuing with next PRN",
+                prn.PrnNumber
+            );
             return;
         }
 
@@ -98,13 +112,12 @@ public class FetchRrepwIssuedPrnsFunction(
         if (response.StatusCode.IsTransient())
         {
             logger.LogError(
-                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
+                "Transient error: ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
                 response.StatusCode,
                 prn.PrnNumber
             );
-            throw new HttpRequestException(
+            throw new ServiceException(
                 $"Transient error {response.StatusCode} saving PRN {prn.PrnNumber}",
-                null,
                 response.StatusCode
             );
         }

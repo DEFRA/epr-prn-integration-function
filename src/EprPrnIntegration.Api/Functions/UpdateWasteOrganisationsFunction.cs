@@ -88,6 +88,14 @@ public class UpdateWasteOrganisationsFunction(
                 producer.PEPRID!,
                 request
             );
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation(
+                    "Successfully saved Organisation {OrganisationId}",
+                    producer.PEPRID
+                );
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -103,9 +111,15 @@ public class UpdateWasteOrganisationsFunction(
         if (response.StatusCode.IsTransient())
         {
             throw new ServiceException(
-                "{StatusCode} response when updating organisation {OrganisationId}, terminating",
+                $"{response.StatusCode} response when updating organisation {producer.PEPRID}, terminating",
                 response.StatusCode
             );
         }
+        // Non-transient errors are not recoverable; log and continue with next PRN
+        logger.LogError(
+            "{StatusCode} response when updating organisation {OrganisationId}, continuing with next organisation",
+            response.StatusCode,
+            producer.PEPRID
+        );
     }
 }

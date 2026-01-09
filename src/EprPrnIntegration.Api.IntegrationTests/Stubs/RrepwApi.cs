@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Models.Rrepw;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
@@ -14,68 +15,12 @@ public class RrepwApi(WireMockContext wiremock)
         string? nextCursor = null
     )
     {
-        var items = prnNumbers
-            .Select(prnNumber => new
-            {
-                id = Guid.NewGuid().ToString(),
-                prnNumber,
-                status = new
-                {
-                    currentStatus = "AWAITING_ACCEPTANCE",
-                    authorisedAt = "2025-01-15T10:30:00Z",
-                    authorisedBy = new { fullName = "John Doe", jobTitle = "Manager" },
-                },
-                issuedByOrganisation = new { id = Guid.NewGuid().ToString(), name = "Issuer Org" },
-                issuedToOrganisation = new
-                {
-                    id = Guid.NewGuid().ToString(),
-                    name = "Recipient Org",
-                },
-                accreditation = new
-                {
-                    id = Guid.NewGuid().ToString(),
-                    accreditationNumber = "ACC-001",
-                    accreditationYear = 2025,
-                    material = "Plastic",
-                    submittedToRegulator = "EA",
-                    siteAddress = new { line1 = "123 Test Street" },
-                },
-                isDecemberWaste = false,
-                isExport = false,
-                tonnageValue = 100,
-                issuerNotes = "Test notes",
-            })
-            .ToArray();
-
+        var items = CreatePrns(prnNumbers);
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
 
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request =>
-                {
-                    var req = request.UsingGet().WithPath("/v1/packaging-recycling-notes");
-
-                    if (cursor != null)
-                    {
-                        req.WithParams(() =>
-                            new List<ParamModel>
-                            {
-                                new()
-                                {
-                                    Name = "cursor",
-                                    Matchers = new[]
-                                    {
-                                        new MatcherModel
-                                        {
-                                            Name = "ExactMatcher",
-                                            Pattern = cursor,
-                                        },
-                                    },
-                                },
-                            }
-                        );
-                    }
-                })
+                .WithRequest(request => CreatePrnRequest(request, cursor))
                 .WithResponse(response =>
                     response
                         .WithStatusCode(HttpStatusCode.OK)
@@ -92,6 +37,88 @@ public class RrepwApi(WireMockContext wiremock)
 
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
+    }
+
+    public async Task HasPrnUpdatesWithTransientFailures(
+        string[] prnNumbers,
+        HttpStatusCode failureStatusCode,
+        int failuresCount
+    )
+    {
+        var items = CreatePrns(prnNumbers);
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request => CreatePrnRequest(request),
+            response =>
+                response
+                    .WithStatusCode(HttpStatusCode.OK)
+                    .WithBodyAsJson(new { items, hasMore = false }),
+            r => r.WithStatusCode(failureStatusCode),
+            failuresCount
+        );
+    }
+
+    public static RequestModelBuilder CreatePrnRequest(
+        RequestModelBuilder request,
+        string? cursor = null
+    )
+    {
+        var req = request.UsingGet().WithPath("/v1/packaging-recycling-notes");
+
+        if (cursor != null)
+        {
+            req.WithParams(() =>
+                [
+                    new()
+                    {
+                        Name = "cursor",
+                        Matchers = [new MatcherModel { Name = "ExactMatcher", Pattern = cursor }],
+                    },
+                ]
+            );
+        }
+
+        return req;
+    }
+
+    private static List<PackagingRecyclingNote> CreatePrns(string[] prnNumbers)
+    {
+        var items = prnNumbers
+            .Select(prnNumber => new PackagingRecyclingNote
+            {
+                Id = Guid.NewGuid().ToString(),
+                PrnNumber = prnNumber,
+                Status = new Status
+                {
+                    CurrentStatus = "AWAITING_ACCEPTANCE",
+                    AuthorisedAt = DateTime.Parse("2025-01-15T10:30:00Z"),
+                    AuthorisedBy = new UserSummary { FullName = "John Doe", JobTitle = "Manager" },
+                },
+                IssuedByOrganisation = new Organisation
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Issuer Org",
+                },
+                IssuedToOrganisation = new Organisation
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Recipient Org",
+                },
+                Accreditation = new Accreditation
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    AccreditationNumber = "ACC-001",
+                    AccreditationYear = 2025,
+                    Material = "Plastic",
+                    SubmittedToRegulator = "EA",
+                    SiteAddress = new Address { Line1 = "123 Test Street" },
+                },
+                IsDecemberWaste = false,
+                IsExport = false,
+                TonnageValue = 100,
+                IssuerNotes = "Test notes",
+            })
+            .ToList();
+        return items;
     }
 
     public async Task AcceptsPrnAccept()
@@ -136,6 +163,18 @@ public class RrepwApi(WireMockContext wiremock)
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
+    }
+
+    public async Task<IList<LogEntryModel>> GetPrnRequests()
+    {
+        var requestsModel = new RequestModel { Methods = ["GET"] };
+        var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+        return
+        [
+            .. allRequests.Where(r =>
+                r.Request.Path?.Contains("/v1/packaging-recycling-notes") == true
+            ),
+        ];
     }
 
     public async Task<IList<LogEntryModel>> GetPrnAcceptRequests()
