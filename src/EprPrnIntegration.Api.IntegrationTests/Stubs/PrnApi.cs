@@ -165,7 +165,17 @@ public class PrnApi(WireMockContext wiremock)
         return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
     }
 
-    public async Task HasUpdatedPrns(List<PrnUpdateStatus> payload)
+    public async Task<IList<LogEntryModel>> FindModifiedPrnsRequest()
+    {
+        var requestsModel = new RequestModel
+        {
+            Methods = ["GET"],
+            Path = "/api/v2/prn/modified-prns",
+        };
+        return await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
+    }
+
+    public async Task HasModifiedPrns(List<PrnUpdateStatus> payload)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
@@ -180,7 +190,7 @@ public class PrnApi(WireMockContext wiremock)
         Assert.NotNull(status.Guid);
     }
 
-    public async Task HasUpdatedPrnsWithTransientFailures(
+    public async Task HasModifiedPrnsWithTransientFailures(
         List<PrnUpdateStatus> payload,
         HttpStatusCode failureResponse,
         int failureCount
