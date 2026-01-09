@@ -9,6 +9,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
             DateTime dateFrom,
             DateTime dateTo
         );
-        Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus rrepwUpdatedPrn);
+        Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn);
     }
-}
+};
