@@ -53,6 +53,9 @@ public static class HostBuilderConfiguration
         // Add Application Insights
         services.AddCustomApplicationInsights();
 
+        // Add memory cache for token caching
+        services.AddMemoryCache();
+
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<ICommonDataService, CommonDataService>();
