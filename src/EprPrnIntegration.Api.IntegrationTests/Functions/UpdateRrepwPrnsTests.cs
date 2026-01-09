@@ -50,7 +50,9 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
                 var jsonDocument = JsonDocument.Parse(request.Request.Body!);
 
                 jsonDocument
-                    .RootElement.GetProperty("acceptedAt")
+                    .RootElement.GetProperty(
+                        eprnStatus == EprnStatus.ACCEPTED ? "acceptedAt" : "rejectedAt"
+                    )
                     .GetDateTime()
                     .Should()
                     .Be(prnUpdate.StatusDate);
