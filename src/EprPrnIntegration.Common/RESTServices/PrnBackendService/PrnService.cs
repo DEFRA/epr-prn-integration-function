@@ -23,27 +23,21 @@ public class PrnService(
                 nameof(config),
                 ExceptionMessages.PrnServiceBaseUrlMissing
             ),
-        "api/v2",
         logger,
         HttpClientNames.PrnV2,
         config.Value.TimeoutSeconds
     ),
         IPrnService
 {
-    public async Task SavePrn(SavePrnDetailsRequest request)
+    public async Task<HttpResponseMessage> SavePrn(SavePrnDetailsRequest request)
     {
         logger.LogInformation("Saving RREPW PRN with id {PrnNumber}", request.PrnNumber);
-        await Post("prn", request, CancellationToken.None);
+        return await PostAsync("api/v2/prn", request, CancellationToken.None);
     }
 
-    public async Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
+    public async Task<HttpResponseMessage> GetUpdatedPrns(DateTime fromDate, DateTime toDate)
     {
         logger.LogInformation("Getting updated PRN's.");
-
-        return await Get<List<PrnUpdateStatus>>(
-            PrnRoutes.ModifiedPrnsRoute(fromDate, toDate),
-            CancellationToken.None,
-            false
-        );
+        return await GetAsync(PrnRoutes.ModifiedPrnsRoute(fromDate, toDate));
     }
 }

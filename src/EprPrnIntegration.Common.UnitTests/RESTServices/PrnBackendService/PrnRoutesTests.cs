@@ -15,7 +15,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
                 .ModifiedPrnsRoute(dateFrom, dateTo)
                 .Should()
                 .Be(
-                    "prn/modified-prns?dateFrom=2023-01-15T10:30:45.123&dateTo=2023-12-31T23:59:59.999"
+                    "api/v2/prn/modified-prns?from=2023-01-15T10:30:45.123&to=2023-12-31T23:59:59.999"
                 );
         }
 
@@ -27,8 +27,8 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             var result = PrnRoutes.ModifiedPrnsRoute(dateFrom, dateTo);
 
-            result.Should().Contain("dateFrom=2024-06-01T00:00:00.000");
-            result.Should().Contain("dateTo=2024-06-30T12:00:00.500");
+            result.Should().Contain("from=2024-06-01T00:00:00.000");
+            result.Should().Contain("to=2024-06-30T12:00:00.500");
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 
             var result = PrnRoutes.ModifiedPrnsRoute(dateFrom, dateTo);
 
-            result.Should().StartWith("prn/modified-prns?");
+            result.Should().StartWith("api/v2/prn/modified-prns?");
         }
     }
 }

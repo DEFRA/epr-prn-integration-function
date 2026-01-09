@@ -11,8 +11,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
     {
         public Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
-            DateTime dateTo,
-            CancellationToken cancellationToken = default
+            DateTime dateTo
         )
         {
             logger.LogInformation(

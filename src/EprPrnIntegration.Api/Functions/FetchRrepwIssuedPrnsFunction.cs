@@ -85,32 +85,35 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task ProcessPrn(PackagingRecyclingNote prn)
     {
-        try
+        var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+        var response = await prnService.SavePrn(request);
+
+        if (response.IsSuccessStatusCode)
         {
-            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-            await prnService.SavePrn(request);
             logger.LogInformation("Successfully saved PRN {PrnNumber}", prn.PrnNumber);
+            return;
         }
-        catch (HttpRequestException ex) when (ex.IsTransient())
+
+        // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
+        if (response.StatusCode.IsTransient())
         {
-            // Allow the function to terminate and resume on the next schedule.
             logger.LogError(
-                ex,
-                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, rethrowing",
-                ex.StatusCode,
+                "Service unavailable ({StatusCode}) when saving PRN {PrnNumber}, terminating function",
+                response.StatusCode,
                 prn.PrnNumber
             );
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
-            // to allow investigation.
-            logger.LogError(
-                ex,
-                "Failed to save PRN {PrnNumber}, continuing with next PRN",
-                prn.PrnNumber
+            throw new HttpRequestException(
+                $"Transient error {response.StatusCode} saving PRN {prn.PrnNumber}",
+                null,
+                response.StatusCode
             );
         }
+
+        // Non-transient errors are not recoverable; log and continue with next PRN
+        logger.LogError(
+            "Failed to save PRN {PrnNumber} with status {StatusCode}, continuing with next PRN",
+            prn.PrnNumber,
+            response.StatusCode
+        );
     }
 }

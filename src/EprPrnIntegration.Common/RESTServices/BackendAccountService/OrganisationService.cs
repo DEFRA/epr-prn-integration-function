@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.BackendAccountService;
 
-public class OrganisationService : BaseHttpService, IOrganisationService
+public class OrganisationService : BaseHttpServiceOld, IOrganisationService
 {
     private readonly ILogger<OrganisationService> _logger;
 

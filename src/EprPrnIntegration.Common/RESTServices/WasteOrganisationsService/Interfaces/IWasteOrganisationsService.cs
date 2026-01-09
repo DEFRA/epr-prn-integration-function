@@ -4,6 +4,9 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interf
 {
     public interface IWasteOrganisationsService
     {
-        Task UpdateOrganisation(string id, WasteOrganisationsApiUpdateRequest organisation);
+        Task<HttpResponseMessage> UpdateOrganisation(
+            string id,
+            WasteOrganisationsApiUpdateRequest organisation
+        );
     }
 }

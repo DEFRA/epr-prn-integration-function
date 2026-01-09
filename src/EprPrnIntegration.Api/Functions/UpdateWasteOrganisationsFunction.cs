@@ -1,8 +1,10 @@
 using System.Net;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -20,12 +22,14 @@ public class UpdateWasteOrganisationsFunction(
     IOptions<UpdateWasteOrganisationsConfiguration> config
 )
 {
-    [Function("UpdateWasteOrganisations")]
-    public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
+    [Function(FunctionName.UpdateWasteOrganisations)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.UpdateWasteOrganisations}:Trigger%")] TimerInfo myTimer
+    )
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
-            "UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}",
+            $"%{FunctionName.UpdateWasteOrganisations} resuming with last update time: {{ExecutionDateTime}}",
             lastUpdate
         );
 
@@ -45,12 +49,14 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionName.UpdateWasteOrganisations, utcNow);
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        var lastUpdate = await lastUpdateService.GetLastUpdate(
+            FunctionName.UpdateWasteOrganisations
+        );
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
@@ -68,29 +74,20 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run.
-        // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(producers, UpdateProducer, 20);
+        foreach (var producer in producers)
+            await UpdateProducer(producer);
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
+        HttpResponseMessage response;
         try
         {
             var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
-        }
-        catch (HttpRequestException ex) when (ex.IsTransient())
-        {
-            // Allow the function to terminate and resume on the next schedule with the original time window.
-            logger.LogError(
-                ex,
-                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing",
-                ex.StatusCode,
-                producer.PEPRID
+            response = await wasteOrganisationsService.UpdateOrganisation(
+                producer.PEPRID!,
+                request
             );
-            throw;
         }
         catch (Exception ex)
         {
@@ -100,6 +97,14 @@ public class UpdateWasteOrganisationsFunction(
                 ex,
                 "Failed to update organisation {OrganisationId}, continuing with next producer",
                 producer.PEPRID
+            );
+            return;
+        }
+        if (response.StatusCode.IsTransient())
+        {
+            throw new ServiceException(
+                "{StatusCode} response when updating organisation {OrganisationId}, terminating",
+                response.StatusCode
             );
         }
     }

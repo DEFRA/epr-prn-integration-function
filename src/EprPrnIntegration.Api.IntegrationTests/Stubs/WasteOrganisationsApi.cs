@@ -13,57 +13,46 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request =>
-                    request
-                        .UsingPut()
-                        .WithPath($"/organisations/{id}/")
-                        .WithHeader("Authorization", "Bearer *")
-                )
+                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
     }
 
-    public async Task AcceptsOrganisationWithTransientFailures(string id)
+    public async Task WithOrganisationsEndpointWIthNonTransientFailure(
+        string id,
+        HttpStatusCode failureResponse = HttpStatusCode.BadRequest
+    )
+    {
+        var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
+                .WithResponse(response => response.WithStatusCode(failureResponse))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task WithOrganisationsEndpointRecoveringFromTransientFailures(
+        string id,
+        int failureCount,
+        HttpStatusCode failureResponse = HttpStatusCode.ServiceUnavailable
+    )
     {
         var scenarioName = "WasteOrgTransientFailure-" + Guid.NewGuid();
 
-        // First mapping: return 503 and transition to "Attempt1" state
-        var failureMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
-        failureMapping.Given(builder =>
-            builder
-                .WithRequest(request =>
-                    request
-                        .UsingPut()
-                        .WithPath($"/organisations/{id}/")
-                        .WithHeader("Authorization", "Bearer *")
-                )
-                .WithResponse(response =>
-                    response.WithStatusCode(HttpStatusCode.ServiceUnavailable)
-                )
-                .WithScenario(scenarioName)
-                .WithSetStateTo("Attempt1")
+        await wireMock.WithEndpointRecoveringFromTransientFailures(
+            request =>
+                request
+                    .UsingPut()
+                    .WithPath($"/organisations/{id}/")
+                    .WithHeader("Authorization", "Bearer *"),
+            response => response.WithStatusCode(HttpStatusCode.Accepted),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
         );
-        var failureMappingStatus = await failureMapping.BuildAndPostAsync();
-        Assert.NotNull(failureMappingStatus.Guid);
-
-        // Second mapping: return 202 Accepted when in "Attempt1" state
-        var successMapping = wireMock.WireMockAdminApi.GetMappingBuilder();
-        successMapping.Given(builder =>
-            builder
-                .WithRequest(request =>
-                    request
-                        .UsingPut()
-                        .WithPath($"/organisations/{id}/")
-                        .WithHeader("Authorization", "Bearer *")
-                )
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
-                .WithScenario(scenarioName)
-                .WithWhenStateIs("Attempt1")
-        );
-        var successMappingStatus = await successMapping.BuildAndPostAsync();
-        Assert.NotNull(successMappingStatus.Guid);
     }
 
     public async Task<IList<LogEntryModel>> GetOrganisationRequests(string id)

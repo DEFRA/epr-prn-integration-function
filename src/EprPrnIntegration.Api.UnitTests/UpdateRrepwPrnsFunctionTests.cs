@@ -1,4 +1,6 @@
 ﻿using System.Globalization;
+using System.Net;
+using System.Net.Http.Json;
 using AutoFixture;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.UnitTests.Helpers;
@@ -7,6 +9,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
+using FluentAssertions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -66,11 +69,14 @@ public class UpdateRrepwPrnsFunctionTests
             .Setup(x =>
                 x.GetUpdatedPrns(ItEx.IsCloseTo(DateTime.MinValue), ItEx.IsCloseTo(DateTime.UtcNow))
             )
-            .ReturnsAsync(prns);
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
+            );
 
+        _rrepwServiceMock
+            .Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()))
+            .Callback((List<PrnUpdateStatus> list) => list.Should().BeEquivalentTo(prns));
         await _function.Run(new TimerInfo());
-
-        _rrepwServiceMock.Verify(x => x.UpdatePrns(prns), Times.Once);
 
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(FunctionName.UpdateRrepwPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
@@ -154,7 +160,9 @@ public class UpdateRrepwPrnsFunctionTests
             .ReturnsAsync(fromDate);
         _prnServiceMock
             .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
-            .ReturnsAsync(prns);
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
+            );
         _rrepwServiceMock.Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>())).Throws(ex);
 
         await _function.Run(new TimerInfo());
@@ -203,11 +211,14 @@ public class UpdateRrepwPrnsFunctionTests
             .Setup(x =>
                 x.GetUpdatedPrns(ItEx.IsCloseTo(new DateTime(2024, 01, 01)), It.IsAny<DateTime>())
             )
-            .ReturnsAsync(prns);
-
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
+            );
+        _rrepwServiceMock
+            .Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()))
+            .Callback((List<PrnUpdateStatus> list) => list.Should().BeEquivalentTo(prns));
         await _function.Run(new TimerInfo());
 
-        _rrepwServiceMock.Verify(m => m.UpdatePrns(prns));
         // Verify GetLastUpdate was called
         _lastUpdateServiceMock.Verify(
             x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns),

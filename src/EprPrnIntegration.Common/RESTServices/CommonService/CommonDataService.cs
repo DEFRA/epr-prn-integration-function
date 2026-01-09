@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.CommonService
 {
-    public class CommonDataService : BaseHttpService, ICommonDataService
+    public class CommonDataService : BaseHttpServiceOld, ICommonDataService
     {
         private readonly ILogger<CommonDataService> _logger;
 
