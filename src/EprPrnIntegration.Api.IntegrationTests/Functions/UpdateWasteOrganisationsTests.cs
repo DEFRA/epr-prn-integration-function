@@ -76,7 +76,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Theory(Skip = "Skip for now, has race conditions, will reintroduce in the next PR")]
+    [Theory()]
     [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
     [InlineData(HttpStatusCode.RequestTimeout, 1)]
     [InlineData(HttpStatusCode.InternalServerError, 1)]
@@ -104,12 +104,16 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+            var entries = await CommonDataApiStub.GetUpdatedProducersRequests();
 
-            entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain(id + "_name");
+            entries.Count.Should().Be(failureCount + 1);
+            for (int i = 0; i < entries.Count - 1; i++)
+                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+            entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
-            entries[0].Response.StatusCode.Should().Be(202);
+            entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+
+            entries.Count.Should().BeGreaterThan(0);
             var after = await LastUpdateService.GetLastUpdate(
                 FunctionName.UpdateWasteOrganisations
             );
@@ -141,7 +145,13 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
+            var entries = await CommonDataApiStub.GetUpdatedProducersRequests();
+
+            entries.Count.Should().Be(4);
+            for (int i = 0; i < entries.Count; i++)
+                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+
+            entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().Be(0);
             var after = await LastUpdateService.GetLastUpdate(
