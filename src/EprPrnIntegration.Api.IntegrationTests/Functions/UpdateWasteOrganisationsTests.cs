@@ -316,7 +316,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
             entries.Count.Should().Be(1);
-            entries[0].Request.Body!.Should().Contain(ids[0] + "_name");
+            entries[0].Request.Body!.Should().Contain(ids[1] + "_name");
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
             var after = await LastUpdateService.GetLastUpdate(
