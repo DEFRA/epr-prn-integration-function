@@ -246,4 +246,28 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
+
+    [Theory]
+    [InlineData(EprnStatus.ACCEPTED)]
+    [InlineData(EprnStatus.REJECTED)]
+    public async Task PrnAccept_WhenRrepwApiHasError409_ContinuesWithNextPrn(EprnStatus eprnStatus)
+    {
+        var payload = CreatePrns(eprnStatus, 2);
+        await PrnApiStub.HasModifiedPrns(payload);
+        await RrepwApiStub.AcceptsPrnWithFailures(eprnStatus, HttpStatusCode.Conflict, 1);
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await RrepwApiStub.GetUpdatePrnRequests(eprnStatus);
+
+            entries.Count.Should().Be(2);
+            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Conflict);
+            entries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
+
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
 }
