@@ -54,13 +54,18 @@ public class RrepwMappers : Profile
                 spdr => spdr.MaterialName,
                 o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
             )
+            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
             .AfterMap(
                 (prn, spdr) =>
                 {
                     spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
-                    spdr.IssueDate = prn.Status?.AuthorisedAt;
                 }
             );
+    }
+
+    private static DateTime? GetAuthorizedAt(PackagingRecyclingNote prn)
+    {
+        return prn.Status?.AuthorisedAt;
     }
 
     private static DateTime? GetStatusUpdatedOn(PackagingRecyclingNote prn)
