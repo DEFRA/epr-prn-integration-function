@@ -54,15 +54,31 @@ public class RrepwMappers : Profile
                 spdr => spdr.MaterialName,
                 o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
             )
-            .AfterMap((prn, spdr) => spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn));
+            .AfterMap(
+                (prn, spdr) =>
+                {
+                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
+                    spdr.StatusUpdatedOn = GetIssueDate(prn);
+                }
+            );
     }
 
     private static DateTime? GetStatusUpdatedOn(PackagingRecyclingNote prn)
     {
         return prn.Status?.CurrentStatus switch
         {
-            RrepwStatus.Cancelled => prn.Status.CancelledAt ?? null,
-            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
+            RrepwStatus.Cancelled => prn.Status.CancelledAt,
+            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt,
+            _ => null,
+        };
+    }
+
+    private static DateTime? GetIssueDate(PackagingRecyclingNote prn)
+    {
+        return prn.Status?.CurrentStatus switch
+        {
+            RrepwStatus.Cancelled => null,
+            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt,
             _ => null,
         };
     }

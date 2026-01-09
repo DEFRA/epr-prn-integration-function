@@ -220,9 +220,11 @@ public class RrepwMappersTests
         {
             case RrepwStatus.Cancelled:
                 savePrnDetailsRequest.StatusUpdatedOn.Should().Be(cdt);
+                savePrnDetailsRequest.IssueDate.Should().Be(null);
                 break;
             case RrepwStatus.AwaitingAcceptance:
                 savePrnDetailsRequest.StatusUpdatedOn.Should().Be(adt);
+                savePrnDetailsRequest.IssueDate.Should().Be(adt);
                 break;
             default:
                 Assert.Fail("Unexpected status");
