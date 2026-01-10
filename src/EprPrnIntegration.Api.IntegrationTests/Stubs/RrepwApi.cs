@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models.Rrepw;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
@@ -121,21 +122,19 @@ public class RrepwApi(WireMockContext wiremock)
         return items;
     }
 
-    public async Task AcceptsPrnAccept()
+    public async Task AcceptsPrn(EprnStatus eprnStatus)
     {
+        var pattern =
+            eprnStatus == EprnStatus.ACCEPTED
+                ? @"/v1/packaging-recycling-notes/.+/accept"
+                : @"/v1/packaging-recycling-notes/.+/reject";
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
                 .WithRequest(request =>
                     request
                         .UsingPost()
-                        .WithPath(
-                            new MatcherModel
-                            {
-                                Name = "RegexMatcher",
-                                Pattern = @"/v1/packaging-recycling-notes/.+/accept",
-                            }
-                        )
+                        .WithPath(new MatcherModel { Name = "RegexMatcher", Pattern = pattern })
                 )
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
         );
@@ -143,26 +142,25 @@ public class RrepwApi(WireMockContext wiremock)
         Assert.NotNull(status.Guid);
     }
 
-    public async Task AcceptsPrnReject()
+    public async Task AcceptsPrnWithFailures(
+        EprnStatus eprnStatus,
+        HttpStatusCode failureResponse,
+        int failureCount
+    )
     {
-        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
-        mappingBuilder.Given(builder =>
-            builder
-                .WithRequest(request =>
-                    request
-                        .UsingPost()
-                        .WithPath(
-                            new MatcherModel
-                            {
-                                Name = "RegexMatcher",
-                                Pattern = @"/v1/packaging-recycling-notes/.+/reject",
-                            }
-                        )
-                )
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
+        var pattern =
+            eprnStatus == EprnStatus.ACCEPTED
+                ? @"/v1/packaging-recycling-notes/.+/accept"
+                : @"/v1/packaging-recycling-notes/.+/reject";
+        await wiremock.WithEndpointRecoveringFromTransientFailures(
+            request =>
+                request
+                    .UsingPost()
+                    .WithPath(new MatcherModel { Name = "RegexMatcher", Pattern = pattern }),
+            response => response.WithStatusCode(HttpStatusCode.OK),
+            response => response.WithStatusCode(failureResponse),
+            failureCount
         );
-        var status = await mappingBuilder.BuildAndPostAsync();
-        Assert.NotNull(status.Guid);
     }
 
     public async Task<IList<LogEntryModel>> GetPrnRequests()
@@ -177,18 +175,12 @@ public class RrepwApi(WireMockContext wiremock)
         ];
     }
 
-    public async Task<IList<LogEntryModel>> GetPrnAcceptRequests()
+    public async Task<IList<LogEntryModel>> GetUpdatePrnRequests(EprnStatus eprnStatus)
     {
+        var pattern = eprnStatus == EprnStatus.ACCEPTED ? "/accept" : "/reject";
         var requestsModel = new RequestModel { Methods = ["POST"] };
         var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
-        return allRequests.Where(r => r.Request.Path?.Contains("/accept") == true).ToList();
-    }
-
-    public async Task<IList<LogEntryModel>> GetPrnRejectRequests()
-    {
-        var requestsModel = new RequestModel { Methods = ["POST"] };
-        var allRequests = await wiremock.WireMockAdminApi.FindRequestsAsync(requestsModel);
-        return allRequests.Where(r => r.Request.Path?.Contains("/reject") == true).ToList();
+        return [.. allRequests.Where(r => r.Request.Path?.Contains(pattern) == true)];
     }
 
     public async Task<IList<LogEntryModel>> GetPrnPatchRequests()

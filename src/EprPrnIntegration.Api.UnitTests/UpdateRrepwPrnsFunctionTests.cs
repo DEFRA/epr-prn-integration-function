@@ -74,8 +74,11 @@ public class UpdateRrepwPrnsFunctionTests
             );
 
         _rrepwServiceMock
-            .Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()))
-            .Callback((List<PrnUpdateStatus> list) => list.Should().BeEquivalentTo(prns));
+            .Setup(x => x.UpdatePrn(It.IsAny<PrnUpdateStatus>()))
+            .Callback(
+                (PrnUpdateStatus prn) =>
+                    prns.Find(p => p.PrnNumber == prn.PrnNumber).Should().BeEquivalentTo(prn)
+            );
         await _function.Run(new TimerInfo());
 
         _lastUpdateServiceMock.Verify(
@@ -98,11 +101,14 @@ public class UpdateRrepwPrnsFunctionTests
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.UpdateRrepwPrns))
             .ReturnsAsync(fromDate);
-
+        _prnServiceMock
+            .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
+            );
         await _function.Run(new TimerInfo());
-
-        _prnServiceMock.Verify(
-            x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)),
+        _lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(FunctionName.UpdateRrepwPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
     }
@@ -125,22 +131,11 @@ public class UpdateRrepwPrnsFunctionTests
             .Setup(x => x.GetUpdatedPrns(ItEx.IsCloseTo(fromDate), ItEx.IsCloseTo(DateTime.UtcNow)))
             .Throws(ex);
 
-        await _function.Run(new TimerInfo());
-        _rrepwServiceMock.Verify(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()), Times.Never);
+        await Assert.ThrowsAsync<Exception>(async () => await _function.Run(new TimerInfo()));
+        _rrepwServiceMock.Verify(x => x.UpdatePrn(It.IsAny<PrnUpdateStatus>()), Times.Never);
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Never
-        );
-        _loggerMock.Verify(
-            x =>
-                x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    ex,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ),
-            Times.Once
         );
     }
 
@@ -163,12 +158,12 @@ public class UpdateRrepwPrnsFunctionTests
             .ReturnsAsync(
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
             );
-        _rrepwServiceMock.Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>())).Throws(ex);
+        _rrepwServiceMock.Setup(x => x.UpdatePrn(It.IsAny<PrnUpdateStatus>())).Throws(ex);
 
         await _function.Run(new TimerInfo());
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
-            Times.Never
+            Times.Once
         );
         _loggerMock.Verify(
             x =>
@@ -179,7 +174,7 @@ public class UpdateRrepwPrnsFunctionTests
                     ex,
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
-            Times.Once
+            Times.Exactly(3)
         );
     }
 
@@ -215,8 +210,11 @@ public class UpdateRrepwPrnsFunctionTests
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(prns) }
             );
         _rrepwServiceMock
-            .Setup(x => x.UpdatePrns(It.IsAny<List<PrnUpdateStatus>>()))
-            .Callback((List<PrnUpdateStatus> list) => list.Should().BeEquivalentTo(prns));
+            .Setup(x => x.UpdatePrn(It.IsAny<PrnUpdateStatus>()))
+            .Callback(
+                (PrnUpdateStatus prn) =>
+                    prns.Find(p => p.PrnNumber == prn.PrnNumber).Should().BeEquivalentTo(prn)
+            );
         await _function.Run(new TimerInfo());
 
         // Verify GetLastUpdate was called

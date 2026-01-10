@@ -21,57 +21,35 @@ public class UpdateRrepwPrnsFunction(
     [Function(FunctionName.UpdateRrepwPrns)]
     public async Task Run([TimerTrigger($"%{FunctionName.UpdateRrepwPrns}:Trigger%")] TimerInfo _)
     {
-        List<PrnUpdateStatus>? updatedEprPrns = null;
-        try
-        {
-            logger.LogInformation(
-                "{FunctionId} function executed at: {DateTimeNow}",
-                FunctionName.UpdateRrepwPrns,
-                DateTime.UtcNow
-            );
+        logger.LogInformation(
+            "{FunctionId} function executed at: {DateTimeNow}",
+            FunctionName.UpdateRrepwPrns,
+            DateTime.UtcNow
+        );
 
-            var toDate = DateTime.UtcNow;
-            var fromDate = await GetLastUpdate();
+        var toDate = DateTime.UtcNow;
+        var fromDate = await GetLastUpdate();
 
-            // Retrieve data from the common backend
-            updatedEprPrns = await GetUpdatedRrepwPrnsAsync(fromDate, toDate);
-            if (updatedEprPrns == null)
-                return;
+        // Retrieve data from the common backend
+        List<PrnUpdateStatus>? updatedEprPrns = await GetUpdatedRrepwPrnsAsync(fromDate, toDate);
+        if (updatedEprPrns == null)
+            return;
 
-            await UpdatePrns(updatedEprPrns, fromDate, toDate);
+        foreach (var prn in updatedEprPrns)
+            await UpdatePrn(prn, fromDate, toDate);
 
-            await lastUpdateService.SetLastUpdate(FunctionName.UpdateRrepwPrns, DateTime.UtcNow);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Failed to update RrepwUpdatedPrns for {RrepwUpdatedPrns}",
-                string.Join(",", updatedEprPrns?.Select(u => u.PrnNumber) ?? [])
-            );
-        }
+        await lastUpdateService.SetLastUpdate(FunctionName.UpdateRrepwPrns, DateTime.UtcNow);
     }
 
     /// <summary>
     ///  Send data to RREPW via pEPR API
     /// </summary>
-    private async Task UpdatePrns(
-        List<PrnUpdateStatus> updatedEprPrns,
-        DateTime fromDate,
-        DateTime toDate
-    )
+    private async Task UpdatePrn(PrnUpdateStatus prn, DateTime fromDate, DateTime toDate)
     {
-        logger.LogInformation(
-            "Sending total of {PrnCount} prns to RREPW for updating",
-            updatedEprPrns.Count
-        );
-
-        await rrepwService.UpdatePrns(updatedEprPrns);
-        logger.LogInformation(
-            "Prns list successfully updated in RREPW for time period {FromDate} to {ToDate} limited to {RecordLimit}.",
-            fromDate,
-            toDate,
-            config.Value.UpdateRrepwPrnsMaxRows
+        await HttpHelper.HandleTransientErrors(
+            async () => await rrepwService.UpdatePrn(prn),
+            logger,
+            $"Updating Prn {prn.PrnNumber} in RREPW for time period {fromDate} to {toDate}."
         );
     }
 
@@ -100,32 +78,19 @@ public class UpdateRrepwPrnsFunction(
         DateTime toDate
     )
     {
-        try
-        {
-            logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
-            var response = await prnService.GetUpdatedPrns(fromDate, toDate);
-            response.EnsureSuccessStatusCode();
+        logger.LogInformation("Fetching Prns from {FromDate} to {ToDate}.", fromDate, toDate);
+        var response = await prnService.GetUpdatedPrns(fromDate, toDate);
+        response.EnsureSuccessStatusCode();
 
-            var updatedEprPrns = await response.Content.ReadFromJsonAsync<List<PrnUpdateStatus>>();
-            if (updatedEprPrns != null && updatedEprPrns.Count > 0)
-                return updatedEprPrns;
+        var updatedEprPrns = await response.Content.ReadFromJsonAsync<List<PrnUpdateStatus>>();
+        if (updatedEprPrns != null && updatedEprPrns.Count > 0)
+            return updatedEprPrns;
 
-            logger.LogWarning(
-                "No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.",
-                fromDate,
-                toDate
-            );
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Failed to retrieve data from common backend. form time period {FromDate} to {ToDate}.",
-                fromDate,
-                toDate
-            );
-        }
-
+        logger.LogInformation(
+            "No updated Prns are retrieved from common database form time period {FromDate} to {ToDate}.",
+            fromDate,
+            toDate
+        );
         return null;
     }
 }
