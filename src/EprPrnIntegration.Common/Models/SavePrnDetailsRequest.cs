@@ -11,6 +11,7 @@ public class SavePrnDetailsRequest
     public string? PrnSignatory { get; set; }
     public string? PrnSignatoryPosition { get; set; }
     public DateTime? StatusUpdatedOn { get; set; }
+    public DateTime? IssueDate { get; set; }
     public string? IssuedByOrg { get; set; }
     public Guid? OrganisationId { get; set; }
     public string? OrganisationName { get; set; }

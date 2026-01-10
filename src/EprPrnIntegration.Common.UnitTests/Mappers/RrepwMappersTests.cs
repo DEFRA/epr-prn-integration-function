@@ -216,6 +216,7 @@ public class RrepwMappersTests
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        savePrnDetailsRequest.IssueDate.Should().Be(adt);
         switch (status)
         {
             case RrepwStatus.Cancelled:
