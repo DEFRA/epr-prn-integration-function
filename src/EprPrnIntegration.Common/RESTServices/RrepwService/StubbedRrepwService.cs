@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
@@ -63,14 +64,13 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return Task.FromResult(stubbedData);
         }
 
-        public Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
+        public Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn)
         {
             logger.LogInformation(
-                "Using stubbed RRepw service. UpdatePrns called with {Count} PRNs (no-op): {@PrnUpdates}",
-                rrepwUpdatedPrns.Count,
-                rrepwUpdatedPrns
+                "Using stubbed RRepw service. UpdatePrn called with prn {PrnNumber}",
+                prn.PrnNumber
             );
-            return Task.CompletedTask;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted));
         }
     }
 }

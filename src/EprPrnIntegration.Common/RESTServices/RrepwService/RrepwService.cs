@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -116,42 +117,40 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return (items, nextCursor);
         }
 
-        public async Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
+        public async Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn)
         {
-            foreach (var prn in rrepwUpdatedPrns)
+            if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
             {
-                if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
-                {
-                    logger.LogWarning(
-                        "Skipping PRN update due to missing SourceSystemId {PrnNumber}.",
-                        prn.PrnNumber
-                    );
-                    continue;
-                }
-                if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
-                {
-                    logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
-                    await PostAsync(
-                        RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
-                        new { acceptedAt = prn.StatusDate }
-                    );
-                }
-                else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
-                {
-                    logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
-                    await PostAsync(
-                        RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
-                        new { rejectedAt = prn.StatusDate }
-                    );
-                }
-                else
-                {
-                    logger.LogWarning(
-                        "Incorrect PRN status {PrnStatusId} for PRN {PrnNumber}; skipping.",
-                        prn.PrnStatusId,
-                        prn.PrnNumber
-                    );
-                }
+                logger.LogWarning(
+                    "Skipping PRN update due to missing SourceSystemId {PrnNumber}.",
+                    prn.PrnNumber
+                );
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+            if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
+            {
+                logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
+                return await PostAsync(
+                    RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
+                    new { acceptedAt = prn.StatusDate }
+                );
+            }
+            else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
+            {
+                logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
+                return await PostAsync(
+                    RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
+                    new { rejectedAt = prn.StatusDate }
+                );
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Incorrect PRN status {PrnStatusId} for PRN {PrnNumber}; skipping.",
+                    prn.PrnStatusId,
+                    prn.PrnNumber
+                );
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
         }
     }
