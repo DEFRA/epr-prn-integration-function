@@ -249,6 +249,25 @@ public class RrepwMappersTests
         savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData(null)]
+    [InlineData("something")]
+    public void ShouldUseNameForOrganisationNameWhenTradingNameEmtpy(string? tradingName)
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.IssuedToOrganisation!.TradingName = tradingName;
+        prn.IssuedToOrganisation!.Name = _fixture.Create<string>();
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        if (!string.IsNullOrWhiteSpace(tradingName))
+            savePrnDetailsRequest
+                .OrganisationName.Should()
+                .Be(prn.IssuedToOrganisation.TradingName);
+        else
+            savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
+    }
+
     [Fact]
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
@@ -260,7 +279,7 @@ public class RrepwMappersTests
         savePrnDetailsRequest.PrnSignatoryPosition.Should().Be(prn.Status.AuthorisedBy.JobTitle);
         savePrnDetailsRequest.IssuedByOrg.Should().Be(prn.IssuedByOrganisation!.Name);
         savePrnDetailsRequest.OrganisationId.Should().Be(prn.IssuedToOrganisation!.Id);
-        savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
+        savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.TradingName);
         savePrnDetailsRequest
             .AccreditationNumber.Should()
             .Be(prn.Accreditation!.AccreditationNumber);
