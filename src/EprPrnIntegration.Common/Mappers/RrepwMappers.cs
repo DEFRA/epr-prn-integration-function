@@ -97,7 +97,9 @@ public class RrepwMappers : Profile
 
     private static string? GetOrganisationName(PackagingRecyclingNote src)
     {
-        return src.IssuedToOrganisation?.Name;
+        return string.IsNullOrWhiteSpace(src.IssuedToOrganisation?.TradingName)
+            ? src.IssuedToOrganisation?.Name
+            : src.IssuedToOrganisation.TradingName;
     }
 
     private static Guid? GetOrganisationId(PackagingRecyclingNote src)
