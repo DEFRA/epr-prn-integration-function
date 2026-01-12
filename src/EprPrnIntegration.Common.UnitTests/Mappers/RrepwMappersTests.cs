@@ -209,13 +209,14 @@ public class RrepwMappersTests
     [InlineData(RrepwStatus.Cancelled)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt(string status)
     {
-        var adt = new DateTime(2024, 12, 08);
+        var adt = new DateTime(2024, 12, 07);
         var cdt = new DateTime(2024, 12, 08);
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        savePrnDetailsRequest.IssueDate.Should().Be(adt);
         switch (status)
         {
             case RrepwStatus.Cancelled:
