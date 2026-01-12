@@ -1,7 +1,7 @@
 ﻿using System.Net;
-using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.UnitTests.Helpers;
@@ -81,7 +81,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
         {
             // Arrange
             var organisationId = "12345";
-            var entityTypeCode = "CS";
+            var entityTypeCode = OrganisationType.ComplianceScheme_CS;
             // Act
             var result = await _organisationService.GetPersonEmailsAsync(
                 organisationId,
@@ -242,7 +242,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             // Act
             bool result = await _organisationService.DoesProducerOrComplianceSchemeExistAsync(
                 organisationId,
-                "CS",
+                OrganisationType.ComplianceScheme_CS,
                 CancellationToken.None
             );
 
@@ -280,7 +280,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.BackendAccountService
             // Act
             bool result = await organisationService.DoesProducerOrComplianceSchemeExistAsync(
                 organisationId,
-                "CS",
+                OrganisationType.ComplianceScheme_CS,
                 CancellationToken.None
             );
 

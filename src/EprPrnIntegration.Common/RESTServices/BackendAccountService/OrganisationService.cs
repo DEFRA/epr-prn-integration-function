@@ -1,6 +1,7 @@
 ﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -74,11 +75,29 @@ public class OrganisationService : BaseHttpServiceOld, IOrganisationService
         CancellationToken cancellationToken
     )
     {
-        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        _logger.LogInformation("Getting organisation exist for {OrgId}.", organisationId);
         return await GetOk(
             $"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
             cancellationToken,
             false
         );
     }
+
+    public async Task<OrganisationResponse> GetOrganisation(
+        string organisationId,
+        CancellationToken cancellationToken
+    )
+    {
+        _logger.LogInformation("Getting organisation details for {OrgId}.", organisationId);
+        return await Get<OrganisationResponse>(
+            $"Organisations/operation/GetOrganisation?organisationId={organisationId}",
+            cancellationToken,
+            false
+        );
+    }
+}
+
+public class OrganisationResponse
+{
+    public string? IssuedToEntityTypeCode { get; set; }
 }

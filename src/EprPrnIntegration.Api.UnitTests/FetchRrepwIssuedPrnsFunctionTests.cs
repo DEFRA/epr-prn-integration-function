@@ -4,13 +4,15 @@ using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,10 +23,15 @@ namespace EprPrnIntegration.Api.UnitTests;
 
 public class FetchRrepwIssuedPrnsFunctionTests
 {
+    private readonly Guid _organisationId = Guid.NewGuid();
+    private readonly string _organisationTypeCode = WoApiOrganisationType.ComplianceScheme;
     private readonly Mock<ILogger<FetchRrepwIssuedPrnsFunction>> _loggerMock = new();
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnService> _prnServiceMock = new();
+    private readonly Mock<ICoreServices> _core = new();
+    private readonly Mock<IMessagingServices> _messagingServices = new();
+    private readonly Mock<IOrganisationService> _organisationService = new();
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
         new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -38,8 +45,18 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _loggerMock.Object,
             _rrepwServiceMock.Object,
             _prnServiceMock.Object,
-            _config
+            _config,
+            _core.Object,
+            _messagingServices.Object,
+            _organisationService.Object
         );
+        _organisationService
+            .Setup(o =>
+                o.GetOrganisation(_organisationId.ToString(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                new OrganisationResponse { IssuedToEntityTypeCode = _organisationTypeCode }
+            );
     }
 
     [Fact]
@@ -286,6 +303,21 @@ public class FetchRrepwIssuedPrnsFunctionTests
         // Arrange - use concrete StubbedRrepwService instead of mock
         var stubbedRrepwService = new StubbedRrepwService(Mock.Of<ILogger<StubbedRrepwService>>());
 
+        //get the stubbed data
+        var prns = await stubbedRrepwService.ListPackagingRecyclingNotes(
+            new DateTime(),
+            new DateTime()
+        );
+        _organisationService
+            .Setup(o =>
+                o.GetOrganisation(
+                    prns[0].IssuedToOrganisation!.Id!.ToString(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(
+                new OrganisationResponse { IssuedToEntityTypeCode = _organisationTypeCode }
+            );
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
 
@@ -310,7 +342,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
             Mock.Of<ILogger<FetchRrepwIssuedPrnsFunction>>(),
             stubbedRrepwService,
             prnServiceMock.Object,
-            _config
+            _config,
+            _core.Object,
+            _messagingServices.Object,
+            _organisationService.Object
         );
 
         // Act
@@ -323,7 +358,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
-    private static PackagingRecyclingNote CreatePrn(
+    private PackagingRecyclingNote CreatePrn(
         string evidenceNo,
         string accreditationNo = "ACC-001",
         int accreditationYear = 2025,
@@ -347,7 +382,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             },
             IssuedToOrganisation = new Organisation
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = _organisationId.ToString(),
                 Name = "Test Recipient Organization",
             },
             Accreditation = new Accreditation
@@ -363,5 +398,51 @@ public class FetchRrepwIssuedPrnsFunctionTests
             TonnageValue = tonnes,
             IssuerNotes = "Test PRN",
         };
+    }
+
+    [Fact]
+    public async Task ProcessesMultiplePrns_ShouldSendEmails()
+    {
+        var prns = new List<PackagingRecyclingNote>
+        {
+            CreatePrn("PRN-001"),
+            CreatePrn("PRN-002"),
+            CreatePrn("PRN-003"),
+        };
+
+        SetupSavePrns(prns);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x =>
+                x.ListPackagingRecyclingNotes(
+                    ItEx.IsCloseTo(DateTime.MinValue),
+                    ItEx.IsCloseTo(DateTime.UtcNow)
+                )
+            )
+            .ReturnsAsync(prns);
+
+        await _function.Run(new TimerInfo());
+
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001")),
+            Times.Once
+        );
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002")),
+            Times.Once
+        );
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003")),
+            Times.Once
+        );
+        _lastUpdateServiceMock.Verify(
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
     }
 }

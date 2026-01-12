@@ -30,4 +30,9 @@ public interface IOrganisationService
         string entityTypeCode,
         CancellationToken cancellationToken
     );
+
+    Task<OrganisationResponse> GetOrganisation(
+        string organisationId,
+        CancellationToken cancellationToken
+    );
 }

@@ -6,7 +6,7 @@ namespace EprPrnIntegration.Api.Functions;
 
 public static class HttpHelper
 {
-    public static async Task HandleTransientErrors(
+    public static async Task<bool> HandleTransientErrors(
         Func<Task<HttpResponseMessage>> action,
         ILogger logger,
         string message
@@ -20,13 +20,13 @@ public static class HttpHelper
             if (response.IsSuccessStatusCode)
             {
                 logger.LogInformation($"{message} - success");
-                return;
+                return true;
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, $"{message} - exception, continuing with next");
-            return;
+            return false;
         }
 
         // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
@@ -47,5 +47,6 @@ public static class HttpHelper
             $"{message} - non transient error {{StatusCode}}, continuing with next",
             response.StatusCode
         );
+        return false;
     }
 }
