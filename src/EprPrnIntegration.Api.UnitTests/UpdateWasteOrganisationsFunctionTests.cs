@@ -2,6 +2,7 @@ using System.Net;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -43,8 +44,8 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2", "CS"),
-            CreateProducer("producer-3", status: "deleted"),
+            CreateProducer("producer-2", OrganisationType.ComplianceScheme_CS),
+            CreateProducer("producer-3", status: OrganisationStatus.Deleted),
         };
         SetupProducers(producers);
         _lastUpdateServiceMock
@@ -147,8 +148,8 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2-fails", "CS"),
-            CreateProducer("producer-3", status: "deleted"),
+            CreateProducer("producer-2-fails", OrganisationType.ComplianceScheme_CS),
+            CreateProducer("producer-3", status: OrganisationStatus.Deleted),
         };
         SetupProducers(producers);
         _lastUpdateServiceMock
@@ -227,7 +228,7 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2-transient", "CS"),
+            CreateProducer("producer-2-transient", OrganisationType.ComplianceScheme_CS),
         };
         SetupProducers(producers.Take(1));
         _lastUpdateServiceMock
@@ -314,8 +315,8 @@ public class UpdateWasteOrganisationsFunctionTests
 
     private static UpdatedProducersResponseV2 CreateProducer(
         string peprid,
-        string type = "DP",
-        string status = "registered"
+        string type = OrganisationType.LargeProducer_DP,
+        string status = OrganisationStatus.Registered
     )
     {
         return new()

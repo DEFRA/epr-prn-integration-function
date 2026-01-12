@@ -43,22 +43,22 @@ public static class WasteOrganisationsApiUpdateRequestMapper
 
     private static string? MapBusinessCountry(string? businessCountry)
     {
-        return (businessCountry) switch
+        return businessCountry switch
         {
-            "England" => "GB-ENG",
-            "Northern Ireland" => "GB-NIR",
-            "Scotland" => "GB-SCT",
-            "Wales" => "GB-WLS",
+            BusinessCountry.England => WoApiBusinessCountry.England,
+            BusinessCountry.NorthernIreland => WoApiBusinessCountry.NorthernIreland,
+            BusinessCountry.Scotland => WoApiBusinessCountry.Scotland,
+            BusinessCountry.Wales => WoApiBusinessCountry.Wales,
             _ => null,
         };
     }
 
     private static Registration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
     {
-        var type = (updatedProducer.OrganisationType) switch
+        var type = updatedProducer.OrganisationType switch
         {
-            "DP" => "LARGE_PRODUCER",
-            "CS" => "COMPLIANCE_SCHEME",
+            OrganisationType.LargeProducer_DP => WoApiOrganisationType.LargeProducer,
+            OrganisationType.ComplianceScheme_CS => WoApiOrganisationType.ComplianceScheme,
             _ => throw new ArgumentException(
                 $"Unknown registration type {updatedProducer.OrganisationType}"
             ),
@@ -66,8 +66,8 @@ public static class WasteOrganisationsApiUpdateRequestMapper
 
         var status = updatedProducer.Status?.ToLowerInvariant() switch
         {
-            "registered" => "REGISTERED",
-            "deleted" => "CANCELLED",
+            OrganisationStatus.Registered => WoApiOrganisationStatus.Registered,
+            OrganisationStatus.Deleted => WoApiOrganisationStatus.Cancelled,
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}"),
         };
 
@@ -85,4 +85,44 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             RegistrationYear = registrationYear,
         };
     }
+}
+
+public class WoApiOrganisationType
+{
+    public const string ComplianceScheme = "COMPLIANCE_SCHEME";
+    public const string LargeProducer = "LARGE_PRODUCER";
+}
+
+public class WoApiOrganisationStatus
+{
+    public const string Registered = "REGISTERED";
+    public const string Cancelled = "CANCELLED";
+}
+
+public class OrganisationType
+{
+    public const string ComplianceScheme_CS = "CS";
+    public const string LargeProducer_DP = "DP";
+}
+
+public class OrganisationStatus
+{
+    public const string Registered = "registered";
+    public const string Deleted = "deleted";
+}
+
+public class BusinessCountry
+{
+    public const string England = "England";
+    public const string NorthernIreland = "Northern Ireland";
+    public const string Scotland = "Scotland";
+    public const string Wales = "Wales";
+}
+
+public class WoApiBusinessCountry
+{
+    public const string England = "GB-ENG";
+    public const string NorthernIreland = "GB-NIR";
+    public const string Scotland = "GB-SCT";
+    public const string Wales = "GB-WLS";
 }
