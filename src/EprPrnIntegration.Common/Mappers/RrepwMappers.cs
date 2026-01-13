@@ -55,15 +55,26 @@ public class RrepwMappers : Profile
                 spdr => spdr.MaterialName,
                 o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
             )
-            .AfterMap((prn, spdr) => spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn));
+            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
+            .AfterMap(
+                (prn, spdr) =>
+                {
+                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
+                }
+            );
+    }
+
+    private static DateTime? GetAuthorizedAt(PackagingRecyclingNote prn)
+    {
+        return prn.Status?.AuthorisedAt;
     }
 
     private static DateTime? GetStatusUpdatedOn(PackagingRecyclingNote prn)
     {
         return prn.Status?.CurrentStatus switch
         {
-            RrepwStatus.Cancelled => prn.Status.CancelledAt ?? null,
-            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt ?? null,
+            RrepwStatus.Cancelled => prn.Status.CancelledAt,
+            RrepwStatus.AwaitingAcceptance => prn.Status.AuthorisedAt,
             _ => null,
         };
     }
@@ -98,7 +109,9 @@ public class RrepwMappers : Profile
 
     private static string? GetOrganisationName(PackagingRecyclingNote src)
     {
-        return src.IssuedToOrganisation?.Name;
+        return string.IsNullOrWhiteSpace(src.IssuedToOrganisation?.TradingName)
+            ? src.IssuedToOrganisation?.Name
+            : src.IssuedToOrganisation.TradingName;
     }
 
     private static Guid? GetOrganisationId(PackagingRecyclingNote src)
