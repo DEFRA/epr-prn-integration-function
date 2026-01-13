@@ -129,7 +129,12 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             }
             if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
             {
-                logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
+                logger.LogInformation(
+                    "Accepting PRN {PrnNumber} and SourceSystemId {SourceSystemId} with acceptedAt date {AcceptedAt}",
+                    prn.PrnNumber,
+                    prn.SourceSystemId,
+                    prn.StatusDate
+                );
                 return await PostAsync(
                     RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
                     new { acceptedAt = prn.StatusDate }
@@ -137,7 +142,12 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             }
             else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
             {
-                logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
+                logger.LogInformation(
+                    "Rejecting PRN {PrnNumber} and SourceSystemId {SourceSystemId}  with rejectedAt date {RejectedAt}",
+                    prn.PrnNumber,
+                    prn.SourceSystemId,
+                    prn.StatusDate
+                );
                 return await PostAsync(
                     RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
                     new { rejectedAt = prn.StatusDate }

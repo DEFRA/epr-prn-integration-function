@@ -67,8 +67,10 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         public Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn)
         {
             logger.LogInformation(
-                "Using stubbed RRepw service. UpdatePrn called with prn {PrnNumber}",
-                prn.PrnNumber
+                "Using stubbed RRepw service. UpdatePrn called with prn {PrnNumber}, date {StatusDate} and SourceSystemId {SourceSystemId}",
+                prn.PrnNumber,
+                prn.StatusDate,
+                prn.SourceSystemId
             );
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted));
         }
