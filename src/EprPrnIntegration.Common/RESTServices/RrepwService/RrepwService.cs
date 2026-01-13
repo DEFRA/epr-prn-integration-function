@@ -143,7 +143,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
             {
                 logger.LogInformation(
-                    "Rejecting PRN {PrnNumber} and SourceSystemId {SourceSystemId}  with rejectedAt date {RejectedAt}",
+                    "Rejecting PRN {PrnNumber} and SourceSystemId {SourceSystemId} with rejectedAt date {RejectedAt}",
                     prn.PrnNumber,
                     prn.SourceSystemId,
                     prn.StatusDate
