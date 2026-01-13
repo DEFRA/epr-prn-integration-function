@@ -47,9 +47,10 @@ public class UpdateRrepwPrnsFunction(
     private async Task UpdatePrn(PrnUpdateStatus prn, DateTime fromDate, DateTime toDate)
     {
         await HttpHelper.HandleTransientErrors(
-            async () => await rrepwService.UpdatePrn(prn),
+            async (ct) => await rrepwService.UpdatePrn(prn),
             logger,
-            $"Updating Prn {prn.PrnNumber} in RREPW for time period {fromDate} to {toDate}."
+            $"Updating Prn {prn.PrnNumber} in RREPW for time period {fromDate} to {toDate}.",
+            CancellationToken.None
         );
     }
 

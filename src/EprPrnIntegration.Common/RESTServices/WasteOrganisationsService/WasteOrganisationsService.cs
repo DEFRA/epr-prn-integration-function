@@ -37,5 +37,14 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
         {
             return await PutAsync($"organisations/{id}", organisation, CancellationToken.None);
         }
+
+        public async Task<HttpResponseMessage> GetOrganisation(
+            string organisationId,
+            CancellationToken cancellationToken
+        )
+        {
+            logger.LogInformation("Getting organisation details for {OrgId}.", organisationId);
+            return await GetAsync($"organisations/{organisationId}", cancellationToken);
+        }
     }
 }

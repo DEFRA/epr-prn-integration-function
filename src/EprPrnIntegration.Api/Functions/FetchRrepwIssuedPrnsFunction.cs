@@ -7,13 +7,17 @@ using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
+using EprPrnIntegration.Common.RESTServices;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -25,14 +29,14 @@ public class FetchRrepwIssuedPrnsFunction(
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
     ICoreServices core,
     IMessagingServices messaging,
-    IOrganisationService organisationService
+    IWasteOrganisationsService woService
 )
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
 
     [Function(FunctionName.FetchRrepwIssuedPrns)]
     public async Task Run(
-        [TimerTrigger($"%{FunctionName.FetchRrepwIssuedPrns}:Trigger%")] TimerInfo myTimer
+        [TimerTrigger($"%{FunctionName.FetchRrepwIssuedPrns}:Trigger%")] TimerInfo _
     )
     {
         var lastUpdate = await GetLastUpdate();
@@ -54,7 +58,7 @@ public class FetchRrepwIssuedPrnsFunction(
 
         logger.LogInformation("Found {Count} PRN(s) to process", prns.Count);
 
-        await ProcessPrns(prns);
+        await ProcessPrns(prns, CancellationToken.None);
 
         await lastUpdateService.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, utcNow);
         logger.LogInformation(
@@ -81,7 +85,10 @@ public class FetchRrepwIssuedPrnsFunction(
         return lastUpdate.Value;
     }
 
-    private async Task SendEmailToProducers(SavePrnDetailsRequest request)
+    private async Task SendEmailToProducers(
+        SavePrnDetailsRequest request,
+        CancellationToken cancellationToken
+    )
     {
         if (request.OrganisationId is null)
         {
@@ -92,7 +99,10 @@ public class FetchRrepwIssuedPrnsFunction(
             return;
         }
         string organisationId = request.OrganisationId.Value.ToString();
-        string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(organisationId);
+        string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(
+            organisationId,
+            cancellationToken
+        );
         if (issuedToEntityTypeCode is null)
         {
             logger.LogError(
@@ -152,15 +162,33 @@ public class FetchRrepwIssuedPrnsFunction(
         }
     }
 
-    private async Task<string?> GetIssuedToEntityTypeCode(string organisationId)
+    private async Task<string?> GetIssuedToEntityTypeCode(
+        string organisationId,
+        CancellationToken cancellationToken
+    )
     {
-        var org = await organisationService.GetOrganisation(organisationId, CancellationToken.None);
-        return org.IssuedToEntityTypeCode switch
+        WoApiOrganisation? org = await HttpHelper.HandleTransientErrorsGet<WoApiOrganisation>(
+            async (cancellationToken) =>
+                await woService.GetOrganisation(organisationId, cancellationToken),
+            logger,
+            $"Getting organisation details for {organisationId}",
+            cancellationToken
+        );
+
+        switch (org?.Registration.Type)
         {
-            WoApiOrganisationType.ComplianceScheme => OrganisationType.ComplianceScheme_CS,
-            WoApiOrganisationType.LargeProducer => OrganisationType.LargeProducer_DP,
-            _ => null,
-        };
+            case WoApiOrganisationType.ComplianceScheme:
+                return OrganisationType.ComplianceScheme_CS;
+            case WoApiOrganisationType.LargeProducer:
+                return OrganisationType.LargeProducer_DR;
+            default:
+                logger.LogError(
+                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
+                    org?.Registration.Type,
+                    organisationId
+                );
+                return null;
+        }
     }
 
     private static ProducerEmail CreateProducerEmail(
@@ -182,25 +210,32 @@ public class FetchRrepwIssuedPrnsFunction(
         };
     }
 
-    private async Task ProcessPrns(List<PackagingRecyclingNote> prns)
+    private async Task ProcessPrns(
+        List<PackagingRecyclingNote> prns,
+        CancellationToken cancellationToken
+    )
     {
         logger.LogInformation("Processing {Count} prns", prns.Count);
         foreach (var prn in prns)
         {
             var request = _mapper.Map<SavePrnDetailsRequest>(prn);
-            if (await ProcessPrn(request))
+            if (await ProcessPrn(request, cancellationToken))
             {
-                await SendEmailToProducers(request);
+                await SendEmailToProducers(request, cancellationToken);
             }
         }
     }
 
-    private async Task<bool> ProcessPrn(SavePrnDetailsRequest request)
+    private async Task<bool> ProcessPrn(
+        SavePrnDetailsRequest request,
+        CancellationToken cancellationToken
+    )
     {
         return await HttpHelper.HandleTransientErrors(
-            async () => await prnService.SavePrn(request),
+            async (ct) => await prnService.SavePrn(request, ct),
             logger,
-            $"Saving PRN {request.PrnNumber}"
+            $"Saving PRN {request.PrnNumber}",
+            cancellationToken
         );
     }
 }

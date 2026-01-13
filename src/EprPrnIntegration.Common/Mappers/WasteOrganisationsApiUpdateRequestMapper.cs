@@ -28,9 +28,9 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         };
     }
 
-    private static Address MapAddress(UpdatedProducersResponseV2 updatedProducer)
+    private static WoApiAddress MapAddress(UpdatedProducersResponseV2 updatedProducer)
     {
-        return new Address
+        return new WoApiAddress
         {
             AddressLine1 = updatedProducer.AddressLine1,
             AddressLine2 = updatedProducer.AddressLine2,
@@ -53,7 +53,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         };
     }
 
-    private static Registration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
+    private static WoApiRegistration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
     {
         var type = updatedProducer.OrganisationType switch
         {
@@ -78,7 +78,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             );
         }
 
-        return new Registration
+        return new WoApiRegistration
         {
             Status = status,
             Type = type,
@@ -87,22 +87,16 @@ public static class WasteOrganisationsApiUpdateRequestMapper
     }
 }
 
-public class WoApiOrganisationType
-{
-    public const string ComplianceScheme = "COMPLIANCE_SCHEME";
-    public const string LargeProducer = "LARGE_PRODUCER";
-}
-
-public class WoApiOrganisationStatus
-{
-    public const string Registered = "REGISTERED";
-    public const string Cancelled = "CANCELLED";
-}
-
 public class OrganisationType
 {
     public const string ComplianceScheme_CS = "CS";
+
+    /// <summary>
+    /// there is a mistake in the Stored procedure for retrieving this which returns this as DP it should be DR.
+    /// Alternatively, it should not be using 2 letter acronyms at all and use full words.
+    /// </summary>
     public const string LargeProducer_DP = "DP";
+    public const string LargeProducer_DR = "DR";
 }
 
 public class OrganisationStatus
@@ -117,12 +111,4 @@ public class BusinessCountry
     public const string NorthernIreland = "Northern Ireland";
     public const string Scotland = "Scotland";
     public const string Wales = "Wales";
-}
-
-public class WoApiBusinessCountry
-{
-    public const string England = "GB-ENG";
-    public const string NorthernIreland = "GB-NIR";
-    public const string Scotland = "GB-SCT";
-    public const string Wales = "GB-WLS";
 }

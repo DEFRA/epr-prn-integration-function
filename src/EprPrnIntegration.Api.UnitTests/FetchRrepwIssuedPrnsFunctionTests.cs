@@ -1,17 +1,22 @@
 using System.Globalization;
 using System.Net;
+using System.Net.Http.Json;
+using AutoFixture;
 using EprPrnIntegration.Api.Functions;
+using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
+using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -30,16 +35,21 @@ public class FetchRrepwIssuedPrnsFunctionTests
     private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnService> _prnServiceMock = new();
     private readonly Mock<ICoreServices> _core = new();
-    private readonly Mock<IMessagingServices> _messagingServices = new();
     private readonly Mock<IOrganisationService> _organisationService = new();
+    private readonly Mock<IMessagingServices> _messagingServices = new();
+    private readonly Mock<IEmailService> _emailService = new();
+    private readonly Mock<IWasteOrganisationsService> _woService = new();
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
         new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
 
     private readonly FetchRrepwIssuedPrnsFunction _function;
+    private readonly Fixture _fixture = new();
 
     public FetchRrepwIssuedPrnsFunctionTests()
     {
+        _core.Setup(c => c.OrganisationService).Returns(_organisationService.Object);
+        _messagingServices.Setup(c => c.EmailService).Returns(_emailService.Object);
         _function = new(
             _lastUpdateServiceMock.Object,
             _loggerMock.Object,
@@ -48,15 +58,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _core.Object,
             _messagingServices.Object,
-            _organisationService.Object
+            _woService.Object
         );
-        _organisationService
-            .Setup(o =>
-                o.GetOrganisation(_organisationId.ToString(), It.IsAny<CancellationToken>())
-            )
-            .ReturnsAsync(
-                new OrganisationResponse { IssuedToEntityTypeCode = _organisationTypeCode }
-            );
+        SetupGetOrganisation(_organisationId.ToString(), _organisationTypeCode);
     }
 
     [Fact]
@@ -87,15 +91,27 @@ public class FetchRrepwIssuedPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _lastUpdateServiceMock.Verify(
@@ -118,7 +134,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
         // Verify no PRNs were saved
-        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never
+        );
         // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
@@ -141,7 +160,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
         await _function.Run(new TimerInfo());
 
         // Verify no PRNs were saved
-        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Never);
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never
+        );
         // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
@@ -173,7 +195,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .ReturnsAsync(prns);
         _prnServiceMock
             .Setup(x =>
-                x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails"))
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails"),
+                    It.IsAny<CancellationToken>()
+                )
             )
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Unauthorized));
 
@@ -181,15 +206,27 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         // Verify all three PRNs were attempted
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-fails"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
         _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003")),
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003"),
+                    It.IsAny<CancellationToken>()
+                ),
             Times.Once
         );
 
@@ -229,7 +266,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         _prnServiceMock
             .Setup(x =>
-                x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-transient"))
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002-transient"),
+                    It.IsAny<CancellationToken>()
+                )
             )
             .ReturnsAsync(new HttpResponseMessage(statusCode));
 
@@ -249,7 +289,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
         {
             _prnServiceMock
                 .Setup(x =>
-                    x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == prn.PrnNumber))
+                    x.SavePrn(
+                        It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == prn.PrnNumber),
+                        It.IsAny<CancellationToken>()
+                    )
                 )
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
         }
@@ -287,7 +330,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
 
         // Verify PRNs were processed
-        _prnServiceMock.Verify(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>()), Times.Exactly(2));
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2)
+        );
 
         // Verify last update was set
         _lastUpdateServiceMock.Verify(
@@ -308,16 +354,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             new DateTime(),
             new DateTime()
         );
-        _organisationService
-            .Setup(o =>
-                o.GetOrganisation(
-                    prns[0].IssuedToOrganisation!.Id!.ToString(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(
-                new OrganisationResponse { IssuedToEntityTypeCode = _organisationTypeCode }
-            );
+
+        SetupGetOrganisation(_organisationId.ToString(), _organisationTypeCode);
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
 
@@ -333,7 +371,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
                         && req.AccreditationYear == "2026"
                         && req.MaterialName != null
                         && req.ProcessToBeUsed != null
-                    )
+                    ),
+                    It.IsAny<CancellationToken>()
                 )
             )
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
@@ -345,7 +384,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _core.Object,
             _messagingServices.Object,
-            _organisationService.Object
+            _woService.Object
         );
 
         // Act
@@ -358,11 +397,28 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
+    private void SetupGetOrganisation(string organisationId, string organisationTypeCode)
+    {
+        _woService
+            .Setup(o => o.GetOrganisation(organisationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new HttpResponseMessage
+                {
+                    Content = JsonContent.Create(
+                        new WoApiOrganisation
+                        {
+                            Registration = new WoApiRegistration { Type = organisationTypeCode },
+                        }
+                    ),
+                }
+            );
+    }
+
     private PackagingRecyclingNote CreatePrn(
         string evidenceNo,
         string accreditationNo = "ACC-001",
         int accreditationYear = 2025,
-        string material = "Plastic",
+        string material = RrepwMaterialName.Plastic,
         int tonnes = 100
     )
     {
@@ -391,7 +447,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                 AccreditationNumber = accreditationNo,
                 AccreditationYear = accreditationYear,
                 Material = material,
-                SubmittedToRegulator = "EA",
+                SubmittedToRegulator = RrepwSubmittedToRegulator.EnvironmentAgency_EA,
             },
             IsDecemberWaste = false,
             IsExport = false,
@@ -401,7 +457,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     }
 
     [Fact]
-    public async Task ProcessesMultiplePrns_ShouldSendEmails()
+    public async Task ProcessesPrns_ShouldSendEmails()
     {
         var prns = new List<PackagingRecyclingNote>
         {
@@ -409,6 +465,12 @@ public class FetchRrepwIssuedPrnsFunctionTests
             CreatePrn("PRN-002"),
             CreatePrn("PRN-003"),
         };
+        prns[0].IssuedToOrganisation!.Id = Guid.NewGuid().ToString();
+        prns[1].IssuedToOrganisation!.Id = Guid.NewGuid().ToString();
+        prns[2].IssuedToOrganisation!.Id = Guid.NewGuid().ToString();
+        prns[0].Status!.CurrentStatus = RrepwStatus.Cancelled;
+        prns[1].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
+        prns[2].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
 
         SetupSavePrns(prns);
 
@@ -425,24 +487,87 @@ public class FetchRrepwIssuedPrnsFunctionTests
             )
             .ReturnsAsync(prns);
 
-        await _function.Run(new TimerInfo());
+        var emails = _fixture
+            .CreateMany<List<PersonEmail>>()
+            .Select(
+                (innerList, j) =>
+                {
+                    for (var k = 0; k < innerList.Count; k++)
+                    {
+                        innerList[k].Email = $"{j}_{k}_email";
+                    }
 
-        _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001")),
-            Times.Once
+                    return innerList;
+                }
+            )
+            .ToList();
+        var orgTypes = new List<string>
+        {
+            WoApiOrganisationType.LargeProducer,
+            WoApiOrganisationType.LargeProducer,
+            WoApiOrganisationType.ComplianceScheme,
+        };
+        for (int i = 0; i < 3; i++)
+        {
+            SetupGetOrganisation(prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
+            SetupGetEmails(emails[i], prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
+        }
+
+        await _function.Run(new TimerInfo());
+        _emailService.Verify(e =>
+            e.SendCancelledPrnsNotificationEmails(
+                It.Is<List<ProducerEmail>>(pe => VerifyProducerEmail(pe, emails[0], prns[0])),
+                prns[0].IssuedToOrganisation!.Id!
+            )
         );
-        _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002")),
-            Times.Once
-        );
-        _prnServiceMock.Verify(
-            x => x.SavePrn(It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-003")),
-            Times.Once
-        );
-        _lastUpdateServiceMock.Verify(
-            x =>
-                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
-            Times.Once
-        );
+        for (int i = 1; i < 3; i++)
+        {
+            _emailService.Verify(e =>
+                e.SendEmailsToProducers(
+                    It.Is<List<ProducerEmail>>(pe => VerifyProducerEmail(pe, emails[i], prns[i])),
+                    prns[i].IssuedToOrganisation!.Id!
+                )
+            );
+        }
+    }
+
+    private bool VerifyProducerEmail(
+        List<ProducerEmail> producerEmails,
+        List<PersonEmail> personEmails,
+        PackagingRecyclingNote packagingRecyclingNote
+    )
+    {
+        var valid = true;
+        valid &= producerEmails.Count == personEmails.Count;
+        for (int i = 0; i < producerEmails.Count; i++)
+        {
+            valid &= producerEmails[i].EmailAddress == personEmails[i].Email;
+            valid &= producerEmails[i].FirstName == personEmails[i].FirstName;
+            valid &= producerEmails[i].LastName == personEmails[i].LastName;
+            valid &= producerEmails[i].IsExporter == packagingRecyclingNote.IsExport;
+            valid &=
+                producerEmails[i].Material.ToLower()
+                == packagingRecyclingNote.Accreditation!.Material!.ToLower();
+            valid &=
+                producerEmails[i].NameOfExporterReprocessor
+                == packagingRecyclingNote.IssuedByOrganisation!.Name;
+            valid &=
+                producerEmails[i].NameOfProducerComplianceScheme
+                == packagingRecyclingNote.IssuedToOrganisation!.Name;
+            valid &= producerEmails[i].PrnNumber == packagingRecyclingNote.PrnNumber;
+            valid &= producerEmails[i].Tonnage == packagingRecyclingNote.TonnageValue;
+        }
+        return valid;
+    }
+
+    private void SetupGetEmails(List<PersonEmail> emails, string orgId, string orgType)
+    {
+        var ot =
+            orgType == WoApiOrganisationType.ComplianceScheme
+                ? OrganisationType.ComplianceScheme_CS
+                : OrganisationType.LargeProducer_DR;
+        _organisationService
+            .Setup(o => o.GetPersonEmailsAsync(orgId, ot, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(emails);
     }
 }

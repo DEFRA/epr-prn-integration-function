@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging;
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 
@@ -28,11 +29,6 @@ public interface IOrganisationService
     Task<bool> DoesProducerOrComplianceSchemeExistAsync(
         string organisationId,
         string entityTypeCode,
-        CancellationToken cancellationToken
-    );
-
-    Task<OrganisationResponse> GetOrganisation(
-        string organisationId,
         CancellationToken cancellationToken
     );
 }

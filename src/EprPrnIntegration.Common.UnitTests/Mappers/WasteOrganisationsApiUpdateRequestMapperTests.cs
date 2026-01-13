@@ -66,7 +66,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             result
                 .Address.Should()
                 .BeEquivalentTo(
-                    new Common.Models.WasteOrganisationsApi.Address
+                    new Common.Models.WasteOrganisationsApi.WoApiAddress
                     {
                         AddressLine1 = "address1",
                         AddressLine2 = "address2",
@@ -147,7 +147,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             result
                 .Registration.Should()
                 .BeEquivalentTo(
-                    new Registration
+                    new WoApiRegistration
                     {
                         Status = expectedStatus,
                         Type = expectedRegistrationType,

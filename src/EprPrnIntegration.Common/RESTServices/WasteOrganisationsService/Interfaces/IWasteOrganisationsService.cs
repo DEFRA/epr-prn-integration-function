@@ -8,5 +8,9 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interf
             string id,
             WasteOrganisationsApiUpdateRequest organisation
         );
+        Task<HttpResponseMessage> GetOrganisation(
+            string organisationId,
+            CancellationToken cancellationToken
+        );
     }
 }

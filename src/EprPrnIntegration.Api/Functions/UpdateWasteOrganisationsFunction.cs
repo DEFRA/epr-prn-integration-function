@@ -77,7 +77,7 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
         await HttpHelper.HandleTransientErrors(
-            async () =>
+            async (ct) =>
             {
                 var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
                 return await wasteOrganisationsService.UpdateOrganisation(
@@ -86,7 +86,8 @@ public class UpdateWasteOrganisationsFunction(
                 );
             },
             logger,
-            $"Saving Organisation {producer.PEPRID}"
+            $"Saving Organisation {producer.PEPRID}",
+            CancellationToken.None
         );
     }
 }
