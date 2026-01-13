@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Mappers;
 using FluentAssertions;
 using Xunit;
 
@@ -37,14 +38,14 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .GetProperty("type")
                 .GetString()
                 .Should()
-                .Be("COMPLIANCE_SCHEME");
+                .Be(WoApiOrganisationType.ComplianceScheme);
 
             jsonDocument
                 .RootElement.GetProperty("registration")
                 .GetProperty("status")
                 .GetString()
                 .Should()
-                .Be("REGISTERED");
+                .Be(WoApiOrganisationStatus.Registered);
 
             entry.Response.StatusCode.Should().Be(202);
         });

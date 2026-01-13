@@ -1,5 +1,6 @@
 ﻿using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 
@@ -26,8 +27,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 TradingName = "Organisation's TradingName",
 
                 RegistrationYear = "2025",
-                Status = "registered",
-                OrganisationType = "DP",
+                Status = OrganisationStatus.Registered,
+                OrganisationType = OrganisationType.LargeProducer_DP,
             };
 
             var result = WasteOrganisationsApiUpdateRequestMapper.Map(input);
@@ -51,8 +52,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 Postcode = "postcode",
                 Country = "UK",
 
-                Status = "registered",
-                OrganisationType = "DP",
+                Status = OrganisationStatus.Registered,
+                OrganisationType = OrganisationType.LargeProducer_DP,
                 RegistrationYear = "2025",
 
                 CompaniesHouseNumber = "some-company-number",
@@ -65,7 +66,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             result
                 .Address.Should()
                 .BeEquivalentTo(
-                    new Address
+                    new Common.Models.WasteOrganisationsApi.WoApiAddress
                     {
                         AddressLine1 = "address1",
                         AddressLine2 = "address2",
@@ -78,10 +79,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("England", "GB-ENG")]
-        [InlineData("Northern Ireland", "GB-NIR")]
-        [InlineData("Wales", "GB-WLS")]
-        [InlineData("Scotland", "GB-SCT")]
+        [InlineData(BusinessCountry.England, WoApiBusinessCountry.England)]
+        [InlineData(BusinessCountry.NorthernIreland, WoApiBusinessCountry.NorthernIreland)]
+        [InlineData(BusinessCountry.Wales, WoApiBusinessCountry.Wales)]
+        [InlineData(BusinessCountry.Scotland, WoApiBusinessCountry.Scotland)]
         [InlineData("", null)]
         public void MapsBusinessCountry(string country, string? expectedBusinessCountry)
         {
@@ -89,8 +90,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
-                Status = "registered",
-                OrganisationType = "DP",
+                Status = OrganisationStatus.Registered,
+                OrganisationType = OrganisationType.LargeProducer_DP,
                 RegistrationYear = "2026",
                 BusinessCountry = country,
             };
@@ -101,10 +102,30 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("Registered", "DP", "REGISTERED", "LARGE_PRODUCER")]
-        [InlineData("Deleted", "DP", "CANCELLED", "LARGE_PRODUCER")]
-        [InlineData("Registered", "CS", "REGISTERED", "COMPLIANCE_SCHEME")]
-        [InlineData("Deleted", "CS", "CANCELLED", "COMPLIANCE_SCHEME")]
+        [InlineData(
+            OrganisationStatus.Registered,
+            OrganisationType.LargeProducer_DP,
+            WoApiOrganisationStatus.Registered,
+            WoApiOrganisationType.LargeProducer
+        )]
+        [InlineData(
+            OrganisationStatus.Deleted,
+            OrganisationType.LargeProducer_DP,
+            WoApiOrganisationStatus.Cancelled,
+            WoApiOrganisationType.LargeProducer
+        )]
+        [InlineData(
+            OrganisationStatus.Registered,
+            OrganisationType.ComplianceScheme_CS,
+            WoApiOrganisationStatus.Registered,
+            WoApiOrganisationType.ComplianceScheme
+        )]
+        [InlineData(
+            OrganisationStatus.Deleted,
+            OrganisationType.ComplianceScheme_CS,
+            WoApiOrganisationStatus.Cancelled,
+            WoApiOrganisationType.ComplianceScheme
+        )]
         public void MapsRegistration(
             string status,
             string orgType,
@@ -126,7 +147,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             result
                 .Registration.Should()
                 .BeEquivalentTo(
-                    new Registration
+                    new WoApiRegistration
                     {
                         Status = expectedStatus,
                         Type = expectedRegistrationType,
@@ -145,7 +166,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                         PEPRID = Guid.NewGuid().ToString(),
                         OrganisationName = Guid.NewGuid().ToString(),
                         Status = "foobar",
-                        OrganisationType = "DP",
+                        OrganisationType = OrganisationType.LargeProducer_DP,
                         RegistrationYear = "2026",
                     }
                 )
@@ -161,7 +182,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                     {
                         PEPRID = Guid.NewGuid().ToString(),
                         OrganisationName = Guid.NewGuid().ToString(),
-                        Status = "registered",
+                        Status = OrganisationStatus.Registered,
                         OrganisationType = "foobar",
                         RegistrationYear = "2026",
                     }
@@ -204,8 +225,8 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             {
                 PEPRID = Guid.NewGuid().ToString(),
                 OrganisationName = Guid.NewGuid().ToString(),
-                Status = "registered",
-                OrganisationType = "DP",
+                Status = OrganisationStatus.Registered,
+                OrganisationType = OrganisationType.LargeProducer_DP,
                 RegistrationYear = "not-a-number",
             };
 

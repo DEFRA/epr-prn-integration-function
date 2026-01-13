@@ -5,7 +5,7 @@ namespace EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 public class WasteOrganisationsApiUpdateRequest
 {
     [JsonPropertyName("name")]
-    public required string Name { get; set; }
+    public string Name { get; set; } = "";
 
     [JsonPropertyName("tradingName")]
     public string? TradingName { get; set; }
@@ -17,13 +17,13 @@ public class WasteOrganisationsApiUpdateRequest
     public string? CompaniesHouseNumber { get; set; }
 
     [JsonPropertyName("address")]
-    public required Address Address { get; set; }
+    public WoApiAddress Address { get; set; } = new();
 
     [JsonPropertyName("registration")]
-    public required Registration Registration { get; set; }
+    public WoApiRegistration Registration { get; set; } = new();
 }
 
-public class Address
+public class WoApiAddress
 {
     [JsonPropertyName("addressLine1")]
     public string? AddressLine1 { get; set; }
@@ -44,14 +44,14 @@ public class Address
     public string? Country { get; set; }
 }
 
-public class Registration
+public class WoApiRegistration
 {
     [JsonPropertyName("status")]
-    public required string Status { get; set; }
+    public string Status { get; set; } = "";
 
     [JsonPropertyName("type")]
-    public required string Type { get; set; }
+    public string Type { get; set; } = "";
 
     [JsonPropertyName("registrationYear")]
-    public required int RegistrationYear { get; set; }
+    public int RegistrationYear { get; set; }
 }

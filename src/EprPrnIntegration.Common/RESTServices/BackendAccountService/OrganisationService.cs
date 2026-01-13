@@ -74,7 +74,7 @@ public class OrganisationService : BaseHttpServiceOld, IOrganisationService
         CancellationToken cancellationToken
     )
     {
-        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        _logger.LogInformation("Getting organisation exist for {OrgId}.", organisationId);
         return await GetOk(
             $"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
             cancellationToken,

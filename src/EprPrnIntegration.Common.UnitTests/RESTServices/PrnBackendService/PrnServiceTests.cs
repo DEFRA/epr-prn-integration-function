@@ -42,7 +42,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var (sut, mockHandler) = CreatePrnServiceV2();
 
             // Act
-            await sut.SavePrn(request);
+            await sut.SavePrn(request, CancellationToken.None);
 
             // Assert
             Assert.NotNull(mockHandler.LastRequest);
@@ -71,7 +71,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             var request = CreateSavePrnDetailsRequest();
             var (sut, _) = CreatePrnServiceV2("", statusCode);
 
-            var response = await sut.SavePrn(request);
+            var response = await sut.SavePrn(request, CancellationToken.None);
             response.StatusCode.Should().Be(statusCode);
         }
 
