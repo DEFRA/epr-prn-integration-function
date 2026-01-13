@@ -471,42 +471,18 @@ public class FetchRrepwIssuedPrnsFunctionTests
         prns[0].Status!.CurrentStatus = RrepwStatus.Cancelled;
         prns[1].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
         prns[2].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
-
-        SetupSavePrns(prns);
-
-        _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
-            .ReturnsAsync(DateTime.MinValue);
-
-        _rrepwServiceMock
-            .Setup(x =>
-                x.ListPackagingRecyclingNotes(
-                    ItEx.IsCloseTo(DateTime.MinValue),
-                    ItEx.IsCloseTo(DateTime.UtcNow)
-                )
-            )
-            .ReturnsAsync(prns);
-
-        var emails = _fixture
-            .CreateMany<List<PersonEmail>>()
-            .Select(
-                (innerList, j) =>
-                {
-                    for (var k = 0; k < innerList.Count; k++)
-                    {
-                        innerList[k].Email = $"{j}_{k}_email";
-                    }
-
-                    return innerList;
-                }
-            )
-            .ToList();
+        var emails = _fixture.CreateMany<List<PersonEmail>>().ToList();
         var orgTypes = new List<string>
         {
             WoApiOrganisationType.LargeProducer,
             WoApiOrganisationType.LargeProducer,
             WoApiOrganisationType.ComplianceScheme,
         };
+        SetupSavePrns(prns);
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(prns);
+
         for (int i = 0; i < 3; i++)
         {
             SetupGetOrganisation(prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
@@ -514,6 +490,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         }
 
         await _function.Run(new TimerInfo());
+
         _emailService.Verify(e =>
             e.SendCancelledPrnsNotificationEmails(
                 It.Is<List<ProducerEmail>>(pe => VerifyProducerEmail(pe, emails[0], prns[0])),
@@ -531,7 +508,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         }
     }
 
-    private bool VerifyProducerEmail(
+    private static bool VerifyProducerEmail(
         List<ProducerEmail> producerEmails,
         List<PersonEmail> personEmails,
         PackagingRecyclingNote packagingRecyclingNote
@@ -545,9 +522,11 @@ public class FetchRrepwIssuedPrnsFunctionTests
             valid &= producerEmails[i].FirstName == personEmails[i].FirstName;
             valid &= producerEmails[i].LastName == personEmails[i].LastName;
             valid &= producerEmails[i].IsExporter == packagingRecyclingNote.IsExport;
-            valid &=
-                producerEmails[i].Material.ToLower()
-                == packagingRecyclingNote.Accreditation!.Material!.ToLower();
+            valid &= producerEmails[i]
+                .Material.Equals(
+                    packagingRecyclingNote.Accreditation!.Material,
+                    StringComparison.CurrentCultureIgnoreCase
+                );
             valid &=
                 producerEmails[i].NameOfExporterReprocessor
                 == packagingRecyclingNote.IssuedByOrganisation!.Name;
