@@ -6,6 +6,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using EprPrnIntegration.Common.RESTServices;
@@ -222,11 +223,34 @@ public class FetchRrepwIssuedPrnsFunction(
         {
             var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
             var request = _mapper.Map<SavePrnDetailsRequest>((prn, org!));
+            MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))
             {
                 await SendEmailToProducers(request, org);
             }
         }
+    }
+
+    private static void MapProducerFields(SavePrnDetailsRequest request, WoApiOrganisation? org)
+    {
+        if (org == null)
+        {
+            return;
+        }
+
+        var agency = org.BusinessCountry switch
+        {
+            WoApiBusinessCountry.England => RpdReprocessorExporterAgency.EnvironmentAgency,
+            WoApiBusinessCountry.NorthernIreland =>
+                RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
+            WoApiBusinessCountry.Scotland =>
+                RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
+            WoApiBusinessCountry.Wales => RpdReprocessorExporterAgency.NaturalResourcesWales,
+            _ => null,
+        };
+
+        request.PackagingProducer = agency;
+        request.ProducerAgency = agency;
     }
 
     private async Task<bool> ProcessPrn(

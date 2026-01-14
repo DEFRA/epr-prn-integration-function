@@ -397,7 +397,11 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
-    private void SetupGetOrganisation(string organisationId, string organisationTypeCode)
+    private void SetupGetOrganisation(
+        string organisationId,
+        string organisationTypeCode,
+        string? businessCountry = null
+    )
     {
         _woService
             .Setup(o => o.GetOrganisation(organisationId, It.IsAny<CancellationToken>()))
@@ -409,6 +413,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                         {
                             Id = Guid.Parse(organisationId),
                             Registration = new WoApiRegistration { Type = organisationTypeCode },
+                            BusinessCountry = businessCountry,
                         }
                     ),
                 }
@@ -549,5 +554,143 @@ public class FetchRrepwIssuedPrnsFunctionTests
         _organisationService
             .Setup(o => o.GetPersonEmailsAsync(orgId, ot, It.IsAny<CancellationToken>()))
             .ReturnsAsync(emails);
+    }
+
+    [Theory]
+    [InlineData(WoApiBusinessCountry.England, RpdReprocessorExporterAgency.EnvironmentAgency)]
+    [InlineData(
+        WoApiBusinessCountry.NorthernIreland,
+        RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency
+    )]
+    [InlineData(
+        WoApiBusinessCountry.Scotland,
+        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency
+    )]
+    [InlineData(WoApiBusinessCountry.Wales, RpdReprocessorExporterAgency.NaturalResourcesWales)]
+    public async Task Run_ShouldMapProducerFields_ForValidBusinessCountries(
+        string businessCountry,
+        string expectedAgency
+    )
+    {
+        // Arrange
+        var orgId = Guid.NewGuid().ToString();
+        var prn = CreatePrn("PRN-001");
+        prn.IssuedToOrganisation!.Id = orgId;
+
+        SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, businessCountry);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
+
+        _prnServiceMock
+            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req =>
+                        req.PrnNumber == "PRN-001"
+                        && req.PackagingProducer == expectedAgency
+                        && req.ProducerAgency == expectedAgency
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Theory]
+    [InlineData("INVALID")]
+    [InlineData("GB-XYZ")]
+    [InlineData("")]
+    public async Task Run_ShouldMapProducerFieldsToNull_ForInvalidBusinessCountries(
+        string businessCountry
+    )
+    {
+        // Arrange
+        var orgId = Guid.NewGuid().ToString();
+        var prn = CreatePrn("PRN-002");
+        prn.IssuedToOrganisation!.Id = orgId;
+
+        SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, businessCountry);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
+
+        _prnServiceMock
+            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req =>
+                        req.PrnNumber == "PRN-002"
+                        && req.PackagingProducer == null
+                        && req.ProducerAgency == null
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task Run_ShouldMapProducerFieldsToNull_WhenBusinessCountryIsNull()
+    {
+        // Arrange
+        var orgId = Guid.NewGuid().ToString();
+        var prn = CreatePrn("PRN-003");
+        prn.IssuedToOrganisation!.Id = orgId;
+
+        SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, null);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
+
+        _prnServiceMock
+            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req =>
+                        req.PrnNumber == "PRN-003"
+                        && req.PackagingProducer == null
+                        && req.ProducerAgency == null
+                    ),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once
+        );
     }
 }
