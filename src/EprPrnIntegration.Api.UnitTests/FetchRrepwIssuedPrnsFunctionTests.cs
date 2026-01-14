@@ -693,4 +693,82 @@ public class FetchRrepwIssuedPrnsFunctionTests
             Times.Once
         );
     }
+
+    [Fact]
+    public async Task Run_ShouldLogErrorAndNotSendEmail_WhenUnknownRegistrationType()
+    {
+        // Arrange
+        var orgId = Guid.NewGuid().ToString();
+        var prn = CreatePrn("PRN-004");
+        prn.IssuedToOrganisation!.Id = orgId;
+
+        // Setup organisation with unknown registration type
+        _woService
+            .Setup(o => o.GetOrganisation(orgId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new HttpResponseMessage
+                {
+                    Content = JsonContent.Create(
+                        new WoApiOrganisation
+                        {
+                            Id = Guid.Parse(orgId),
+                            Registration = new WoApiRegistration { Type = "UNKNOWN_TYPE" },
+                            BusinessCountry = WoApiBusinessCountry.England,
+                        }
+                    ),
+                }
+            );
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
+
+        _prnServiceMock
+            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert - Verify error was logged
+        _loggerMock.Verify(
+            x =>
+                x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (o, t) =>
+                            o.ToString()!.Contains("Unknown registration type UNKNOWN_TYPE")
+                            && o.ToString()!.Contains($"for organisation {orgId}")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+
+        // Verify PRN was still saved
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
+            Times.Once
+        );
+
+        // Verify no emails were sent due to null entity type code
+        _emailService.Verify(
+            x => x.SendEmailsToProducers(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()),
+            Times.Never
+        );
+        _emailService.Verify(
+            x =>
+                x.SendCancelledPrnsNotificationEmails(
+                    It.IsAny<List<ProducerEmail>>(),
+                    It.IsAny<string>()
+                ),
+            Times.Never
+        );
+    }
 }
