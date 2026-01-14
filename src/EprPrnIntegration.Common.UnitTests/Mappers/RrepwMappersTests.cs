@@ -14,7 +14,6 @@ public class RrepwMappersTests
 {
     private readonly Fixture _fixture = new();
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
-    private readonly WoApiOrganisation _defaultOrg = new();
 
     public RrepwMappersTests()
     {
@@ -46,11 +45,17 @@ public class RrepwMappersTests
                 .With(o => o.Postcode, "TE5 7ST")
                 .Create()
         );
+        _fixture.Register(() => _fixture.Build<WoApiOrganisation>());
     }
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
     {
         return _fixture.Build<PackagingRecyclingNote>().Create();
+    }
+
+    private WoApiOrganisation CreateWoApiOrganisation()
+    {
+        return _fixture.Build<WoApiOrganisation>().Create();
     }
 
     [Theory]
@@ -63,7 +68,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
     }
 
@@ -71,7 +78,9 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_WithNulls()
     {
         var prn = new PackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest
             .Should()
             .BeEquivalentTo(new SavePrnDetailsRequest { ObligationYear = "2026" });
@@ -86,7 +95,10 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg)).PrnStatusId.Should().BeNull();
+        _mapper
+            .Map<SavePrnDetailsRequest>((prn, CreateWoApiOrganisation()))
+            .PrnStatusId.Should()
+            .BeNull();
     }
 
     [Theory]
@@ -115,7 +127,9 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
     }
 
@@ -124,7 +138,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -134,7 +150,9 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = RrepwMaterialName.Glass;
         prn.Accreditation.GlassRecyclingProcess = "invalidProcess";
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -153,7 +171,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.ProcessToBeUsed.Should().Be(expectedProcessToBeUsed);
     }
 
@@ -162,7 +182,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.ProcessToBeUsed.Should().BeNull();
     }
 
@@ -190,7 +212,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = sourceStr;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().Be(expectedStr);
     }
 
@@ -199,7 +223,9 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = "invalidRegulator";
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().BeNull();
     }
 
@@ -214,7 +240,9 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.IssueDate.Should().Be(adt);
         switch (status)
         {
@@ -244,7 +272,9 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
@@ -258,7 +288,9 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.IssuedToOrganisation!.TradingName = tradingName;
         prn.IssuedToOrganisation!.Name = _fixture.Create<string>();
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         if (!string.IsNullOrWhiteSpace(tradingName))
             savePrnDetailsRequest
                 .OrganisationName.Should()
@@ -271,7 +303,9 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
         var prn = CreatePackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>((prn, _defaultOrg));
+        var savePrnDetailsRequest = _mapper.Map<SavePrnDetailsRequest>(
+            (prn, CreateWoApiOrganisation())
+        );
         savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
         savePrnDetailsRequest.PrnNumber.Should().Be(prn.PrnNumber);
         savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status!.AuthorisedBy!.FullName);
@@ -429,5 +463,47 @@ public class RrepwMappersTests
         prn.Accreditation = null;
         var site = RrepwMappers.GetReprocessingSite(prn);
         site.Should().Be(null);
+    }
+
+    [Theory]
+    [InlineData(WoApiBusinessCountry.England, RpdReprocessorExporterAgency.EnvironmentAgency)]
+    [InlineData(
+        WoApiBusinessCountry.NorthernIreland,
+        RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency
+    )]
+    [InlineData(
+        WoApiBusinessCountry.Scotland,
+        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency
+    )]
+    [InlineData(WoApiBusinessCountry.Wales, RpdReprocessorExporterAgency.NaturalResourcesWales)]
+    public void ShouldMapProducerField_ValidBusinessCountries(
+        string businessCountry,
+        string expectedAgency
+    )
+    {
+        var org = new WoApiOrganisation { BusinessCountry = businessCountry };
+        var prn = CreatePackagingRecyclingNote();
+
+        var request = _mapper.Map<SavePrnDetailsRequest>((prn, org));
+
+        request.PackagingProducer.Should().Be(expectedAgency);
+        request.ProducerAgency.Should().Be(expectedAgency);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("GB-INVALID")]
+    [InlineData("US")]
+    [InlineData("FR")]
+    public void ShouldMapProducerField_InvalidBusinessCountries_ReturnsNull(string? businessCountry)
+    {
+        var org = new WoApiOrganisation { BusinessCountry = businessCountry };
+        var prn = CreatePackagingRecyclingNote();
+
+        var request = _mapper.Map<SavePrnDetailsRequest>((prn, org));
+
+        request.PackagingProducer.Should().BeNull();
+        request.ProducerAgency.Should().BeNull();
     }
 }

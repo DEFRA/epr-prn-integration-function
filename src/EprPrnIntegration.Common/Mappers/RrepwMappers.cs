@@ -15,6 +15,7 @@ public class RrepwMappers : Profile
         // all fields required here have been validated as not null prior to this mapping
         CreateMap<(PackagingRecyclingNote prn, WoApiOrganisation org), SavePrnDetailsRequest>()
             .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.prn.Id))
+            .ForMember(spdr => spdr.PrnNumber, opt => opt.MapFrom(src => src.prn.PrnNumber))
             .ForMember(
                 spdr => spdr.PrnStatusId,
                 o => o.MapFrom(src => ConvertStatusToEprnStatus(src.prn))
@@ -50,6 +51,9 @@ public class RrepwMappers : Profile
                 o => o.MapFrom(src => GetReprocessingSite(src.prn))
             )
             .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.prn.IsDecemberWaste))
+            .ForMember(spdr => spdr.IsExport, o => o.MapFrom(src => src.prn.IsExport))
+            .ForMember(spdr => spdr.TonnageValue, o => o.MapFrom(src => src.prn.TonnageValue))
+            .ForMember(spdr => spdr.IssuerNotes, o => o.MapFrom(src => src.prn.IssuerNotes))
             .ForMember(
                 spdr => spdr.ProcessToBeUsed,
                 o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.prn))
@@ -221,7 +225,15 @@ public class RrepwMappers : Profile
 
     private static string? GetProducerField(WoApiOrganisation org)
     {
-        // TODO: Implement mapping logic for PackagingProducer and ProducerAgency
-        return null;
+        return org.BusinessCountry switch
+        {
+            WoApiBusinessCountry.England => RpdReprocessorExporterAgency.EnvironmentAgency,
+            WoApiBusinessCountry.NorthernIreland =>
+                RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
+            WoApiBusinessCountry.Scotland =>
+                RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
+            WoApiBusinessCountry.Wales => RpdReprocessorExporterAgency.NaturalResourcesWales,
+            _ => null,
+        };
     }
 }
