@@ -6,6 +6,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using EprPrnIntegration.Common.RESTServices;
@@ -87,10 +88,10 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task SendEmailToProducers(
         SavePrnDetailsRequest request,
-        CancellationToken cancellationToken
+        WoApiOrganisation? woOrganisation
     )
     {
-        if (request.OrganisationId is null)
+        if (woOrganisation?.Id is null)
         {
             logger.LogError(
                 "For prn {PrnNumber} Cannot send email to producer, IssueToOrganisation.Id is null",
@@ -98,11 +99,9 @@ public class FetchRrepwIssuedPrnsFunction(
             );
             return;
         }
-        string organisationId = request.OrganisationId.Value.ToString();
-        string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(
-            organisationId,
-            cancellationToken
-        );
+
+        string organisationId = woOrganisation.Id.ToString();
+        string? issuedToEntityTypeCode = GetIssuedToEntityTypeCode(woOrganisation);
         if (issuedToEntityTypeCode is null)
         {
             logger.LogError(
@@ -162,7 +161,25 @@ public class FetchRrepwIssuedPrnsFunction(
         }
     }
 
-    private async Task<string?> GetIssuedToEntityTypeCode(
+    private string? GetIssuedToEntityTypeCode(WoApiOrganisation? org)
+    {
+        switch (org?.Registration.Type)
+        {
+            case WoApiOrganisationType.ComplianceScheme:
+                return OrganisationType.ComplianceScheme_CS;
+            case WoApiOrganisationType.LargeProducer:
+                return OrganisationType.LargeProducer_DR;
+            default:
+                logger.LogError(
+                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
+                    org?.Registration.Type,
+                    org?.Id
+                );
+                return null;
+        }
+    }
+
+    private async Task<WoApiOrganisation?> GetWoApiOrganisation(
         string organisationId,
         CancellationToken cancellationToken
     )
@@ -174,21 +191,7 @@ public class FetchRrepwIssuedPrnsFunction(
             $"Getting organisation details for {organisationId}",
             cancellationToken
         );
-
-        switch (org?.Registration.Type)
-        {
-            case WoApiOrganisationType.ComplianceScheme:
-                return OrganisationType.ComplianceScheme_CS;
-            case WoApiOrganisationType.LargeProducer:
-                return OrganisationType.LargeProducer_DR;
-            default:
-                logger.LogError(
-                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
-                    org?.Registration.Type,
-                    organisationId
-                );
-                return null;
-        }
+        return org;
     }
 
     private static ProducerEmail CreateProducerEmail(
@@ -218,12 +221,36 @@ public class FetchRrepwIssuedPrnsFunction(
         logger.LogInformation("Processing {Count} prns", prns.Count);
         foreach (var prn in prns)
         {
+            var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
             var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+            MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))
             {
-                await SendEmailToProducers(request, cancellationToken);
+                await SendEmailToProducers(request, org);
             }
         }
+    }
+
+    private static void MapProducerFields(SavePrnDetailsRequest request, WoApiOrganisation? org)
+    {
+        if (org == null)
+        {
+            return;
+        }
+
+        var agency = org.BusinessCountry switch
+        {
+            WoApiBusinessCountry.England => RpdReprocessorExporterAgency.EnvironmentAgency,
+            WoApiBusinessCountry.NorthernIreland =>
+                RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
+            WoApiBusinessCountry.Scotland =>
+                RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
+            WoApiBusinessCountry.Wales => RpdReprocessorExporterAgency.NaturalResourcesWales,
+            _ => null,
+        };
+
+        request.PackagingProducer = agency;
+        request.ProducerAgency = agency;
     }
 
     private async Task<bool> ProcessPrn(
