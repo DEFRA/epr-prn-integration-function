@@ -87,10 +87,10 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private async Task SendEmailToProducers(
         SavePrnDetailsRequest request,
-        CancellationToken cancellationToken
+        WoApiOrganisation? woOrganisation
     )
     {
-        if (request.OrganisationId is null)
+        if (woOrganisation?.Id is null)
         {
             logger.LogError(
                 "For prn {PrnNumber} Cannot send email to producer, IssueToOrganisation.Id is null",
@@ -98,11 +98,9 @@ public class FetchRrepwIssuedPrnsFunction(
             );
             return;
         }
-        string organisationId = request.OrganisationId.Value.ToString();
-        string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(
-            organisationId,
-            cancellationToken
-        );
+
+        string organisationId = woOrganisation.Id.ToString();
+        string? issuedToEntityTypeCode = GetIssuedToEntityTypeCode(woOrganisation);
         if (issuedToEntityTypeCode is null)
         {
             logger.LogError(
@@ -162,7 +160,25 @@ public class FetchRrepwIssuedPrnsFunction(
         }
     }
 
-    private async Task<string?> GetIssuedToEntityTypeCode(
+    private string? GetIssuedToEntityTypeCode(WoApiOrganisation? org)
+    {
+        switch (org?.Registration.Type)
+        {
+            case WoApiOrganisationType.ComplianceScheme:
+                return OrganisationType.ComplianceScheme_CS;
+            case WoApiOrganisationType.LargeProducer:
+                return OrganisationType.LargeProducer_DR;
+            default:
+                logger.LogError(
+                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
+                    org?.Registration.Type,
+                    org?.Id
+                );
+                return null;
+        }
+    }
+
+    private async Task<WoApiOrganisation?> GetWoApiOrganisation(
         string organisationId,
         CancellationToken cancellationToken
     )
@@ -174,21 +190,7 @@ public class FetchRrepwIssuedPrnsFunction(
             $"Getting organisation details for {organisationId}",
             cancellationToken
         );
-
-        switch (org?.Registration.Type)
-        {
-            case WoApiOrganisationType.ComplianceScheme:
-                return OrganisationType.ComplianceScheme_CS;
-            case WoApiOrganisationType.LargeProducer:
-                return OrganisationType.LargeProducer_DR;
-            default:
-                logger.LogError(
-                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
-                    org?.Registration.Type,
-                    organisationId
-                );
-                return null;
-        }
+        return org;
     }
 
     private static ProducerEmail CreateProducerEmail(
@@ -218,10 +220,11 @@ public class FetchRrepwIssuedPrnsFunction(
         logger.LogInformation("Processing {Count} prns", prns.Count);
         foreach (var prn in prns)
         {
+            var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
             var request = _mapper.Map<SavePrnDetailsRequest>(prn);
             if (await ProcessPrn(request, cancellationToken))
             {
-                await SendEmailToProducers(request, cancellationToken);
+                await SendEmailToProducers(request, org);
             }
         }
     }

@@ -407,6 +407,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                     Content = JsonContent.Create(
                         new WoApiOrganisation
                         {
+                            Id = Guid.Parse(organisationId),
                             Registration = new WoApiRegistration { Type = organisationTypeCode },
                         }
                     ),
