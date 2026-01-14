@@ -90,30 +90,29 @@ public class FetchRrepwIssuedPrnsFunction(
         CancellationToken cancellationToken
     )
     {
-        string? organisationId = null;
+        if (request.OrganisationId is null)
+        {
+            logger.LogError(
+                "For prn {PrnNumber} Cannot send email to producer, IssueToOrganisation.Id is null",
+                request.PrnNumber
+            );
+            return;
+        }
+        string organisationId = request.OrganisationId.Value.ToString();
+        string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(
+            organisationId,
+            cancellationToken
+        );
+        if (issuedToEntityTypeCode is null)
+        {
+            logger.LogError(
+                "For prn {PrnNumber} Cannot send email to producer, failed to get issuedToEntityTypeCode",
+                request.PrnNumber
+            );
+            return;
+        }
         try
         {
-            if (request.OrganisationId is null)
-            {
-                logger.LogError(
-                    "For prn {PrnNumber} Cannot send email to producer, IssueToOrganisation.Id is null",
-                    request.PrnNumber
-                );
-                return;
-            }
-            organisationId = request.OrganisationId.Value.ToString();
-            string? issuedToEntityTypeCode = await GetIssuedToEntityTypeCode(
-                organisationId,
-                cancellationToken
-            );
-            if (issuedToEntityTypeCode is null)
-            {
-                logger.LogError(
-                    "For prn {PrnNumber} Cannot send email to producer, failed to get issuedToEntityTypeCode",
-                    request.PrnNumber
-                );
-                return;
-            }
             // Get list of producers
             var producerEmails =
                 await core.OrganisationService.GetPersonEmailsAsync(
