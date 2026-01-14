@@ -397,8 +397,11 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
-    private void SetupGetOrganisation(Guid organisationId, string organisationTypeCode,
-        string? businessCountry = null)
+    private void SetupGetOrganisation(
+        Guid organisationId,
+        string organisationTypeCode,
+        string? businessCountry = null
+    )
     {
         _woService
             .Setup(o => o.GetOrganisation(organisationId.ToString(), It.IsAny<CancellationToken>()))
@@ -576,9 +579,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
     )
     {
         // Arrange
-        var orgId = Guid.NewGuid().ToString();
+        var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-001");
-        prn.IssuedToOrganisation!.Id = orgId;
+        prn.IssuedToOrganisation!.Id = orgId.ToString();
 
         SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, businessCountry);
 
@@ -621,9 +624,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
     )
     {
         // Arrange
-        var orgId = Guid.NewGuid().ToString();
+        var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-002");
-        prn.IssuedToOrganisation!.Id = orgId;
+        prn.IssuedToOrganisation!.Id = orgId.ToString();
 
         SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, businessCountry);
 
@@ -661,9 +664,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task Run_ShouldMapProducerFieldsToNull_WhenBusinessCountryIsNull()
     {
         // Arrange
-        var orgId = Guid.NewGuid().ToString();
+        var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-003");
-        prn.IssuedToOrganisation!.Id = orgId;
+        prn.IssuedToOrganisation!.Id = orgId.ToString();
 
         SetupGetOrganisation(orgId, WoApiOrganisationType.ComplianceScheme, null);
 
@@ -715,8 +718,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
                         new WoApiOrganisation
                         {
                             Id = Guid.Parse(orgId),
-                            Registration = new WoApiRegistration { Type = "UNKNOWN_TYPE" },
+                            Registration = new WoApiRegistration
+                            {
+                                Type = "UNKNOWN_TYPE",
+                                RegistrationYear = 2024,
+                                Status = WoApiOrganisationStatus.Registered,
+                            },
                             BusinessCountry = WoApiBusinessCountry.England,
+                            Address = new WoApiAddress(),
                         }
                     ),
                 }
