@@ -19,6 +19,8 @@ public class SavePrnDetailsRequest
     public string? AccreditationYear { get; set; }
     public string? MaterialName { get; set; }
     public string? ReprocessorExporterAgency { get; set; }
+    public string? PackagingProducer { get; set; }
+    public string? ProducerAgency { get; set; }
     public string? ReprocessingSite { get; set; }
     public bool? DecemberWaste { get; set; }
     public bool? IsExport { get; set; }

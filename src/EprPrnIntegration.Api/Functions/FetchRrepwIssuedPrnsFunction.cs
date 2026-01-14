@@ -221,7 +221,7 @@ public class FetchRrepwIssuedPrnsFunction(
         foreach (var prn in prns)
         {
             var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
-            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+            var request = _mapper.Map<SavePrnDetailsRequest>((prn, org!));
             if (await ProcessPrn(request, cancellationToken))
             {
                 await SendEmailToProducers(request, org);

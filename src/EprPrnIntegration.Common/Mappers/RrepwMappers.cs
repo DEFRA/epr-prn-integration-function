@@ -4,6 +4,7 @@ using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.Mappers;
 
@@ -12,54 +13,65 @@ public class RrepwMappers : Profile
     public RrepwMappers()
     {
         // all fields required here have been validated as not null prior to this mapping
-        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequest>()
-            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
+        CreateMap<(PackagingRecyclingNote prn, WoApiOrganisation org), SavePrnDetailsRequest>()
+            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.prn.Id))
             .ForMember(
                 spdr => spdr.PrnStatusId,
-                o => o.MapFrom(src => ConvertStatusToEprnStatus(src))
+                o => o.MapFrom(src => ConvertStatusToEprnStatus(src.prn))
             )
-            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src)))
+            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src.prn)))
             .ForMember(
                 spdr => spdr.PrnSignatoryPosition,
-                o => o.MapFrom(src => GetPrnSignatoryPosition(src))
+                o => o.MapFrom(src => GetPrnSignatoryPosition(src.prn))
             )
-            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src)))
-            .ForMember(spdr => spdr.OrganisationId, o => o.MapFrom(src => GetOrganisationId(src)))
+            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src.prn)))
+            .ForMember(
+                spdr => spdr.OrganisationId,
+                o => o.MapFrom(src => GetOrganisationId(src.prn))
+            )
             .ForMember(
                 spdr => spdr.OrganisationName,
-                o => o.MapFrom(src => GetOrganisationName(src))
+                o => o.MapFrom(src => GetOrganisationName(src.prn))
             )
             .ForMember(
                 spdr => spdr.AccreditationNumber,
-                o => o.MapFrom(src => GetAccreditationNumber(src))
+                o => o.MapFrom(src => GetAccreditationNumber(src.prn))
             )
             .ForMember(
                 spdr => spdr.AccreditationYear,
-                o => o.MapFrom(src => GetAccreditationYear(src))
+                o => o.MapFrom(src => GetAccreditationYear(src.prn))
             )
             .ForMember(
                 spdr => spdr.ReprocessorExporterAgency,
-                o => o.MapFrom(src => ConvertRegulator(src))
+                o => o.MapFrom(src => ConvertRegulator(src.prn))
             )
             .ForMember(
                 spdr => spdr.ReprocessingSite,
-                o => o.MapFrom(src => GetReprocessingSite(src))
+                o => o.MapFrom(src => GetReprocessingSite(src.prn))
             )
-            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
+            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.prn.IsDecemberWaste))
             .ForMember(
                 spdr => spdr.ProcessToBeUsed,
-                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src))
+                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.prn))
             )
             .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
             .ForMember(
                 spdr => spdr.MaterialName,
-                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
+                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src.prn))
             )
-            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
+            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src.prn)))
+            .ForMember(
+                spdr => spdr.PackagingProducer,
+                o => o.MapFrom(src => GetProducerField(src.org))
+            )
+            .ForMember(
+                spdr => spdr.ProducerAgency,
+                o => o.MapFrom(src => GetProducerField(src.org))
+            )
             .AfterMap(
-                (prn, spdr) =>
+                (src, spdr) =>
                 {
-                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
+                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(src.prn);
                 }
             );
     }
@@ -205,5 +217,11 @@ public class RrepwMappers : Profile
             RrepwMaterialName.Wood => RpdProcesses.R3,
             _ => null,
         };
+    }
+
+    private static string? GetProducerField(WoApiOrganisation org)
+    {
+        // TODO: Implement mapping logic for PackagingProducer and ProducerAgency
+        return null;
     }
 }
