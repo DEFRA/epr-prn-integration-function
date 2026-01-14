@@ -60,7 +60,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _messagingServices.Object,
             _woService.Object
         );
-        SetupGetOrganisation(_organisationId.ToString(), _organisationTypeCode);
+        SetupGetOrganisation(_organisationId, _organisationTypeCode);
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             new DateTime()
         );
 
-        SetupGetOrganisation(_organisationId.ToString(), _organisationTypeCode);
+        SetupGetOrganisation(_organisationId, _organisationTypeCode);
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
 
@@ -397,18 +397,25 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
-    private void SetupGetOrganisation(string organisationId, string organisationTypeCode)
+    private void SetupGetOrganisation(Guid organisationId, string organisationTypeCode)
     {
         _woService
-            .Setup(o => o.GetOrganisation(organisationId, It.IsAny<CancellationToken>()))
+            .Setup(o => o.GetOrganisation(organisationId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
                 new HttpResponseMessage
                 {
                     Content = JsonContent.Create(
-                        new WoApiOrganisation
-                        {
-                            Registration = new WoApiRegistration { Type = organisationTypeCode },
-                        }
+                        _fixture
+                            .Build<WoApiOrganisation>()
+                            .With(o => o.Id, organisationId)
+                            .With(
+                                o => o.Registration,
+                                _fixture
+                                    .Build<WoApiRegistration>()
+                                    .With(w => w.Type, organisationTypeCode)
+                                    .Create()
+                            )
+                            .Create()
                     ),
                 }
             );
@@ -485,7 +492,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         for (int i = 0; i < 3; i++)
         {
-            SetupGetOrganisation(prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
+            SetupGetOrganisation(Guid.Parse(prns[i].IssuedToOrganisation!.Id!), orgTypes[i]);
             SetupGetEmails(emails[i], prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
         }
 
