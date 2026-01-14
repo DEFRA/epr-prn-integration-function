@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
-using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.Mappers;
 
@@ -13,69 +12,54 @@ public class RrepwMappers : Profile
     public RrepwMappers()
     {
         // all fields required here have been validated as not null prior to this mapping
-        CreateMap<(PackagingRecyclingNote prn, WoApiOrganisation org), SavePrnDetailsRequest>()
-            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.prn.Id))
-            .ForMember(spdr => spdr.PrnNumber, opt => opt.MapFrom(src => src.prn.PrnNumber))
+        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequest>()
+            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(
                 spdr => spdr.PrnStatusId,
-                o => o.MapFrom(src => ConvertStatusToEprnStatus(src.prn))
+                o => o.MapFrom(src => ConvertStatusToEprnStatus(src))
             )
-            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src.prn)))
+            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src)))
             .ForMember(
                 spdr => spdr.PrnSignatoryPosition,
-                o => o.MapFrom(src => GetPrnSignatoryPosition(src.prn))
+                o => o.MapFrom(src => GetPrnSignatoryPosition(src))
             )
-            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src.prn)))
-            .ForMember(
-                spdr => spdr.OrganisationId,
-                o => o.MapFrom(src => GetOrganisationId(src.prn))
-            )
+            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src)))
+            .ForMember(spdr => spdr.OrganisationId, o => o.MapFrom(src => GetOrganisationId(src)))
             .ForMember(
                 spdr => spdr.OrganisationName,
-                o => o.MapFrom(src => GetOrganisationName(src.prn))
+                o => o.MapFrom(src => GetOrganisationName(src))
             )
             .ForMember(
                 spdr => spdr.AccreditationNumber,
-                o => o.MapFrom(src => GetAccreditationNumber(src.prn))
+                o => o.MapFrom(src => GetAccreditationNumber(src))
             )
             .ForMember(
                 spdr => spdr.AccreditationYear,
-                o => o.MapFrom(src => GetAccreditationYear(src.prn))
+                o => o.MapFrom(src => GetAccreditationYear(src))
             )
             .ForMember(
                 spdr => spdr.ReprocessorExporterAgency,
-                o => o.MapFrom(src => ConvertRegulator(src.prn))
+                o => o.MapFrom(src => ConvertRegulator(src))
             )
             .ForMember(
                 spdr => spdr.ReprocessingSite,
-                o => o.MapFrom(src => GetReprocessingSite(src.prn))
+                o => o.MapFrom(src => GetReprocessingSite(src))
             )
-            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.prn.IsDecemberWaste))
-            .ForMember(spdr => spdr.IsExport, o => o.MapFrom(src => src.prn.IsExport))
-            .ForMember(spdr => spdr.TonnageValue, o => o.MapFrom(src => src.prn.TonnageValue))
-            .ForMember(spdr => spdr.IssuerNotes, o => o.MapFrom(src => src.prn.IssuerNotes))
+            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
             .ForMember(
                 spdr => spdr.ProcessToBeUsed,
-                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src.prn))
+                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src))
             )
             .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
             .ForMember(
                 spdr => spdr.MaterialName,
-                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src.prn))
+                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
             )
-            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src.prn)))
-            .ForMember(
-                spdr => spdr.PackagingProducer,
-                o => o.MapFrom(src => GetProducerField(src.org))
-            )
-            .ForMember(
-                spdr => spdr.ProducerAgency,
-                o => o.MapFrom(src => GetProducerField(src.org))
-            )
+            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
             .AfterMap(
-                (src, spdr) =>
+                (prn, spdr) =>
                 {
-                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(src.prn);
+                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
                 }
             );
     }
@@ -219,20 +203,6 @@ public class RrepwMappers : Profile
             RrepwMaterialName.Plastic => RpdProcesses.R3,
             RrepwMaterialName.Steel => RpdProcesses.R4,
             RrepwMaterialName.Wood => RpdProcesses.R3,
-            _ => null,
-        };
-    }
-
-    private static string? GetProducerField(WoApiOrganisation org)
-    {
-        return org.BusinessCountry switch
-        {
-            WoApiBusinessCountry.England => RpdReprocessorExporterAgency.EnvironmentAgency,
-            WoApiBusinessCountry.NorthernIreland =>
-                RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
-            WoApiBusinessCountry.Scotland =>
-                RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
-            WoApiBusinessCountry.Wales => RpdReprocessorExporterAgency.NaturalResourcesWales,
             _ => null,
         };
     }
