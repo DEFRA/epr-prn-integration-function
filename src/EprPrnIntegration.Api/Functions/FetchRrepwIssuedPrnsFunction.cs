@@ -1,4 +1,5 @@
 using System.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using AutoMapper;
 using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Api.Models;
@@ -22,6 +23,11 @@ using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Api.Functions;
 
+[SuppressMessage(
+    "SonarQube",
+    "S107:Methods should not have too many parameters",
+    Justification = "Dependencies injected via primary constructor"
+)]
 public class FetchRrepwIssuedPrnsFunction(
     ILastUpdateService lastUpdateService,
     ILogger<FetchRrepwIssuedPrnsFunction> logger,
