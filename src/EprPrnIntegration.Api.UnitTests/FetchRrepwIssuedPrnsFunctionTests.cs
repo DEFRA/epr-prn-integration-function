@@ -783,4 +783,297 @@ public class FetchRrepwIssuedPrnsFunctionTests
             Times.Never
         );
     }
+
+    #region GetWoApiOrganisation Transient Error Tests
+
+    [Theory]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task WhenTransientErrorOccurs_ForWoService_RethrowsExceptionAndDoesNotUpdateLastUpdatedTime(
+        HttpStatusCode statusCode
+    )
+    {
+        // Arrange
+        var prns = new List<PackagingRecyclingNote> { CreatePrn("PRN-001"), CreatePrn("PRN-002") };
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(prns);
+
+        // Setup WO service to return transient error for the first PRN's organisation
+        _woService
+            .Setup(o =>
+                o.GetOrganisation(prns[0].IssuedToOrganisation!.Id!, It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(new HttpResponseMessage(statusCode));
+
+        // Act & Assert - expect the exception to be rethrown
+        await Assert.ThrowsAsync<ServiceException>(() => _function.Run(new TimerInfo()));
+
+        // Verify no PRNs were saved
+        _prnServiceMock.Verify(
+            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never
+        );
+
+        // Verify last update was NOT set when transient error occurs
+        _lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            Times.Never
+        );
+
+        // Verify appropriate error was logged
+        _loggerMock.Verify(
+            x =>
+                x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (o, t) =>
+                            o.ToString()!.Contains("transient error")
+                            && o.ToString()!.Contains("terminating")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    public async Task WhenNonTransientErrorOccurs_ForWoService_ContinuesProcessingAndUpdatesLastUpdatedTime(
+        HttpStatusCode statusCode
+    )
+    {
+        // Arrange
+        var orgId1 = Guid.NewGuid();
+        var orgId2 = Guid.NewGuid();
+
+        var prn1 = CreatePrn("PRN-001");
+        prn1.IssuedToOrganisation!.Id = orgId1.ToString();
+
+        var prn2 = CreatePrn("PRN-002");
+        prn2.IssuedToOrganisation!.Id = orgId2.ToString();
+
+        var prns = new List<PackagingRecyclingNote> { prn1, prn2 };
+
+        SetupSavePrns(prns);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(prns);
+
+        // Setup WO service to return non-transient error for the first PRN's organisation
+        _woService
+            .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(statusCode));
+
+        // Setup WO service to succeed for the second PRN
+        SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Verify PRN-001 (with error) was NOT saved, PRN-002 was saved
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Never,
+            "PRN-001 should not be saved when GetWoApiOrganisation returns non-transient error"
+        );
+
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once,
+            "PRN-002 should be saved normally"
+        );
+
+        // Verify last update WAS set despite the non-transient error
+        _lastUpdateServiceMock.Verify(
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
+
+        // Verify appropriate error was logged for non-transient error
+        _loggerMock.Verify(
+            x =>
+                x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (o, t) =>
+                            o.ToString()!.Contains("non transient error")
+                            && o.ToString()!.Contains("continuing with next")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task WhenExceptionThrown_ForWoService_ContinuesProcessingAndUpdatesLastUpdatedTime()
+    {
+        // Arrange
+        var orgId1 = Guid.NewGuid();
+        var orgId2 = Guid.NewGuid();
+
+        var prn1 = CreatePrn("PRN-001");
+        prn1.IssuedToOrganisation!.Id = orgId1.ToString();
+
+        var prn2 = CreatePrn("PRN-002");
+        prn2.IssuedToOrganisation!.Id = orgId2.ToString();
+
+        var prns = new List<PackagingRecyclingNote> { prn1, prn2 };
+
+        SetupSavePrns(prns);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(prns);
+
+        // Setup WO service to throw an exception for the first PRN's organisation
+        _woService
+            .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        // Setup WO service to succeed for the second PRN
+        SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Verify PRN-001 (with exception) was NOT saved, PRN-002 was saved
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Never,
+            "PRN-001 should not be saved when GetWoApiOrganisation throws exception"
+        );
+
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once,
+            "PRN-002 should be saved normally"
+        );
+
+        // Verify last update WAS set despite the exception
+        _lastUpdateServiceMock.Verify(
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
+
+        // Verify appropriate error was logged for the exception
+        _loggerMock.Verify(
+            x =>
+                x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>(
+                        (o, t) => o.ToString()!.Contains("exception, continuing with next")
+                    ),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task WhenWoServiceReturnsNull_ContinuesProcessingWithNullOrganisation()
+    {
+        // Arrange
+        var orgId1 = Guid.NewGuid();
+        var orgId2 = Guid.NewGuid();
+
+        var prn1 = CreatePrn("PRN-001");
+        prn1.IssuedToOrganisation!.Id = orgId1.ToString();
+
+        var prn2 = CreatePrn("PRN-002");
+        prn2.IssuedToOrganisation!.Id = orgId2.ToString();
+
+        var prns = new List<PackagingRecyclingNote> { prn1, prn2 };
+
+        SetupSavePrns(prns);
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(prns);
+
+        // Setup WO service to return empty content (results in null after deserialization)
+        _woService
+            .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("") }
+            );
+
+        // Setup WO service to succeed for the second PRN
+        SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Verify PRN-001 (with null org) was NOT saved, PRN-002 was saved
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-001"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Never,
+            "PRN-001 should not be saved when GetWoApiOrganisation returns null"
+        );
+
+        _prnServiceMock.Verify(
+            x =>
+                x.SavePrn(
+                    It.Is<SavePrnDetailsRequest>(req => req.PrnNumber == "PRN-002"),
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once,
+            "PRN-002 should be saved normally"
+        );
+
+        // Verify last update WAS set
+        _lastUpdateServiceMock.Verify(
+            x =>
+                x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
+            Times.Once
+        );
+    }
+
+    #endregion
 }

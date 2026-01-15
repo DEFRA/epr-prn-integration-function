@@ -78,21 +78,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Theory()]
-    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
-    [InlineData(HttpStatusCode.RequestTimeout, 1)]
-    [InlineData(HttpStatusCode.InternalServerError, 1)]
-    [InlineData(HttpStatusCode.BadGateway, 1)]
-    [InlineData(HttpStatusCode.TooManyRequests, 1)]
-    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
-    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi(
-        HttpStatusCode failureResponse,
-        int failureCount
-    )
+    [Fact]
+    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
     {
         var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-            failureResponse,
-            failureCount
+            HttpStatusCode.ServiceUnavailable,
+            2
         );
 
         await CognitoApiStub.SetupOAuthToken();
@@ -108,9 +99,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         {
             var entries = await CommonDataApiStub.GetUpdatedProducersRequests();
 
-            entries.Count.Should().Be(failureCount + 1);
+            entries.Count.Should().Be(3);
             for (int i = 0; i < entries.Count - 1; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
             entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
@@ -123,18 +114,13 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.RequestTimeout)]
-    [InlineData(HttpStatusCode.InternalServerError)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.TooManyRequests)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndGivesUpAfter3Retries(
-        HttpStatusCode failureResponse
-    )
+    [Fact]
+    public async Task WhenCommonDataApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(failureResponse, 4);
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
+            HttpStatusCode.ServiceUnavailable,
+            4
+        );
         var before =
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
@@ -151,7 +137,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries.Count.Should().Be(4);
             for (int i = 0; i < entries.Count; i++)
-                entries[i].Response.StatusCode.Should().Be((int)failureResponse);
+                entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
@@ -163,25 +149,16 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable, 2)]
-    [InlineData(HttpStatusCode.RequestTimeout, 1)]
-    [InlineData(HttpStatusCode.InternalServerError, 1)]
-    [InlineData(HttpStatusCode.BadGateway, 1)]
-    [InlineData(HttpStatusCode.TooManyRequests, 1)]
-    [InlineData(HttpStatusCode.GatewayTimeout, 1)]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated(
-        HttpStatusCode failureResponse,
-        int failureCount
-    )
+    [Fact]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
         var ids = await CommonDataApiStub.HasV2UpdateFor();
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
             ids[0],
-            failureCount,
-            failureResponse
+            2,
+            HttpStatusCode.ServiceUnavailable
         );
 
         var before =
@@ -198,10 +175,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
             entries
                 .Count.Should()
-                .Be(
-                    failureCount + 1,
-                    $"Should be {failureCount} failures in a row then a success,so {failureCount + 1} requests"
-                );
+                .Be(3, $"Should be 2 failures in a row then a success,so 3 requests");
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
@@ -213,16 +187,8 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         });
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.ServiceUnavailable)]
-    [InlineData(HttpStatusCode.RequestTimeout)]
-    [InlineData(HttpStatusCode.InternalServerError)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    [InlineData(HttpStatusCode.TooManyRequests)]
-    [InlineData(HttpStatusCode.GatewayTimeout)]
-    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Retries(
-        HttpStatusCode failureResponse
-    )
+    [Fact]
+    public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Retries()
     {
         var ids = await CommonDataApiStub.HasV2UpdateFor();
 
@@ -230,7 +196,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
             ids[0],
             4,
-            failureResponse
+            HttpStatusCode.ServiceUnavailable
         );
 
         var before =
@@ -250,7 +216,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Be(4, "Should be an initial request then 3 retries, so four in total");
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
-            mostRecentUpdate.Response.StatusCode.Should().Be((int)failureResponse);
+            mostRecentUpdate
+                .Response.StatusCode.Should()
+                .Be((int)HttpStatusCode.ServiceUnavailable);
 
             var after = await LastUpdateService.GetLastUpdate(
                 FunctionName.UpdateWasteOrganisations

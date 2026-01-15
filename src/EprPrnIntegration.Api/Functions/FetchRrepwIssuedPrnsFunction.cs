@@ -1,7 +1,5 @@
-using System.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using AutoMapper;
-using Azure.Messaging.ServiceBus;
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Enums;
@@ -10,8 +8,6 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
-using EprPrnIntegration.Common.RESTServices;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -19,7 +15,6 @@ using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 
 namespace EprPrnIntegration.Api.Functions;
 
@@ -228,6 +223,8 @@ public class FetchRrepwIssuedPrnsFunction(
         foreach (var prn in prns)
         {
             var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
+            if (org == null)
+                continue;
             var request = _mapper.Map<SavePrnDetailsRequest>(prn);
             MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))
