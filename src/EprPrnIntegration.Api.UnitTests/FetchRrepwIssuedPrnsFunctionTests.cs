@@ -347,7 +347,13 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task StubbedRrepwService_WorksWithMappersAndFunction()
     {
         // Arrange - use concrete StubbedRrepwService instead of mock
-        var stubbedRrepwService = new StubbedRrepwService(Mock.Of<ILogger<StubbedRrepwService>>());
+        var rrepwApiConfig = Options.Create(
+            new RrepwApiConfiguration { StubOrgId = "0b51240c-c013-4973-9d06-d4f90ee4ad8b" }
+        );
+        var stubbedRrepwService = new StubbedRrepwService(
+            Mock.Of<ILogger<StubbedRrepwService>>(),
+            rrepwApiConfig
+        );
 
         //get the stubbed data
         var prns = await stubbedRrepwService.ListPackagingRecyclingNotes(
