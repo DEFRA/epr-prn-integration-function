@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 using Xunit;
 
@@ -12,9 +14,10 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
         var prnNumber = "PRN-TEST-001";
-        await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
 
         await PrnApiStub.AcceptsPrnV2();
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -36,9 +39,10 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_WithPrnsFound_UpdatesLastUpdatedTimestamp()
     {
-        await RrepwApiStub.HasPrnUpdates(["PRN-TEST-002"]);
+        var prns = await RrepwApiStub.HasPrnUpdates(["PRN-TEST-002"]);
 
         await PrnApiStub.AcceptsPrnV2();
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
@@ -54,19 +58,24 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_WithPaginatedData_SendsAllPrnsToBackendApi()
     {
         // Set up paginated responses - 2 pages with 2 items each
-        await RrepwApiStub.HasPrnUpdates(
+        var prns1 = await RrepwApiStub.HasPrnUpdates(
             ["PRN-PAGE1-001", "PRN-PAGE1-002"],
             cursor: null,
             nextCursor: "cursor-page-2"
         );
 
-        await RrepwApiStub.HasPrnUpdates(
+        var prns2 = await RrepwApiStub.HasPrnUpdates(
             ["PRN-PAGE2-001", "PRN-PAGE2-002"],
             cursor: "cursor-page-2",
             nextCursor: null
         );
 
         await PrnApiStub.AcceptsPrnV2();
+        await TestHelper.SetupOrganisations(
+            [.. prns1, .. prns2],
+            CognitoApiStub,
+            WasteOrganisationsApiStub
+        );
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -101,6 +110,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenRrepwApiHasTransientFailure_RetriesAndEventuallySendsDataToCommonPrnApi()
     {
         var prnNumber = "PRN-TEST-001";
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
             [prnNumber],
             HttpStatusCode.ServiceUnavailable,
@@ -108,6 +118,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -128,6 +139,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenRrepwApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
         var prnNumber = "PRN-TEST-001";
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
             [prnNumber],
             HttpStatusCode.ServiceUnavailable,
@@ -135,6 +147,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -154,9 +167,10 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenCommonApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
         var prnNumber = "PRN-TEST-001";
-        await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -176,9 +190,10 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenCommonApiHasTransientFailure_RetriesAndFailsAfter3Retries()
     {
         var prnNumber = "PRN-TEST-001";
-        await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 
@@ -198,10 +213,11 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     public async Task WhenCommonApiHasNonTransientFailure_ContinuesWithNextPrn()
     {
         var prnNumbers = new string[] { "PRN-TEST-001", "PRN-TEST-002" };
-        await RrepwApiStub.HasPrnUpdates(prnNumbers);
+        var prns = await RrepwApiStub.HasPrnUpdates(prnNumbers);
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithNonTransientFailure(prnNumbers[0]);
         await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
+        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
 

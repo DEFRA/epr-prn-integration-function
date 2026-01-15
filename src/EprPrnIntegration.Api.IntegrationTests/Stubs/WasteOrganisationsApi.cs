@@ -1,4 +1,5 @@
 using System.Net;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
@@ -15,6 +16,34 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
             builder
                 .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+        );
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
+    }
+
+    public async Task WithOrganisation(Guid id, string type)
+    {
+        var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request => request.UsingGet().WithPath($"/organisations/{id}/"))
+                .WithResponse(response =>
+                    response
+                        .WithStatusCode(HttpStatusCode.OK)
+                        .WithBodyAsJson(
+                            new WoApiOrganisation
+                            {
+                                Id = id,
+                                Address = new WoApiAddress(),
+                                Registration = new WoApiRegistration
+                                {
+                                    RegistrationYear = 2024,
+                                    Status = WoApiOrganisationStatus.Registered,
+                                    Type = type,
+                                },
+                            }
+                        )
+                )
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);

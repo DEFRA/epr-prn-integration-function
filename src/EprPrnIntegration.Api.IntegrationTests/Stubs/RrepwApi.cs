@@ -10,7 +10,7 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class RrepwApi(WireMockContext wiremock)
 {
-    public async Task HasPrnUpdates(
+    public async Task<List<PackagingRecyclingNote>> HasPrnUpdates(
         string[] prnNumbers,
         string? cursor = null,
         string? nextCursor = null
@@ -38,6 +38,7 @@ public class RrepwApi(WireMockContext wiremock)
 
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
+        return items;
     }
 
     public async Task HasPrnUpdatesWithTransientFailures(
