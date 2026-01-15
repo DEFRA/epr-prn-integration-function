@@ -55,8 +55,7 @@ public class HttpHelperTests
     {
         // Arrange
         var exception = new Exception("Test exception");
-        Task<HttpResponseMessage> action(CancellationToken _) =>
-            throw exception;
+        Task<HttpResponseMessage> action(CancellationToken _) => throw exception;
         var message = "Test operation";
 
         // Act
@@ -94,14 +93,13 @@ public class HttpHelperTests
         var message = "Test operation";
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<ServiceException>(
-            () =>
-                HttpHelper.HandleTransientErrors(
-                    action,
-                    _loggerMock.Object,
-                    message,
-                    CancellationToken.None
-                )
+        var exception = await Assert.ThrowsAsync<ServiceException>(() =>
+            HttpHelper.HandleTransientErrors(
+                action,
+                _loggerMock.Object,
+                message,
+                CancellationToken.None
+            )
         );
 
         Assert.Contains("transient error", exception.Message);
@@ -130,6 +128,7 @@ public class HttpHelperTests
     [InlineData(HttpStatusCode.GatewayTimeout)]
     [InlineData(HttpStatusCode.RequestTimeout)]
     [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
     public async Task HandleTransientErrors_ThrowsServiceException_ForAllTransientStatusCodes(
         HttpStatusCode statusCode
     )
@@ -140,14 +139,13 @@ public class HttpHelperTests
         var message = "Test operation";
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<ServiceException>(
-            () =>
-                HttpHelper.HandleTransientErrors(
-action,
-                    _loggerMock.Object,
-                    message,
-                    CancellationToken.None
-                )
+        var exception = await Assert.ThrowsAsync<ServiceException>(() =>
+            HttpHelper.HandleTransientErrors(
+                action,
+                _loggerMock.Object,
+                message,
+                CancellationToken.None
+            )
         );
 
         Assert.Equal(statusCode, exception.StatusCode);
@@ -169,7 +167,7 @@ action,
 
         // Act
         var result = await HttpHelper.HandleTransientErrors(
-action,
+            action,
             _loggerMock.Object,
             message,
             CancellationToken.None
@@ -228,7 +226,7 @@ action,
         var jsonContent = JsonConvert.SerializeObject(testObject);
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonContent)
+            Content = new StringContent(jsonContent),
         };
         Func<CancellationToken, Task<HttpResponseMessage>> action = _ => Task.FromResult(response);
         var message = "Test operation";
@@ -257,7 +255,7 @@ action,
 
         // Act
         var result = await HttpHelper.HandleTransientErrorsGet<TestModel>(
-action,
+            action,
             _loggerMock.Object,
             message,
             CancellationToken.None
@@ -276,14 +274,13 @@ action,
         var message = "Test operation";
 
         // Act & Assert
-        await Assert.ThrowsAsync<ServiceException>(
-            () =>
-                HttpHelper.HandleTransientErrorsGet<TestModel>(
-action,
-                    _loggerMock.Object,
-                    message,
-                    CancellationToken.None
-                )
+        await Assert.ThrowsAsync<ServiceException>(() =>
+            HttpHelper.HandleTransientErrorsGet<TestModel>(
+                action,
+                _loggerMock.Object,
+                message,
+                CancellationToken.None
+            )
         );
     }
 
@@ -297,7 +294,7 @@ action,
 
         // Act
         var result = await HttpHelper.HandleTransientErrorsGet<TestModel>(
-action,
+            action,
             _loggerMock.Object,
             message,
             CancellationToken.None
@@ -319,7 +316,7 @@ action,
         var jsonContent = JsonConvert.SerializeObject(testObject);
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonContent)
+            Content = new StringContent(jsonContent),
         };
 
         // Act
@@ -337,7 +334,7 @@ action,
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.BadRequest)
         {
-            Content = new StringContent("{\"id\": 1}")
+            Content = new StringContent("{\"id\": 1}"),
         };
 
         // Act
@@ -368,7 +365,7 @@ action,
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("")
+            Content = new StringContent(""),
         };
 
         // Act
@@ -399,7 +396,7 @@ action,
         // Arrange
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("   ")
+            Content = new StringContent("   "),
         };
 
         // Act
@@ -431,7 +428,7 @@ action,
         // Using "null" as JSON content will deserialize to null
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("null")
+            Content = new StringContent("null"),
         };
 
         // Act
@@ -464,7 +461,7 @@ action,
         var jsonContent = JsonConvert.SerializeObject(testObject);
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonContent)
+            Content = new StringContent(jsonContent),
         };
         var cts = new CancellationTokenSource();
 
@@ -483,7 +480,7 @@ action,
         var jsonContent = JsonConvert.SerializeObject(testObject);
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonContent)
+            Content = new StringContent(jsonContent),
         };
 
         // Act
@@ -502,12 +499,12 @@ action,
             Id = 1,
             Name = "Complex",
             NestedObject = new TestModel { Id = 2, Name = "Nested" },
-            Items = ["item1", "item2", "item3"]
+            Items = ["item1", "item2", "item3"],
         };
         var jsonContent = JsonConvert.SerializeObject(complexObject);
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(jsonContent)
+            Content = new StringContent(jsonContent),
         };
 
         // Act
