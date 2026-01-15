@@ -45,8 +45,6 @@ public static class HostBuilderConfiguration
             .ConfigureLogging(logging =>
             {
                 logging.ClearProviders();
-                logging.AddFilter("System.Net.Http", LogLevel.Information);
-                logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
                 // comment this out to revert to plain text logging locally.
                 logging.AddJsonConsole(options =>
                 {
