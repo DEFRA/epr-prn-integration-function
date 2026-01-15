@@ -264,4 +264,129 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
+
+    #region GetUpdatedRrepwPrnsAsync Tests
+
+    [Fact]
+    public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndSucceeds()
+    {
+        // Arrange
+        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+            payload,
+            HttpStatusCode.InternalServerError,
+            1 // Fail once, then succeed on 2nd attempt
+        );
+        await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        // Act
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        // Assert
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await PrnApiStub.FindModifiedPrnsRequest();
+
+            // Should have made initial request + 1 retry = 2 total, last one succeeds
+            entries.Count.Should().BeGreaterOrEqualTo(2);
+            var relevantEntries = entries.TakeLast(2).ToList();
+            relevantEntries[0]
+                .Response.StatusCode.Should()
+                .Be((int)HttpStatusCode.InternalServerError);
+            relevantEntries[1].Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
+
+            // Verify PRN was sent to RREPW
+            var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
+            rrepwEntries.Count.Should().BeGreaterOrEqualTo(1);
+
+            // Last update should be set
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
+
+    [Fact]
+    public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
+    {
+        // Arrange
+        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+            payload,
+            HttpStatusCode.ServiceUnavailable,
+            4 // Fail 4 times (initial + 3 retries)
+        );
+        await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        // Act
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        // Assert
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await PrnApiStub.FindModifiedPrnsRequest();
+
+            // Should have made initial request + 3 retries = 4 total
+            entries.Count.Should().Be(4);
+            foreach (var entry in entries)
+            {
+                entry.Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
+            }
+
+            // Verify NO PRNs were sent to RREPW (function terminated)
+            var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
+            rrepwEntries.Count.Should().Be(0);
+
+            // Last update should NOT be set (function terminated)
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
+
+    [Fact]
+    public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasNonTransientFailure_FunctionTerminates()
+    {
+        // Arrange
+        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+        await PrnApiStub.HasModifiedPrnsWithNonTransientFailure(payload, HttpStatusCode.BadRequest);
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        // Act
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        // Assert
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await PrnApiStub.FindModifiedPrnsRequest();
+
+            // Should only make 1 request (no retries for non-transient errors)
+            entries.Count.Should().Be(1);
+            entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+
+            // Verify NO PRNs were sent to RREPW (function terminated)
+            var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
+            rrepwEntries.Count.Should().Be(0);
+
+            // Last update should NOT be set (function terminated)
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
+
+    [Fact]
+    public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiThrowsException_FunctionTerminates()
+    {
+        // Arrange
+        // Don't set up any stub - this will cause a connection failure/exception
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        // Act
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        // Assert - function should terminate without updating last run time
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
+
+    #endregion
 }
