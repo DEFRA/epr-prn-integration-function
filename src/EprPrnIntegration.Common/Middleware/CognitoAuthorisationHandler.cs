@@ -5,26 +5,23 @@ using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.Middleware;
 
-public class WasteOrganisationsApiAuthorisationHandler(
-    IOptions<WasteOrganisationsApiConfiguration> config,
+public class CognitoAuthorisationHandler(
+    ICognitoConfiguration config,
     IHttpClientFactory httpClientFactory,
-    ILogger<WasteOrganisationsApiAuthorisationHandler> logger,
-    IMemoryCache memoryCache
+    ILogger logger,
+    IMemoryCache memoryCache,
+    string tokenCacheKey
 ) : DelegatingHandler
 {
-    private readonly WasteOrganisationsApiConfiguration _config = config.Value;
-    private const string TokenCacheKey = "WasteOrganisationsApi_AccessToken";
-
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken
     )
     {
-        if (string.IsNullOrEmpty(_config.ClientId) || string.IsNullOrEmpty(_config.ClientSecret))
+        if (string.IsNullOrEmpty(config.ClientId) || string.IsNullOrEmpty(config.ClientSecret))
         {
             return await base.SendAsync(request, cancellationToken);
         }
@@ -41,10 +38,13 @@ public class WasteOrganisationsApiAuthorisationHandler(
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
         return await memoryCache.GetOrCreateAsync(
-                TokenCacheKey,
+                tokenCacheKey,
                 async entry =>
                 {
-                    logger.LogInformation("Obtaining fresh Cognito access token");
+                    logger.LogInformation(
+                        "Obtaining fresh Cognito access token for cache key: {CacheKey}",
+                        tokenCacheKey
+                    );
                     var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
                     var token = tokenResponse.AccessToken!;
 
@@ -65,12 +65,12 @@ public class WasteOrganisationsApiAuthorisationHandler(
     )
     {
         logger.LogInformation("Fetching Cognito access token");
-        var clientCredentials = $"{_config.ClientId}:{_config.ClientSecret}";
+        var clientCredentials = $"{config.ClientId}:{config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
         var httpClient = httpClientFactory.CreateClient();
 
-        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, _config.AccessTokenUrl);
+        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, config.AccessTokenUrl);
         tokenRequest.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic",
             encodedCredentials
@@ -79,8 +79,8 @@ public class WasteOrganisationsApiAuthorisationHandler(
         var formData = new Dictionary<string, string>
         {
             { "grant_type", "client_credentials" },
-            { "client_id", _config.ClientId },
-            { "client_secret", _config.ClientSecret },
+            { "client_id", config.ClientId },
+            { "client_secret", config.ClientSecret },
         };
 
         tokenRequest.Content = new FormUrlEncodedContent(formData);
