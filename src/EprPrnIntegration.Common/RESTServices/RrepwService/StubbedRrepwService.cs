@@ -1,14 +1,19 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.RrepwService
 {
     [ExcludeFromCodeCoverage(Justification = "Stub service for testing purposes.")]
-    public class StubbedRrepwService(ILogger<StubbedRrepwService> logger) : IRrepwService
+    public class StubbedRrepwService(
+        ILogger<StubbedRrepwService> logger,
+        IOptions<RrepwApiConfiguration> rrepwApiConfig
+    ) : IRrepwService
     {
         public Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
@@ -41,7 +46,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     },
                     IssuedToOrganisation = new Organisation
                     {
-                        Id = "0b51240c-c013-4973-9d06-d4f90ee4ad8b",
+                        Id = rrepwApiConfig.Value.StubOrgId,
                         Name = "Stubbed Recipient Organisation",
                         TradingName = "Stubbed Recipient Trading",
                     },
