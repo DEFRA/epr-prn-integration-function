@@ -420,11 +420,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
                             .With(o => o.Id, organisationId)
                             .With(o => o.BusinessCountry, businessCountry)
                             .With(
-                                o => o.Registration,
-                                _fixture
-                                    .Build<WoApiRegistration>()
-                                    .With(w => w.Type, organisationTypeCode)
-                                    .Create()
+                                o => o.Registrations,
+                                new List<WoApiRegistration>
+                                {
+                                    _fixture
+                                        .Build<WoApiRegistration>()
+                                        .With(w => w.Type, organisationTypeCode)
+                                        .Create(),
+                                }
                             )
                             .Create()
                     ),
@@ -724,11 +727,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
                         new WoApiOrganisation
                         {
                             Id = Guid.Parse(orgId),
-                            Registration = new WoApiRegistration
+                            Registrations = new List<WoApiRegistration>
                             {
-                                Type = "UNKNOWN_TYPE",
-                                RegistrationYear = 2024,
-                                Status = WoApiOrganisationStatus.Registered,
+                                new WoApiRegistration
+                                {
+                                    Type = "UNKNOWN_TYPE",
+                                    RegistrationYear = 2024,
+                                    Status = WoApiOrganisationStatus.Registered,
+                                },
                             },
                             BusinessCountry = WoApiBusinessCountry.England,
                             Address = new WoApiAddress(),

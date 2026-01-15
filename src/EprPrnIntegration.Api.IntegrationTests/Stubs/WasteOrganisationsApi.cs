@@ -35,11 +35,14 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
                             {
                                 Id = id,
                                 Address = new WoApiAddress(),
-                                Registration = new WoApiRegistration
+                                Registrations = new List<WoApiRegistration>
                                 {
-                                    RegistrationYear = 2024,
-                                    Status = WoApiOrganisationStatus.Registered,
-                                    Type = type,
+                                    new WoApiRegistration
+                                    {
+                                        RegistrationYear = 2024,
+                                        Status = WoApiOrganisationStatus.Registered,
+                                        Type = type,
+                                    }
                                 },
                             }
                         )

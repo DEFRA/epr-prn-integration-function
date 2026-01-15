@@ -164,7 +164,27 @@ public class FetchRrepwIssuedPrnsFunction(
 
     private string? GetIssuedToEntityTypeCode(WoApiOrganisation? org)
     {
-        switch (org?.Registration.Type)
+        if (org?.Registrations == null || org.Registrations.Count == 0)
+        {
+            logger.LogError("No registrations found for organisation {OrganisationId}", org?.Id);
+            return null;
+        }
+
+        // Get the most recent registration
+        var latestRegistration = org
+            .Registrations.OrderByDescending(r => r.RegistrationYear)
+            .First();
+
+        if (org.Registrations.Count > 1)
+        {
+            logger.LogWarning(
+                "Multiple registrations found for organisation {OrganisationId}. Using most recent registration year {RegistrationYear}",
+                org.Id,
+                latestRegistration.RegistrationYear
+            );
+        }
+
+        switch (latestRegistration.Type)
         {
             case WoApiOrganisationType.ComplianceScheme:
                 return OrganisationType.ComplianceScheme_CS;
@@ -173,8 +193,8 @@ public class FetchRrepwIssuedPrnsFunction(
             default:
                 logger.LogError(
                     "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
-                    org?.Registration.Type,
-                    org?.Id
+                    latestRegistration.Type,
+                    org.Id
                 );
                 return null;
         }
