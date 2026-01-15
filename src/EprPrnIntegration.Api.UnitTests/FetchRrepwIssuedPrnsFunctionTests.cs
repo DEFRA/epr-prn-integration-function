@@ -529,6 +529,126 @@ public class FetchRrepwIssuedPrnsFunctionTests
         }
     }
 
+    public static IEnumerable<object[]> MultipleRegistrationOrderingTestData =>
+        new List<object[]>
+        {
+            new object[]
+            {
+                new[] { 2023, 2024, 2025 },
+                new[]
+                {
+                    WoApiOrganisationType.LargeProducer,
+                    WoApiOrganisationType.ComplianceScheme,
+                    WoApiOrganisationType.LargeProducer,
+                },
+                OrganisationType.LargeProducer_DR,
+            },
+            new object[]
+            {
+                new[] { 2025, 2023, 2024 },
+                new[]
+                {
+                    WoApiOrganisationType.LargeProducer,
+                    WoApiOrganisationType.ComplianceScheme,
+                    WoApiOrganisationType.LargeProducer,
+                },
+                OrganisationType.LargeProducer_DR,
+            },
+            new object[]
+            {
+                new[] { 2024, 2025, 2023 },
+                new[]
+                {
+                    WoApiOrganisationType.ComplianceScheme,
+                    WoApiOrganisationType.LargeProducer,
+                    WoApiOrganisationType.ComplianceScheme,
+                },
+                OrganisationType.LargeProducer_DR,
+            },
+        };
+
+    [Theory]
+    [MemberData(nameof(MultipleRegistrationOrderingTestData))]
+    public async Task ProcessesPrns_SelectsCorrectRegistrationYear_WhenMultipleExistInAnyOrder(
+        int[] years,
+        string[] types,
+        string expectedOrgTypeCode
+    )
+    {
+        // Arrange
+        var orgId = Guid.NewGuid();
+        var prn = CreatePrn("PRN-TEST");
+        prn.IssuedToOrganisation!.Id = orgId.ToString();
+
+        // Setup organisation with multiple registrations in specified order
+        var registrations = new List<WoApiRegistration>();
+        for (int i = 0; i < years.Length; i++)
+        {
+            registrations.Add(
+                new WoApiRegistration
+                {
+                    Type = types[i],
+                    RegistrationYear = years[i],
+                    Status = WoApiOrganisationStatus.Registered,
+                }
+            );
+        }
+
+        _woService
+            .Setup(o => o.GetOrganisation(orgId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new HttpResponseMessage
+                {
+                    Content = JsonContent.Create(
+                        new WoApiOrganisation
+                        {
+                            Id = orgId,
+                            Registrations = registrations,
+                            BusinessCountry = WoApiBusinessCountry.England,
+                            Address = new WoApiAddress(),
+                        }
+                    ),
+                }
+            );
+
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
+            .ReturnsAsync(DateTime.MinValue);
+
+        _rrepwServiceMock
+            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
+
+        _prnServiceMock
+            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        _organisationService
+            .Setup(x =>
+                x.GetPersonEmailsAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync([]);
+
+        // Act
+        await _function.Run(new TimerInfo());
+
+        // Assert - Verify the correct registration type (from year 2025) was used
+        _organisationService.Verify(
+            x =>
+                x.GetPersonEmailsAsync(
+                    orgId.ToString(),
+                    expectedOrgTypeCode,
+                    It.IsAny<CancellationToken>()
+                ),
+            Times.Once,
+            $"Should use organization type from year 2025 regardless of registration order"
+        );
+    }
+
     private static bool VerifyProducerEmail(
         List<ProducerEmail> producerEmails,
         List<PersonEmail> personEmails,
