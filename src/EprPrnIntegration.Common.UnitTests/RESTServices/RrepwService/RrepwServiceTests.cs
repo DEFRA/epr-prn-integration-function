@@ -2,6 +2,7 @@ using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
+using EprPrnIntegration.Common.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -53,51 +54,45 @@ public class RrepwServiceTests
     [Fact]
     public async Task ShouldUpdatePrns_Accepted()
     {
-        var prns = new List<Common.Models.PrnUpdateStatus>
+        var prn = new PrnUpdateStatus()
         {
-            new()
-            {
-                AccreditationYear = "2024",
-                PrnNumber = "123",
-                PrnStatusId = (int)EprnStatus.ACCEPTED,
-                SourceSystemId = "something",
-                StatusDate = DateTime.Now,
-            },
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = (int)EprnStatus.ACCEPTED,
+            SourceSystemId = "something",
+            StatusDate = DateTime.Now,
         };
-        await _service.UpdatePrns(prns);
+        await _service.UpdatePrn(prn);
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
         _mockHandler
             .Request.RequestUri.Should()
-            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prns[0].PrnNumber}/accept/");
+            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.PrnNumber}/accept/");
         var content = await _mockHandler.Request.Content!.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("acceptedAt").GetDateTime();
-        value.Should().Be(prns[0].StatusDate);
+        value.Should().Be(prn.StatusDate);
     }
 
     [Fact]
     public async Task ShouldUpdatePrns_Rejected()
     {
-        var prns = new List<Common.Models.PrnUpdateStatus>
+        var prn = new PrnUpdateStatus
         {
-            new()
-            {
-                AccreditationYear = "2024",
-                PrnNumber = "123",
-                PrnStatusId = (int)EprnStatus.REJECTED,
-                SourceSystemId = "something",
-                StatusDate = DateTime.Now,
-            },
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = (int)EprnStatus.REJECTED,
+            SourceSystemId = "something",
+            StatusDate = DateTime.Now,
         };
-        await _service.UpdatePrns(prns);
+        await _service.UpdatePrn(prn);
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
         _mockHandler
             .Request.RequestUri.Should()
-            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prns[0].PrnNumber}/reject/");
+            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.PrnNumber}/reject/");
         var content = await _mockHandler.Request.Content!.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("rejectedAt").GetDateTime();
-        value.Should().Be(prns[0].StatusDate);
+        value.Should().Be(prn.StatusDate);
     }
 
     [Theory]
@@ -106,18 +101,15 @@ public class RrepwServiceTests
     [InlineData(" ")]
     public async Task ShouldUpdatePrns_NullOrEmptySourceSystemId(string? ssi)
     {
-        var prns = new List<Common.Models.PrnUpdateStatus>
+        var prn = new PrnUpdateStatus
         {
-            new()
-            {
-                AccreditationYear = "2024",
-                PrnNumber = "123",
-                PrnStatusId = (int)EprnStatus.ACCEPTED,
-                SourceSystemId = ssi!,
-                StatusDate = DateTime.Now,
-            },
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = (int)EprnStatus.ACCEPTED,
+            SourceSystemId = ssi!,
+            StatusDate = DateTime.Now,
         };
-        await _service.UpdatePrns(prns);
+        await _service.UpdatePrn(prn);
         _mockHandler.Request.Should().BeNull();
     }
 
@@ -127,18 +119,15 @@ public class RrepwServiceTests
     [InlineData(100)]
     public async Task ShouldUpdatePrns_InvalidStatus(int status)
     {
-        var prns = new List<Common.Models.PrnUpdateStatus>
+        var prn = new PrnUpdateStatus
         {
-            new()
-            {
-                AccreditationYear = "2024",
-                PrnNumber = "123",
-                PrnStatusId = status,
-                SourceSystemId = "something",
-                StatusDate = DateTime.Now,
-            },
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = status,
+            SourceSystemId = "something",
+            StatusDate = DateTime.Now,
         };
-        await _service.UpdatePrns(prns);
+        await _service.UpdatePrn(prn);
         _mockHandler.Request.Should().BeNull();
     }
 }

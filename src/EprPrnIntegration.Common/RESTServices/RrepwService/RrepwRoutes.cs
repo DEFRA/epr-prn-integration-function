@@ -20,7 +20,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         )
         {
             var route =
-                $"{PackagingRecyclingNotesEndpoint}?statuses={string.Join(",", statuses)}&dateFrom={dateFrom}&dateTo={dateTo}";
+                $"v1/{PackagingRecyclingNotesEndpoint}?statuses={string.Join(",", statuses)}&dateFrom={dateFrom}&dateTo={dateTo}";
 
             if (!string.IsNullOrEmpty(cursor))
             {
@@ -32,12 +32,12 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
 
         public static string AcceptPrnRoute(string prnNumber)
         {
-            return $"{PackagingRecyclingNotesEndpoint}/{prnNumber}/accept";
+            return $"v1/{PackagingRecyclingNotesEndpoint}/{prnNumber}/accept";
         }
 
         public static string RejectPrnRoute(string prnNumber)
         {
-            return $"{PackagingRecyclingNotesEndpoint}/{prnNumber}/reject";
+            return $"v1/{PackagingRecyclingNotesEndpoint}/{prnNumber}/reject";
         }
     }
 }

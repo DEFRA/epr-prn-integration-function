@@ -4,6 +4,9 @@ namespace EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 
 public interface IPrnService
 {
-    Task<List<PrnUpdateStatus>> GetUpdatedPrns(DateTime fromDate, DateTime toDate);
-    Task SavePrn(SavePrnDetailsRequest request);
+    Task<HttpResponseMessage> GetUpdatedPrns(DateTime fromDate, DateTime toDate);
+    Task<HttpResponseMessage> SavePrn(
+        SavePrnDetailsRequest request,
+        CancellationToken cancellationToken
+    );
 }

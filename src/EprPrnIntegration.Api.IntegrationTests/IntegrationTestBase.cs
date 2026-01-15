@@ -1,5 +1,6 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
 using EprPrnIntegration.Common.Service;
+using FluentAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
@@ -36,5 +37,22 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await WireMockContext.DisposeAsync();
+    }
+
+    protected async Task<DateTime> GetLastUpdate(string functionName)
+    {
+        return await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+    }
+
+    protected async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
+    {
+        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        after.Should().BeAfter(before);
+    }
+
+    protected async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
+    {
+        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        after.Should().NotBeAfter(before);
     }
 }

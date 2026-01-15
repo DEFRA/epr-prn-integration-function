@@ -11,6 +11,7 @@ public class SavePrnDetailsRequest
     public string? PrnSignatory { get; set; }
     public string? PrnSignatoryPosition { get; set; }
     public DateTime? StatusUpdatedOn { get; set; }
+    public DateTime? IssueDate { get; set; }
     public string? IssuedByOrg { get; set; }
     public Guid? OrganisationId { get; set; }
     public string? OrganisationName { get; set; }
@@ -18,6 +19,8 @@ public class SavePrnDetailsRequest
     public string? AccreditationYear { get; set; }
     public string? MaterialName { get; set; }
     public string? ReprocessorExporterAgency { get; set; }
+    public string? PackagingProducer { get; set; }
+    public string? ProducerAgency { get; set; }
     public string? ReprocessingSite { get; set; }
     public bool? DecemberWaste { get; set; }
     public bool? IsExport { get; set; }

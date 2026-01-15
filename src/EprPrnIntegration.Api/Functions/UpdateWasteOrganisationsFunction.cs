@@ -1,6 +1,4 @@
-using System.Net;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -20,12 +18,14 @@ public class UpdateWasteOrganisationsFunction(
     IOptions<UpdateWasteOrganisationsConfiguration> config
 )
 {
-    [Function("UpdateWasteOrganisations")]
-    public async Task Run([TimerTrigger("%UpdateWasteOrganisations:Trigger%")] TimerInfo myTimer)
+    [Function(FunctionName.UpdateWasteOrganisations)]
+    public async Task Run(
+        [TimerTrigger($"%{FunctionName.UpdateWasteOrganisations}:Trigger%")] TimerInfo myTimer
+    )
     {
         var lastUpdate = await GetLastUpdate();
         logger.LogInformation(
-            "UpdateWasteOrganisationsList resuming with last update time: {ExecutionDateTime}",
+            $"%{FunctionName.UpdateWasteOrganisations} resuming with last update time: {{ExecutionDateTime}}",
             lastUpdate
         );
 
@@ -45,12 +45,14 @@ public class UpdateWasteOrganisationsFunction(
 
         await UpdateProducers(producers);
 
-        await lastUpdateService.SetLastUpdate("UpdateWasteOrganisations", utcNow);
+        await lastUpdateService.SetLastUpdate(FunctionName.UpdateWasteOrganisations, utcNow);
     }
 
     private async Task<DateTime> GetLastUpdate()
     {
-        var lastUpdate = await lastUpdateService.GetLastUpdate("UpdateWasteOrganisations");
+        var lastUpdate = await lastUpdateService.GetLastUpdate(
+            FunctionName.UpdateWasteOrganisations
+        );
         if (!lastUpdate.HasValue)
         {
             return DateTime.SpecifyKind(
@@ -68,39 +70,24 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        // Items won't often be processed in large volumes,
-        // except in the case of the initial load which will process hundreds of items in a single function run.
-        // These requests are throttled to stay under CDP's rate limits of 25rps.
-        await RateLimitedParallelProcessor.ProcessAsync(producers, UpdateProducer, 20);
+        foreach (var producer in producers)
+            await UpdateProducer(producer);
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
     {
-        try
-        {
-            var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
-            await wasteOrganisationsService.UpdateOrganisation(producer.PEPRID!, request);
-        }
-        catch (HttpRequestException ex) when (ex.IsTransient())
-        {
-            // Allow the function to terminate and resume on the next schedule with the original time window.
-            logger.LogError(
-                ex,
-                "Service unavailable ({StatusCode}) when updating organisation {OrganisationId}, rethrowing",
-                ex.StatusCode,
-                producer.PEPRID
-            );
-            throw;
-        }
-        catch (Exception ex)
-        {
-            // We want to swallow non-transient errors since they'll never be recoverable; all we can do is log errors
-            // to allow investigation.
-            logger.LogError(
-                ex,
-                "Failed to update organisation {OrganisationId}, continuing with next producer",
-                producer.PEPRID
-            );
-        }
+        await HttpHelper.HandleTransientErrors(
+            async (ct) =>
+            {
+                var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);
+                return await wasteOrganisationsService.UpdateOrganisation(
+                    producer.PEPRID!,
+                    request
+                );
+            },
+            logger,
+            $"Saving Organisation {producer.PEPRID}",
+            CancellationToken.None
+        );
     }
 }

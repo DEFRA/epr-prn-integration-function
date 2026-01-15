@@ -7,9 +7,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces
     {
         Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
-            DateTime dateTo,
-            CancellationToken cancellationToken = default
+            DateTime dateTo
         );
-        Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns);
+        Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn);
     }
-}
+};

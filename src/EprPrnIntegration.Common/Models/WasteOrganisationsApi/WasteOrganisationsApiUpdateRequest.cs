@@ -17,13 +17,13 @@ public class WasteOrganisationsApiUpdateRequest
     public string? CompaniesHouseNumber { get; set; }
 
     [JsonPropertyName("address")]
-    public required Address Address { get; set; }
+    public required WoApiAddress Address { get; set; }
 
     [JsonPropertyName("registration")]
-    public required Registration Registration { get; set; }
+    public required WoApiRegistration Registration { get; set; }
 }
 
-public class Address
+public class WoApiAddress
 {
     [JsonPropertyName("addressLine1")]
     public string? AddressLine1 { get; set; }
@@ -44,7 +44,7 @@ public class Address
     public string? Country { get; set; }
 }
 
-public class Registration
+public class WoApiRegistration
 {
     [JsonPropertyName("status")]
     public required string Status { get; set; }

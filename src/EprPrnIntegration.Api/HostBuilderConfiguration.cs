@@ -22,6 +22,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -68,6 +69,9 @@ public static class HostBuilderConfiguration
     {
         // Add Application Insights
         services.AddCustomApplicationInsights();
+
+        // Add memory cache for token caching
+        services.AddMemoryCache();
 
         // Register services
         services.AddScoped<IOrganisationService, OrganisationService>();
@@ -136,7 +140,6 @@ public static class HostBuilderConfiguration
         services.AddTransient<PrnServiceAuthorisationHandler>();
         services.AddTransient<OrganisationServiceAuthorisationHandler>();
         services.AddTransient<CommonDataServiceAuthorisationHandler>();
-        services.AddTransient<WasteOrganisationsApiAuthorisationHandler>();
 
         // Add retry resilience policy
         ApiCallsRetryConfig apiCallsRetryConfig = new();
@@ -213,7 +216,24 @@ public static class HostBuilderConfiguration
             .Bind(wasteOrganisationsApiConfig);
         services
             .AddHttpClient(Common.Constants.HttpClientNames.WasteOrganisations)
-            .AddHttpMessageHandler<WasteOrganisationsApiAuthorisationHandler>()
+            .AddHttpMessageHandler(sp =>
+            {
+                var config = sp.GetRequiredService<
+                    IOptions<WasteOrganisationsApiConfiguration>
+                >().Value;
+                return new CognitoAuthorisationHandler(
+                    new CognitoConfig
+                    {
+                        AccessTokenUrl = config.AccessTokenUrl,
+                        ClientId = config.ClientId,
+                        ClientSecret = config.ClientSecret,
+                    },
+                    sp.GetRequiredService<IHttpClientFactory>(),
+                    sp.GetRequiredService<ILogger<CognitoAuthorisationHandler>>(),
+                    sp.GetRequiredService<IMemoryCache>(),
+                    "WasteOrganisationsApi_AccessToken"
+                );
+            })
             .AddPolicyHandler(
                 (services, request) =>
                     GetRetryPolicy(

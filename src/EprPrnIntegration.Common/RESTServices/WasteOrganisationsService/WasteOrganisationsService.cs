@@ -24,19 +24,27 @@ namespace EprPrnIntegration.Common.RESTServices.WasteOrganisationsService
                     nameof(config),
                     ExceptionMessages.WasteOrganisationsApiBaseUrlMissing
                 ),
-            "organisations",
             logger,
             HttpClientNames.WasteOrganisations,
             config.Value.TimeoutSeconds
         ),
             IWasteOrganisationsService
     {
-        public async Task UpdateOrganisation(
+        public async Task<HttpResponseMessage> UpdateOrganisation(
             string id,
             WasteOrganisationsApiUpdateRequest organisation
         )
         {
-            await Put($"{id}", organisation, CancellationToken.None);
+            return await PutAsync($"organisations/{id}", organisation, CancellationToken.None);
+        }
+
+        public async Task<HttpResponseMessage> GetOrganisation(
+            string organisationId,
+            CancellationToken cancellationToken
+        )
+        {
+            logger.LogInformation("Getting organisation details for {OrgId}.", organisationId);
+            return await GetAsync($"organisations/{organisationId}", cancellationToken);
         }
     }
 }

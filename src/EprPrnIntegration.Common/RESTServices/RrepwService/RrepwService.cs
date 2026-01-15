@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
@@ -26,7 +28,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     nameof(config),
                     ExceptionMessages.RrepwApiBaseUrlMissing
                 ),
-            "v1",
             logger,
             HttpClientNames.Rrepw,
             config.Value.TimeoutSeconds
@@ -35,8 +36,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
     {
         public async Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
             DateTime dateFrom,
-            DateTime dateTo,
-            CancellationToken cancellationToken = default
+            DateTime dateTo
         )
         {
             var dateFromQuery = dateFrom.ToUniversalDate();
@@ -59,8 +59,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     dateFromQuery,
                     dateToQuery,
                     cursor,
-                    pageCount,
-                    cancellationToken
+                    pageCount
                 );
 
                 if (items.Count > 0)
@@ -85,8 +84,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             string dateFromQuery,
             string dateToQuery,
             string? cursor,
-            int pageCount,
-            CancellationToken cancellationToken
+            int pageCount
         )
         {
             var url = RrepwRoutes.ListPrnsRoute(statuses, dateFromQuery, dateToQuery, cursor);
@@ -98,13 +96,12 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 pageCount
             );
 
-            var response = await Get<ListPackagingRecyclingNotesResponse>(
-                url,
-                cancellationToken,
-                includeTrailingSlash: false
-            );
+            var httpResponse = await GetAsync(url);
+            httpResponse.EnsureSuccessStatusCode();
 
-            var items = response.Items ?? [];
+            var response =
+                await httpResponse.Content.ReadFromJsonAsync<ListPackagingRecyclingNotesResponse>();
+            var items = response?.Items ?? [];
 
             if (items.Count > 0)
             {
@@ -115,49 +112,55 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 );
             }
 
-            var nextCursor = response.HasMore ? response.NextCursor : null;
+            var nextCursor = response?.HasMore == true ? response.NextCursor : null;
 
             return (items, nextCursor);
         }
 
-        public async Task UpdatePrns(List<PrnUpdateStatus> rrepwUpdatedPrns)
+        public async Task<HttpResponseMessage> UpdatePrn(PrnUpdateStatus prn)
         {
-            foreach (var prn in rrepwUpdatedPrns)
+            if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
             {
-                if (string.IsNullOrWhiteSpace(prn.SourceSystemId))
-                {
-                    logger.LogWarning(
-                        "Skipping PRN update due to missing SourceSystemId {PrnNumber}.",
-                        prn.PrnNumber
-                    );
-                    continue;
-                }
-                if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
-                {
-                    logger.LogInformation("Accepting PRN {PrnNumber}", prn.PrnNumber);
-                    await Post(
-                        RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
-                        new { acceptedAt = prn.StatusDate },
-                        CancellationToken.None
-                    );
-                }
-                else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
-                {
-                    logger.LogInformation("Rejecting PRN {PrnNumber}", prn.PrnNumber);
-                    await Post(
-                        RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
-                        new { rejectedAt = prn.StatusDate },
-                        CancellationToken.None
-                    );
-                }
-                else
-                {
-                    logger.LogWarning(
-                        "Incorrect PRN status {PrnStatusId} for PRN {PrnNumber}; skipping.",
-                        prn.PrnStatusId,
-                        prn.PrnNumber
-                    );
-                }
+                logger.LogWarning(
+                    "Skipping PRN update due to missing SourceSystemId {PrnNumber}.",
+                    prn.PrnNumber
+                );
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+            if (prn.PrnStatusId == (int)EprnStatus.ACCEPTED)
+            {
+                logger.LogInformation(
+                    "Accepting PRN {PrnNumber} and SourceSystemId {SourceSystemId} with acceptedAt date {AcceptedAt}",
+                    prn.PrnNumber,
+                    prn.SourceSystemId,
+                    prn.StatusDate
+                );
+                return await PostAsync(
+                    RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
+                    new { acceptedAt = prn.StatusDate }
+                );
+            }
+            else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
+            {
+                logger.LogInformation(
+                    "Rejecting PRN {PrnNumber} and SourceSystemId {SourceSystemId} with rejectedAt date {RejectedAt}",
+                    prn.PrnNumber,
+                    prn.SourceSystemId,
+                    prn.StatusDate
+                );
+                return await PostAsync(
+                    RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
+                    new { rejectedAt = prn.StatusDate }
+                );
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Incorrect PRN status {PrnStatusId} for PRN {PrnNumber}; skipping.",
+                    prn.PrnStatusId,
+                    prn.PrnNumber
+                );
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
         }
     }

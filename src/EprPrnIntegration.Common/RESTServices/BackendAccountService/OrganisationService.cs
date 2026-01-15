@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EprPrnIntegration.Common.RESTServices.BackendAccountService;
 
-public class OrganisationService : BaseHttpService, IOrganisationService
+public class OrganisationService : BaseHttpServiceOld, IOrganisationService
 {
     private readonly ILogger<OrganisationService> _logger;
 
@@ -74,7 +74,7 @@ public class OrganisationService : BaseHttpService, IOrganisationService
         CancellationToken cancellationToken
     )
     {
-        _logger.LogInformation("Getting organisation deatails for {OrgId}.", organisationId);
+        _logger.LogInformation("Getting organisation exist for {OrgId}.", organisationId);
         return await GetOk(
             $"validate-issued-epr-id?externalId={organisationId}&entityTypeCode={entityTypeCode}",
             cancellationToken,

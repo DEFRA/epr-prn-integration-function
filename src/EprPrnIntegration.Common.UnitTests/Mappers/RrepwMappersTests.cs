@@ -5,6 +5,7 @@ using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers;
@@ -182,7 +183,7 @@ public class RrepwMappersTests
     )]
     [InlineData(
         RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
-        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAge
+        RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency
     )]
     public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(
         string sourceStr,
@@ -209,13 +210,14 @@ public class RrepwMappersTests
     [InlineData(RrepwStatus.Cancelled)]
     public void ShouldMapPackagingRecyclingNoteToPrn_Status_AuthorizedAt(string status)
     {
-        var adt = new DateTime(2024, 12, 08);
+        var adt = new DateTime(2024, 12, 07);
         var cdt = new DateTime(2024, 12, 08);
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
         var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        savePrnDetailsRequest.IssueDate.Should().Be(adt);
         switch (status)
         {
             case RrepwStatus.Cancelled:
@@ -248,6 +250,25 @@ public class RrepwMappersTests
         savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData(null)]
+    [InlineData("something")]
+    public void ShouldUseNameForOrganisationNameWhenTradingNameEmtpy(string? tradingName)
+    {
+        var prn = CreatePackagingRecyclingNote();
+        prn.IssuedToOrganisation!.TradingName = tradingName;
+        prn.IssuedToOrganisation!.Name = _fixture.Create<string>();
+        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        if (!string.IsNullOrWhiteSpace(tradingName))
+            savePrnDetailsRequest
+                .OrganisationName.Should()
+                .Be(prn.IssuedToOrganisation.TradingName);
+        else
+            savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
+    }
+
     [Fact]
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
@@ -259,7 +280,7 @@ public class RrepwMappersTests
         savePrnDetailsRequest.PrnSignatoryPosition.Should().Be(prn.Status.AuthorisedBy.JobTitle);
         savePrnDetailsRequest.IssuedByOrg.Should().Be(prn.IssuedByOrganisation!.Name);
         savePrnDetailsRequest.OrganisationId.Should().Be(prn.IssuedToOrganisation!.Id);
-        savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.Name);
+        savePrnDetailsRequest.OrganisationName.Should().Be(prn.IssuedToOrganisation.TradingName);
         savePrnDetailsRequest
             .AccreditationNumber.Should()
             .Be(prn.Accreditation!.AccreditationNumber);

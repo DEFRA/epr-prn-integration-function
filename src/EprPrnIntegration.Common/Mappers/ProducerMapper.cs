@@ -145,13 +145,13 @@ namespace EprPrnIntegration.Common.Mappers
         {
             switch (businessCountry)
             {
-                case "England":
+                case BusinessCountry.England:
                     return "Environment Agency";
-                case "Northern Ireland":
+                case BusinessCountry.NorthernIreland:
                     return "Northern Ireland Environment Agency";
-                case "Wales":
+                case BusinessCountry.Wales:
                     return "Natural Resources Wales";
-                case "Scotland":
+                case BusinessCountry.Scotland:
                     return "Scottish Environment Protection Agency";
                 default:
                     return string.Empty;

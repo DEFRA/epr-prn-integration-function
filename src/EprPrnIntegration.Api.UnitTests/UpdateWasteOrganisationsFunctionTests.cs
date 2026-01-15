@@ -1,6 +1,8 @@
 using System.Net;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -42,10 +44,10 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2", "CS"),
-            CreateProducer("producer-3", status: "deleted"),
+            CreateProducer("producer-2", OrganisationType.ComplianceScheme_CS),
+            CreateProducer("producer-3", status: OrganisationStatus.Deleted),
         };
-
+        SetupProducers(producers);
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.MinValue);
@@ -64,34 +66,23 @@ public class UpdateWasteOrganisationsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        _wasteOrganisationsService.Verify(
-            x =>
-                x.UpdateOrganisation(
-                    "producer-1",
-                    It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
-                ),
-            Times.Once
-        );
-        _wasteOrganisationsService.Verify(
-            x =>
-                x.UpdateOrganisation(
-                    "producer-2",
-                    It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
-                ),
-            Times.Once
-        );
-        _wasteOrganisationsService.Verify(
-            x =>
-                x.UpdateOrganisation(
-                    "producer-3",
-                    It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
-                ),
-            Times.Once
-        );
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
+    }
+
+    private void SetupProducers(IEnumerable<UpdatedProducersResponseV2> producers)
+    {
+        foreach (var producer in producers)
+            _wasteOrganisationsService
+                .Setup(x =>
+                    x.UpdateOrganisation(
+                        producer.PEPRID!,
+                        It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
+                    )
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
     }
 
     [Fact]
@@ -157,10 +148,10 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2-fails", "CS"),
-            CreateProducer("producer-3", status: "deleted"),
+            CreateProducer("producer-2-fails", OrganisationType.ComplianceScheme_CS),
+            CreateProducer("producer-3", status: OrganisationStatus.Deleted),
         };
-
+        SetupProducers(producers);
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.MinValue);
@@ -237,9 +228,9 @@ public class UpdateWasteOrganisationsFunctionTests
         var producers = new List<UpdatedProducersResponseV2>
         {
             CreateProducer("producer-1"),
-            CreateProducer("producer-2-transient", "CS"),
+            CreateProducer("producer-2-transient", OrganisationType.ComplianceScheme_CS),
         };
-
+        SetupProducers(producers.Take(1));
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.MinValue);
@@ -263,10 +254,10 @@ public class UpdateWasteOrganisationsFunctionTests
                     It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
                 )
             )
-            .ThrowsAsync(new HttpRequestException($"Error: {statusCode}", null, statusCode));
+            .ReturnsAsync(new HttpResponseMessage(statusCode));
 
         // Act & Assert - expect the exception to be rethrown
-        await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
+        await Assert.ThrowsAsync<ServiceException>(() => _function.Run(new TimerInfo()));
 
         // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(
@@ -283,7 +274,7 @@ public class UpdateWasteOrganisationsFunctionTests
             CreateProducer("producer-1"),
             CreateProducer("producer-2"),
         };
-
+        SetupProducers(producers);
         // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
@@ -324,8 +315,8 @@ public class UpdateWasteOrganisationsFunctionTests
 
     private static UpdatedProducersResponseV2 CreateProducer(
         string peprid,
-        string type = "DP",
-        string status = "registered"
+        string type = OrganisationType.LargeProducer_DP,
+        string status = OrganisationStatus.Registered
     )
     {
         return new()

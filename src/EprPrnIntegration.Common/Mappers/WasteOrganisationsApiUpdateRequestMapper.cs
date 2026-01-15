@@ -28,9 +28,9 @@ public static class WasteOrganisationsApiUpdateRequestMapper
         };
     }
 
-    private static Address MapAddress(UpdatedProducersResponseV2 updatedProducer)
+    private static WoApiAddress MapAddress(UpdatedProducersResponseV2 updatedProducer)
     {
-        return new Address
+        return new WoApiAddress
         {
             AddressLine1 = updatedProducer.AddressLine1,
             AddressLine2 = updatedProducer.AddressLine2,
@@ -43,22 +43,22 @@ public static class WasteOrganisationsApiUpdateRequestMapper
 
     private static string? MapBusinessCountry(string? businessCountry)
     {
-        return (businessCountry) switch
+        return businessCountry switch
         {
-            "England" => "GB-ENG",
-            "Northern Ireland" => "GB-NIR",
-            "Scotland" => "GB-SCT",
-            "Wales" => "GB-WLS",
+            BusinessCountry.England => WoApiBusinessCountry.England,
+            BusinessCountry.NorthernIreland => WoApiBusinessCountry.NorthernIreland,
+            BusinessCountry.Scotland => WoApiBusinessCountry.Scotland,
+            BusinessCountry.Wales => WoApiBusinessCountry.Wales,
             _ => null,
         };
     }
 
-    private static Registration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
+    private static WoApiRegistration MapRegistration(UpdatedProducersResponseV2 updatedProducer)
     {
-        var type = (updatedProducer.OrganisationType) switch
+        var type = updatedProducer.OrganisationType switch
         {
-            "DP" => "LARGE_PRODUCER",
-            "CS" => "COMPLIANCE_SCHEME",
+            OrganisationType.LargeProducer_DP => WoApiOrganisationType.LargeProducer,
+            OrganisationType.ComplianceScheme_CS => WoApiOrganisationType.ComplianceScheme,
             _ => throw new ArgumentException(
                 $"Unknown registration type {updatedProducer.OrganisationType}"
             ),
@@ -66,8 +66,8 @@ public static class WasteOrganisationsApiUpdateRequestMapper
 
         var status = updatedProducer.Status?.ToLowerInvariant() switch
         {
-            "registered" => "REGISTERED",
-            "deleted" => "CANCELLED",
+            OrganisationStatus.Registered => WoApiOrganisationStatus.Registered,
+            OrganisationStatus.Deleted => WoApiOrganisationStatus.Cancelled,
             _ => throw new ArgumentException($"Unknown status {updatedProducer.Status}"),
         };
 
@@ -78,11 +78,37 @@ public static class WasteOrganisationsApiUpdateRequestMapper
             );
         }
 
-        return new Registration
+        return new WoApiRegistration
         {
             Status = status,
             Type = type,
             RegistrationYear = registrationYear,
         };
     }
+}
+
+public class OrganisationType
+{
+    public const string ComplianceScheme_CS = "CS";
+
+    /// <summary>
+    /// there is a mistake in the Stored procedure for retrieving this which returns this as DP it should be DR.
+    /// Alternatively, it should not be using 2 letter acronyms at all and use full words.
+    /// </summary>
+    public const string LargeProducer_DP = "DP";
+    public const string LargeProducer_DR = "DR";
+}
+
+public class OrganisationStatus
+{
+    public const string Registered = "registered";
+    public const string Deleted = "deleted";
+}
+
+public class BusinessCountry
+{
+    public const string England = "England";
+    public const string NorthernIreland = "Northern Ireland";
+    public const string Scotland = "Scotland";
+    public const string Wales = "Wales";
 }

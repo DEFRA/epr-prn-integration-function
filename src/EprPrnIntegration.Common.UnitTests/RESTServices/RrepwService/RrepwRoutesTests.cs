@@ -17,7 +17,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService
                 .ListPrnsRoute(statuses, dateFrom, dateTo, cursor)
                 .Should()
                 .Be(
-                    "packaging-recycling-notes?statuses=awaiting-acceptance,cancelled&dateFrom=2023-01-01T00:00:00Z&dateTo=2023-12-31T23:59:59Z&cursor=cursor-value"
+                    "v1/packaging-recycling-notes?statuses=awaiting-acceptance,cancelled&dateFrom=2023-01-01T00:00:00Z&dateTo=2023-12-31T23:59:59Z&cursor=cursor-value"
                 );
         }
 
@@ -32,7 +32,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService
                 .ListPrnsRoute(statuses, dateFrom, dateTo, null)
                 .Should()
                 .Be(
-                    "packaging-recycling-notes?statuses=awaiting-acceptance,cancelled&dateFrom=2023-01-01T00:00:00Z&dateTo=2023-12-31T23:59:59Z"
+                    "v1/packaging-recycling-notes?statuses=awaiting-acceptance,cancelled&dateFrom=2023-01-01T00:00:00Z&dateTo=2023-12-31T23:59:59Z"
                 );
         }
 
@@ -42,7 +42,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService
             RrepwRoutes
                 .AcceptPrnRoute("PRN12345")
                 .Should()
-                .Be("packaging-recycling-notes/PRN12345/accept");
+                .Be("v1/packaging-recycling-notes/PRN12345/accept");
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService
             RrepwRoutes
                 .RejectPrnRoute("PRN12345")
                 .Should()
-                .Be("packaging-recycling-notes/PRN12345/reject");
+                .Be("v1/packaging-recycling-notes/PRN12345/reject");
         }
 
         [Fact]

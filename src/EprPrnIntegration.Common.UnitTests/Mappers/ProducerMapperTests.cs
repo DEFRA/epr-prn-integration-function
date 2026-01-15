@@ -119,10 +119,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         }
 
         [Theory]
-        [InlineData("England", "Environment Agency")]
-        [InlineData("Northern Ireland", "Northern Ireland Environment Agency")]
-        [InlineData("Wales", "Natural Resources Wales")]
-        [InlineData("Scotland", "Scottish Environment Protection Agency")]
+        [InlineData(BusinessCountry.England, "Environment Agency")]
+        [InlineData(BusinessCountry.NorthernIreland, "Northern Ireland Environment Agency")]
+        [InlineData(BusinessCountry.Wales, "Natural Resources Wales")]
+        [InlineData(BusinessCountry.Scotland, "Scottish Environment Protection Agency")]
         [InlineData("Unknown Country", "")]
         public void GetAgencyByCountry_ReturnsCorrectAgency(
             string businessCountry,
