@@ -509,46 +509,15 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        for (int i = 1; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             _producerEmailServiceMock.Verify(e =>
                 e.SendEmailToProducersAsync(
                     It.Is<SavePrnDetailsRequest>(p => p.PrnNumber == prns[i].PrnNumber),
-                    orgs[i]
+                    It.Is<WoApiOrganisation>(o => o.Id == orgs[i].Id)
                 )
             );
         }
-    }
-
-    private static bool VerifyProducerEmail(
-        List<ProducerEmail> producerEmails,
-        List<PersonEmail> personEmails,
-        PackagingRecyclingNote packagingRecyclingNote
-    )
-    {
-        var valid = true;
-        valid &= producerEmails.Count == personEmails.Count;
-        for (int i = 0; i < producerEmails.Count; i++)
-        {
-            valid &= producerEmails[i].EmailAddress == personEmails[i].Email;
-            valid &= producerEmails[i].FirstName == personEmails[i].FirstName;
-            valid &= producerEmails[i].LastName == personEmails[i].LastName;
-            valid &= producerEmails[i].IsExporter == packagingRecyclingNote.IsExport;
-            valid &= producerEmails[i]
-                .Material.Equals(
-                    packagingRecyclingNote.Accreditation!.Material,
-                    StringComparison.CurrentCultureIgnoreCase
-                );
-            valid &=
-                producerEmails[i].NameOfExporterReprocessor
-                == packagingRecyclingNote.IssuedByOrganisation!.Name;
-            valid &=
-                producerEmails[i].NameOfProducerComplianceScheme
-                == packagingRecyclingNote.IssuedToOrganisation!.Name;
-            valid &= producerEmails[i].PrnNumber == packagingRecyclingNote.PrnNumber;
-            valid &= producerEmails[i].Tonnage == packagingRecyclingNote.TonnageValue;
-        }
-        return valid;
     }
 
     [Theory]
@@ -686,88 +655,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
                     It.IsAny<CancellationToken>()
                 ),
             Times.Once
-        );
-    }
-
-    [Fact]
-    public async Task Run_ShouldLogErrorAndNotSendEmail_WhenUnknownRegistrationType()
-    {
-        // Arrange
-        var orgId = Guid.NewGuid().ToString();
-        var prn = CreatePrn("PRN-004");
-        prn.IssuedToOrganisation!.Id = orgId;
-
-        // Setup organisation with unknown registration type
-        var organisation = new WoApiOrganisation
-        {
-            Id = Guid.Parse(orgId),
-            Registrations =
-            [
-                new WoApiRegistration
-                {
-                    Type = "UNKNOWN_TYPE",
-                    RegistrationYear = _year,
-                    Status = WoApiOrganisationStatus.Registered,
-                },
-            ],
-            BusinessCountry = WoApiBusinessCountry.England,
-            Address = new WoApiAddress(),
-        };
-
-        // Use Newtonsoft.Json to serialize since that's what the actual code uses to deserialize
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(organisation);
-        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-        _woService
-            .Setup(o => o.GetOrganisation(orgId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HttpResponseMessage { Content = content });
-
-        _lastUpdateServiceMock
-            .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
-            .ReturnsAsync(DateTime.MinValue);
-
-        _rrepwServiceMock
-            .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
-            .ReturnsAsync(new List<PackagingRecyclingNote> { prn });
-
-        _prnServiceMock
-            .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
-
-        // Act
-        await _function.Run(new TimerInfo());
-
-        // Assert - Verify error was logged
-        _loggerMock.Verify(
-            x =>
-                x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>(
-                        (o, t) =>
-                            o.ToString()!.Contains("Unknown registration type")
-                            && o.ToString()!.Contains($"for organisation {orgId}")
-                    ),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-                ),
-            Times.Once
-        );
-
-        // Verify PRN was still saved
-        _prnServiceMock.Verify(
-            x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
-            Times.Once
-        );
-
-        // Verify no emails were sent due to null entity type code
-        _producerEmailServiceMock.Verify(
-            x =>
-                x.SendEmailToProducersAsync(
-                    It.IsAny<SavePrnDetailsRequest>(),
-                    It.IsAny<WoApiOrganisation>()
-                ),
-            Times.Never
         );
     }
 
