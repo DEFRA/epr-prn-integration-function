@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AutoMapper;
 using EprPrnIntegration.Api.Models;
+using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
@@ -10,6 +11,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
+using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -33,7 +35,8 @@ public class FetchRrepwIssuedPrnsFunction(
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
     ICoreServices core,
     IMessagingServices messaging,
-    IWasteOrganisationsService woService
+    IWasteOrganisationsService woService,
+    IProducerEmailService producerEmailService
 )
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
@@ -94,83 +97,13 @@ public class FetchRrepwIssuedPrnsFunction(
         WoApiOrganisation? woOrganisation
     )
     {
-        if (woOrganisation?.Id is null)
-        {
-            logger.LogError(
-                "For prn {PrnNumber} Cannot send email to producer, IssueToOrganisation.Id is null",
-                request.PrnNumber
-            );
-            return;
-        }
-        if (!int.TryParse(request.AccreditationYear, out var year))
-        {
-            logger.LogError(
-                "For prn {PrnNumber} Cannot send email to producer, AccreditationYear is not valid: {year}",
-                request.PrnNumber,
-                year
-            );
-            return;
-        }
-
-        string organisationId = woOrganisation.Id.ToString();
-        string? issuedToEntityTypeCode = woOrganisation.GetEntityTypeCode(year, logger);
-        if (issuedToEntityTypeCode is null)
-        {
-            logger.LogError(
-                "For prn {PrnNumber} Cannot send email to producer, failed to get issuedToEntityTypeCode",
-                request.PrnNumber
-            );
-            return;
-        }
-        try
-        {
-            // Get list of producers
-            var producerEmails =
-                await core.OrganisationService.GetPersonEmailsAsync(
-                    organisationId,
-                    issuedToEntityTypeCode,
-                    CancellationToken.None
-                ) ?? [];
-
-            logger.LogInformation(
-                "Fetched {ProducerCount} producers for OrganisationId: {EPRId}",
-                producerEmails.Count,
-                organisationId
-            );
-
-            var producers = producerEmails.Select(p => CreateProducerEmail(p, request)).ToList();
-
-            logger.LogInformation(
-                "Sending email notifications to {ProducerCount} producers.",
-                producers.Count
-            );
-
-            if (request.PrnStatusId == (int)EprnStatus.CANCELLED)
-            {
-                messaging.EmailService.SendCancelledPrnsNotificationEmails(
-                    producers,
-                    organisationId
-                );
-            }
-            else
-            {
-                messaging.EmailService.SendEmailsToProducers(producers, organisationId);
-            }
-
-            logger.LogInformation(
-                "Successfully processed and sent emails for message Id: {PrnNumber}",
-                request.PrnNumber
-            );
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Failed to send email notification for issued prn: {PrnNo} and EprId: {EprId}",
-                request.PrnNumber,
-                organisationId
-            );
-        }
+        await producerEmailService.SendEmailToProducersAsync(
+            request,
+            woOrganisation,
+            logger,
+            core.OrganisationService,
+            messaging.EmailService
+        );
     }
 
     private async Task<WoApiOrganisation?> GetWoApiOrganisation(
@@ -180,34 +113,12 @@ public class FetchRrepwIssuedPrnsFunction(
     {
         WoApiOrganisation? org = await HttpHelper.HandleTransientErrorsGet<WoApiOrganisation>(
             async (cancellationToken) =>
-            {
-                var ret = await woService.GetOrganisation(organisationId, cancellationToken);
-                return ret;
-            },
+                await woService.GetOrganisation(organisationId, cancellationToken),
             logger,
             $"Getting organisation details for {organisationId}",
             cancellationToken
         );
         return org;
-    }
-
-    private static ProducerEmail CreateProducerEmail(
-        PersonEmail producer,
-        SavePrnDetailsRequest request
-    )
-    {
-        return new ProducerEmail
-        {
-            EmailAddress = producer.Email,
-            FirstName = producer.FirstName,
-            LastName = producer.LastName,
-            NameOfExporterReprocessor = request.IssuedByOrg ?? "",
-            NameOfProducerComplianceScheme = request.OrganisationName ?? "",
-            PrnNumber = request.PrnNumber ?? "",
-            Material = request.MaterialName!,
-            Tonnage = request.TonnageValue ?? 0,
-            IsExporter = request.IsExport ?? false,
-        };
     }
 
     private async Task ProcessPrns(

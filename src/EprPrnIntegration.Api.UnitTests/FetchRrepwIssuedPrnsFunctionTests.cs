@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using AutoFixture;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.Models;
+using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
@@ -39,6 +40,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     private readonly Mock<IMessagingServices> _messagingServices = new();
     private readonly Mock<IEmailService> _emailService = new();
     private readonly Mock<IWasteOrganisationsService> _woService = new();
+    private readonly Mock<IProducerEmailService> _producerEmailServiceMock = new();
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
         new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -51,6 +53,38 @@ public class FetchRrepwIssuedPrnsFunctionTests
     {
         _core.Setup(c => c.OrganisationService).Returns(_organisationService.Object);
         _messagingServices.Setup(c => c.EmailService).Returns(_emailService.Object);
+
+        // Setup producer email service to call through to the actual implementation
+        _producerEmailServiceMock
+            .Setup(x =>
+                x.SendEmailToProducersAsync(
+                    It.IsAny<SavePrnDetailsRequest>(),
+                    It.IsAny<WoApiOrganisation>(),
+                    It.IsAny<ILogger>(),
+                    It.IsAny<IOrganisationService>(),
+                    It.IsAny<IEmailService>()
+                )
+            )
+            .Returns<
+                SavePrnDetailsRequest,
+                WoApiOrganisation,
+                ILogger,
+                IOrganisationService,
+                IEmailService
+            >(
+                async (request, org, logger, orgService, emailService) =>
+                {
+                    var service = new ProducerEmailService();
+                    await service.SendEmailToProducersAsync(
+                        request,
+                        org,
+                        logger,
+                        orgService,
+                        emailService
+                    );
+                }
+            );
+
         _function = new(
             _lastUpdateServiceMock.Object,
             _loggerMock.Object,
@@ -59,7 +93,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _core.Object,
             _messagingServices.Object,
-            _woService.Object
+            _woService.Object,
+            _producerEmailServiceMock.Object
         );
         SetupGetOrganisation(_organisationId, _organisationTypeCode);
     }
@@ -391,7 +426,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _core.Object,
             _messagingServices.Object,
-            _woService.Object
+            _woService.Object,
+            _producerEmailServiceMock.Object
         );
 
         // Act
