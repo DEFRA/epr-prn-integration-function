@@ -65,31 +65,6 @@ public class ProducerEmailServiceTests
     }
 
     [Fact]
-    public async Task SendEmailToProducersAsync_WhenOrganisationIdIsNull_LogsErrorAndReturns()
-    {
-        // Arrange
-        var request = CreateRequest();
-        var organisation = new WoApiOrganisation
-        {
-            Id = Guid.Empty,
-            Address = new WoApiAddress(),
-            Registrations = [],
-        };
-
-        // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
-
-        // Assert - Note: Guid.Empty is not null, so this test should actually proceed
-        // Let me reconsider this test...
-    }
-
-    [Fact]
     public async Task SendEmailToProducersAsync_WhenAccreditationYearIsInvalid_LogsErrorAndReturns()
     {
         // Arrange
