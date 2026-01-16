@@ -9,14 +9,15 @@ using Microsoft.Extensions.Logging;
 
 namespace EprPrnIntegration.Api.Services;
 
-public class ProducerEmailService : IProducerEmailService
+public class ProducerEmailService(
+    ILogger<ProducerEmailService> logger,
+    IOrganisationService organisationService,
+    IEmailService emailService
+) : IProducerEmailService
 {
     public async Task SendEmailToProducersAsync(
         SavePrnDetailsRequest request,
-        WoApiOrganisation? woOrganisation,
-        ILogger logger,
-        IOrganisationService organisationService,
-        IEmailService emailService
+        WoApiOrganisation? woOrganisation
     )
     {
         if (woOrganisation?.Id is null)

@@ -35,10 +35,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnService> _prnServiceMock = new();
-    private readonly Mock<ICoreServices> _core = new();
-    private readonly Mock<IOrganisationService> _organisationService = new();
-    private readonly Mock<IMessagingServices> _messagingServices = new();
-    private readonly Mock<IEmailService> _emailService = new();
     private readonly Mock<IWasteOrganisationsService> _woService = new();
     private readonly Mock<IProducerEmailService> _producerEmailServiceMock = new();
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
@@ -51,48 +47,12 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
     public FetchRrepwIssuedPrnsFunctionTests()
     {
-        _core.Setup(c => c.OrganisationService).Returns(_organisationService.Object);
-        _messagingServices.Setup(c => c.EmailService).Returns(_emailService.Object);
-
-        // Setup producer email service to call through to the actual implementation
-        _producerEmailServiceMock
-            .Setup(x =>
-                x.SendEmailToProducersAsync(
-                    It.IsAny<SavePrnDetailsRequest>(),
-                    It.IsAny<WoApiOrganisation>(),
-                    It.IsAny<ILogger>(),
-                    It.IsAny<IOrganisationService>(),
-                    It.IsAny<IEmailService>()
-                )
-            )
-            .Returns<
-                SavePrnDetailsRequest,
-                WoApiOrganisation,
-                ILogger,
-                IOrganisationService,
-                IEmailService
-            >(
-                async (request, org, logger, orgService, emailService) =>
-                {
-                    var service = new ProducerEmailService();
-                    await service.SendEmailToProducersAsync(
-                        request,
-                        org,
-                        logger,
-                        orgService,
-                        emailService
-                    );
-                }
-            );
-
         _function = new(
             _lastUpdateServiceMock.Object,
             _loggerMock.Object,
             _rrepwServiceMock.Object,
             _prnServiceMock.Object,
             _config,
-            _core.Object,
-            _messagingServices.Object,
             _woService.Object,
             _producerEmailServiceMock.Object
         );
@@ -424,8 +384,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
             stubbedRrepwService,
             prnServiceMock.Object,
             _config,
-            _core.Object,
-            _messagingServices.Object,
             _woService.Object,
             _producerEmailServiceMock.Object
         );
@@ -440,7 +398,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
     }
 
-    private void SetupGetOrganisation(
+    private WoApiOrganisation SetupGetOrganisation(
         Guid organisationId,
         string organisationTypeCode,
         string? businessCountry = null
@@ -469,6 +427,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         _woService
             .Setup(o => o.GetOrganisation(organisationId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage { Content = content });
+        return organisation;
     }
 
     private PackagingRecyclingNote CreatePrn(
@@ -540,26 +499,22 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
+        List<WoApiOrganisation> orgs = new List<WoApiOrganisation>();
         for (int i = 0; i < 3; i++)
         {
-            SetupGetOrganisation(Guid.Parse(prns[i].IssuedToOrganisation!.Id!), orgTypes[i]);
-            SetupGetEmails(emails[i], prns[i].IssuedToOrganisation!.Id!, orgTypes[i]);
+            orgs.Add(
+                SetupGetOrganisation(Guid.Parse(prns[i].IssuedToOrganisation!.Id!), orgTypes[i])
+            );
         }
 
         await _function.Run(new TimerInfo());
 
-        _emailService.Verify(e =>
-            e.SendCancelledPrnsNotificationEmails(
-                It.Is<List<ProducerEmail>>(pe => VerifyProducerEmail(pe, emails[0], prns[0])),
-                prns[0].IssuedToOrganisation!.Id!
-            )
-        );
         for (int i = 1; i < 3; i++)
         {
-            _emailService.Verify(e =>
-                e.SendEmailsToProducers(
-                    It.Is<List<ProducerEmail>>(pe => VerifyProducerEmail(pe, emails[i], prns[i])),
-                    prns[i].IssuedToOrganisation!.Id!
+            _producerEmailServiceMock.Verify(e =>
+                e.SendEmailToProducersAsync(
+                    It.Is<SavePrnDetailsRequest>(p => p.PrnNumber == prns[i].PrnNumber),
+                    orgs[i]
                 )
             );
         }
@@ -594,17 +549,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
             valid &= producerEmails[i].Tonnage == packagingRecyclingNote.TonnageValue;
         }
         return valid;
-    }
-
-    private void SetupGetEmails(List<PersonEmail> emails, string orgId, string orgType)
-    {
-        var ot =
-            orgType == WoApiOrganisationType.ComplianceScheme
-                ? OrganisationType.ComplianceScheme_CS
-                : OrganisationType.LargeProducer_DR;
-        _organisationService
-            .Setup(o => o.GetPersonEmailsAsync(orgId, ot, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(emails);
     }
 
     [Theory]
@@ -817,15 +761,11 @@ public class FetchRrepwIssuedPrnsFunctionTests
         );
 
         // Verify no emails were sent due to null entity type code
-        _emailService.Verify(
-            x => x.SendEmailsToProducers(It.IsAny<List<ProducerEmail>>(), It.IsAny<string>()),
-            Times.Never
-        );
-        _emailService.Verify(
+        _producerEmailServiceMock.Verify(
             x =>
-                x.SendCancelledPrnsNotificationEmails(
-                    It.IsAny<List<ProducerEmail>>(),
-                    It.IsAny<string>()
+                x.SendEmailToProducersAsync(
+                    It.IsAny<SavePrnDetailsRequest>(),
+                    It.IsAny<WoApiOrganisation>()
                 ),
             Times.Never
         );

@@ -15,17 +15,21 @@ namespace EprPrnIntegration.Api.UnitTests.Services;
 public class ProducerEmailServiceTests
 {
     private readonly ProducerEmailService _service;
-    private readonly Mock<ILogger> _loggerMock;
+    private readonly Mock<ILogger<ProducerEmailService>> _loggerMock;
     private readonly Mock<IOrganisationService> _organisationServiceMock;
     private readonly Mock<IEmailService> _emailServiceMock;
     private const int Year = 2025;
 
     public ProducerEmailServiceTests()
     {
-        _service = new ProducerEmailService();
-        _loggerMock = new Mock<ILogger>();
+        _loggerMock = new Mock<ILogger<ProducerEmailService>>();
         _organisationServiceMock = new Mock<IOrganisationService>();
         _emailServiceMock = new Mock<IEmailService>();
+        _service = new ProducerEmailService(
+            _loggerMock.Object,
+            _organisationServiceMock.Object,
+            _emailServiceMock.Object
+        );
     }
 
     [Fact]
@@ -35,13 +39,7 @@ public class ProducerEmailServiceTests
         var request = CreateRequest();
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            null,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, null);
 
         // Assert
         _loggerMock.Verify(
@@ -73,13 +71,7 @@ public class ProducerEmailServiceTests
         var organisation = CreateOrganisation();
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         _loggerMock.Verify(
@@ -115,13 +107,7 @@ public class ProducerEmailServiceTests
         };
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         _loggerMock.Verify(
@@ -178,13 +164,7 @@ public class ProducerEmailServiceTests
             .ReturnsAsync(producerEmails);
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         _emailServiceMock.Verify(
@@ -230,13 +210,7 @@ public class ProducerEmailServiceTests
             .ReturnsAsync(producerEmails);
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         _emailServiceMock.Verify(
@@ -277,13 +251,7 @@ public class ProducerEmailServiceTests
             .ThrowsAsync(expectedException);
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         _loggerMock.Verify(
@@ -347,13 +315,7 @@ public class ProducerEmailServiceTests
             );
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         capturedProducerEmail.Should().NotBeNull();
@@ -413,13 +375,7 @@ public class ProducerEmailServiceTests
             );
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert
         capturedProducerEmail.Should().NotBeNull();
@@ -463,13 +419,7 @@ public class ProducerEmailServiceTests
             .ReturnsAsync(producerEmails);
 
         // Act
-        await _service.SendEmailToProducersAsync(
-            request,
-            organisation,
-            _loggerMock.Object,
-            _organisationServiceMock.Object,
-            _emailServiceMock.Object
-        );
+        await _service.SendEmailToProducersAsync(request, organisation);
 
         // Assert - Verify information logs
         _loggerMock.Verify(

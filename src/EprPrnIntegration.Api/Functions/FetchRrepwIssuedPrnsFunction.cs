@@ -33,8 +33,6 @@ public class FetchRrepwIssuedPrnsFunction(
     IRrepwService rrepwService,
     IPrnService prnService,
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
-    ICoreServices core,
-    IMessagingServices messaging,
     IWasteOrganisationsService woService,
     IProducerEmailService producerEmailService
 )
@@ -97,13 +95,7 @@ public class FetchRrepwIssuedPrnsFunction(
         WoApiOrganisation? woOrganisation
     )
     {
-        await producerEmailService.SendEmailToProducersAsync(
-            request,
-            woOrganisation,
-            logger,
-            core.OrganisationService,
-            messaging.EmailService
-        );
+        await producerEmailService.SendEmailToProducersAsync(request, woOrganisation);
     }
 
     private async Task<WoApiOrganisation?> GetWoApiOrganisation(
