@@ -158,7 +158,7 @@ services:
       MessagingConfig__NpwdReconcileUpdatedOrganisationsTemplateId: "07e89bba-7f0e-47f3-a96d-9fbcd923f9ee"
       MessagingConfig__NpwdCancelledPrnsNotificationTemplateId: "52ec5cdb-ab29-475e-82d5-f5841f016066"
       MessagingConfig__NpwdReconcileUpdatedPrnsTemplateId: "a1b81df4-560e-4034-a3cc-282d00ee2959"
-      ApiCallsRetryConfig__WaitTimeBetweenRetryInSecs: "2"
+      ApiCallsRetryConfig__WaitTimeBetweenRetryInSecs: "1"
       ApiCallsRetryConfig__MaxAttempts: "3"
       NpwdIntegration__BaseUrl: "http://wiremock"
       NpwdIntegration__ClientId: ""

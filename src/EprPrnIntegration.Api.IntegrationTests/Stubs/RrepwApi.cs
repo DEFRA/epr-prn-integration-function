@@ -41,7 +41,7 @@ public class RrepwApi(WireMockContext wiremock)
         return items;
     }
 
-    public async Task HasPrnUpdatesWithTransientFailures(
+    public async Task<List<PackagingRecyclingNote>> HasPrnUpdatesWithTransientFailures(
         string[] prnNumbers,
         HttpStatusCode failureStatusCode,
         int failuresCount
@@ -57,6 +57,23 @@ public class RrepwApi(WireMockContext wiremock)
             r => r.WithStatusCode(failureStatusCode),
             failuresCount
         );
+        return items;
+    }
+
+    public async Task HasPrnUpdatesWithNonTransientFailure(
+        string[] prnNumbers,
+        HttpStatusCode failureStatusCode
+    )
+    {
+        var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
+        mappingBuilder.Given(builder =>
+            builder
+                .WithRequest(request => CreatePrnRequest(request))
+                .WithResponse(response => response.WithStatusCode(failureStatusCode))
+        );
+
+        var status = await mappingBuilder.BuildAndPostAsync();
+        Assert.NotNull(status.Guid);
     }
 
     public static RequestModelBuilder CreatePrnRequest(
