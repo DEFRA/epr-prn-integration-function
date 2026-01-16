@@ -35,7 +35,7 @@ public static class PrnMapper
                     EvidenceNo = eprProducer.EvidenceNo,
                     EvidenceStatusCode = eprProducer.EvidenceStatusCode,
                     StatusDate = eprProducer.StatusDate,
-                    ObligationYear = obligationYear,
+                    ObligationYear = eprProducer.ObligationYear ?? obligationYear,
                 })
                 .ToList(),
         };
