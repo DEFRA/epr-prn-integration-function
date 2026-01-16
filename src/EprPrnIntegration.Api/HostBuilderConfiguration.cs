@@ -2,6 +2,7 @@
 using System.Net;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
@@ -79,6 +80,7 @@ public static class HostBuilderConfiguration
         services.AddScoped<INpwdClient, NpwdClient>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.AddScoped<IWasteOrganisationsService, WasteOrganisationsService>();
+        services.AddScoped<IProducerEmailService, ProducerEmailService>();
 
         // Register RRepw service - use stubbed version if configured
         RrepwApiConfiguration rrepwConfig = new();

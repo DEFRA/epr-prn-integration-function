@@ -1,7 +1,5 @@
-﻿using Azure.Messaging;
-using EprPrnIntegration.Api.Models;
+﻿using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 
