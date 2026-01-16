@@ -2,7 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using AutoMapper;
 using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
+using EprPrnIntegration.Common.Extensions;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
@@ -100,9 +102,18 @@ public class FetchRrepwIssuedPrnsFunction(
             );
             return;
         }
+        if (!int.TryParse(request.AccreditationYear, out var year))
+        {
+            logger.LogError(
+                "For prn {PrnNumber} Cannot send email to producer, AccreditationYear is not valid: {year}",
+                request.PrnNumber,
+                year
+            );
+            return;
+        }
 
         string organisationId = woOrganisation.Id.ToString();
-        string? issuedToEntityTypeCode = GetIssuedToEntityTypeCode(woOrganisation);
+        string? issuedToEntityTypeCode = woOrganisation.GetEntityTypeCode(year, logger);
         if (issuedToEntityTypeCode is null)
         {
             logger.LogError(
@@ -162,24 +173,6 @@ public class FetchRrepwIssuedPrnsFunction(
         }
     }
 
-    private string? GetIssuedToEntityTypeCode(WoApiOrganisation? org)
-    {
-        switch (org?.Registration.Type)
-        {
-            case WoApiOrganisationType.ComplianceScheme:
-                return OrganisationType.ComplianceScheme_CS;
-            case WoApiOrganisationType.LargeProducer:
-                return OrganisationType.LargeProducer_DR;
-            default:
-                logger.LogError(
-                    "Unknown registration type {RegistrationType} for organisation {OrganisationId}",
-                    org?.Registration.Type,
-                    org?.Id
-                );
-                return null;
-        }
-    }
-
     private async Task<WoApiOrganisation?> GetWoApiOrganisation(
         string organisationId,
         CancellationToken cancellationToken
@@ -187,7 +180,10 @@ public class FetchRrepwIssuedPrnsFunction(
     {
         WoApiOrganisation? org = await HttpHelper.HandleTransientErrorsGet<WoApiOrganisation>(
             async (cancellationToken) =>
-                await woService.GetOrganisation(organisationId, cancellationToken),
+            {
+                var ret = await woService.GetOrganisation(organisationId, cancellationToken);
+                return ret;
+            },
             logger,
             $"Getting organisation details for {organisationId}",
             cancellationToken

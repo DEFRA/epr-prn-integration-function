@@ -23,6 +23,6 @@ namespace EprPrnIntegration.Common.Models.WasteOrganisationsApi
         public required WoApiAddress Address { get; set; }
 
         [JsonPropertyName("registration")]
-        public required WoApiRegistration Registration { get; set; }
+        public required List<WoApiRegistration> Registrations { get; set; }
     }
 }

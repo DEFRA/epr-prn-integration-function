@@ -45,6 +45,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
     private readonly FetchRrepwIssuedPrnsFunction _function;
     private readonly Fixture _fixture = new();
+    private const int _year = 2025;
 
     public FetchRrepwIssuedPrnsFunctionTests()
     {
@@ -409,33 +410,35 @@ public class FetchRrepwIssuedPrnsFunctionTests
         string? businessCountry = null
     )
     {
+        var registration = _fixture
+            .Build<WoApiRegistration>()
+            .With(w => w.Type, organisationTypeCode)
+            .With(w => w.RegistrationYear, _year)
+            .With(w => w.Status, WoApiOrganisationStatus.Registered)
+            .Create();
+
+        var organisation = _fixture
+            .Build<WoApiOrganisation>()
+            .With(o => o.Id, organisationId)
+            .With(o => o.BusinessCountry, businessCountry)
+            .Create();
+
+        // Set Registrations after Create() to avoid AutoFixture overwriting it
+        organisation.Registrations = [registration];
+
+        // Use Newtonsoft.Json to serialize since that's what the actual code uses to deserialize
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(organisation);
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
         _woService
             .Setup(o => o.GetOrganisation(organisationId.ToString(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-                new HttpResponseMessage
-                {
-                    Content = JsonContent.Create(
-                        _fixture
-                            .Build<WoApiOrganisation>()
-                            .With(o => o.Id, organisationId)
-                            .With(o => o.BusinessCountry, businessCountry)
-                            .With(
-                                o => o.Registration,
-                                _fixture
-                                    .Build<WoApiRegistration>()
-                                    .With(w => w.Type, organisationTypeCode)
-                                    .Create()
-                            )
-                            .Create()
-                    ),
-                }
-            );
+            .ReturnsAsync(new HttpResponseMessage { Content = content });
     }
 
     private PackagingRecyclingNote CreatePrn(
         string evidenceNo,
         string accreditationNo = "ACC-001",
-        int accreditationYear = 2025,
+        int accreditationYear = _year,
         string material = RrepwMaterialName.Plastic,
         int tonnes = 100
     )
@@ -715,27 +718,29 @@ public class FetchRrepwIssuedPrnsFunctionTests
         prn.IssuedToOrganisation!.Id = orgId;
 
         // Setup organisation with unknown registration type
+        var organisation = new WoApiOrganisation
+        {
+            Id = Guid.Parse(orgId),
+            Registrations =
+            [
+                new WoApiRegistration
+                {
+                    Type = "UNKNOWN_TYPE",
+                    RegistrationYear = _year,
+                    Status = WoApiOrganisationStatus.Registered,
+                },
+            ],
+            BusinessCountry = WoApiBusinessCountry.England,
+            Address = new WoApiAddress(),
+        };
+
+        // Use Newtonsoft.Json to serialize since that's what the actual code uses to deserialize
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(organisation);
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
         _woService
             .Setup(o => o.GetOrganisation(orgId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-                new HttpResponseMessage
-                {
-                    Content = JsonContent.Create(
-                        new WoApiOrganisation
-                        {
-                            Id = Guid.Parse(orgId),
-                            Registration = new WoApiRegistration
-                            {
-                                Type = "UNKNOWN_TYPE",
-                                RegistrationYear = 2024,
-                                Status = WoApiOrganisationStatus.Registered,
-                            },
-                            BusinessCountry = WoApiBusinessCountry.England,
-                            Address = new WoApiAddress(),
-                        }
-                    ),
-                }
-            );
+            .ReturnsAsync(new HttpResponseMessage { Content = content });
 
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
@@ -760,7 +765,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>(
                         (o, t) =>
-                            o.ToString()!.Contains("Unknown registration type UNKNOWN_TYPE")
+                            o.ToString()!.Contains("Unknown registration type")
                             && o.ToString()!.Contains($"for organisation {orgId}")
                     ),
                     It.IsAny<Exception>(),
