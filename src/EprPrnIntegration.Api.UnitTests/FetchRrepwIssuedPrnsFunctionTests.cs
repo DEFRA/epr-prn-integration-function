@@ -129,12 +129,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         await Assert.ThrowsAsync<HttpRequestException>(() => _function.Run(new TimerInfo()));
 
-        // Verify no PRNs were saved
         _prnServiceMock.Verify(
             x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
             Times.Never
         );
-        // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Never
@@ -155,12 +153,10 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        // Verify no PRNs were saved
         _prnServiceMock.Verify(
             x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
             Times.Never
         );
-        // Verify last update was NOT set
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Never
@@ -200,7 +196,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        // Verify all three PRNs were attempted
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -226,7 +221,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
             Times.Once
         );
 
-        // Verify last update WAS still set despite one failure
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
@@ -269,10 +263,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             )
             .ReturnsAsync(new HttpResponseMessage(statusCode));
 
-        // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<ServiceException>(() => _function.Run(new TimerInfo()));
 
-        // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Never
@@ -308,7 +300,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
             DateTimeKind.Utc
         );
 
-        // Setup: GetLastUpdate returns null (no blob storage value)
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns))
             .ReturnsAsync((DateTime?)null);
@@ -319,19 +310,16 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         await _function.Run(new TimerInfo());
 
-        // Verify GetLastUpdate was called
         _lastUpdateServiceMock.Verify(
             x => x.GetLastUpdate(FunctionName.FetchRrepwIssuedPrns),
             Times.Once
         );
 
-        // Verify PRNs were processed
         _prnServiceMock.Verify(
             x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2)
         );
 
-        // Verify last update was set
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
@@ -342,7 +330,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
     [Fact]
     public async Task StubbedRrepwService_WorksWithMappersAndFunction()
     {
-        // Arrange - use concrete StubbedRrepwService instead of mock
         var stubOrgId = Guid.Parse("0b51240c-c013-4973-9d06-d4f90ee4ad8b");
         var rrepwApiConfig = Options.Create(
             new RrepwApiConfiguration { StubOrgId = stubOrgId.ToString() }
@@ -352,27 +339,22 @@ public class FetchRrepwIssuedPrnsFunctionTests
             rrepwApiConfig
         );
 
-        //get the stubbed data
         var prns = await stubbedRrepwService.ListPackagingRecyclingNotes(
             DateTime.UtcNow.AddHours(-1),
             DateTime.UtcNow
         );
 
-        // Verify we have all 14 PRNs from the canonical scenario matrix
         Assert.Equal(14, prns.Count);
 
-        // Setup WO service to return organisation for the stub org ID used in all PRNs
         SetupGetOrganisation(stubOrgId, _organisationTypeCode);
 
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
 
-        // Use a valid date range - DateTime.MinValue causes overflow when stub adds/subtracts minutes
         lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.UtcNow.AddHours(-1));
 
-        // Setup to accept any PRN with valid AccreditationYear and material mapping
         prnServiceMock
             .Setup(x =>
                 x.SavePrn(
@@ -396,10 +378,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _producerEmailServiceMock.Object
         );
 
-        // Act
         await function.Run(new TimerInfo());
 
-        // Verify last update was set
         lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
@@ -425,10 +405,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .With(o => o.BusinessCountry, businessCountry)
             .Create();
 
-        // Set Registrations after Create() to avoid AutoFixture overwriting it
         organisation.Registrations = [registration];
 
-        // Use Newtonsoft.Json to serialize since that's what the actual code uses to deserialize
         var json = Newtonsoft.Json.JsonConvert.SerializeObject(organisation);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
@@ -544,7 +522,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
         string expectedAgency
     )
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-001");
         prn.IssuedToOrganisation!.Id = orgId.ToString();
@@ -563,10 +540,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Assert
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -589,7 +564,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
         string businessCountry
     )
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-002");
         prn.IssuedToOrganisation!.Id = orgId.ToString();
@@ -608,10 +582,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Assert
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -629,7 +601,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
     [Fact]
     public async Task Run_ShouldMapProducerFieldsToNull_WhenBusinessCountryIsNull()
     {
-        // Arrange
         var orgId = Guid.NewGuid();
         var prn = CreatePrn("PRN-003");
         prn.IssuedToOrganisation!.Id = orgId.ToString();
@@ -648,10 +619,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Assert
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -674,7 +643,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
         HttpStatusCode statusCode
     )
     {
-        // Arrange
         var prns = new List<PackagingRecyclingNote> { CreatePrn("PRN-001"), CreatePrn("PRN-002") };
 
         _lastUpdateServiceMock
@@ -685,29 +653,24 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
-        // Setup WO service to return transient error for the first PRN's organisation
         _woService
             .Setup(o =>
                 o.GetOrganisation(prns[0].IssuedToOrganisation!.Id!, It.IsAny<CancellationToken>())
             )
             .ReturnsAsync(new HttpResponseMessage(statusCode));
 
-        // Act & Assert - expect the exception to be rethrown
         await Assert.ThrowsAsync<ServiceException>(() => _function.Run(new TimerInfo()));
 
-        // Verify no PRNs were saved
         _prnServiceMock.Verify(
             x => x.SavePrn(It.IsAny<SavePrnDetailsRequest>(), It.IsAny<CancellationToken>()),
             Times.Never
         );
 
-        // Verify last update was NOT set when transient error occurs
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Never
         );
 
-        // Verify appropriate error was logged
         _loggerMock.Verify(
             x =>
                 x.Log(
@@ -731,7 +694,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
         HttpStatusCode statusCode
     )
     {
-        // Arrange
         var orgId1 = Guid.NewGuid();
         var orgId2 = Guid.NewGuid();
 
@@ -753,18 +715,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
-        // Setup WO service to return non-transient error for the first PRN's organisation
         _woService
             .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(statusCode));
 
-        // Setup WO service to succeed for the second PRN
         SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Verify PRN-001 (with error) was NOT saved, PRN-002 was saved
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -785,14 +743,12 @@ public class FetchRrepwIssuedPrnsFunctionTests
             "PRN-002 should be saved normally"
         );
 
-        // Verify last update WAS set despite the non-transient error
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
 
-        // Verify appropriate error was logged for non-transient error
         _loggerMock.Verify(
             x =>
                 x.Log(
@@ -813,7 +769,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
     [Fact]
     public async Task WhenExceptionThrown_ForWoService_ContinuesProcessingAndUpdatesLastUpdatedTime()
     {
-        // Arrange
         var orgId1 = Guid.NewGuid();
         var orgId2 = Guid.NewGuid();
 
@@ -835,18 +790,14 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
-        // Setup WO service to throw an exception for the first PRN's organisation
         _woService
             .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Network error"));
 
-        // Setup WO service to succeed for the second PRN
         SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Verify PRN-001 (with exception) was NOT saved, PRN-002 was saved
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -867,14 +818,12 @@ public class FetchRrepwIssuedPrnsFunctionTests
             "PRN-002 should be saved normally"
         );
 
-        // Verify last update WAS set despite the exception
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
             Times.Once
         );
 
-        // Verify appropriate error was logged for the exception
         _loggerMock.Verify(
             x =>
                 x.Log(
@@ -893,7 +842,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
     [Fact]
     public async Task WhenWoServiceReturnsNull_ContinuesProcessingWithNullOrganisation()
     {
-        // Arrange
         var orgId1 = Guid.NewGuid();
         var orgId2 = Guid.NewGuid();
 
@@ -915,20 +863,16 @@ public class FetchRrepwIssuedPrnsFunctionTests
             .Setup(x => x.ListPackagingRecyclingNotes(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync(prns);
 
-        // Setup WO service to return empty content (results in null after deserialization)
         _woService
             .Setup(o => o.GetOrganisation(orgId1.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
                 new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("") }
             );
 
-        // Setup WO service to succeed for the second PRN
         SetupGetOrganisation(orgId2, WoApiOrganisationType.ComplianceScheme);
 
-        // Act
         await _function.Run(new TimerInfo());
 
-        // Verify PRN-001 (with null org) was NOT saved, PRN-002 was saved
         _prnServiceMock.Verify(
             x =>
                 x.SavePrn(
@@ -949,7 +893,6 @@ public class FetchRrepwIssuedPrnsFunctionTests
             "PRN-002 should be saved normally"
         );
 
-        // Verify last update WAS set
         _lastUpdateServiceMock.Verify(
             x =>
                 x.SetLastUpdate(FunctionName.FetchRrepwIssuedPrns, ItEx.IsCloseTo(DateTime.UtcNow)),
