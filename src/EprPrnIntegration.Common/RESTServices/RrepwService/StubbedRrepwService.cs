@@ -38,183 +38,112 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 // PRN-01: awaiting_acceptance, PRN, plastic, authorisedAt = fromDate + 1 min
                 // AC1 (mandatory field mapping), AC5 (awaiting_acceptance uses authorisedAt)
                 CreatePrn(
-                    scenarioId: "01",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("01", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 100,
-                    accreditation: CreateAccreditation("01", RrepwMaterialName.Plastic, includeFullAddress: true)
+                    new PrnScenario("01", hourlyPrnSuffix, stubOrgId, 100),
+                    CreateAwaitingAcceptanceStatus("01", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("01", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeFullAddress: true))
                 ),
 
                 // PRN-02: awaiting_acceptance, PERN (isExport=true), plastic, authorisedAt = fromDate + 1 min
                 // AC1 (mandatory field mapping), AC5, AC10 (PRN vs PERN behaviour)
                 CreatePrn(
-                    scenarioId: "02",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("02", dateFrom.AddMinutes(1)),
-                    isExport: true,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 150,
-                    accreditation: CreateAccreditation("02", RrepwMaterialName.Plastic, includeSiteAddress: false) // siteAddress omitted for PERN
+                    new PrnScenario("02", hourlyPrnSuffix, stubOrgId, 150, IsExport: true),
+                    CreateAwaitingAcceptanceStatus("02", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("02", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeSiteAddress: false))
                 ),
 
                 // PRN-03: cancelled, PRN, plastic, cancelledAt = toDate - 1 min
                 // AC6 (cancelled uses cancelledAt)
                 CreatePrn(
-                    scenarioId: "03",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateCancelledStatus("03", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 200,
-                    accreditation: CreateAccreditation("03", RrepwMaterialName.Plastic),
-                    issuerNotes: "Stubbed cancelled PRN-03 for AC6 testing"
+                    new PrnScenario("03", hourlyPrnSuffix, stubOrgId, 200, IssuerNotes: "Stubbed cancelled PRN-03 for AC6 testing"),
+                    CreateCancelledStatus("03", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
+                    CreateAccreditation("03", RrepwMaterialName.Plastic)
                 ),
 
                 // PRN-04: cancelled, PERN (isExport=true), plastic, cancelledAt = toDate - 1 min
                 // AC6 (cancelled uses cancelledAt)
                 CreatePrn(
-                    scenarioId: "04",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateCancelledStatus("04", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
-                    isExport: true,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 250,
-                    accreditation: CreateAccreditation("04", RrepwMaterialName.Plastic),
-                    issuerNotes: "Stubbed cancelled PRN-04 for AC6 testing"
+                    new PrnScenario("04", hourlyPrnSuffix, stubOrgId, 250, IsExport: true, IssuerNotes: "Stubbed cancelled PRN-04 for AC6 testing"),
+                    CreateCancelledStatus("04", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
+                    CreateAccreditation("04", RrepwMaterialName.Plastic)
                 ),
 
                 // PRN-05: rejected, PRN, plastic, rejectedAt = fromDate + 1 min
                 // AC2 (only awaiting_acceptance and cancelled persisted - this should NOT be persisted)
                 CreatePrn(
-                    scenarioId: "05",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateRejectedStatus(dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 300,
-                    accreditation: CreateAccreditation("05", RrepwMaterialName.Plastic, includeSiteAddress: false),
-                    includeIssuedByTradingName: false,
-                    includeIssuedToTradingName: false,
-                    issuerNotes: "Stubbed rejected PRN-05 - should NOT be persisted (AC2)"
+                    new PrnScenario("05", hourlyPrnSuffix, stubOrgId, 300,
+                        IncludeIssuedByTradingName: false,
+                        IncludeIssuedToTradingName: false,
+                        IssuerNotes: "Stubbed rejected PRN-05 - should NOT be persisted (AC2)"),
+                    CreateRejectedStatus(dateFrom.AddMinutes(1)),
+                    CreateAccreditation("05", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeSiteAddress: false))
                 ),
 
                 // PRN-06: awaiting_acceptance, PRN, paper, authorisedAt = fromDate - 1 min
                 // AC3 (delta exclusion - outside date range, should NOT be persisted)
                 CreatePrn(
-                    scenarioId: "06",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("06", dateFrom.AddMinutes(-1)), // Before fromDate - delta exclusion
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 350,
-                    accreditation: CreateAccreditation("06", RrepwMaterialName.Paper, includeFullAddress: true)
+                    new PrnScenario("06", hourlyPrnSuffix, stubOrgId, 350),
+                    CreateAwaitingAcceptanceStatus("06", dateFrom.AddMinutes(-1)),
+                    CreateAccreditation("06", RrepwMaterialName.Paper, new AccreditationOptions(IncludeFullAddress: true))
                 ),
 
                 // PRN-07: awaiting_acceptance, PRN, aluminium, authorisedAt = fromDate + 1 min
                 // AC7 (enum mapping for material and regulator)
                 CreatePrn(
-                    scenarioId: "07",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("07", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 400,
-                    accreditation: CreateAccreditation(
-                        "07",
-                        RrepwMaterialName.Aluminium,
-                        regulator: RrepwSubmittedToRegulator.NaturalResourcesWales_NRW,
-                        includeFullAddress: true
-                    )
+                    new PrnScenario("07", hourlyPrnSuffix, stubOrgId, 400),
+                    CreateAwaitingAcceptanceStatus("07", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("07", RrepwMaterialName.Aluminium,
+                        new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.NaturalResourcesWales_NRW, IncludeFullAddress: true))
                 ),
 
                 // PRN-08: awaiting_acceptance, PRN, glass (glass_re_melt), authorisedAt = fromDate + 1 min
                 // AC8 (glass mapping via glassRecyclingProcess)
                 CreatePrn(
-                    scenarioId: "08",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("08", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 450,
-                    accreditation: CreateAccreditation(
-                        "08",
-                        RrepwMaterialName.Glass,
-                        glassRecyclingProcess: RrepwGlassRecyclingProcess.GlassRemelt,
-                        siteAddress: CreateSiteAddress("08", "Glass")
-                    ),
-                    issuerNotes: $"Stubbed glass PRN-08 for AC8 testing ({RrepwGlassRecyclingProcess.GlassRemelt})"
+                    new PrnScenario("08", hourlyPrnSuffix, stubOrgId, 450,
+                        IssuerNotes: $"Stubbed glass PRN-08 for AC8 testing ({RrepwGlassRecyclingProcess.GlassRemelt})"),
+                    CreateAwaitingAcceptanceStatus("08", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("08", RrepwMaterialName.Glass,
+                        new AccreditationOptions(GlassRecyclingProcess: RrepwGlassRecyclingProcess.GlassRemelt,
+                            SiteAddress: CreateSiteAddress("08", "Glass")))
                 ),
 
                 // PRN-09: awaiting_acceptance, PRN, glass (glass_other), authorisedAt = fromDate + 1 min
                 // AC8 (glass mapping via glassRecyclingProcess)
                 CreatePrn(
-                    scenarioId: "09",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("09", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 500,
-                    accreditation: CreateAccreditation(
-                        "09",
-                        RrepwMaterialName.Glass,
-                        glassRecyclingProcess: RrepwGlassRecyclingProcess.GlassOther,
-                        siteAddress: CreateSiteAddress("09", "Glass")
-                    ),
-                    issuerNotes: $"Stubbed glass PRN-09 for AC8 testing ({RrepwGlassRecyclingProcess.GlassOther})"
+                    new PrnScenario("09", hourlyPrnSuffix, stubOrgId, 500,
+                        IssuerNotes: $"Stubbed glass PRN-09 for AC8 testing ({RrepwGlassRecyclingProcess.GlassOther})"),
+                    CreateAwaitingAcceptanceStatus("09", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("09", RrepwMaterialName.Glass,
+                        new AccreditationOptions(GlassRecyclingProcess: RrepwGlassRecyclingProcess.GlassOther,
+                            SiteAddress: CreateSiteAddress("09", "Glass")))
                 ),
 
                 // PRN-10: awaiting_acceptance, PRN, steel, authorisedAt = fromDate + 1 min
                 // AC9 (ProcessToBeUsed mapping - steel maps to R4)
                 CreatePrn(
-                    scenarioId: "10",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("10", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 550,
-                    accreditation: CreateAccreditation(
-                        "10",
-                        RrepwMaterialName.Steel,
-                        regulator: RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA,
-                        includeFullAddress: true
-                    )
+                    new PrnScenario("10", hourlyPrnSuffix, stubOrgId, 550),
+                    CreateAwaitingAcceptanceStatus("10", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("10", RrepwMaterialName.Steel,
+                        new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA, IncludeFullAddress: true))
                 ),
 
                 // PRN-11: awaiting_acceptance, PRN, fibre, authorisedAt = fromDate + 1 min
                 // AC9 (ProcessToBeUsed mapping - fibre maps to R3)
                 CreatePrn(
-                    scenarioId: "11",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("11", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 600,
-                    accreditation: CreateAccreditation(
-                        "11",
-                        RrepwMaterialName.Fibre,
-                        regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
-                        includeFullAddress: true
-                    )
+                    new PrnScenario("11", hourlyPrnSuffix, stubOrgId, 600),
+                    CreateAwaitingAcceptanceStatus("11", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("11", RrepwMaterialName.Fibre,
+                        new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA, IncludeFullAddress: true))
                 ),
 
                 // PRN-12: awaiting_acceptance, PRN, wood, authorisedAt = fromDate + 1 min
                 // AC4 (ignored fields do not affect persistence)
                 CreatePrn(
-                    scenarioId: "12",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatusWithIgnoredFields("12", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 650,
-                    accreditation: CreateAccreditation(
-                        "12",
-                        RrepwMaterialName.Wood,
-                        siteAddress: CreateSiteAddress("12", "Wood", includeFullAddress: true)
-                    ),
-                    isDecemberWaste: true, // This is a mapped field, not ignored
-                    issuerNotes: "Stubbed PRN-12 with ignored fields for AC4 testing"
+                    new PrnScenario("12", hourlyPrnSuffix, stubOrgId, 650,
+                        IsDecemberWaste: true,
+                        IssuerNotes: "Stubbed PRN-12 with ignored fields for AC4 testing"),
+                    CreateAwaitingAcceptanceStatusWithIgnoredFields("12", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("12", RrepwMaterialName.Wood,
+                        new AccreditationOptions(SiteAddress: CreateSiteAddress("12", "Wood", includeFullAddress: true)))
                 ),
 
                 // PRN-13: awaiting_acceptance, PRN, plastic, authorisedAt = toDate - 1 min
@@ -230,13 +159,9 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 // PRN-14: awaiting_acceptance, PRN, plastic, authorisedAt = fromDate + 1 min
                 // AC12 (obligation year always stored as 2026)
                 CreatePrn(
-                    scenarioId: "14",
-                    hourlyPrnSuffix: hourlyPrnSuffix,
-                    status: CreateAwaitingAcceptanceStatus("14", dateFrom.AddMinutes(1)),
-                    isExport: false,
-                    stubOrgId: stubOrgId,
-                    tonnageValue: 800,
-                    accreditation: CreateAccreditation("14", RrepwMaterialName.Plastic, accreditationYear: 2026, includeFullAddress: true)
+                    new PrnScenario("14", hourlyPrnSuffix, stubOrgId, 800),
+                    CreateAwaitingAcceptanceStatus("14", dateFrom.AddMinutes(1)),
+                    CreateAccreditation("14", RrepwMaterialName.Plastic, new AccreditationOptions(AccreditationYear: 2026, IncludeFullAddress: true))
                 ),
             };
 
@@ -259,34 +184,51 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted));
         }
 
+        #region Parameter Records
+
+        private sealed record PrnScenario(
+            string ScenarioId,
+            string HourlyPrnSuffix,
+            string StubOrgId,
+            int TonnageValue,
+            bool IsExport = false,
+            bool IsDecemberWaste = false,
+            bool IncludeIssuedByTradingName = true,
+            bool IncludeIssuedToTradingName = true,
+            string? IssuerNotes = null
+        );
+
+        private sealed record AccreditationOptions(
+            string Regulator = RrepwSubmittedToRegulator.EnvironmentAgency_EA,
+            int AccreditationYear = 2026,
+            Address? SiteAddress = null,
+            string? GlassRecyclingProcess = null,
+            bool IncludeSiteAddress = true,
+            bool IncludeFullAddress = false
+        );
+
+        #endregion
+
         #region PRN Factory Methods
 
         private static PackagingRecyclingNote CreatePrn(
-            string scenarioId,
-            string hourlyPrnSuffix,
+            PrnScenario scenario,
             Status status,
-            bool isExport,
-            string stubOrgId,
-            int tonnageValue,
-            Accreditation accreditation,
-            bool includeIssuedByTradingName = true,
-            bool includeIssuedToTradingName = true,
-            bool isDecemberWaste = false,
-            string? issuerNotes = null
+            Accreditation accreditation
         )
         {
             return new PackagingRecyclingNote
             {
-                Id = $"stub-prn-{scenarioId}-{Guid.NewGuid()}",
-                PrnNumber = $"STUB-PRN{scenarioId}-{hourlyPrnSuffix}",
+                Id = $"stub-prn-{scenario.ScenarioId}-{Guid.NewGuid()}",
+                PrnNumber = $"STUB-PRN{scenario.ScenarioId}-{scenario.HourlyPrnSuffix}",
                 Status = status,
-                IssuedByOrganisation = CreateIssuedByOrganisation(scenarioId, includeIssuedByTradingName),
-                IssuedToOrganisation = CreateIssuedToOrganisation(scenarioId, stubOrgId, includeIssuedToTradingName),
+                IssuedByOrganisation = CreateIssuedByOrganisation(scenario.ScenarioId, scenario.IncludeIssuedByTradingName),
+                IssuedToOrganisation = CreateIssuedToOrganisation(scenario.ScenarioId, scenario.StubOrgId, scenario.IncludeIssuedToTradingName),
                 Accreditation = accreditation,
-                IsDecemberWaste = isDecemberWaste,
-                IsExport = isExport,
-                TonnageValue = tonnageValue,
-                IssuerNotes = issuerNotes ?? $"Stubbed PRN-{scenarioId} for AC testing",
+                IsDecemberWaste = scenario.IsDecemberWaste,
+                IsExport = scenario.IsExport,
+                TonnageValue = scenario.TonnageValue,
+                IssuerNotes = scenario.IssuerNotes ?? $"Stubbed PRN-{scenario.ScenarioId} for AC testing",
             };
         }
 
@@ -309,7 +251,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 Accreditation = CreateAccreditation("13", RrepwMaterialName.Plastic),
                 IsDecemberWaste = false,
                 IsExport = false,
-                TonnageValue = tonnageValue, // Changes each run to test update behaviour
+                TonnageValue = tonnageValue,
                 IssuerNotes = $"Stubbed PRN-13 for AC3 update testing - tonnage: {tonnageValue}",
             };
         }
@@ -346,7 +288,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             {
                 CurrentStatus = RrepwStatus.Cancelled,
                 CancelledAt = cancelledAt,
-                AuthorisedAt = authorisedAt, // Also present but should be ignored for cancelled
+                AuthorisedAt = authorisedAt,
                 AuthorisedBy = CreateAuthorisedBy(scenarioId),
             };
         }
@@ -400,18 +342,15 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         private static Accreditation CreateAccreditation(
             string scenarioId,
             string material,
-            string regulator = RrepwSubmittedToRegulator.EnvironmentAgency_EA,
-            int accreditationYear = 2026,
-            Address? siteAddress = null,
-            string? glassRecyclingProcess = null,
-            bool includeSiteAddress = true,
-            bool includeFullAddress = false
+            AccreditationOptions? options = null
         )
         {
-            Address? address = siteAddress;
-            if (address == null && includeSiteAddress)
+            options ??= new AccreditationOptions();
+
+            Address? address = options.SiteAddress;
+            if (address == null && options.IncludeSiteAddress)
             {
-                address = includeFullAddress
+                address = options.IncludeFullAddress
                     ? CreateSiteAddress(scenarioId, "Test", includeFullAddress: true)
                     : CreateSiteAddress(scenarioId, "Test");
             }
@@ -420,10 +359,10 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             {
                 Id = $"stub-accred-{scenarioId}",
                 AccreditationNumber = $"STUB-ACC-{scenarioId}",
-                AccreditationYear = accreditationYear,
+                AccreditationYear = options.AccreditationYear,
                 Material = material,
-                SubmittedToRegulator = regulator,
-                GlassRecyclingProcess = glassRecyclingProcess,
+                SubmittedToRegulator = options.Regulator,
+                GlassRecyclingProcess = options.GlassRecyclingProcess,
                 SiteAddress = address,
             };
         }
