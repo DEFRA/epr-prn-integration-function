@@ -6,7 +6,7 @@ using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using FluentAssertions;
 
-namespace EprPrnIntegration.Common.UnitTests.Scenarios;
+namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService;
 
 public class StubbedRrepwServiceTests
 {
