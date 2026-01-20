@@ -8,7 +8,7 @@ using FluentAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.Scenarios;
 
-public class RrepwPrnScenarioTests
+public class StubbedRrepwServiceTests
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
     private readonly DateTime _fromDate = new(2026, 1, 15, 10, 0, 0, DateTimeKind.Utc);
