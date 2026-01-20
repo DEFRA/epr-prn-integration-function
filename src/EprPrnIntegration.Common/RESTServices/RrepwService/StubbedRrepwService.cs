@@ -15,7 +15,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         IOptions<RrepwApiConfiguration> rrepwApiConfig
     ) : IRrepwService
     {
-        // Fixed ID for PRN-13 to test update/upsert behaviour
         private const string Prn13FixedId = "prn13-fixed-id-for-update-test";
 
         public Task<List<PackagingRecyclingNote>> ListPackagingRecyclingNotes(
@@ -35,40 +34,26 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
 
             var stubbedData = new List<PackagingRecyclingNote>
             {
-                // PRN-01: awaiting_acceptance, PRN, plastic, authorisedAt = fromDate + 1 min
-                // AC1 (mandatory field mapping), AC5 (awaiting_acceptance uses authorisedAt)
                 CreatePrn(
                     new PrnScenario("01", hourlyPrnSuffix, stubOrgId, 100),
                     CreateAwaitingAcceptanceStatus("01", dateFrom.AddMinutes(1)),
                     CreateAccreditation("01", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeFullAddress: true))
                 ),
-
-                // PRN-02: awaiting_acceptance, PERN (isExport=true), plastic, authorisedAt = fromDate + 1 min
-                // AC1 (mandatory field mapping), AC5, AC10 (PRN vs PERN behaviour)
                 CreatePrn(
                     new PrnScenario("02", hourlyPrnSuffix, stubOrgId, 150, IsExport: true),
                     CreateAwaitingAcceptanceStatus("02", dateFrom.AddMinutes(1)),
                     CreateAccreditation("02", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeSiteAddress: false))
                 ),
-
-                // PRN-03: cancelled, PRN, plastic, cancelledAt = toDate - 1 min
-                // AC6 (cancelled uses cancelledAt)
                 CreatePrn(
                     new PrnScenario("03", hourlyPrnSuffix, stubOrgId, 200, IssuerNotes: "Stubbed cancelled PRN-03 for AC6 testing"),
                     CreateCancelledStatus("03", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
                     CreateAccreditation("03", RrepwMaterialName.Plastic)
                 ),
-
-                // PRN-04: cancelled, PERN (isExport=true), plastic, cancelledAt = toDate - 1 min
-                // AC6 (cancelled uses cancelledAt)
                 CreatePrn(
                     new PrnScenario("04", hourlyPrnSuffix, stubOrgId, 250, IsExport: true, IssuerNotes: "Stubbed cancelled PRN-04 for AC6 testing"),
                     CreateCancelledStatus("04", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
                     CreateAccreditation("04", RrepwMaterialName.Plastic)
                 ),
-
-                // PRN-05: rejected, PRN, plastic, rejectedAt = fromDate + 1 min
-                // AC2 (only awaiting_acceptance and cancelled persisted - this should NOT be persisted)
                 CreatePrn(
                     new PrnScenario("05", hourlyPrnSuffix, stubOrgId, 300,
                         IncludeIssuedByTradingName: false,
@@ -77,26 +62,17 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     CreateRejectedStatus(dateFrom.AddMinutes(1)),
                     CreateAccreditation("05", RrepwMaterialName.Plastic, new AccreditationOptions(IncludeSiteAddress: false))
                 ),
-
-                // PRN-06: awaiting_acceptance, PRN, paper, authorisedAt = fromDate - 1 min
-                // AC3 (delta exclusion - outside date range, should NOT be persisted)
                 CreatePrn(
                     new PrnScenario("06", hourlyPrnSuffix, stubOrgId, 350),
                     CreateAwaitingAcceptanceStatus("06", dateFrom.AddMinutes(-1)),
                     CreateAccreditation("06", RrepwMaterialName.Paper, new AccreditationOptions(IncludeFullAddress: true))
                 ),
-
-                // PRN-07: awaiting_acceptance, PRN, aluminium, authorisedAt = fromDate + 1 min
-                // AC7 (enum mapping for material and regulator)
                 CreatePrn(
                     new PrnScenario("07", hourlyPrnSuffix, stubOrgId, 400),
                     CreateAwaitingAcceptanceStatus("07", dateFrom.AddMinutes(1)),
                     CreateAccreditation("07", RrepwMaterialName.Aluminium,
                         new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.NaturalResourcesWales_NRW, IncludeFullAddress: true))
                 ),
-
-                // PRN-08: awaiting_acceptance, PRN, glass (glass_re_melt), authorisedAt = fromDate + 1 min
-                // AC8 (glass mapping via glassRecyclingProcess)
                 CreatePrn(
                     new PrnScenario("08", hourlyPrnSuffix, stubOrgId, 450,
                         IssuerNotes: $"Stubbed glass PRN-08 for AC8 testing ({RrepwGlassRecyclingProcess.GlassRemelt})"),
@@ -105,9 +81,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         new AccreditationOptions(GlassRecyclingProcess: RrepwGlassRecyclingProcess.GlassRemelt,
                             SiteAddress: CreateSiteAddress("08", "Glass")))
                 ),
-
-                // PRN-09: awaiting_acceptance, PRN, glass (glass_other), authorisedAt = fromDate + 1 min
-                // AC8 (glass mapping via glassRecyclingProcess)
                 CreatePrn(
                     new PrnScenario("09", hourlyPrnSuffix, stubOrgId, 500,
                         IssuerNotes: $"Stubbed glass PRN-09 for AC8 testing ({RrepwGlassRecyclingProcess.GlassOther})"),
@@ -116,27 +89,18 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         new AccreditationOptions(GlassRecyclingProcess: RrepwGlassRecyclingProcess.GlassOther,
                             SiteAddress: CreateSiteAddress("09", "Glass")))
                 ),
-
-                // PRN-10: awaiting_acceptance, PRN, steel, authorisedAt = fromDate + 1 min
-                // AC9 (ProcessToBeUsed mapping - steel maps to R4)
                 CreatePrn(
                     new PrnScenario("10", hourlyPrnSuffix, stubOrgId, 550),
                     CreateAwaitingAcceptanceStatus("10", dateFrom.AddMinutes(1)),
                     CreateAccreditation("10", RrepwMaterialName.Steel,
                         new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA, IncludeFullAddress: true))
                 ),
-
-                // PRN-11: awaiting_acceptance, PRN, fibre, authorisedAt = fromDate + 1 min
-                // AC9 (ProcessToBeUsed mapping - fibre maps to R3)
                 CreatePrn(
                     new PrnScenario("11", hourlyPrnSuffix, stubOrgId, 600),
                     CreateAwaitingAcceptanceStatus("11", dateFrom.AddMinutes(1)),
                     CreateAccreditation("11", RrepwMaterialName.Fibre,
                         new AccreditationOptions(Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA, IncludeFullAddress: true))
                 ),
-
-                // PRN-12: awaiting_acceptance, PRN, wood, authorisedAt = fromDate + 1 min
-                // AC4 (ignored fields do not affect persistence)
                 CreatePrn(
                     new PrnScenario("12", hourlyPrnSuffix, stubOrgId, 650,
                         IsDecemberWaste: true,
@@ -145,19 +109,12 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     CreateAccreditation("12", RrepwMaterialName.Wood,
                         new AccreditationOptions(SiteAddress: CreateSiteAddress("12", "Wood", includeFullAddress: true)))
                 ),
-
-                // PRN-13: awaiting_acceptance, PRN, plastic, authorisedAt = toDate - 1 min
-                // AC3 (update behaviour - same ID every run, changing tonnage)
                 CreateUpdateTestPrn(
                     hourlyPrnSuffix: hourlyPrnSuffix,
                     authorisedAt: dateTo.AddMinutes(-1),
                     stubOrgId: stubOrgId,
-                    // Tonnage varies based on current minute to simulate changes between runs
                     tonnageValue: 700 + now.Minute
                 ),
-
-                // PRN-14: awaiting_acceptance, PRN, plastic, authorisedAt = fromDate + 1 min
-                // AC12 (obligation year always stored as 2026)
                 CreatePrn(
                     new PrnScenario("14", hourlyPrnSuffix, stubOrgId, 800),
                     CreateAwaitingAcceptanceStatus("14", dateFrom.AddMinutes(1)),
@@ -239,8 +196,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             int tonnageValue
         )
         {
-            // PRN-13: Fixed ID for update/upsert testing
-            // Same ID and prnNumber every run, but tonnage changes
             return new PackagingRecyclingNote
             {
                 Id = Prn13FixedId,
@@ -277,7 +232,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 CurrentStatus = RrepwStatus.AwaitingAcceptance,
                 AuthorisedAt = authorisedAt,
                 AuthorisedBy = CreateAuthorisedBy(scenarioId),
-                // Ignored fields - should not affect persistence
                 AcceptedAt = DateTime.UtcNow.AddDays(-5),
             };
         }
