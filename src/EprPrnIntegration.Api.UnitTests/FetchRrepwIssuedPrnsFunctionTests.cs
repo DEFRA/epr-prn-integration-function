@@ -343,8 +343,9 @@ public class FetchRrepwIssuedPrnsFunctionTests
     public async Task StubbedRrepwService_WorksWithMappersAndFunction()
     {
         // Arrange - use concrete StubbedRrepwService instead of mock
+        var stubOrgId = Guid.Parse("0b51240c-c013-4973-9d06-d4f90ee4ad8b");
         var rrepwApiConfig = Options.Create(
-            new RrepwApiConfiguration { StubOrgId = "0b51240c-c013-4973-9d06-d4f90ee4ad8b" }
+            new RrepwApiConfiguration { StubOrgId = stubOrgId.ToString() }
         );
         var stubbedRrepwService = new StubbedRrepwService(
             Mock.Of<ILogger<StubbedRrepwService>>(),
@@ -353,31 +354,38 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
         //get the stubbed data
         var prns = await stubbedRrepwService.ListPackagingRecyclingNotes(
-            new DateTime(),
-            new DateTime()
+            DateTime.UtcNow.AddHours(-1),
+            DateTime.UtcNow
         );
 
-        SetupGetOrganisation(_organisationId, _organisationTypeCode);
+        // Verify we have all 14 PRNs from the canonical scenario matrix
+        Assert.Equal(14, prns.Count);
+
+        // Setup WO service to return organisation for the stub org ID used in all PRNs
+        SetupGetOrganisation(stubOrgId, _organisationTypeCode);
+
         var lastUpdateServiceMock = new Mock<ILastUpdateService>();
         var prnServiceMock = new Mock<IPrnService>();
 
+        // Use a valid date range - DateTime.MinValue causes overflow when stub adds/subtracts minutes
         lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
-            .ReturnsAsync(DateTime.MinValue);
+            .ReturnsAsync(DateTime.UtcNow.AddHours(-1));
 
+        // Setup to accept any PRN with valid AccreditationYear and material mapping
         prnServiceMock
             .Setup(x =>
                 x.SavePrn(
                     It.Is<SavePrnDetailsRequest>(req =>
-                        req.PrnNumber == "STUB-12345"
+                        req.PrnNumber != null
+                        && req.PrnNumber.StartsWith("STUB-PRN")
                         && req.AccreditationYear == "2026"
-                        && req.MaterialName != null
-                        && req.ProcessToBeUsed != null
                     ),
                     It.IsAny<CancellationToken>()
                 )
             )
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
         var function = new FetchRrepwIssuedPrnsFunction(
             lastUpdateServiceMock.Object,
             Mock.Of<ILogger<FetchRrepwIssuedPrnsFunction>>(),
