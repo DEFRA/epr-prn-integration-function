@@ -344,7 +344,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             DateTime.UtcNow
         );
 
-        Assert.Equal(17, prns.Count);
+        Assert.Equal(19, prns.Count);
 
         SetupGetOrganisation(stubOrgId, _organisationTypeCode);
 
