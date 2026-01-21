@@ -350,7 +350,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     scenario.IncludeIssuedByTradingName
                 ),
                 IssuedToOrganisation = CreateIssuedToOrganisation(
-                    scenario.ScenarioId,
                     scenario.StubOrgId,
                     scenario.OrgName,
                     scenario.TradingName
@@ -464,7 +463,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         }
 
         private static Organisation CreateIssuedToOrganisation(
-            string scenarioId,
             string stubOrgId,
             string? orgName = null,
             string? tradingName = null
