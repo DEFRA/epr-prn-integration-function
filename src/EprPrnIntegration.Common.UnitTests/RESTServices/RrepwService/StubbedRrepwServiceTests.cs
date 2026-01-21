@@ -84,7 +84,7 @@ public class StubbedRrepwServiceTests
             .Should()
             .AllSatisfy(prn =>
             {
-                prn.PrnNumber.Should().StartWith("STUB-PRN");
+                prn.PrnNumber.Should().StartWith("STUB");
                 prn.PrnNumber.Should().EndWith(hourlyPrnSuffix);
             });
     }
@@ -100,9 +100,9 @@ public class StubbedRrepwServiceTests
         // PRNs 01-14 use StubOrgId
         var standardPrns = result
             .Where(p =>
-                !p.PrnNumber!.Contains("PRN15")
-                && !p.PrnNumber.Contains("PRN16")
-                && !p.PrnNumber.Contains("PRN17")
+                !p.PrnNumber!.Contains("STUB15")
+                && !p.PrnNumber.Contains("STUB16")
+                && !p.PrnNumber.Contains("STUB17")
             )
             .ToList();
 
@@ -123,12 +123,12 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        // PRNs 15-17 use OrganisationIdComplianceScheme
+        // STUBs 15-17 use OrganisationIdComplianceScheme
         var complianceSchemePrns = result
             .Where(p =>
-                p.PrnNumber!.Contains("PRN15")
-                || p.PrnNumber.Contains("PRN16")
-                || p.PrnNumber.Contains("PRN17")
+                p.PrnNumber!.Contains("STUB15")
+                || p.PrnNumber.Contains("STUB16")
+                || p.PrnNumber.Contains("STUB17")
             )
             .ToList();
 
@@ -222,7 +222,7 @@ public class StubbedRrepwServiceTests
 
         var decemberWastePrns = result.Where(p => p.IsDecemberWaste == true).ToList();
         decemberWastePrns.Should().HaveCount(1);
-        decemberWastePrns.First().PrnNumber.Should().Contain("PRN12");
+        decemberWastePrns.First().PrnNumber.Should().Contain("STUB12");
     }
 
     [Fact]
@@ -315,7 +315,7 @@ public class StubbedRrepwServiceTests
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
         var tonnageValues = result.Select(p => p.TonnageValue).ToList();
-        // PRN 14-17 have the same tonnage of 800, and PRN 13 has variable tonnage based on minute
+        // STUB 14-17 have the same tonnage of 800, and STUB 13 has variable tonnage based on minute
         var distinctTonnageCount = tonnageValues.Distinct().Count();
         distinctTonnageCount.Should().BeGreaterOrEqualTo(13);
     }
@@ -328,7 +328,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        var prn13 = result.FirstOrDefault(p => p.PrnNumber!.Contains("PRN13"));
+        var prn13 = result.FirstOrDefault(p => p.PrnNumber!.Contains("STUB13"));
         prn13.Should().NotBeNull();
         prn13!.Id.Should().Be("prn13-fixed-id-for-update-test");
     }
@@ -456,7 +456,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        var prn12 = result.FirstOrDefault(p => p.PrnNumber!.Contains("PRN12"));
+        var prn12 = result.FirstOrDefault(p => p.PrnNumber!.Contains("STUB12"));
         prn12.Should().NotBeNull();
         prn12!.Status!.CurrentStatus.Should().Be(RrepwStatus.AwaitingAcceptance);
         prn12.Status.AcceptedAt.Should().NotBeNull();
@@ -470,7 +470,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        var prn15 = result.FirstOrDefault(p => p.PrnNumber!.Contains("PRN15"));
+        var prn15 = result.FirstOrDefault(p => p.PrnNumber!.Contains("STUB15"));
         prn15.Should().NotBeNull();
         // Note: CreatePrn passes TradingName as orgName and OrgName as tradingName (swapped)
         prn15!.IssuedToOrganisation!.Name.Should().Be("ABC Scheme Operator Ltd");
@@ -485,7 +485,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        var prn16 = result.FirstOrDefault(p => p.PrnNumber!.Contains("PRN16"));
+        var prn16 = result.FirstOrDefault(p => p.PrnNumber!.Contains("STUB16"));
         prn16.Should().NotBeNull();
         // Note: OrgName is passed as tradingName, Name falls back to default
         prn16!.IssuedToOrganisation!.Name.Should().Contain("XYZ Scheme Operator Ltd");
@@ -500,7 +500,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        var prn17 = result.FirstOrDefault(p => p.PrnNumber!.Contains("PRN17"));
+        var prn17 = result.FirstOrDefault(p => p.PrnNumber!.Contains("STUB17"));
         prn17.Should().NotBeNull();
         // Note: OrgName is passed as tradingName, Name falls back to default
         prn17!.IssuedToOrganisation!.Name.Should().Contain("Producer Company Ltd");
