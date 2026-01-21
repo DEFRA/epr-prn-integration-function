@@ -31,6 +31,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             var now = DateTime.UtcNow;
             var hourlyPrnSuffix = now.ToString("yyyyMMddHH");
             var stubOrgId = rrepwApiConfig.Value.StubOrgId;
+            var complianceSchemeOrgId = rrepwApiConfig.Value.StubOrgIdComplianceScheme;
 
             var stubbedData = new List<PackagingRecyclingNote>
             {
@@ -210,7 +211,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     new PrnScenario(
                         "15",
                         hourlyPrnSuffix,
-                        stubOrgId,
+                        complianceSchemeOrgId,
                         800,
                         OrgName: "ABC Scheme Operator Ltd",
                         TradingName: "ABC Packaging Scheme"
@@ -226,7 +227,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     new PrnScenario(
                         "16",
                         hourlyPrnSuffix,
-                        stubOrgId,
+                        complianceSchemeOrgId,
                         800,
                         OrgName: "XYZ Scheme Operator Ltd"
                     ),
@@ -241,7 +242,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     new PrnScenario(
                         "17",
                         hourlyPrnSuffix,
-                        stubOrgId,
+                        complianceSchemeOrgId,
                         800,
                         OrgName: "Producer Company Ltd"
                     ),
@@ -300,7 +301,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         #endregion
 
         #region PRN Factory Methods
-
         private static PackagingRecyclingNote CreatePrn(
             PrnScenario scenario,
             Status status,
@@ -309,8 +309,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         {
             return new PackagingRecyclingNote
             {
-                Id = $"stub-prn-{scenario.ScenarioId}-{Guid.NewGuid()}",
-                PrnNumber = $"STUB-PRN{scenario.ScenarioId}-{scenario.HourlyPrnSuffix}",
+                Id = Guid.NewGuid().ToString(),
+                PrnNumber = $"STUB{scenario.ScenarioId}-{scenario.HourlyPrnSuffix}",
                 Status = status,
                 IssuedByOrganisation = CreateIssuedByOrganisation(
                     scenario.ScenarioId,
@@ -341,7 +341,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return new PackagingRecyclingNote
             {
                 Id = Prn13FixedId,
-                PrnNumber = $"STUB-PRN13-{hourlyPrnSuffix}",
+                PrnNumber = $"STUB13-{hourlyPrnSuffix}",
                 Status = CreateAwaitingAcceptanceStatus("13", authorisedAt),
                 IssuedByOrganisation = CreateIssuedByOrganisation("13"),
                 IssuedToOrganisation = CreateIssuedToOrganisation("13", stubOrgId),

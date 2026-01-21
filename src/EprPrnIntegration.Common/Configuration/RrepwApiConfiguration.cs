@@ -15,4 +15,5 @@ public class RrepwApiConfiguration
     public int RetryDelaySeconds { get; set; } = 5;
     public bool UseStubbedData { get; set; }
     public string StubOrgId { get; set; } = null!;
+    public string StubOrgIdComplianceScheme { get; set; } = null!;
 }

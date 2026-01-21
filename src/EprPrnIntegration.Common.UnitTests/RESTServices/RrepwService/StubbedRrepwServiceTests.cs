@@ -16,6 +16,7 @@ public class StubbedRrepwServiceTests
         ILogger<Common.RESTServices.RrepwService.StubbedRrepwService>
     > _loggerMock;
     private const string TestStubOrgId = "test-stub-org-id";
+    private const string TestComplianceSchemeOrgId = "test-compliance-scheme-org-id";
 
     public StubbedRrepwServiceTests()
     {
@@ -23,7 +24,13 @@ public class StubbedRrepwServiceTests
         var configMock = new Mock<IOptions<RrepwApiConfiguration>>();
         configMock
             .Setup(c => c.Value)
-            .Returns(new RrepwApiConfiguration { StubOrgId = TestStubOrgId });
+            .Returns(
+                new RrepwApiConfiguration
+                {
+                    StubOrgId = TestStubOrgId,
+                    StubOrgIdComplianceScheme = TestComplianceSchemeOrgId,
+                }
+            );
         _service = new Common.RESTServices.RrepwService.StubbedRrepwService(
             _loggerMock.Object,
             configMock.Object
@@ -90,11 +97,47 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        result
+        // PRNs 01-14 use StubOrgId
+        var standardPrns = result
+            .Where(p =>
+                !p.PrnNumber!.Contains("PRN15")
+                && !p.PrnNumber.Contains("PRN16")
+                && !p.PrnNumber.Contains("PRN17")
+            )
+            .ToList();
+
+        standardPrns.Should().HaveCount(14);
+        standardPrns
             .Should()
             .AllSatisfy(prn =>
             {
                 prn.IssuedToOrganisation!.Id.Should().Be(TestStubOrgId);
+            });
+    }
+
+    [Fact]
+    public async Task ListPackagingRecyclingNotes_ComplianceSchemePrnsUseComplianceSchemeOrgId()
+    {
+        var dateFrom = DateTime.UtcNow.AddDays(-1);
+        var dateTo = DateTime.UtcNow;
+
+        var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
+
+        // PRNs 15-17 use OrganisationIdComplianceScheme
+        var complianceSchemePrns = result
+            .Where(p =>
+                p.PrnNumber!.Contains("PRN15")
+                || p.PrnNumber.Contains("PRN16")
+                || p.PrnNumber.Contains("PRN17")
+            )
+            .ToList();
+
+        complianceSchemePrns.Should().HaveCount(3);
+        complianceSchemePrns
+            .Should()
+            .AllSatisfy(prn =>
+            {
+                prn.IssuedToOrganisation!.Id.Should().Be(TestComplianceSchemeOrgId);
             });
     }
 
