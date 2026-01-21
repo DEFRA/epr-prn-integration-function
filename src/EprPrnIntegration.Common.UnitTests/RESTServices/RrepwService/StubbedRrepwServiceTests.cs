@@ -45,7 +45,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        result.Should().HaveCount(17);
+        result.Should().HaveCount(19);
     }
 
     [Fact]
@@ -103,6 +103,8 @@ public class StubbedRrepwServiceTests
                 !p.PrnNumber!.Contains("STUB15")
                 && !p.PrnNumber.Contains("STUB16")
                 && !p.PrnNumber.Contains("STUB17")
+                && !p.PrnNumber.Contains("STUB18")
+                && !p.PrnNumber.Contains("STUB19")
             )
             .ToList();
 
@@ -209,7 +211,7 @@ public class StubbedRrepwServiceTests
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
         var exportPrns = result.Where(p => p.IsExport == true).ToList();
-        exportPrns.Should().HaveCount(2);
+        exportPrns.Should().HaveCount(4);
     }
 
     [Fact]

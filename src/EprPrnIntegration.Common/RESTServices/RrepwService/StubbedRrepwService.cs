@@ -253,6 +253,39 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         new AccreditationOptions(IncludeFullAddress: true)
                     )
                 ),
+                CreatePrn(
+                    new PrnScenario(
+                        "18",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        OrgName: "ABC Scheme Operator Ltd",
+                        TradingName: "ABC Packaging Scheme",
+                        IsExport: true
+                    ),
+                    CreateAwaitingAcceptanceStatus("18", dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "18",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
+                CreatePrn(
+                    new PrnScenario(
+                        "19",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        OrgName: "XYZ Scheme Operator Ltd",
+                        IsExport: true
+                    ),
+                    CreateAwaitingAcceptanceStatus("19", dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "19",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
             };
 
             logger.LogInformation(
@@ -440,7 +473,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return new Organisation
             {
                 Id = stubOrgId,
-                Name = orgName ?? $"Stubbed Recipient Organisation {scenarioId}",
+                Name = orgName ?? $"Stubbed Recipient Organisation {stubOrgId}",
                 TradingName = tradingName,
             };
         }
