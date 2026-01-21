@@ -344,7 +344,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             DateTime.UtcNow
         );
 
-        Assert.Equal(14, prns.Count);
+        Assert.Equal(17, prns.Count);
 
         SetupGetOrganisation(stubOrgId, _organisationTypeCode);
 
@@ -360,7 +360,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                 x.SavePrn(
                     It.Is<SavePrnDetailsRequest>(req =>
                         req.PrnNumber != null
-                        && req.PrnNumber.StartsWith("STUB-PRN")
+                        && req.PrnNumber.StartsWith("STUB")
                         && req.AccreditationYear == "2026"
                     ),
                     It.IsAny<CancellationToken>()
