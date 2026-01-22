@@ -350,7 +350,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     scenario.IncludeIssuedByTradingName
                 ),
                 IssuedToOrganisation = CreateIssuedToOrganisation(
-                    scenario.ScenarioId,
                     scenario.StubOrgId,
                     scenario.OrgName,
                     scenario.TradingName
@@ -377,7 +376,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 PrnNumber = $"STUB13-{hourlyPrnSuffix}",
                 Status = CreateAwaitingAcceptanceStatus("13", authorisedAt),
                 IssuedByOrganisation = CreateIssuedByOrganisation("13"),
-                IssuedToOrganisation = CreateIssuedToOrganisation("13", stubOrgId),
+                IssuedToOrganisation = CreateIssuedToOrganisation(stubOrgId),
                 Accreditation = CreateAccreditation("13", RrepwMaterialName.Plastic),
                 IsDecemberWaste = false,
                 IsExport = false,
@@ -464,7 +463,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         }
 
         private static Organisation CreateIssuedToOrganisation(
-            string scenarioId,
             string stubOrgId,
             string? orgName = null,
             string? tradingName = null
