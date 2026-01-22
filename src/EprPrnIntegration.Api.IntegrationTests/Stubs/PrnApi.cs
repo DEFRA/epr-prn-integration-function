@@ -110,7 +110,7 @@ public class PrnApi(WireMockContext wiremock)
         Assert.NotNull(status.Guid);
     }
 
-    public async Task HasUpdateFor(string evidenceNo)
+    public async Task HasUpdateFor(string evidenceNo, string? obligationYear = null)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
@@ -129,6 +129,7 @@ public class PrnApi(WireMockContext wiremock)
                                     evidenceNo,
                                     evidenceStatusCode = "EV-ACCEP",
                                     statusDate = "2025-01-15T10:30:00Z",
+                                    obligationYear,
                                 },
                             }
                         )

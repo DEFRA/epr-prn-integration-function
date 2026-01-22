@@ -57,13 +57,11 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 {
                     EvidenceNo = "12345",
                     EvidenceStatusCode = "EV-ACANCEL",
-                    ObligationYear = "2025",
                 },
                 new UpdatedNpwdPrnsResponseModel
                 {
                     EvidenceNo = "67890",
                     EvidenceStatusCode = "EV-ACCEP",
-                    ObligationYear = "2025",
                 },
             };
 
@@ -77,9 +75,11 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
 
             Assert.Equal("12345", result.Value[0].EvidenceNo);
             Assert.Equal("EV-ACANCEL", result.Value[0].EvidenceStatusCode);
+            Assert.Equal("2025", result.Value[0].ObligationYear);
 
             Assert.Equal("67890", result.Value[1].EvidenceNo);
             Assert.Equal("EV-ACCEP", result.Value[1].EvidenceStatusCode);
+            Assert.Equal("2025", result.Value[1].ObligationYear);
         }
 
         [Fact]
@@ -88,12 +88,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Arrange
             var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
             {
-                new UpdatedNpwdPrnsResponseModel
-                {
-                    EvidenceNo = "12345",
-                    EvidenceStatusCode = "",
-                    ObligationYear = "2025",
-                },
+                new UpdatedNpwdPrnsResponseModel { EvidenceNo = "12345", EvidenceStatusCode = "" },
             };
 
             // Act
@@ -107,6 +102,29 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Check first entry
             Assert.Equal("12345", result.Value[0].EvidenceNo);
             Assert.Equal("", result.Value[0].EvidenceStatusCode);
+        }
+
+        [Theory]
+        [InlineData(null, "2025")]
+        [InlineData("2026", "2026")]
+        public void Map_ValidInput_ObligationYear_FromInputOrConfigFallback(
+            string? obligationYear,
+            string expectedObligationYear
+        )
+        {
+            var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
+            {
+                new()
+                {
+                    EvidenceNo = "12345",
+                    EvidenceStatusCode = "",
+                    ObligationYear = obligationYear,
+                },
+            };
+
+            var result = PrnMapper.Map(updatedPrns, _configurationMock.Object);
+
+            Assert.Equal(expectedObligationYear, result.Value[0].ObligationYear);
         }
     }
 }

@@ -5,11 +5,16 @@ namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
 public class UpdatePrnsListTests : IntegrationTestBase
 {
-    [Fact]
-    public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()
+    [Theory]
+    [InlineData(null, "2025")]
+    [InlineData("2026", "2026")]
+    public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD(
+        string? obligationYear,
+        string expectedObligationYear
+    )
     {
         await Task.WhenAll(
-            PrnApiStub.HasUpdateFor("PRN001234567"),
+            PrnApiStub.HasUpdateFor("PRN001234567", obligationYear),
             PrnApiStub.AcceptsSyncStatus(),
             NpwdApiStub.AcceptsPrnPatch()
         );
@@ -21,6 +26,11 @@ public class UpdatePrnsListTests : IntegrationTestBase
             var requests = await NpwdApiStub.GetPrnPatchRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
+            Assert.Contains(
+                requests,
+                entry =>
+                    entry.Request.Body!.Contains($"\"ObligationYear\":\"{expectedObligationYear}\"")
+            );
         });
 
         await AsyncWaiter.WaitForAsync(async () =>
