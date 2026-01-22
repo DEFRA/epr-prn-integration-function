@@ -113,6 +113,8 @@ public class StubbedRrepwServiceTests
             .Should()
             .AllSatisfy(prn =>
             {
+                prn.IssuedToOrganisation!.Name.Should()
+                    .Be($"Stubbed Recipient Organisation {TestStubOrgId}");
                 prn.IssuedToOrganisation!.Id.Should().Be(TestStubOrgId);
             });
     }
@@ -141,6 +143,9 @@ public class StubbedRrepwServiceTests
             {
                 prn.IssuedToOrganisation!.Id.Should().Be(TestComplianceSchemeOrgId);
             });
+        complianceSchemePrns[0].IssuedToOrganisation!.Name.Should().Be("ABC Scheme Operator Ltd");
+        complianceSchemePrns[1].IssuedToOrganisation!.Name.Should().Be("XYZ Scheme Operator Ltd");
+        complianceSchemePrns[2].IssuedToOrganisation!.Name.Should().Be("Producer Company Ltd");
     }
 
     [Fact]
