@@ -114,17 +114,26 @@ public class PrnApi(WireMockContext wiremock)
     {
         var mappingBuilder = wiremock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
-            builder.WithRequest(request => request.UsingGet().WithPath("/api/v1/prn/ModifiedPrnsByDate"))
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK).WithBodyAsJson(new[]
-                {
-                    new
-                    {
-                        evidenceNo,
-                        evidenceStatusCode = "EV-ACCEP",
-                        statusDate = "2025-01-15T10:30:00Z",
-                        obligationYear
-                    }
-                }))
+            builder
+                .WithRequest(request =>
+                    request.UsingGet().WithPath("/api/v1/prn/ModifiedPrnsByDate")
+                )
+                .WithResponse(response =>
+                    response
+                        .WithStatusCode(HttpStatusCode.OK)
+                        .WithBodyAsJson(
+                            new[]
+                            {
+                                new
+                                {
+                                    evidenceNo,
+                                    evidenceStatusCode = "EV-ACCEP",
+                                    statusDate = "2025-01-15T10:30:00Z",
+                                    obligationYear,
+                                },
+                            }
+                        )
+                )
         );
 
         var status = await mappingBuilder.BuildAndPostAsync();

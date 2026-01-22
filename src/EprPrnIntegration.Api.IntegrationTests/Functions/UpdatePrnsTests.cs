@@ -8,7 +8,10 @@ public class UpdatePrnsListTests : IntegrationTestBase
     [Theory]
     [InlineData(null, "2025")]
     [InlineData("2026", "2026")]
-    public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD(string? obligationYear, string expectedObligationYear)
+    public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD(
+        string? obligationYear,
+        string expectedObligationYear
+    )
     {
         await Task.WhenAll(
             PrnApiStub.HasUpdateFor("PRN001234567", obligationYear),
@@ -23,7 +26,11 @@ public class UpdatePrnsListTests : IntegrationTestBase
             var requests = await NpwdApiStub.GetPrnPatchRequests();
 
             Assert.Contains(requests, entry => entry.Request.Body!.Contains("PRN001234567"));
-            Assert.Contains(requests, entry => entry.Request.Body!.Contains($"\"ObligationYear\":\"{expectedObligationYear}\""));
+            Assert.Contains(
+                requests,
+                entry =>
+                    entry.Request.Body!.Contains($"\"ObligationYear\":\"{expectedObligationYear}\"")
+            );
         });
 
         await AsyncWaiter.WaitForAsync(async () =>

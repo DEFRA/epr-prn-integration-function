@@ -88,11 +88,7 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
             // Arrange
             var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
             {
-                new UpdatedNpwdPrnsResponseModel
-                {
-                    EvidenceNo = "12345",
-                    EvidenceStatusCode = "",
-                },
+                new UpdatedNpwdPrnsResponseModel { EvidenceNo = "12345", EvidenceStatusCode = "" },
             };
 
             // Act
@@ -111,7 +107,10 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
         [Theory]
         [InlineData(null, "2025")]
         [InlineData("2026", "2026")]
-        public void Map_ValidInput_ObligationYear_FromInputOrConfigFallback(string? obligationYear, string expectedObligationYear)
+        public void Map_ValidInput_ObligationYear_FromInputOrConfigFallback(
+            string? obligationYear,
+            string expectedObligationYear
+        )
         {
             var updatedPrns = new List<UpdatedNpwdPrnsResponseModel>
             {
@@ -119,12 +118,12 @@ namespace EprPrnIntegration.Common.UnitTests.Mappers
                 {
                     EvidenceNo = "12345",
                     EvidenceStatusCode = "",
-                    ObligationYear = obligationYear
+                    ObligationYear = obligationYear,
                 },
             };
-            
+
             var result = PrnMapper.Map(updatedPrns, _configurationMock.Object);
-            
+
             Assert.Equal(expectedObligationYear, result.Value[0].ObligationYear);
         }
     }
