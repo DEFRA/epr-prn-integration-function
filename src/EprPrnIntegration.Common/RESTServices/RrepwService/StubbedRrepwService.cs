@@ -376,7 +376,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 PrnNumber = $"STUB13-{hourlyPrnSuffix}",
                 Status = CreateAwaitingAcceptanceStatus("13", authorisedAt),
                 IssuedByOrganisation = CreateIssuedByOrganisation("13"),
-                IssuedToOrganisation = CreateIssuedToOrganisation("13", stubOrgId),
+                IssuedToOrganisation = CreateIssuedToOrganisation(stubOrgId),
                 Accreditation = CreateAccreditation("13", RrepwMaterialName.Plastic),
                 IsDecemberWaste = false,
                 IsExport = false,
