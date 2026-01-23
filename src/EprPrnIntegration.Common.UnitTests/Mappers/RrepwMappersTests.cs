@@ -182,7 +182,7 @@ public class RrepwMappersTests
         RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency
     )]
     [InlineData(
-        RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA,
+        RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAgency_SEPA,
         RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency
     )]
     public void ShouldMapPackagingRecyclingNoteToPrn_SubmittedToRegulator(

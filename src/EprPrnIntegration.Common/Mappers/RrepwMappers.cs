@@ -185,7 +185,7 @@ public class RrepwMappers : Profile
                 RpdReprocessorExporterAgency.NaturalResourcesWales,
             RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_NIEA =>
                 RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
-            RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA =>
+            RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAgency_SEPA =>
                 RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
             _ => null,
         };

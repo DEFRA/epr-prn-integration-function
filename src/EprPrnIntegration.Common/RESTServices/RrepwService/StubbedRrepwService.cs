@@ -169,7 +169,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         "11",
                         RrepwMaterialName.Fibre,
                         new AccreditationOptions(
-                            Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA,
+                            Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAgency_SEPA,
                             IncludeFullAddress: true
                         )
                     )

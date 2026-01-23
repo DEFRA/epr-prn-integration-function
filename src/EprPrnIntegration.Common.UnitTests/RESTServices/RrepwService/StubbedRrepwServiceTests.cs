@@ -269,7 +269,7 @@ public class StubbedRrepwServiceTests
             .Contain(RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_NIEA);
         regulators
             .Should()
-            .Contain(RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA);
+            .Contain(RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAgency_SEPA);
     }
 
     [Fact]
