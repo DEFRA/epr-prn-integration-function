@@ -266,10 +266,10 @@ public class StubbedRrepwServiceTests
         regulators.Should().Contain(RrepwSubmittedToRegulator.NaturalResourcesWales_NRW);
         regulators
             .Should()
-            .Contain(RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA);
+            .Contain(RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_NIEA);
         regulators
             .Should()
-            .Contain(RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA);
+            .Contain(RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAgency_SEPA);
     }
 
     [Fact]
