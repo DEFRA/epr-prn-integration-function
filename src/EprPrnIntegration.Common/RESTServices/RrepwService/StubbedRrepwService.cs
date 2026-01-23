@@ -95,7 +95,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 ),
                 CreatePrn(
                     new PrnScenario("06", hourlyPrnSuffix, stubOrgId, 350),
-                    CreateAwaitingAcceptanceStatus("06", dateFrom.AddMinutes(-1)),
+                    CreateAwaitingAcceptanceStatus("06", dateFrom.AddMinutes(1)),
                     CreateAccreditation(
                         "06",
                         RrepwMaterialName.Paper,
@@ -157,7 +157,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         "10",
                         RrepwMaterialName.Steel,
                         new AccreditationOptions(
-                            Regulator: RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA,
+                            Regulator: RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_NIEA,
                             IncludeFullAddress: true
                         )
                     )
@@ -169,7 +169,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         "11",
                         RrepwMaterialName.Fibre,
                         new AccreditationOptions(
-                            Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA,
+                            Regulator: RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA,
                             IncludeFullAddress: true
                         )
                     )

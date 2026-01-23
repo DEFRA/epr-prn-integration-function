@@ -155,6 +155,7 @@ public class RrepwMappers : Profile
     private static string? ConvertMaterialToEprnMaterial(PackagingRecyclingNote prn)
     {
         string? material = prn.Accreditation?.Material;
+
         string? glassRecyclingProcess = prn.Accreditation?.GlassRecyclingProcess;
         return material switch
         {
@@ -183,9 +184,9 @@ public class RrepwMappers : Profile
                 RpdReprocessorExporterAgency.EnvironmentAgency,
             RrepwSubmittedToRegulator.NaturalResourcesWales_NRW =>
                 RpdReprocessorExporterAgency.NaturalResourcesWales,
-            RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_SEPA =>
+            RrepwSubmittedToRegulator.NorthernIrelandEnvironmentAgency_NIEA =>
                 RpdReprocessorExporterAgency.NorthernIrelandEnvironmentAgency,
-            RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_NIEA =>
+            RrepwSubmittedToRegulator.ScottishEnvironmentProtectionAge_SEPA =>
                 RpdReprocessorExporterAgency.ScottishEnvironmentProtectionAgency,
             _ => null,
         };
