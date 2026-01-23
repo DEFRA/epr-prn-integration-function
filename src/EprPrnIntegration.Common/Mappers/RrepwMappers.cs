@@ -155,7 +155,6 @@ public class RrepwMappers : Profile
     private static string? ConvertMaterialToEprnMaterial(PackagingRecyclingNote prn)
     {
         string? material = prn.Accreditation?.Material;
-
         string? glassRecyclingProcess = prn.Accreditation?.GlassRecyclingProcess;
         return material switch
         {
