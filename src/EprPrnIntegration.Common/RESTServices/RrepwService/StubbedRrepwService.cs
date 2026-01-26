@@ -394,7 +394,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         #endregion
 
         #region PRN Factory Methods
-        private static int ScenarioNumber = 1;
 
         private static PackagingRecyclingNote CreatePrn(
             PrnScenario scenario,
