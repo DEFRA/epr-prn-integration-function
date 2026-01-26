@@ -43,20 +43,6 @@ public static class HostBuilderConfiguration
     {
         return new HostBuilder()
             .ConfigureFunctionsWebApplication()
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                // comment this out to revert to plain text logging locally.
-                logging.AddJsonConsole(options =>
-                {
-                    options.IncludeScopes = true;
-                    options.TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
-                    options.JsonWriterOptions = new System.Text.Json.JsonWriterOptions
-                    {
-                        Indented = true,
-                    };
-                });
-            })
             .ConfigureServices(
                 (hostingContext, services) =>
                     ConfigureServices(hostingContext.Configuration, services)
