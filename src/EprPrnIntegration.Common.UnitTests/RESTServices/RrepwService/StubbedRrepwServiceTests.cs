@@ -45,7 +45,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        result.Should().HaveCount(19);
+        result.Should().HaveCount(23);
     }
 
     [Fact]
@@ -105,6 +105,10 @@ public class StubbedRrepwServiceTests
                 && !p.PrnNumber.Contains("STUB17")
                 && !p.PrnNumber.Contains("STUB18")
                 && !p.PrnNumber.Contains("STUB19")
+                && !p.PrnNumber.Contains("STUB20")
+                && !p.PrnNumber.Contains("STUB21")
+                && !p.PrnNumber.Contains("STUB22")
+                && !p.PrnNumber.Contains("STUB23")
             )
             .ToList();
 
@@ -182,7 +186,7 @@ public class StubbedRrepwServiceTests
         var cancelledPrns = result
             .Where(p => p.Status!.CurrentStatus == RrepwStatus.Cancelled)
             .ToList();
-        cancelledPrns.Should().HaveCount(2);
+        cancelledPrns.Should().HaveCount(4);
         cancelledPrns
             .Should()
             .AllSatisfy(prn =>
@@ -216,7 +220,7 @@ public class StubbedRrepwServiceTests
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
         var exportPrns = result.Where(p => p.IsExport == true).ToList();
-        exportPrns.Should().HaveCount(4);
+        exportPrns.Should().HaveCount(6);
     }
 
     [Fact]
