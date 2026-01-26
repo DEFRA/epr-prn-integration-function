@@ -286,6 +286,66 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         new AccreditationOptions(IncludeFullAddress: true)
                     )
                 ),
+                CreatePrn(
+                    new PrnScenario(
+                        "20",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        IsExport: false
+                    ),
+                    CreateAwaitingAcceptanceStatus("20", dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "20",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
+                CreatePrn(
+                    new PrnScenario(
+                        "21",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        IsExport: true
+                    ),
+                    CreateAwaitingAcceptanceStatus("21", dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "21",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
+                CreatePrn(
+                    new PrnScenario(
+                        "22",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        IsExport: false
+                    ),
+                    CreateCancelledStatus("22", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "22",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
+                CreatePrn(
+                    new PrnScenario(
+                        "23",
+                        hourlyPrnSuffix,
+                        complianceSchemeOrgId,
+                        800,
+                        IsExport: true
+                    ),
+                    CreateCancelledStatus("23", dateTo.AddMinutes(-1), dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "23",
+                        RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
             };
 
             logger.LogInformation(
@@ -334,6 +394,8 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
         #endregion
 
         #region PRN Factory Methods
+        private static int ScenarioNumber = 1;
+
         private static PackagingRecyclingNote CreatePrn(
             PrnScenario scenario,
             Status status,
