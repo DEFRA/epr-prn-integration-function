@@ -5,6 +5,7 @@ using AutoFixture;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
@@ -24,6 +25,7 @@ public class UpdateRrepwPrnsFunctionTests
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IRrepwService> _rrepwServiceMock = new();
     private readonly Mock<IPrnService> _prnServiceMock = new();
+    private readonly Mock<IUtilities> _mockUtilities = new();
     private readonly IOptions<UpdateRrepwPrnsConfiguration> _config = Options.Create(
         new UpdateRrepwPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -38,7 +40,8 @@ public class UpdateRrepwPrnsFunctionTests
             _prnServiceMock.Object,
             _rrepwServiceMock.Object,
             _loggerMock.Object,
-            _config
+            _config,
+            _mockUtilities.Object
         );
     }
 

@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
@@ -15,7 +17,8 @@ public class UpdateRrepwPrnsFunction(
     IPrnService prnService,
     IRrepwService rrepwService,
     ILogger<UpdateRrepwPrnsFunction> logger,
-    IOptions<UpdateRrepwPrnsConfiguration> config
+    IOptions<UpdateRrepwPrnsConfiguration> config,
+    IUtilities utilities
 )
 {
     [Function(FunctionName.UpdateRrepwPrns)]
@@ -35,8 +38,10 @@ public class UpdateRrepwPrnsFunction(
         if (updatedEprPrns == null)
             return;
 
-        foreach (var prn in updatedEprPrns)
+        foreach (var prn in updatedEprPrns) {
             await UpdatePrn(prn, fromDate, toDate);
+            LogCustomEvents(prn);
+        }
 
         await lastUpdateService.SetLastUpdate(FunctionName.UpdateRrepwPrns, DateTime.UtcNow);
     }
@@ -94,4 +99,18 @@ public class UpdateRrepwPrnsFunction(
         );
         return null;
     }
+
+    private void LogCustomEvents(PrnUpdateStatus prn)
+    {
+
+        Dictionary<string, string> eventData = new()
+        {
+            { "EvidenceNo", prn.PrnNumber },
+            { "EvidenceStatusCode", prn.PrnStatusId.ToString() },
+            { "StatusDate", prn.StatusDate.GetValueOrDefault().ToUniversalTime().ToString() },
+        };
+
+        utilities.AddCustomEvent(CustomEvents.UpdatePrnRrepw, eventData);
+    }
+
 }

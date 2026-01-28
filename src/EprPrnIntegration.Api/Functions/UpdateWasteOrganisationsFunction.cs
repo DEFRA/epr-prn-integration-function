@@ -1,4 +1,6 @@
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -8,6 +10,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+
 namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateWasteOrganisationsFunction(
@@ -15,7 +18,8 @@ public class UpdateWasteOrganisationsFunction(
     ILogger<UpdateWasteOrganisationsFunction> logger,
     ICommonDataService commonDataService,
     IWasteOrganisationsService wasteOrganisationsService,
-    IOptions<UpdateWasteOrganisationsConfiguration> config
+    IOptions<UpdateWasteOrganisationsConfiguration> config,
+    IUtilities utilities
 )
 {
     [Function(FunctionName.UpdateWasteOrganisations)]
@@ -70,8 +74,10 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        foreach (var producer in producers)
+        foreach (var producer in producers) {
             await UpdateProducer(producer);
+            LogCustomEvents(producer);
+        }
     }
 
     private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
@@ -89,5 +95,16 @@ public class UpdateWasteOrganisationsFunction(
             $"Saving Organisation {producer.PEPRID}",
             CancellationToken.None
         );
+    }
+
+     private void LogCustomEvents(UpdatedProducersResponseV2 producer)
+    {
+        {
+            Dictionary<string, string> eventData = new()
+            {
+                { CustomEventFields.OrganisationName, producer.OrganisationName ?? string.Empty },
+            };
+            utilities.AddCustomEvent(CustomEvents.UpdateWasteOrganisation, eventData);
+        }
     }
 }
