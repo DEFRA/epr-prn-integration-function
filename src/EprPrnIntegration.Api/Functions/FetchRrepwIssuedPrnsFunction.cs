@@ -171,21 +171,19 @@ public class FetchRrepwIssuedPrnsFunction(
         );
     }
 
-    private void LogCustomEvents(
-        PackagingRecyclingNote? rrepwIssuedPrn
-    )
+    private void LogCustomEvents(PackagingRecyclingNote rrepwIssuedPrn)
     {
         Dictionary<string, string> eventData = new()
         {
-            { CustomEventFields.PrnNumber, rrepwIssuedPrn?.PrnNumber ?? "No PRN Number" },
+            { CustomEventFields.PrnNumber, rrepwIssuedPrn.PrnNumber ?? "No PRN Number" },
             {
                 CustomEventFields.IncomingStatus,
-                rrepwIssuedPrn?.Status?.CurrentStatus ?? "Blank Incoming Status"
+                rrepwIssuedPrn.Status?.CurrentStatus ?? "Blank Incoming Status"
             },
             { CustomEventFields.Date, DateTime.UtcNow.ToString() },
             {
                 CustomEventFields.OrganisationName,
-                rrepwIssuedPrn?.IssuedToOrganisation?.Name ?? "Blank Organisation Name"
+                rrepwIssuedPrn.IssuedToOrganisation?.Name ?? "Blank Organisation Name"
             },
         };
 
