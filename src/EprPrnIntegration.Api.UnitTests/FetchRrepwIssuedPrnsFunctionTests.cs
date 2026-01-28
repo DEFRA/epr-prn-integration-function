@@ -7,6 +7,7 @@ using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -34,6 +35,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
     private readonly Mock<IPrnService> _prnServiceMock = new();
     private readonly Mock<IWasteOrganisationsService> _woService = new();
     private readonly Mock<IProducerEmailService> _producerEmailServiceMock = new();
+    private readonly Mock<IUtilities> _mockUtilities = new();
+
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
         new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -51,7 +54,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _prnServiceMock.Object,
             _config,
             _woService.Object,
-            _producerEmailServiceMock.Object
+            _producerEmailServiceMock.Object,
+            _mockUtilities.Object
         );
         SetupGetOrganisation(_organisationId, _organisationTypeCode);
     }
@@ -372,7 +376,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             prnServiceMock.Object,
             _config,
             _woService.Object,
-            _producerEmailServiceMock.Object
+            _producerEmailServiceMock.Object,
+            _mockUtilities.Object
         );
 
         await function.Run(new TimerInfo());

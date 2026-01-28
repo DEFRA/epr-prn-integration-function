@@ -6,6 +6,7 @@ using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Extensions;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
@@ -34,7 +35,8 @@ public class FetchRrepwIssuedPrnsFunction(
     IPrnService prnService,
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
     IWasteOrganisationsService woService,
-    IProducerEmailService producerEmailService
+    IProducerEmailService producerEmailService,
+    IUtilities utilities
 )
 {
     private readonly IMapper _mapper = RrepwMappers.CreateMapper();
@@ -128,6 +130,7 @@ public class FetchRrepwIssuedPrnsFunction(
             MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))
             {
+                LogCustomEvents(prn);
                 await SendEmailToProducers(request, org);
             }
         }
@@ -166,5 +169,26 @@ public class FetchRrepwIssuedPrnsFunction(
             $"Saving PRN {request.PrnNumber}",
             cancellationToken
         );
+    }
+
+    private void LogCustomEvents(
+        PackagingRecyclingNote? rrepwIssuedPrn
+    )
+    {
+        Dictionary<string, string> eventData = new()
+        {
+            { CustomEventFields.PrnNumber, rrepwIssuedPrn?.PrnNumber ?? "No PRN Number" },
+            {
+                CustomEventFields.IncomingStatus,
+                rrepwIssuedPrn?.Status?.CurrentStatus ?? "Blank Incoming Status"
+            },
+            { CustomEventFields.Date, DateTime.UtcNow.ToString() },
+            {
+                CustomEventFields.OrganisationName,
+                rrepwIssuedPrn?.IssuedToOrganisation?.Name ?? "Blank Organisation Name"
+            },
+        };
+
+        utilities.AddCustomEvent(CustomEvents.InsertPrnFromRrepw, eventData);
     }
 }

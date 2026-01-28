@@ -61,9 +61,12 @@
     {
         public const string IssuedPrn = "IssuedPrn";
         public const string UpdateProducer = "UpdateProducer";
+        public const string UpdateWasteOrganisation = "UpdateWasteOrganisation";
         public const string NpwdPrnValidationError = "NpwdPrnValidationError";
         public const string UpdatePrn = "UpdatePrnOnNpwd";
+        public const string UpdatePrnRrepw = "UpdatePrnOnRrepw";
         public const string InsertPrnOnEpr = "InsertedPrnOnEpr";
+        public const string InsertPrnFromRrepw = "InsertedPrnFromRrepw";
     }
 
     public static class CustomEventFields

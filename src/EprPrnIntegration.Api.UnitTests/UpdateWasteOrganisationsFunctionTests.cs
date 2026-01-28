@@ -2,6 +2,7 @@ using System.Net;
 using EprPrnIntegration.Api.Functions;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
+using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.CommonService.Interfaces;
@@ -21,6 +22,8 @@ public class UpdateWasteOrganisationsFunctionTests
     private readonly Mock<ILastUpdateService> _lastUpdateServiceMock = new();
     private readonly Mock<IWasteOrganisationsService> _wasteOrganisationsService = new();
     private readonly Mock<ICommonDataService> _commonDataService = new();
+    private readonly Mock<IUtilities> _mockUtilities = new();
+
     private readonly IOptions<UpdateWasteOrganisationsConfiguration> _config = Options.Create(
         new UpdateWasteOrganisationsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -34,7 +37,8 @@ public class UpdateWasteOrganisationsFunctionTests
             _loggerMock.Object,
             _commonDataService.Object,
             _wasteOrganisationsService.Object,
-            _config
+            _config,
+            _mockUtilities.Object
         );
     }
 
