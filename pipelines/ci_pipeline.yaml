@@ -46,7 +46,7 @@ resources:
     - repository: CommonTemplates
       name: RWD-CPR-EPR4P-ADO/epr-webapps-code-deploy-templates
       type: git
-      ref: bugfix/improve-owasp-caching
+      ref: refs/heads/bugfix/add-npm-scanning-to-owasp-checker
 
 extends:
   template: epr-build-pipeline.yaml@CommonTemplates
