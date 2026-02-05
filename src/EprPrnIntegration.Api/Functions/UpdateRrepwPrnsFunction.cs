@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -55,6 +56,7 @@ public class UpdateRrepwPrnsFunction(
             async (ct) => await rrepwService.UpdatePrn(prn),
             logger,
             $"Updating Prn {prn.PrnNumber} in RREPW for time period {fromDate} to {toDate}.",
+            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
             CancellationToken.None
         );
     }

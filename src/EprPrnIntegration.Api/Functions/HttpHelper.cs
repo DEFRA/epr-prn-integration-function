@@ -1,3 +1,4 @@
+using System.Net;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ public static class HttpHelper
         Func<CancellationToken, Task<HttpResponseMessage>> action,
         ILogger logger,
         string message,
+        HttpStatusCode[] shouldNotContinueOn,
         CancellationToken cancellationToken
     )
     {
@@ -32,7 +34,8 @@ public static class HttpHelper
         }
 
         // Transient errors after Polly retries exhausted - terminate function to retry on next schedule
-        if (response.StatusCode.IsTransient())
+        // Or a response that should prevent continuing with the next PRN
+        if (response.StatusCode.IsTransient() || shouldNotContinueOn.Contains(response.StatusCode))
         {
             logger.LogError(
                 $"{message} - transient error {{StatusCode}}, terminating",
@@ -71,6 +74,7 @@ public static class HttpHelper
             },
             logger,
             message,
+            shouldNotContinueOn: [],
             cancellationToken
         );
         return content;

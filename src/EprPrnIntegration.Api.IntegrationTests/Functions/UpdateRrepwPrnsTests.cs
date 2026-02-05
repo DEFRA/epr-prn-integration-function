@@ -217,6 +217,35 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         });
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    {
+        var payload = CreatePrns(EprnStatus.REJECTED, 1);
+        await PrnApiStub.HasModifiedPrns(payload);
+        await RrepwApiStub.AcceptsPrnWithFailures(
+            EprnStatus.REJECTED,
+            statusCode,
+            1
+        );
+        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+
+        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.REJECTED);
+
+            entries.Count.Should().Be(1);
+            for (int i = 0; i < entries.Count; i++)
+                entries[i].Response.StatusCode.Should().Be((int)statusCode);
+
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
+        });
+    }
+
     [Fact]
     public async Task PrnAccept_WhenRrepwApiHasNonTransientFailure_ContinuesWithNextPrn()
     {
