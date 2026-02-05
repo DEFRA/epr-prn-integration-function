@@ -1,18 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using AutoMapper;
-using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
-using EprPrnIntegration.Common.Enums;
-using EprPrnIntegration.Common.Extensions;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
-using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
@@ -167,7 +164,7 @@ public class FetchRrepwIssuedPrnsFunction(
             async (ct) => await prnService.SavePrn(request, ct),
             logger,
             $"Saving PRN {request.PrnNumber}",
-            shouldNotContinueOn: [],
+            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
             cancellationToken
         );
     }
