@@ -32,6 +32,7 @@ public class HttpHelperTests
             action,
             _loggerMock.Object,
             message,
+            shouldNotContinueOn: [],
             CancellationToken.None
         );
 
@@ -63,6 +64,7 @@ public class HttpHelperTests
             action,
             _loggerMock.Object,
             message,
+            shouldNotContinueOn: [],
             CancellationToken.None
         );
 
@@ -98,6 +100,7 @@ public class HttpHelperTests
                 action,
                 _loggerMock.Object,
                 message,
+                shouldNotContinueOn: [],
                 CancellationToken.None
             )
         );
@@ -144,6 +147,7 @@ public class HttpHelperTests
                 action,
                 _loggerMock.Object,
                 message,
+                shouldNotContinueOn: [],
                 CancellationToken.None
             )
         );
@@ -170,6 +174,7 @@ public class HttpHelperTests
             action,
             _loggerMock.Object,
             message,
+            shouldNotContinueOn: [],
             CancellationToken.None
         );
 
@@ -207,7 +212,7 @@ public class HttpHelperTests
         var message = "Test operation";
 
         // Act
-        await HttpHelper.HandleTransientErrors(action, _loggerMock.Object, message, cts.Token);
+        await HttpHelper.HandleTransientErrors(action, _loggerMock.Object, message, shouldNotContinueOn: [], cts.Token);
 
         // Assert
         Assert.NotNull(capturedToken);

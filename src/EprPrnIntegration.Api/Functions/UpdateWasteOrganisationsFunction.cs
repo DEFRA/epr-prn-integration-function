@@ -93,6 +93,7 @@ public class UpdateWasteOrganisationsFunction(
             },
             logger,
             $"Saving Organisation {producer.PEPRID}",
+            shouldNotContinueOn: [],
             CancellationToken.None
         );
     }

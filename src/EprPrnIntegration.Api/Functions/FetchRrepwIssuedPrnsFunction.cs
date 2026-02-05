@@ -167,6 +167,7 @@ public class FetchRrepwIssuedPrnsFunction(
             async (ct) => await prnService.SavePrn(request, ct),
             logger,
             $"Saving PRN {request.PrnNumber}",
+            shouldNotContinueOn: [],
             cancellationToken
         );
     }
