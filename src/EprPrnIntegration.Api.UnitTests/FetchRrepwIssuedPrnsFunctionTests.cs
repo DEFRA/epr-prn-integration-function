@@ -193,7 +193,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                     It.IsAny<CancellationToken>()
                 )
             )
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest));
 
         await _function.Run(new TimerInfo());
 

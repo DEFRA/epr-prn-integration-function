@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using AutoMapper;
 using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Configuration;
@@ -163,7 +164,7 @@ public class FetchRrepwIssuedPrnsFunction(
             async (ct) => await prnService.SavePrn(request, ct),
             logger,
             $"Saving PRN {request.PrnNumber}",
-            shouldNotContinueOn: [],
+            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
             cancellationToken
         );
     }
