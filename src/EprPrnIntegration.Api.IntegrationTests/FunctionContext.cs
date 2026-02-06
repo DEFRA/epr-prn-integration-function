@@ -31,7 +31,42 @@ public static class FunctionContext
 
     private static string BaseUri => "http://localhost:7234";
 
+    /// <summary>
+    /// The specified function can be invoked if it's not running.
+    ///
+    /// Setup activities can be included.
+    /// </summary>
+    /// <param name="functionName"></param>
+    /// <param name="setup"></param>
     public static async Task Invoke(string functionName, Func<Task>? setup = null)
+    {
+        await EnsureNotRunningAndSetup(functionName, setup);
+        await InvokeInternal(functionName);
+    }
+
+    /// <summary>
+    /// For functions that use the pattern, get the last update DateTime
+    /// before invocation.
+    /// 
+    /// The specified function can be invoked if it's not running.
+    ///
+    /// Setup activities can be included.
+    /// </summary>
+    /// <param name="functionName"></param>
+    /// <param name="setup"></param>
+    /// <returns></returns>
+    public static async Task<DateTime> GetLastUpdateAndInvoke(string functionName, Func<Task>? setup = null)
+    {
+        await EnsureNotRunningAndSetup(functionName, setup);
+        
+        var lastUpdate = await GetLastUpdate(functionName) ?? DateTime.MinValue;
+        
+        await InvokeInternal(functionName);
+        
+        return lastUpdate;
+    }
+
+    private static async Task EnsureNotRunningAndSetup(string functionName, Func<Task>? setup = null)
     {
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -40,7 +75,10 @@ public static class FunctionContext
         });
         
         if (setup is not null) await setup();
-        
+    }
+
+    private static async Task InvokeInternal(string functionName)
+    {
         var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),

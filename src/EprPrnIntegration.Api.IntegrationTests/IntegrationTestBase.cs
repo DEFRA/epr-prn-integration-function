@@ -40,11 +40,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         await _wireMockContext.DisposeAsync();
     }
 
-    protected static async Task<DateTime> GetLastUpdate(string functionName)
-    {
-        return await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
-    }
-
     protected static async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
     {
         var after = await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
