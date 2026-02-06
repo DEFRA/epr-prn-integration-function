@@ -8,14 +8,15 @@ public class FetchNpwdIssuedPrnsFunctionTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsIssuedPrnsToPrnService()
     {
-        await Task.WhenAll(
-            NpwdApiStub.HasIssuedPrns("ACC123456"),
-            AccountApiStub.ValidatesIssuedEpr(),
-            PrnApiStub.AcceptsPrnDetails(),
-            AccountApiStub.HasPersonEmailForEpr()
-        );
-
-        await FunctionContext.Invoke(FunctionName.FetchNpwdIssuedPrnsFunction);
+        await FunctionContext.Invoke(FunctionName.FetchNpwdIssuedPrnsFunction, async () =>
+        {
+            await Task.WhenAll(
+                NpwdApiStub.HasIssuedPrns("ACC123456"),
+                AccountApiStub.ValidatesIssuedEpr(),
+                PrnApiStub.AcceptsPrnDetails(),
+                AccountApiStub.HasPersonEmailForEpr()
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
