@@ -6,7 +6,7 @@ namespace EprPrnIntegration.Api.IntegrationTests;
 
 public static class FunctionExecutionContext
 {
-    public static readonly ILastUpdateService LastUpdateService;
+    private static readonly ILastUpdateService LastUpdateService;
 
     static FunctionExecutionContext()
     {
@@ -20,4 +20,6 @@ public static class FunctionExecutionContext
         
         LastUpdateService = new LastUpdateService(blobStorage);
     }
+
+    public static Task<DateTime?> GetLastUpdate(string functionName) => LastUpdateService.GetLastUpdate(functionName);
 }
