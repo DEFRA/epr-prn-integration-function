@@ -19,7 +19,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -46,7 +46,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -77,7 +77,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             WasteOrganisationsApiStub
         );
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -120,7 +120,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -151,7 +151,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -177,7 +177,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -200,7 +200,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -224,7 +224,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -255,7 +255,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -293,7 +293,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -329,7 +329,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -357,7 +357,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         // Assert - function should terminate without updating last run time
         await AsyncWaiter.WaitForAsync(async () =>

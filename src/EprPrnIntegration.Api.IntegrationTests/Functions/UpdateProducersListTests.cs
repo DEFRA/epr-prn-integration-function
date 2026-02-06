@@ -12,7 +12,7 @@ public class UpdateProducersListTests : IntegrationTestBase
 
         await NpwdApiStub.AcceptsProducerPatch();
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
+        await FunctionContext.Invoke(FunctionName.UpdateProducersList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

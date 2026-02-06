@@ -34,7 +34,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrn(eprnStatus);
 
         // Act: Invoke the function
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         // Assert: Verify the accept request was sent to RREPW
         await AsyncWaiter.WaitForAsync(async () =>
@@ -84,7 +84,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
         await PrnApiStub.AcceptsPrnV2();
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -125,7 +125,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -151,7 +151,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -177,7 +177,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -203,7 +203,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -232,7 +232,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -258,7 +258,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -280,7 +280,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.ACCEPTED, HttpStatusCode.Conflict, 1);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -310,7 +310,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -348,7 +348,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -380,7 +380,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         // Assert
         await AsyncWaiter.WaitForAsync(async () =>
@@ -408,7 +408,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
         // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         // Assert - function should terminate without updating last run time
         await AsyncWaiter.WaitForAsync(async () =>

@@ -18,7 +18,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -64,7 +64,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -91,7 +91,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         var before =
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -127,7 +127,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -165,7 +165,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -203,7 +203,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -243,7 +243,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 
@@ -282,7 +282,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
             ?? DateTime.MinValue;
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
+        await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
 

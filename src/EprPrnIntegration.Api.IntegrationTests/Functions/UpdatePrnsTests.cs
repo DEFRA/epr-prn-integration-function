@@ -19,7 +19,7 @@ public class UpdatePrnsListTests : IntegrationTestBase
             NpwdApiStub.AcceptsPrnPatch()
         );
 
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdatePrnsList);
+        await FunctionContext.Invoke(FunctionName.UpdatePrnsList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

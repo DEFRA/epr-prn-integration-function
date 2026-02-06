@@ -1,13 +1,12 @@
 using System.Text;
-using EprPrnIntegration.Common.Configuration;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
-public static class AzureFunctionInvokerContext
+public static class FunctionContext
 {
     private static readonly HttpClient HttpClient;
 
-    static AzureFunctionInvokerContext()
+    static FunctionContext()
     {
         HttpClient = new HttpClient { BaseAddress = new Uri($"{BaseUri}/admin/functions/") };
 
@@ -16,7 +15,7 @@ public static class AzureFunctionInvokerContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    public static async Task InvokeAzureFunction(string functionName)
+    public static async Task Invoke(string functionName)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
