@@ -44,7 +44,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             foreach (var prnUpdate in payload)
             {
                 var request = requests.FirstOrDefault(r =>
-                    r.Request.Path.Contains(prnUpdate.PrnNumber)
+                    r.Request.Path.Contains(prnUpdate.SourceSystemId)
                 );
                 request.Should().NotBeNull();
                 var jsonDocument = JsonDocument.Parse(request.Request.Body!);
@@ -221,15 +221,13 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.NotFound)]
-    public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(
+        HttpStatusCode statusCode
+    )
     {
         var payload = CreatePrns(EprnStatus.REJECTED, 1);
         await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.REJECTED,
-            statusCode,
-            1
-        );
+        await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.REJECTED, statusCode, 1);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
         await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);

@@ -40,18 +40,18 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.RrepwService
         public void AcceptPrnRouteReturnsCorrectUrl()
         {
             RrepwRoutes
-                .AcceptPrnRoute("PRN12345")
+                .AcceptPrnRoute("source-system-id-123")
                 .Should()
-                .Be("v1/packaging-recycling-notes/PRN12345/accept");
+                .Be("v1/packaging-recycling-notes/source-system-id-123/accept");
         }
 
         [Fact]
         public void RejectPrnRouteReturnsCorrectUrl()
         {
             RrepwRoutes
-                .RejectPrnRoute("PRN12345")
+                .RejectPrnRoute("source-system-id-123")
                 .Should()
-                .Be("v1/packaging-recycling-notes/PRN12345/reject");
+                .Be("v1/packaging-recycling-notes/source-system-id-123/reject");
         }
 
         [Fact]

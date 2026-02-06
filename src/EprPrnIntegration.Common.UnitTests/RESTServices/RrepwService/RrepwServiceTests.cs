@@ -66,7 +66,7 @@ public class RrepwServiceTests
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
         _mockHandler
             .Request.RequestUri.Should()
-            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.PrnNumber}/accept/");
+            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.SourceSystemId}/accept/");
         var content = await _mockHandler.Request.Content!.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("acceptedAt").GetDateTime();
@@ -88,7 +88,7 @@ public class RrepwServiceTests
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
         _mockHandler
             .Request.RequestUri.Should()
-            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.PrnNumber}/reject/");
+            .Be($"{_testUrl}/v1/packaging-recycling-notes/{prn.SourceSystemId}/reject/");
         var content = await _mockHandler.Request.Content!.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("rejectedAt").GetDateTime();

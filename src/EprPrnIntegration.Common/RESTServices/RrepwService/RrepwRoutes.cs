@@ -30,14 +30,14 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
             return route;
         }
 
-        public static string AcceptPrnRoute(string prnNumber)
+        public static string AcceptPrnRoute(string sourceSystemId)
         {
-            return $"v1/{PackagingRecyclingNotesEndpoint}/{prnNumber}/accept";
+            return $"v1/{PackagingRecyclingNotesEndpoint}/{sourceSystemId}/accept";
         }
 
-        public static string RejectPrnRoute(string prnNumber)
+        public static string RejectPrnRoute(string sourceSystemId)
         {
-            return $"v1/{PackagingRecyclingNotesEndpoint}/{prnNumber}/reject";
+            return $"v1/{PackagingRecyclingNotesEndpoint}/{sourceSystemId}/reject";
         }
     }
 }
