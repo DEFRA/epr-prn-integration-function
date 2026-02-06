@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
-public class FetchNpwdIssuedPrnsFunctionIntegrationTest : IntegrationTestBase
+public class FetchNpwdIssuedPrnsFunctionTests : IntegrationTestBase
 {
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsIssuedPrnsToPrnService()
