@@ -1,7 +1,5 @@
 using System.Net;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Exceptions;
-using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService;
 using EprPrnIntegration.Common.UnitTests.Helpers;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;

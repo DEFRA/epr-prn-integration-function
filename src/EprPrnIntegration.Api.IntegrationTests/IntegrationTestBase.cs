@@ -1,5 +1,4 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
-using EprPrnIntegration.Common.Service;
 using FluentAssertions;
 using Xunit;
 

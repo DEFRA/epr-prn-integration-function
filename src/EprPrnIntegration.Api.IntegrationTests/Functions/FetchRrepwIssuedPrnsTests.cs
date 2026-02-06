@@ -1,8 +1,6 @@
 using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
-using EprPrnIntegration.Common.Models.Rrepw;
-using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 using Xunit;
 

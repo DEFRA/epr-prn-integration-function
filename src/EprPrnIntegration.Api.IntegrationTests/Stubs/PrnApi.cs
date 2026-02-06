@@ -1,6 +1,5 @@
 using System.Net;
 using EprPrnIntegration.Common.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
 using WireMock.Admin.Mappings;
 using WireMock.Admin.Requests;
 using WireMock.Client.Extensions;
