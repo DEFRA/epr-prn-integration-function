@@ -16,26 +16,27 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
     protected CognitoApi CognitoApiStub = null!;
     protected RrepwApi RrepwApiStub = null!;
-    private WireMockContext WireMockContext = null!;
+    
+    private WireMockContext _wireMockContext = null!;
 
     public async Task InitializeAsync()
     {
-        WireMockContext = new WireMockContext();
+        _wireMockContext = new WireMockContext();
 
-        await WireMockContext.InitializeAsync();
+        await _wireMockContext.InitializeAsync();
 
-        NpwdApiStub = new NpwdApi(WireMockContext);
-        CommonDataApiStub = new CommonDataApi(WireMockContext);
-        PrnApiStub = new PrnApi(WireMockContext);
-        AccountApiStub = new AccountApi(WireMockContext);
-        WasteOrganisationsApiStub = new WasteOrganisationsApi(WireMockContext);
-        CognitoApiStub = new CognitoApi(WireMockContext);
-        RrepwApiStub = new RrepwApi(WireMockContext);
+        NpwdApiStub = new NpwdApi(_wireMockContext);
+        CommonDataApiStub = new CommonDataApi(_wireMockContext);
+        PrnApiStub = new PrnApi(_wireMockContext);
+        AccountApiStub = new AccountApi(_wireMockContext);
+        WasteOrganisationsApiStub = new WasteOrganisationsApi(_wireMockContext);
+        CognitoApiStub = new CognitoApi(_wireMockContext);
+        RrepwApiStub = new RrepwApi(_wireMockContext);
     }
 
     public async Task DisposeAsync()
     {
-        await WireMockContext.DisposeAsync();
+        await _wireMockContext.DisposeAsync();
     }
 
     protected static async Task<DateTime> GetLastUpdate(string functionName)
