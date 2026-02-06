@@ -60,9 +60,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
 
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
 
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
@@ -70,11 +68,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-
-            after.Should().BeAfter(before);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 
@@ -88,9 +82,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
 
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
         );
@@ -107,10 +99,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().BeGreaterThan(0);
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().BeAfter(before);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 
@@ -121,9 +110,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable,
             4
         );
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
 
@@ -142,10 +129,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(id);
 
             entries.Count.Should().Be(0);
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().NotBeAfter(before);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 
@@ -161,9 +145,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
 
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
 
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
@@ -180,10 +162,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
             mostRecentUpdate.Response.StatusCode.Should().Be(202);
 
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().BeAfter(before);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 
@@ -199,9 +178,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
 
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
 
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
@@ -220,10 +197,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Response.StatusCode.Should()
                 .Be((int)HttpStatusCode.ServiceUnavailable);
 
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().NotBeAfter(before);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 
@@ -239,9 +213,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
 
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
@@ -260,10 +232,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
                 .Response.StatusCode.Should()
                 .Be((int)HttpStatusCode.ServiceUnavailable);
 
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().NotBeAfter(before);
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
 
             entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
             entries.Should().BeEmpty();
@@ -278,9 +247,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        var before =
-            await LastUpdateService.GetLastUpdate(FunctionName.UpdateWasteOrganisations)
-            ?? DateTime.MinValue;
+        var before = await GetLastUpdate(FunctionName.UpdateWasteOrganisations);
 
         await FunctionContext.Invoke(
             FunctionName.UpdateWasteOrganisations
@@ -299,10 +266,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries[0].Request.Body!.Should().Contain(ids[1] + "_name");
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
 
-            var after = await LastUpdateService.GetLastUpdate(
-                FunctionName.UpdateWasteOrganisations
-            );
-            after.Should().BeAfter(before);
+            await LastUpdateShouldHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
 }
