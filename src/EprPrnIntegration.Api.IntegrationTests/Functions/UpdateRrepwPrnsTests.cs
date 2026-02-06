@@ -28,15 +28,11 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsAcceptedPrnToRrepw(EprnStatus eprnStatus)
     {
         var payload = CreatePrns(eprnStatus);
-        // Arrange: Set up the PRN backend to return an accepted PRN
-        // PrnStatusId = 1 corresponds to ACCEPTED status
         await PrnApiStub.HasModifiedPrns(payload);
         await RrepwApiStub.AcceptsPrn(eprnStatus);
 
-        // Act: Invoke the function
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
-        // Assert: Verify the accept request was sent to RREPW
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var requests = await RrepwApiStub.GetUpdatePrnRequests(eprnStatus);
@@ -65,7 +61,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_WithPaginatedData_SendsAllPrnsToBackendApi()
     {
-        // Set up paginated responses - 2 pages with 2 items each
         var prns = await RrepwApiStub.HasPrnUpdates(
             ["PRN-PAGE1-001", "PRN-PAGE1-002"],
             cursor: null,
@@ -294,30 +289,24 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         });
     }
 
-    #region GetUpdatedRrepwPrnsAsync Tests
-
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndSucceeds()
     {
-        // Arrange
         var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
         await PrnApiStub.HasModifiedPrnsWithTransientFailures(
             payload,
             HttpStatusCode.InternalServerError,
-            1 // Fail once, then succeed on 2nd attempt
+            1
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        // Act
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should have made initial request + 1 retry = 2 total, last one succeeds
             entries.Count.Should().BeGreaterOrEqualTo(2);
             var relevantEntries = entries.TakeLast(2).ToList();
             relevantEntries[0]
@@ -329,7 +318,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().BeGreaterOrEqualTo(1);
 
-            // Last update should be set
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -337,25 +325,21 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        // Arrange
         var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
         await PrnApiStub.HasModifiedPrnsWithTransientFailures(
             payload,
             HttpStatusCode.ServiceUnavailable,
-            4 // Fail 4 times (initial + 3 retries)
+            4
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        // Act
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should have made initial request + 3 retries = 4 total
             entries.Count.Should().Be(4);
             foreach (var entry in entries)
             {
@@ -366,7 +350,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().Be(0);
 
-            // Last update should NOT be set (function terminated)
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -374,20 +357,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasNonTransientFailure_FunctionTerminates()
     {
-        // Arrange
         var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
         await PrnApiStub.HasModifiedPrnsWithNonTransientFailure(payload, HttpStatusCode.BadRequest);
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        // Act
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should only make 1 request (no retries for non-transient errors)
             entries.Count.Should().Be(1);
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
@@ -395,7 +374,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().Be(0);
 
-            // Last update should NOT be set (function terminated)
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -403,19 +381,14 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiThrowsException_FunctionTerminates()
     {
-        // Arrange
         // Don't set up any stub - this will cause a connection failure/exception
         var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
 
-        // Act
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
-        // Assert - function should terminate without updating last run time
         await AsyncWaiter.WaitForAsync(async () =>
         {
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
-
-    #endregion
 }
