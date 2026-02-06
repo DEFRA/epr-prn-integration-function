@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text.Json;
-using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
 using EprPrnIntegration.Common.UnitTests.Helpers;

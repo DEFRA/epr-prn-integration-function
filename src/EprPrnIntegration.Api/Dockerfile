@@ -1,11 +1,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
 USER root
 
+COPY EprPrnIntegration.Common/*.csproj ./EprPrnIntegration.Common/
+COPY EprPrnIntegration.Api/*.csproj ./EprPrnIntegration.Api/
+
+# Restore
+RUN dotnet restore EprPrnIntegration.Api/*.csproj
+
 COPY EprPrnIntegration.Common/. ./EprPrnIntegration.Common/.
 COPY EprPrnIntegration.Api/. ./EprPrnIntegration.Api/.
 
 # Publish 
-RUN dotnet publish EprPrnIntegration.Api/*.csproj --output /home/site/wwwroot
+RUN dotnet publish EprPrnIntegration.Api/*.csproj --no-restore --output /home/site/wwwroot
 
 # Use the Azure Functions image as the final image
 FROM --platform=$TARGETPLATFORM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0

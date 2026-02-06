@@ -1,6 +1,5 @@
 ﻿using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
-using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 

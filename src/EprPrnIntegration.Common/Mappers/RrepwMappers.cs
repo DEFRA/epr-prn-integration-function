@@ -1,5 +1,4 @@
 using AutoMapper;
-using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;

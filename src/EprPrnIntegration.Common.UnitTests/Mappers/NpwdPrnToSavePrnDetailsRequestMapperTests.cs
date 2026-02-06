@@ -1,12 +1,10 @@
-﻿using System;
-using EprPrnIntegration.Common.Constants;
+﻿using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace EprPrnIntegration.Tests.Mappers
 {

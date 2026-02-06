@@ -28,15 +28,13 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsAcceptedPrnToRrepw(EprnStatus eprnStatus)
     {
         var payload = CreatePrns(eprnStatus);
-        // Arrange: Set up the PRN backend to return an accepted PRN
-        // PrnStatusId = 1 corresponds to ACCEPTED status
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrn(eprnStatus);
+        
+        await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrn(eprnStatus);
+        });
 
-        // Act: Invoke the function
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        // Assert: Verify the accept request was sent to RREPW
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var requests = await RrepwApiStub.GetUpdatePrnRequests(eprnStatus);
@@ -63,69 +61,18 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task WhenAzureFunctionIsInvoked_WithPaginatedData_SendsAllPrnsToBackendApi()
-    {
-        // Set up paginated responses - 2 pages with 2 items each
-        var prns = await RrepwApiStub.HasPrnUpdates(
-            ["PRN-PAGE1-001", "PRN-PAGE1-002"],
-            cursor: null,
-            nextCursor: "cursor-page-2"
-        );
-
-        prns =
-        [
-            .. prns,
-            .. await RrepwApiStub.HasPrnUpdates(
-                ["PRN-PAGE2-001", "PRN-PAGE2-002"],
-                cursor: "cursor-page-2",
-                nextCursor: null
-            ),
-        ];
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
-        await PrnApiStub.AcceptsPrnV2();
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.FetchRrepwIssuedPrns);
-
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var entries = await PrnApiStub.GetPrnDetailsUpdateV2();
-
-            entries.Count.Should().Be(4);
-
-            var receivedPrnNumbers = entries
-                .Select(entry =>
-                {
-                    var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
-                    return jsonDocument.RootElement.GetProperty("prnNumber").GetString();
-                })
-                .OrderBy(prn => prn)
-                .ToList();
-
-            var expectedPrnNumbers = new[]
-            {
-                "PRN-PAGE1-001",
-                "PRN-PAGE1-002",
-                "PRN-PAGE2-001",
-                "PRN-PAGE2-002",
-            };
-
-            receivedPrnNumbers.Should().BeEquivalentTo(expectedPrnNumbers.OrderBy(prn => prn));
-        });
-    }
-
-    [Fact]
     public async Task PrnAccept_WhenCommonApiHasTransientFailure_RetriesAndEventuallySendsDataToRrepwPrnApi()
     {
-        var payload = CreatePrns(EprnStatus.REJECTED, 1);
-        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
-            payload,
-            HttpStatusCode.ServiceUnavailable,
-            1
-        );
-        await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.REJECTED, 1);
+            await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+                payload,
+                HttpStatusCode.ServiceUnavailable,
+                1
+            );
+            await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -142,16 +89,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task PrnAccept_WhenCommonApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        var payload = CreatePrns(EprnStatus.REJECTED, 1);
-        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
-            payload,
-            HttpStatusCode.ServiceUnavailable,
-            4
-        );
-        await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.REJECTED, 1);
+            await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+                payload,
+                HttpStatusCode.ServiceUnavailable,
+                4
+            );
+            await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -168,16 +115,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task PrnAccept_WhenRrepwApiHasTransientFailure_RetriesAndEventuallySucceeds()
     {
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.ACCEPTED,
-            HttpStatusCode.ServiceUnavailable,
-            1
-        );
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrnWithFailures(
+                EprnStatus.ACCEPTED,
+                HttpStatusCode.ServiceUnavailable,
+                1
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -194,16 +141,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task PrnAccept_WhenRrepwApiHasTransientFailure_RetriesAndFailsAfter3Retries()
     {
-        var payload = CreatePrns(EprnStatus.REJECTED, 1);
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.REJECTED,
-            HttpStatusCode.ServiceUnavailable,
-            4
-        );
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.REJECTED, 1);
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrnWithFailures(
+                EprnStatus.REJECTED,
+                HttpStatusCode.ServiceUnavailable,
+                4
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -223,16 +170,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.NotFound)]
     public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
     {
-        var payload = CreatePrns(EprnStatus.REJECTED, 1);
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.REJECTED,
-            statusCode,
-            1
-        );
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.REJECTED, 1);
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrnWithFailures(
+                EprnStatus.REJECTED,
+                statusCode,
+                1
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -249,16 +196,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task PrnAccept_WhenRrepwApiHasNonTransientFailure_ContinuesWithNextPrn()
     {
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 2);
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.ACCEPTED,
-            HttpStatusCode.BadRequest,
-            1
-        );
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 2);
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrnWithFailures(
+                EprnStatus.ACCEPTED,
+                HttpStatusCode.BadRequest,
+                1
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -275,12 +222,12 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task PrnAccept_WhenRrepwApiHasError409_ContinuesWithNextPrn()
     {
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 2);
-        await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.ACCEPTED, HttpStatusCode.Conflict, 1);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 2);
+            await PrnApiStub.HasModifiedPrns(payload);
+            await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.ACCEPTED, HttpStatusCode.Conflict, 1);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -294,30 +241,24 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         });
     }
 
-    #region GetUpdatedRrepwPrnsAsync Tests
-
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndSucceeds()
     {
-        // Arrange
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
-        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
-            payload,
-            HttpStatusCode.InternalServerError,
-            1 // Fail once, then succeed on 2nd attempt
-        );
-        await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+            await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+                payload,
+                HttpStatusCode.InternalServerError,
+                1
+            );
+            await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
+        });
 
-        // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should have made initial request + 1 retry = 2 total, last one succeeds
             entries.Count.Should().BeGreaterOrEqualTo(2);
             var relevantEntries = entries.TakeLast(2).ToList();
             relevantEntries[0]
@@ -329,7 +270,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().BeGreaterOrEqualTo(1);
 
-            // Last update should be set
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -337,25 +277,21 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        // Arrange
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
-        await PrnApiStub.HasModifiedPrnsWithTransientFailures(
-            payload,
-            HttpStatusCode.ServiceUnavailable,
-            4 // Fail 4 times (initial + 3 retries)
-        );
-        await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+            await PrnApiStub.HasModifiedPrnsWithTransientFailures(
+                payload,
+                HttpStatusCode.ServiceUnavailable,
+                4
+            );
+            await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
+        });
 
-        // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should have made initial request + 3 retries = 4 total
             entries.Count.Should().Be(4);
             foreach (var entry in entries)
             {
@@ -366,7 +302,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().Be(0);
 
-            // Last update should NOT be set (function terminated)
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -374,20 +309,16 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiHasNonTransientFailure_FunctionTerminates()
     {
-        // Arrange
-        var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
-        await PrnApiStub.HasModifiedPrnsWithNonTransientFailure(payload, HttpStatusCode.BadRequest);
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
+        {
+            var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
+            await PrnApiStub.HasModifiedPrnsWithNonTransientFailure(payload, HttpStatusCode.BadRequest);
+        });
 
-        // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        // Assert
         await AsyncWaiter.WaitForAsync(async () =>
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            // Should only make 1 request (no retries for non-transient errors)
             entries.Count.Should().Be(1);
             entries[0].Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
@@ -395,7 +326,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
             rrepwEntries.Count.Should().Be(0);
 
-            // Last update should NOT be set (function terminated)
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
@@ -403,19 +333,13 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Fact]
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiThrowsException_FunctionTerminates()
     {
-        // Arrange
         // Don't set up any stub - this will cause a connection failure/exception
-        var before = await GetLastUpdate(FunctionName.UpdateRrepwPrns);
+        
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
-        // Act
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateRrepwPrns);
-
-        // Assert - function should terminate without updating last run time
         await AsyncWaiter.WaitForAsync(async () =>
         {
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });
     }
-
-    #endregion
 }

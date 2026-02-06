@@ -2,7 +2,6 @@
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Service;
-using Fare;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
