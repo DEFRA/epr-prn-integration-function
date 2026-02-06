@@ -16,7 +16,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
     protected CognitoApi CognitoApiStub = null!;
     protected RrepwApi RrepwApiStub = null!;
-    protected ILastUpdateService LastUpdateService = LastExecutedContext.LastUpdateService;
     private WireMockContext WireMockContext = null!;
 
     public async Task InitializeAsync()
@@ -39,20 +38,20 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         await WireMockContext.DisposeAsync();
     }
 
-    protected async Task<DateTime> GetLastUpdate(string functionName)
+    protected static async Task<DateTime> GetLastUpdate(string functionName)
     {
-        return await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        return await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
     }
 
-    protected async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
+    protected static async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
     {
-        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().BeAfter(before);
     }
 
-    protected async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
+    protected static async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
     {
-        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);
     }
 }
