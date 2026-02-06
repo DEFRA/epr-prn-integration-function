@@ -136,7 +136,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     prn.StatusDate
                 );
                 return await PostAsync(
-                    RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
+                    RrepwRoutes.AcceptPrnRoute(prn.SourceSystemId),
                     new { acceptedAt = prn.StatusDate }
                 );
             }
@@ -149,7 +149,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     prn.StatusDate
                 );
                 return await PostAsync(
-                    RrepwRoutes.RejectPrnRoute(prn.PrnNumber),
+                    RrepwRoutes.RejectPrnRoute(prn.SourceSystemId),
                     new { rejectedAt = prn.StatusDate }
                 );
             }
