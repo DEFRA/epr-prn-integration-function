@@ -11,13 +11,14 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsPrnToBackendApi()
     {
-        var prnNumber = "PRN-TEST-001";
-        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        const string prnNumber = "PRN-TEST-001";
 
-        await PrnApiStub.AcceptsPrnV2();
-        await SetupOrganisations(prns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+            await PrnApiStub.AcceptsPrnV2();
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -37,14 +38,14 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_WithPrnsFound_UpdatesLastUpdatedTimestamp()
     {
-        var prns = await RrepwApiStub.HasPrnUpdates(["PRN-TEST-002"]);
-
-        await PrnApiStub.AcceptsPrnV2();
-        await SetupOrganisations(prns);
-
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates(["PRN-TEST-002"]);
+            await PrnApiStub.AcceptsPrnV2();
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -55,22 +56,21 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_WithPaginatedData_SendsAllPrnsToBackendApi()
     {
-        var prns1 = await RrepwApiStub.HasPrnUpdates(
-            ["PRN-PAGE1-001", "PRN-PAGE1-002"],
-            cursor: null,
-            nextCursor: "cursor-page-2"
-        );
-
-        var prns2 = await RrepwApiStub.HasPrnUpdates(
-            ["PRN-PAGE2-001", "PRN-PAGE2-002"],
-            cursor: "cursor-page-2",
-            nextCursor: null
-        );
-
-        await PrnApiStub.AcceptsPrnV2();
-        await SetupOrganisations([.. prns1, .. prns2]);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns1 = await RrepwApiStub.HasPrnUpdates(
+                ["PRN-PAGE1-001", "PRN-PAGE1-002"],
+                cursor: null,
+                nextCursor: "cursor-page-2"
+            );
+            var prns2 = await RrepwApiStub.HasPrnUpdates(
+                ["PRN-PAGE2-001", "PRN-PAGE2-002"],
+                cursor: "cursor-page-2",
+                nextCursor: null
+            );
+            await PrnApiStub.AcceptsPrnV2();
+            await SetupOrganisations([.. prns1, .. prns2]);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -102,18 +102,21 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenRrepwApiHasTransientFailure_RetriesAndEventuallySendsDataToCommonPrnApi()
     {
-        var prnNumber = "PRN-TEST-001";
-        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
-        await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
-            [prnNumber],
-            HttpStatusCode.ServiceUnavailable,
-            1
-        );
+        const string prnNumber = "PRN-TEST-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-        await PrnApiStub.AcceptsPrnV2();
-        await SetupOrganisations(prns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+            await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
+                [prnNumber],
+                HttpStatusCode.ServiceUnavailable,
+                1
+            );
+            await PrnApiStub.AcceptsPrnV2();
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -133,18 +136,21 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenRrepwApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        var prnNumber = "PRN-TEST-001";
-        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
-        await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
-            [prnNumber],
-            HttpStatusCode.ServiceUnavailable,
-            4
-        );
+        const string prnNumber = "PRN-TEST-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-        await PrnApiStub.AcceptsPrnV2();
-        await SetupOrganisations(prns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+            await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
+                [prnNumber],
+                HttpStatusCode.ServiceUnavailable,
+                4
+            );
+            await PrnApiStub.AcceptsPrnV2();
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -164,13 +170,16 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
-        var prnNumber = "PRN-TEST-001";
-        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        const string prnNumber = "PRN-TEST-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-        await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
-        await SetupOrganisations(prns);
 
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+            await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -187,13 +196,16 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonApiHasTransientFailure_RetriesAndFailsAfter3Retries()
     {
-        var prnNumber = "PRN-TEST-001";
-        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        const string prnNumber = "PRN-TEST-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-        await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
-        await SetupOrganisations(prns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+            await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -210,14 +222,17 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonApiHasNonTransientFailure_ContinuesWithNextPrn()
     {
-        var prnNumbers = new string[] { "PRN-TEST-001", "PRN-TEST-002" };
-        var prns = await RrepwApiStub.HasPrnUpdates(prnNumbers);
+        var prnNumbers = new[] { "PRN-TEST-001", "PRN-TEST-002" };
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-        await PrnApiStub.AcceptsPrnV2WithNonTransientFailure(prnNumbers[0]);
-        await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
-        await SetupOrganisations(prns);
 
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdates(prnNumbers);
+            await PrnApiStub.AcceptsPrnV2WithNonTransientFailure(prnNumbers[0]);
+            await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
+            await SetupOrganisations(prns);
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -234,17 +249,20 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task ListPackagingRecyclingNotes_WhenRrepwApiHasTransientFailure_RetriesAndSucceeds()
     {
-        var prnNumber = "PRN-TRANSIENT-SUCCESS-001";
-        var prns = await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
-            [prnNumber],
-            HttpStatusCode.InternalServerError,
-            1
-        );
-        await SetupOrganisations(prns);
-        await PrnApiStub.AcceptsPrnV2();
+        const string prnNumber = "PRN-TRANSIENT-SUCCESS-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            var prns = await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
+                [prnNumber],
+                HttpStatusCode.InternalServerError,
+                1
+            );
+            await SetupOrganisations(prns);
+            await PrnApiStub.AcceptsPrnV2();
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -268,16 +286,19 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task ListPackagingRecyclingNotes_WhenRrepwApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        var prnNumber = "PRN-TRANSIENT-GIVEUP-001";
-        await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
-            [prnNumber],
-            HttpStatusCode.ServiceUnavailable,
-            4
-        );
-        await PrnApiStub.AcceptsPrnV2();
+        const string prnNumber = "PRN-TRANSIENT-GIVEUP-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
-
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            await RrepwApiStub.HasPrnUpdatesWithTransientFailures(
+                [prnNumber],
+                HttpStatusCode.ServiceUnavailable,
+                4
+            );
+            await PrnApiStub.AcceptsPrnV2();
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -300,15 +321,18 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [Fact]
     public async Task ListPackagingRecyclingNotes_WhenRrepwApiHasNonTransientFailure_FunctionTerminates()
     {
-        var prnNumber = "PRN-NONTRANSIENT-001";
-        await RrepwApiStub.HasPrnUpdatesWithNonTransientFailure(
-            [prnNumber],
-            HttpStatusCode.BadRequest
-        );
-        await PrnApiStub.AcceptsPrnV2();
+        const string prnNumber = "PRN-NONTRANSIENT-001";
+        
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
+        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
+        {
+            await RrepwApiStub.HasPrnUpdatesWithNonTransientFailure(
+                [prnNumber],
+                HttpStatusCode.BadRequest
+            );
+            await PrnApiStub.AcceptsPrnV2();
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

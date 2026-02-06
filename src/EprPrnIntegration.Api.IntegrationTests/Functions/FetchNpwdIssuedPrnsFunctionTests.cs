@@ -15,9 +15,7 @@ public class FetchNpwdIssuedPrnsFunctionTests : IntegrationTestBase
             AccountApiStub.HasPersonEmailForEpr()
         );
 
-        await FunctionContext.Invoke(
-            FunctionName.FetchNpwdIssuedPrnsFunction
-        );
+        await FunctionContext.Invoke(FunctionName.FetchNpwdIssuedPrnsFunction);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

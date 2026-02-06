@@ -13,13 +13,14 @@ public class UpdatePrnsListTests : IntegrationTestBase
         string expectedObligationYear
     )
     {
-        await Task.WhenAll(
-            PrnApiStub.HasUpdateFor("PRN001234567", obligationYear),
-            PrnApiStub.AcceptsSyncStatus(),
-            NpwdApiStub.AcceptsPrnPatch()
-        );
-
-        await FunctionContext.Invoke(FunctionName.UpdatePrnsList);
+        await FunctionContext.Invoke(FunctionName.UpdatePrnsList, async () =>
+        {
+            await Task.WhenAll(
+                PrnApiStub.HasUpdateFor("PRN001234567", obligationYear),
+                PrnApiStub.AcceptsSyncStatus(),
+                NpwdApiStub.AcceptsPrnPatch()
+            );
+        });
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

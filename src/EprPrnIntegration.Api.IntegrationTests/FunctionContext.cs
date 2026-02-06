@@ -28,8 +28,10 @@ public static class FunctionContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    public static async Task Invoke(string functionName)
+    public static async Task Invoke(string functionName, Func<Task>? setup = null)
     {
+        if (setup is not null) await setup();
+        
         var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),
