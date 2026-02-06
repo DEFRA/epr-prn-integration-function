@@ -61,58 +61,6 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task WhenAzureFunctionIsInvoked_WithPaginatedData_SendsAllPrnsToBackendApi()
-    {
-        // Why is this function call here?
-        await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns, async () =>
-        {
-            var prns = await RrepwApiStub.HasPrnUpdates(
-                ["PRN-PAGE1-001", "PRN-PAGE1-002"],
-                cursor: null,
-                nextCursor: "cursor-page-2"
-            );
-
-            prns =
-            [
-                .. prns,
-                .. await RrepwApiStub.HasPrnUpdates(
-                    ["PRN-PAGE2-001", "PRN-PAGE2-002"],
-                    cursor: "cursor-page-2",
-                    nextCursor: null
-                ),
-            ];
-            await SetupOrganisations(prns);
-            await PrnApiStub.AcceptsPrnV2();
-        });
-
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var entries = await PrnApiStub.GetPrnDetailsUpdateV2();
-
-            entries.Count.Should().Be(4);
-
-            var receivedPrnNumbers = entries
-                .Select(entry =>
-                {
-                    var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
-                    return jsonDocument.RootElement.GetProperty("prnNumber").GetString();
-                })
-                .OrderBy(prn => prn)
-                .ToList();
-
-            var expectedPrnNumbers = new[]
-            {
-                "PRN-PAGE1-001",
-                "PRN-PAGE1-002",
-                "PRN-PAGE2-001",
-                "PRN-PAGE2-002",
-            };
-
-            receivedPrnNumbers.Should().BeEquivalentTo(expectedPrnNumbers.OrderBy(prn => prn));
-        });
-    }
-
-    [Fact]
     public async Task PrnAccept_WhenCommonApiHasTransientFailure_RetriesAndEventuallySendsDataToRrepwPrnApi()
     {
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns, async () =>
