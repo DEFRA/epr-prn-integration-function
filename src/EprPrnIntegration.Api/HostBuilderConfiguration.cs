@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using EprPrnIntegration.Api.Middleware;
 using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
@@ -42,7 +44,11 @@ public static class HostBuilderConfiguration
     public static IHost BuildHost()
     {
         return new HostBuilder()
-            .ConfigureFunctionsWebApplication()
+            .ConfigureFunctionsWebApplication((context, builder) =>
+            {
+                if (IsRunningLocally(context.Configuration) is true)
+                    builder.UseMiddleware<FunctionRunningMiddleware>();
+            })
             .ConfigureServices(
                 (hostingContext, services) =>
                     ConfigureServices(hostingContext.Configuration, services)
@@ -115,6 +121,9 @@ public static class HostBuilderConfiguration
         services.AddValidatorsFromAssemblyContaining<NpwdPrnValidator>();
         services.AddScoped<ICoreServices, CoreServices>();
         services.AddScoped<IMessagingServices, MessagingServices>();
+
+        if (IsRunningLocally(configuration) is true)
+            services.AddTransient<FunctionRunningMiddleware>();
     }
 
     public static IServiceCollection AddHttpClients(
@@ -289,8 +298,7 @@ public static class HostBuilderConfiguration
         IConfiguration configuration
     )
     {
-        var isRunningLocally = configuration.GetValue<bool?>("IsRunningLocally");
-        if (isRunningLocally is true)
+        if (IsRunningLocally(configuration) is true)
         {
             services.AddAzureClients(clientBuilder =>
             {
@@ -417,4 +425,7 @@ public static class HostBuilderConfiguration
 
         return services;
     }
+
+    private static bool? IsRunningLocally(IConfiguration configuration) =>
+        configuration.GetValue<bool?>("IsRunningLocally");
 }

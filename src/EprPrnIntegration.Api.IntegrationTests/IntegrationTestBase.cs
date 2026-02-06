@@ -16,7 +16,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
     protected CognitoApi CognitoApiStub = null!;
     protected RrepwApi RrepwApiStub = null!;
-    protected ILastUpdateService LastUpdateService = LastExecutedContext.LastUpdateService;
+    protected ILastUpdateService LastUpdateService = FunctionExecutionContext.LastUpdateService;
     private WireMockContext WireMockContext = null!;
 
     public async Task InitializeAsync()

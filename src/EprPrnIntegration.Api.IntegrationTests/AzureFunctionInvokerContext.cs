@@ -1,5 +1,6 @@
 using System.Text;
-using EprPrnIntegration.Common.Configuration;
+using FluentAssertions;
+using Xunit.Abstractions;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
@@ -16,8 +17,17 @@ public static class AzureFunctionInvokerContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    public static async Task InvokeAzureFunction(string functionName)
+    public static async Task<DateTime> InvokeAzureFunction(string functionName, ITestOutputHelper? testOutputHelper = null)
     {
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var isRunning = await FunctionExecutionContext.IsRunning(functionName);
+            testOutputHelper?.WriteLine(isRunning ? "Running" : "Not Running");
+            isRunning.Should().BeFalse();
+        });
+
+        var lastUpdate = await FunctionExecutionContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        
         var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),
@@ -26,6 +36,8 @@ public static class AzureFunctionInvokerContext
         var response = await HttpClient.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
+
+        return lastUpdate;
     }
 
     public static async Task<HttpResponseMessage> Get(string requestUri) =>
