@@ -40,18 +40,18 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
     protected static async Task<DateTime> GetLastUpdate(string functionName)
     {
-        return await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        return await FunctionExecutionContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
     }
 
     protected static async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
     {
-        var after = await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await FunctionExecutionContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().BeAfter(before);
     }
 
     protected static async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
     {
-        var after = await LastExecutedContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await FunctionExecutionContext.LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);
     }
 }
