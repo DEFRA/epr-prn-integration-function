@@ -1,4 +1,6 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
+using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 using Xunit;
 
@@ -53,5 +55,18 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     {
         var after = await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);
+    }
+    
+    protected async Task SetupOrganisations(List<PackagingRecyclingNote> prns)
+    {
+        await CognitoApiStub.SetupOAuthToken();
+
+        foreach (var prn in prns)
+        {
+            await WasteOrganisationsApiStub.WithOrganisation(
+                Guid.Parse(prn.IssuedToOrganisation!.Id!),
+                WoApiOrganisationType.ComplianceScheme
+            );
+        }
     }
 }

@@ -76,7 +76,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
                 nextCursor: null
             ),
         ];
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
         await PrnApiStub.AcceptsPrnV2();
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);

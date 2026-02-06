@@ -15,7 +15,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
 
         await PrnApiStub.AcceptsPrnV2();
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -40,7 +40,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var prns = await RrepwApiStub.HasPrnUpdates(["PRN-TEST-002"]);
 
         await PrnApiStub.AcceptsPrnV2();
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
@@ -68,11 +68,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         );
 
         await PrnApiStub.AcceptsPrnV2();
-        await TestHelper.SetupOrganisations(
-            [.. prns1, .. prns2],
-            CognitoApiStub,
-            WasteOrganisationsApiStub
-        );
+        await SetupOrganisations([.. prns1, .. prns2]);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -115,7 +111,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -146,7 +142,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         );
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2();
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -172,7 +168,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -195,7 +191,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -219,7 +215,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
         await PrnApiStub.AcceptsPrnV2WithNonTransientFailure(prnNumbers[0]);
         await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
 
         await FunctionContext.Invoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -244,7 +240,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             HttpStatusCode.InternalServerError,
             1
         );
-        await TestHelper.SetupOrganisations(prns, CognitoApiStub, WasteOrganisationsApiStub);
+        await SetupOrganisations(prns);
         await PrnApiStub.AcceptsPrnV2();
         var before = await GetLastUpdate(FunctionName.FetchRrepwIssuedPrns);
 
