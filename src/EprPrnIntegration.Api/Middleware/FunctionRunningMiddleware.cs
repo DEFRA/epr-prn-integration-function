@@ -19,18 +19,21 @@ public class FunctionRunningMiddleware(
         {
             logger.LogInformation("Before function execution: {Name}", context.FunctionDefinition.Name);
 
-            await SetIsRunning(context.FunctionDefinition.Name, true);
-
             await next(context);
         }
         finally
         {
             logger.LogInformation("After function execution: {Name}", context.FunctionDefinition.Name);
 
-            await SetIsRunning(context.FunctionDefinition.Name, false);
+            await SetLastRun(context.FunctionDefinition.Name);
         }
     }
 
-    private async Task SetIsRunning(string functionName, bool isRunning) =>
-        await blobStorage.WriteTextToBlob(ContainerName, $"{functionName}.txt", isRunning.ToString().ToLower());
+    private async Task SetLastRun(string functionName)
+    {
+        var blobName = $"{functionName}.txt";
+        var content = DateTime.UtcNow.ToString("O"); // ISO 8601 format
+
+        await blobStorage.WriteTextToBlob(ContainerName, blobName, content);
+    }
 }

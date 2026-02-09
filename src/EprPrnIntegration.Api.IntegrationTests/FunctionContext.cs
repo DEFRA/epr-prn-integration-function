@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Azure.Storage.Blobs;
 using EprPrnIntegration.Api.Middleware;
@@ -31,50 +32,22 @@ public static class FunctionContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    /// <summary>
-    /// The specified function can be invoked if it's not running.
-    ///
-    /// Setup activities can be included.
-    /// </summary>
-    /// <param name="functionName"></param>
-    /// <param name="setup"></param>
     public static async Task Invoke(string functionName, Func<Task>? setup = null)
     {
-        await EnsureNotRunningAndSetup(functionName, setup);
+        if (setup is not null) await setup();
+        
         await InvokeInternal(functionName);
     }
 
-    /// <summary>
-    /// For functions that use the pattern, get the last update DateTime
-    /// before invocation.
-    /// 
-    /// The specified function can be invoked if it's not running.
-    ///
-    /// Setup activities can be included.
-    /// </summary>
-    /// <param name="functionName"></param>
-    /// <param name="setup"></param>
-    /// <returns></returns>
     public static async Task<DateTime> GetLastUpdateAndInvoke(string functionName, Func<Task>? setup = null)
     {
-        await EnsureNotRunningAndSetup(functionName, setup);
+        if (setup is not null) await setup();
         
         var lastUpdate = await GetLastUpdate(functionName) ?? DateTime.MinValue;
         
         await InvokeInternal(functionName);
         
         return lastUpdate;
-    }
-
-    private static async Task EnsureNotRunningAndSetup(string functionName, Func<Task>? setup = null)
-    {
-        await AsyncWaiter.WaitForAsync(async () =>
-        {
-            var isRunning = await IsRunning(functionName);
-            isRunning.Should().BeFalse();
-        });
-        
-        if (setup is not null) await setup();
     }
 
     private static async Task InvokeInternal(string functionName)
@@ -84,9 +57,20 @@ public static class FunctionContext
             Content = new StringContent("{}", Encoding.UTF8, "application/json"),
         };
 
+        var utcNow = DateTime.UtcNow;
         var response = await HttpClient.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
+
+        // See FunctionRunningMiddleware that sets the last run date time
+        // for a specific function. This will block until the function
+        // has finished, or if the maximum WaitForAsync time is reached.
+        await AsyncWaiter.WaitForAsync(async () =>
+            {
+                var lastRun = await GetLastRun(functionName);
+                lastRun.Should().BeAfter(utcNow);
+            },
+            delay: TimeSpan.FromMilliseconds(10));
     }
 
     public static async Task<HttpResponseMessage> Get(string requestUri) =>
@@ -94,10 +78,12 @@ public static class FunctionContext
 
     public static Task<DateTime?> GetLastUpdate(string functionName) => LastUpdateService.GetLastUpdate(functionName);
 
-    private static async Task<bool> IsRunning(string functionName)
+    private static async Task<DateTime> GetLastRun(string functionName)
     {
         var content = await BlobStorage.ReadTextFromBlob(FunctionRunningMiddleware.ContainerName, $"{functionName}.txt");
 
-        return !string.IsNullOrEmpty(content) && bool.Parse(content);
+        return string.IsNullOrEmpty(content)
+            ? DateTime.MinValue
+            : DateTime.ParseExact(content, "O", CultureInfo.InvariantCulture, DateTimeStyles.None);
     }
 }
