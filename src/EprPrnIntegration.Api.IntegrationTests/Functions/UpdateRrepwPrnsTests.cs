@@ -95,7 +95,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             4
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
-        
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -166,15 +166,13 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.NotFound)]
-    public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    public async Task PrnAccept_WhenRrepwApiHasStatusThatShouldNotContinue_FailAndNotContinue(
+        HttpStatusCode statusCode
+    )
     {
         var payload = CreatePrns(EprnStatus.REJECTED, 1);
         await PrnApiStub.HasModifiedPrns(payload);
-        await RrepwApiStub.AcceptsPrnWithFailures(
-            EprnStatus.REJECTED,
-            statusCode,
-            1
-        );
+        await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.REJECTED, statusCode, 1);
         await CognitoApiStub.SetupOAuthToken();
 
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
@@ -282,7 +280,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             4
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
-        
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -308,7 +306,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     {
         var payload = CreatePrns(EprnStatus.ACCEPTED, 1);
         await PrnApiStub.HasModifiedPrnsWithNonTransientFailure(payload, HttpStatusCode.BadRequest);
-        
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -330,7 +328,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     public async Task GetUpdatedRrepwPrnsAsync_WhenCommonApiThrowsException_FunctionTerminates()
     {
         // Don't set up any stub - this will cause a connection failure/exception
-        
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>

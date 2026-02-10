@@ -40,7 +40,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -106,7 +108,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -136,7 +140,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -161,7 +167,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 1);
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -183,7 +191,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(HttpStatusCode.ServiceUnavailable, 4);
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -201,14 +211,18 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.NotFound)]
-    public async Task WhenCommonApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    public async Task WhenCommonApiHasStatusThatShouldNotContinue_FailAndNotContinue(
+        HttpStatusCode statusCode
+    )
     {
         const string prnNumber = "PRN-TEST-001";
         var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
         await PrnApiStub.AcceptsPrnV2WithTransientFailures(statusCode, 1);
         await SetupOrganisations(prns);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -231,7 +245,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2ForId(prnNumbers[1]);
         await SetupOrganisations(prns);
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -257,7 +273,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await SetupOrganisations(prns);
         await PrnApiStub.AcceptsPrnV2();
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -290,7 +308,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await CognitoApiStub.SetupOAuthToken();
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -321,7 +341,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         await PrnApiStub.AcceptsPrnV2();
         await CognitoApiStub.SetupOAuthToken();
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -343,7 +365,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
     {
         // Don't set up any stub - this will cause a connection failure/exception
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.FetchRrepwIssuedPrns
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

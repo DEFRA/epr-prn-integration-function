@@ -43,11 +43,13 @@ public static class HostBuilderConfiguration
     public static IHost BuildHost()
     {
         return new HostBuilder()
-            .ConfigureFunctionsWebApplication((context, builder) =>
-            {
-                if (IsRunningLocally(context.Configuration) is true)
-                    builder.UseMiddleware<FunctionRunningMiddleware>();
-            })
+            .ConfigureFunctionsWebApplication(
+                (context, builder) =>
+                {
+                    if (IsRunningLocally(context.Configuration) is true)
+                        builder.UseMiddleware<FunctionRunningMiddleware>();
+                }
+            )
             .ConfigureServices(
                 (hostingContext, services) =>
                     ConfigureServices(hostingContext.Configuration, services)
@@ -244,9 +246,7 @@ public static class HostBuilderConfiguration
             .AddHttpClient(Common.Constants.HttpClientNames.Rrepw)
             .AddHttpMessageHandler(sp =>
             {
-                var config = sp.GetRequiredService<
-                    IOptions<RrepwApiConfiguration>
-                >().Value;
+                var config = sp.GetRequiredService<IOptions<RrepwApiConfiguration>>().Value;
                 return new CognitoAuthorisationHandler(
                     new CognitoConfig
                     {
