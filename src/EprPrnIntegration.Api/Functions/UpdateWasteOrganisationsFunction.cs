@@ -1,3 +1,4 @@
+using System.Net;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Helpers;
@@ -93,7 +94,7 @@ public class UpdateWasteOrganisationsFunction(
             },
             logger,
             $"Saving Organisation {producer.PEPRID}",
-            shouldNotContinueOn: [],
+            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
             CancellationToken.None
         );
     }
