@@ -12,14 +12,11 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedWasteOrganisationToApi()
     {
-        var ids = new List<string>();
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
 
-        await FunctionContext.Invoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            ids = await CommonDataApiStub.HasV2UpdateFor();
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
-        });
+        await FunctionContext.Invoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -54,12 +51,11 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_With_UpdatesFound_UpdatesLastUpdatedTimestamp()
     {
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            var ids = await CommonDataApiStub.HasV2UpdateFor();
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
-        });
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
+        
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -70,17 +66,14 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonDataApiHasTransientFailure_RetriesAndEventuallySendsDataToWasteOrganisationsApi()
     {
-        var id = string.Empty;
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
+            HttpStatusCode.ServiceUnavailable,
+            2
+        );
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id);
         
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-                HttpStatusCode.ServiceUnavailable,
-                2
-            );
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -101,17 +94,14 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenCommonDataApiHasTransientFailure_RetriesAndGivesUpAfter3Retries()
     {
-        var id = string.Empty;
+        var id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
+            HttpStatusCode.ServiceUnavailable,
+            4
+        );
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(id);
         
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            id = await CommonDataApiStub.HasV2UpdateWithTransientFailures(
-                HttpStatusCode.ServiceUnavailable,
-                4
-            );
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -131,18 +121,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesAndEventuallySucceedsAndUpdatesLastUpdated()
     {
-        var ids = new List<string>();
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            ids[0],
+            2,
+            HttpStatusCode.ServiceUnavailable
+        );
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            ids = await CommonDataApiStub.HasV2UpdateFor();
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
-                ids[0],
-                2,
-                HttpStatusCode.ServiceUnavailable
-            );
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -162,18 +149,15 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasTransientFailure_RetriesButGivesUpAfter3Retries()
     {
-        var ids = new List<string>();
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            ids[0],
+            4,
+            HttpStatusCode.ServiceUnavailable
+        );
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            ids = await CommonDataApiStub.HasV2UpdateFor();
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
-                ids[0],
-                4,
-                HttpStatusCode.ServiceUnavailable
-            );
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -195,19 +179,16 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasTransientFailure_DoesNotContinueWithNextOrganisation()
     {
-        var ids = new List<string>();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(2);
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            ids[0],
+            4,
+            HttpStatusCode.ServiceUnavailable
+        );
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
         
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            ids = await CommonDataApiStub.HasV2UpdateFor(2);
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
-                ids[0],
-                4,
-                HttpStatusCode.ServiceUnavailable
-            );
-            await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -232,15 +213,12 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [Fact]
     public async Task WhenWasteOrganisationsApiHasNonTransientFailure_ContinuesWithNextOrganisation()
     {
-        var ids = new List<string>();
+        var ids = await CommonDataApiStub.HasV2UpdateFor(2);
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
         
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations, async () =>
-        {
-            ids = await CommonDataApiStub.HasV2UpdateFor(2);
-            await CognitoApiStub.SetupOAuthToken();
-            await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
-            await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        });
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

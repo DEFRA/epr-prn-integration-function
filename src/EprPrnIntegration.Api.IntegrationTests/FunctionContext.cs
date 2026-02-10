@@ -32,25 +32,7 @@ public static class FunctionContext
 
     private static string BaseUri => "http://localhost:7234";
 
-    public static async Task Invoke(string functionName, Func<Task>? setup = null)
-    {
-        if (setup is not null) await setup();
-        
-        await InvokeInternal(functionName);
-    }
-
-    public static async Task<DateTime> GetLastUpdateAndInvoke(string functionName, Func<Task>? setup = null)
-    {
-        if (setup is not null) await setup();
-        
-        var lastUpdate = await GetLastUpdate(functionName) ?? DateTime.MinValue;
-        
-        await InvokeInternal(functionName);
-        
-        return lastUpdate;
-    }
-
-    private static async Task InvokeInternal(string functionName)
+    public static async Task Invoke(string functionName)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, functionName)
         {
@@ -71,6 +53,15 @@ public static class FunctionContext
                 lastRun.Should().BeAfter(utcNow);
             },
             delay: TimeSpan.FromMilliseconds(10));
+    }
+
+    public static async Task<DateTime> GetLastUpdateAndInvoke(string functionName)
+    {
+        var lastUpdate = await GetLastUpdate(functionName) ?? DateTime.MinValue;
+        
+        await Invoke(functionName);
+        
+        return lastUpdate;
     }
 
     public static async Task<HttpResponseMessage> Get(string requestUri) =>
