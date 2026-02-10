@@ -242,6 +242,24 @@ public static class HostBuilderConfiguration
         configuration.GetSection(RrepwApiConfiguration.SectionName).Bind(rrepwApiConfig);
         services
             .AddHttpClient(Common.Constants.HttpClientNames.Rrepw)
+            .AddHttpMessageHandler(sp =>
+            {
+                var config = sp.GetRequiredService<
+                    IOptions<RrepwApiConfiguration>
+                >().Value;
+                return new CognitoAuthorisationHandler(
+                    new CognitoConfig
+                    {
+                        AccessTokenUrl = config.AccessTokenUrl,
+                        ClientId = config.ClientId,
+                        ClientSecret = config.ClientSecret,
+                    },
+                    sp.GetRequiredService<IHttpClientFactory>(),
+                    sp.GetRequiredService<ILogger<CognitoAuthorisationHandler>>(),
+                    sp.GetRequiredService<IMemoryCache>(),
+                    "RrepwApi_AccessToken"
+                );
+            })
             .AddPolicyHandler(
                 (services, request) =>
                     GetRetryPolicy(

@@ -30,7 +30,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var payload = CreatePrns(eprnStatus);
         await PrnApiStub.HasModifiedPrns(payload);
         await RrepwApiStub.AcceptsPrn(eprnStatus);
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         await FunctionContext.Invoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -68,7 +69,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             1
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.REJECTED);
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -118,7 +120,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable,
             1
         );
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -143,7 +146,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable,
             4
         );
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -171,7 +175,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             statusCode,
             1
         );
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -196,7 +201,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             HttpStatusCode.BadRequest,
             1
         );
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -217,7 +223,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         var payload = CreatePrns(EprnStatus.ACCEPTED, 2);
         await PrnApiStub.HasModifiedPrns(payload);
         await RrepwApiStub.AcceptsPrnWithFailures(EprnStatus.ACCEPTED, HttpStatusCode.Conflict, 1);
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>
@@ -242,7 +249,8 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
             1
         );
         await RrepwApiStub.AcceptsPrn(EprnStatus.ACCEPTED);
-        
+        await CognitoApiStub.SetupOAuthToken();
+
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateRrepwPrns);
 
         await AsyncWaiter.WaitForAsync(async () =>

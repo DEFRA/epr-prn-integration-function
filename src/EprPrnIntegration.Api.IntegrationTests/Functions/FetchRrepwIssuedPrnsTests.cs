@@ -288,6 +288,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             4
         );
         await PrnApiStub.AcceptsPrnV2();
+        await CognitoApiStub.SetupOAuthToken();
 
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
 
@@ -318,6 +319,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             HttpStatusCode.BadRequest
         );
         await PrnApiStub.AcceptsPrnV2();
+        await CognitoApiStub.SetupOAuthToken();
 
         var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
 

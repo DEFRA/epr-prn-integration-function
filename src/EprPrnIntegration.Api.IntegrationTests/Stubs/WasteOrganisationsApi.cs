@@ -14,11 +14,16 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
+                .WithRequest(request =>
+                    request
+                        .UsingPut()
+                        .WithPath($"/organisations/{id}/")
+                        .WithHeader("Authorization", "Bearer *")
+                )
                 .WithResponse(response =>
                 {
                     response.WithStatusCode(HttpStatusCode.Accepted);
-                    
+
                     if (delay is not null)
                         response.WithDelay((int)delay.Value.TotalMilliseconds);
                 })
@@ -32,7 +37,12 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request => request.UsingGet().WithPath($"/organisations/{id}/"))
+                .WithRequest(request =>
+                    request
+                        .UsingGet()
+                        .WithPath($"/organisations/{id}/")
+                        .WithHeader("Authorization", "Bearer *")
+                )
                 .WithResponse(response =>
                     response
                         .WithStatusCode(HttpStatusCode.OK)
@@ -66,7 +76,12 @@ public class WasteOrganisationsApi(WireMockContext wireMock)
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
-                .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
+                .WithRequest(request =>
+                    request
+                        .UsingPut()
+                        .WithPath($"/organisations/{id}/")
+                        .WithHeader("Authorization", "Bearer *")
+                )
                 .WithResponse(response => response.WithStatusCode(failureResponse))
         );
         var status = await mappingBuilder.BuildAndPostAsync();

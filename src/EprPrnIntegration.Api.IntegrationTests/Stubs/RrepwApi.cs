@@ -81,7 +81,10 @@ public class RrepwApi(WireMockContext wiremock)
         string? cursor = null
     )
     {
-        var req = request.UsingGet().WithPath("/v1/packaging-recycling-notes");
+        var req = request
+            .UsingGet()
+            .WithPath("/v1/packaging-recycling-notes")
+            .WithHeader("Authorization", "Bearer *");
 
         if (cursor != null)
         {
@@ -153,6 +156,7 @@ public class RrepwApi(WireMockContext wiremock)
                     request
                         .UsingPost()
                         .WithPath(new MatcherModel { Name = "RegexMatcher", Pattern = pattern })
+                        .WithHeader("Authorization", "Bearer *")
                 )
                 .WithResponse(response => response.WithStatusCode(HttpStatusCode.OK))
         );
@@ -174,7 +178,8 @@ public class RrepwApi(WireMockContext wiremock)
             request =>
                 request
                     .UsingPost()
-                    .WithPath(new MatcherModel { Name = "RegexMatcher", Pattern = pattern }),
+                    .WithPath(new MatcherModel { Name = "RegexMatcher", Pattern = pattern })
+                    .WithHeader("Authorization", "Bearer *"),
             response => response.WithStatusCode(HttpStatusCode.OK),
             response => response.WithStatusCode(failureResponse),
             failureCount
