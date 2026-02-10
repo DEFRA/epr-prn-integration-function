@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
 
-public class FetchNpwdIssuedPrnsFunctionIntegrationTest : IntegrationTestBase
+public class FetchNpwdIssuedPrnsFunctionTests : IntegrationTestBase
 {
     [Fact]
     public async Task WhenAzureFunctionIsInvoked_SendsIssuedPrnsToPrnService()
@@ -14,10 +14,8 @@ public class FetchNpwdIssuedPrnsFunctionIntegrationTest : IntegrationTestBase
             PrnApiStub.AcceptsPrnDetails(),
             AccountApiStub.HasPersonEmailForEpr()
         );
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(
-            FunctionName.FetchNpwdIssuedPrnsFunction
-        );
+        
+        await FunctionContext.Invoke(FunctionName.FetchNpwdIssuedPrnsFunction);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

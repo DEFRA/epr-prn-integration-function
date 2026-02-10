@@ -9,10 +9,9 @@ public class UpdateProducersListTests : IntegrationTestBase
     public async Task WhenAzureFunctionIsInvoked_SendsUpdatedProducerToNPWD()
     {
         await CommonDataApiStub.HasUpdateFor("Acme Manufacturing Ltd");
-
         await NpwdApiStub.AcceptsProducerPatch();
-
-        await AzureFunctionInvokerContext.InvokeAzureFunction(FunctionName.UpdateProducersList);
+        
+        await FunctionContext.Invoke(FunctionName.UpdateProducersList);
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

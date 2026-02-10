@@ -1,6 +1,5 @@
 ﻿using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Mappers;
-using Xunit;
 
 namespace EprPrnIntegration.Tests.Mappers
 {

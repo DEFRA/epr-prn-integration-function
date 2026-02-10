@@ -1,5 +1,6 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
-using EprPrnIntegration.Common.Service;
+using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 using Xunit;
 
@@ -16,43 +17,51 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
     protected CognitoApi CognitoApiStub = null!;
     protected RrepwApi RrepwApiStub = null!;
-    protected ILastUpdateService LastUpdateService = LastExecutedContext.LastUpdateService;
-    private WireMockContext WireMockContext = null!;
+    
+    private WireMockContext _wireMockContext = null!;
 
     public async Task InitializeAsync()
     {
-        WireMockContext = new WireMockContext();
+        _wireMockContext = new WireMockContext();
 
-        await WireMockContext.InitializeAsync();
+        await _wireMockContext.InitializeAsync();
 
-        NpwdApiStub = new NpwdApi(WireMockContext);
-        CommonDataApiStub = new CommonDataApi(WireMockContext);
-        PrnApiStub = new PrnApi(WireMockContext);
-        AccountApiStub = new AccountApi(WireMockContext);
-        WasteOrganisationsApiStub = new WasteOrganisationsApi(WireMockContext);
-        CognitoApiStub = new CognitoApi(WireMockContext);
-        RrepwApiStub = new RrepwApi(WireMockContext);
+        NpwdApiStub = new NpwdApi(_wireMockContext);
+        CommonDataApiStub = new CommonDataApi(_wireMockContext);
+        PrnApiStub = new PrnApi(_wireMockContext);
+        AccountApiStub = new AccountApi(_wireMockContext);
+        WasteOrganisationsApiStub = new WasteOrganisationsApi(_wireMockContext);
+        CognitoApiStub = new CognitoApi(_wireMockContext);
+        RrepwApiStub = new RrepwApi(_wireMockContext);
     }
 
     public async Task DisposeAsync()
     {
-        await WireMockContext.DisposeAsync();
+        await _wireMockContext.DisposeAsync();
     }
 
-    protected async Task<DateTime> GetLastUpdate(string functionName)
+    protected static async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
     {
-        return await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
-    }
-
-    protected async Task LastUpdateShouldHaveChanged(DateTime before, string functionName)
-    {
-        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().BeAfter(before);
     }
 
-    protected async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
+    protected static async Task LastUpdateShouldNotHaveChanged(DateTime before, string functionName)
     {
-        var after = await LastUpdateService.GetLastUpdate(functionName) ?? DateTime.MinValue;
+        var after = await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);
+    }
+    
+    protected async Task SetupOrganisations(List<PackagingRecyclingNote> prns)
+    {
+        await CognitoApiStub.SetupOAuthToken();
+
+        foreach (var prn in prns)
+        {
+            await WasteOrganisationsApiStub.WithOrganisation(
+                Guid.Parse(prn.IssuedToOrganisation!.Id!),
+                WoApiOrganisationType.ComplianceScheme
+            );
+        }
     }
 }

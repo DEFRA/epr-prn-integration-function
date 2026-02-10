@@ -1,4 +1,3 @@
-using System.Net;
 using WireMock.Admin.Mappings;
 using WireMock.Client.Extensions;
 using Xunit;

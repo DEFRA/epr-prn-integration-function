@@ -4,7 +4,6 @@ using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace EprPrnIntegration.Common.UnitTests.Extensions;
 
