@@ -197,6 +197,31 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         });
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task WhenCommonApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    {
+        const string prnNumber = "PRN-TEST-001";
+        var prns = await RrepwApiStub.HasPrnUpdates([prnNumber]);
+        await PrnApiStub.AcceptsPrnV2WithTransientFailures(statusCode, 1);
+        await SetupOrganisations(prns);
+        
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.FetchRrepwIssuedPrns);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await PrnApiStub.GetPrnDetailsUpdateV2();
+
+            entries.Count.Should().Be(1);
+            for (int i = 0; i < entries.Count; i++)
+                entries[i].Response.StatusCode.Should().Be((int)statusCode);
+
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
+        });
+    }
+
     [Fact]
     public async Task WhenCommonApiHasNonTransientFailure_ContinuesWithNextPrn()
     {
