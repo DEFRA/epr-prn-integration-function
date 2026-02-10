@@ -27,7 +27,7 @@ public static class HttpHelper
                 return true;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not TaskCanceledException)
         {
             logger.LogError(ex, $"{message} - exception, continuing with next");
             return false;
