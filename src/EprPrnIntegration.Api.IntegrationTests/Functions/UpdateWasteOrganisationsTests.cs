@@ -236,4 +236,39 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateWasteOrganisations);
         });
     }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task WhenWasteOrganisationsApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    {
+        var ids = await CommonDataApiStub.HasV2UpdateFor(2);
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.WithOrganisationsEndpointRecoveringFromTransientFailures(
+            ids[0],
+            1,
+            statusCode
+        );
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
+        
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            var entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[0]);
+
+            entries.Count.Should().Be(1);
+            var mostRecentUpdate = entries.Last();
+            mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
+            mostRecentUpdate
+                .Response.StatusCode.Should()
+                .Be((int)statusCode);
+
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
+
+            entries = await WasteOrganisationsApiStub.GetOrganisationRequests(ids[1]);
+            entries.Should().BeEmpty();
+        });
+    }
 }
