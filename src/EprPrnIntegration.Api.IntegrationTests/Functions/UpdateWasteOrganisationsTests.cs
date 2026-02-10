@@ -271,4 +271,19 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries.Should().BeEmpty();
         });
     }
+
+    [Fact]
+    public async Task WhenWasteOrganisationsApiTimesOut_FailAndNotContinue()
+    {
+        var ids = await CommonDataApiStub.HasV2UpdateFor();
+        await CognitoApiStub.SetupOAuthToken();
+        await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0], delay: TimeSpan.FromSeconds(6)); // Timeout is 5 seconds, configured in compose.yml
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        await AsyncWaiter.WaitForAsync(async () =>
+        {
+            await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
+        });
+    }
 }

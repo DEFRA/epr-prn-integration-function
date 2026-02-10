@@ -74,6 +74,8 @@ public class UpdateWasteOrganisationsFunctionTests
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
+        
+        _mockUtilities.Verify(x => x.AddCustomEvent("UpdateWasteOrganisation", It.IsAny<IDictionary<string, string>>()), Times.Exactly(3));
     }
 
     private void SetupProducers(IEnumerable<UpdatedProducersResponseV2> producers)
@@ -216,6 +218,8 @@ public class UpdateWasteOrganisationsFunctionTests
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
+        
+        _mockUtilities.Verify(x => x.AddCustomEvent("UpdateWasteOrganisation", It.IsAny<IDictionary<string, string>>()), Times.Exactly(2));
     }
 
     [Theory]
@@ -314,6 +318,46 @@ public class UpdateWasteOrganisationsFunctionTests
         _lastUpdateServiceMock.Verify(
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task WhenTaskCanceledExceptionOccurs_ForWasteOrganisationApi_DoesNotUpdateLastUpdatedTime()
+    {
+        var producers = new List<UpdatedProducersResponseV2>
+        {
+            CreateProducer("producer-1")
+        };
+        _lastUpdateServiceMock
+            .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
+            .ReturnsAsync(DateTime.MinValue);
+        _lastUpdateServiceMock
+            .Setup(x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()))
+            .Returns(Task.CompletedTask);
+        _commonDataService
+            .Setup(x =>
+                x.GetUpdatedProducersV2(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ReturnsAsync(producers);
+
+        _wasteOrganisationsService
+            .Setup(x =>
+                x.UpdateOrganisation(
+                    "producer-1",
+                    It.IsAny<Common.Models.WasteOrganisationsApi.WasteOrganisationsApiUpdateRequest>()
+                )
+            )
+            .Throws(new TaskCanceledException());
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _function.Run(new TimerInfo()));
+
+        _lastUpdateServiceMock.Verify(
+            x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
+            Times.Never
         );
     }
 

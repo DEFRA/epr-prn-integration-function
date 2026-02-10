@@ -75,15 +75,16 @@ public class UpdateWasteOrganisationsFunction(
     private async Task UpdateProducers(List<UpdatedProducersResponseV2> producers)
     {
         logger.LogInformation("Found {ProducerCount} updated producers ", producers.Count);
-        foreach (var producer in producers) {
-            await UpdateProducer(producer);
-            LogCustomEvents(producer);
+        foreach (var producer in producers)
+        {
+            if (await UpdateProducer(producer))
+                LogCustomEvents(producer);
         }
     }
 
-    private async Task UpdateProducer(UpdatedProducersResponseV2 producer)
+    private async Task<bool> UpdateProducer(UpdatedProducersResponseV2 producer)
     {
-        await HttpHelper.HandleTransientErrors(
+        return await HttpHelper.HandleTransientErrors(
             async (ct) =>
             {
                 var request = WasteOrganisationsApiUpdateRequestMapper.Map(producer);

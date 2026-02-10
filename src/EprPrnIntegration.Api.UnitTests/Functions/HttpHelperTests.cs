@@ -219,6 +219,17 @@ public class HttpHelperTests
         Assert.Equal(cts.Token, capturedToken.Value);
     }
 
+    [Fact]
+    public async Task HandleTransientErrors_WhenTaskCanceledException_Throws()
+    {
+        Task<HttpResponseMessage> action(CancellationToken _) => throw new TaskCanceledException();
+        var message = "Test operation";
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() =>
+            HttpHelper.HandleTransientErrors(action, _loggerMock.Object, message, shouldNotContinueOn: [],
+                CancellationToken.None));
+    }
+
     #endregion
 
     #region HandleTransientErrorsGet Tests

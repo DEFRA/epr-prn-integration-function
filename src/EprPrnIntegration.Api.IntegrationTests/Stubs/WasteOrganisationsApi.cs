@@ -9,13 +9,19 @@ namespace EprPrnIntegration.Api.IntegrationTests.Stubs;
 
 public class WasteOrganisationsApi(WireMockContext wireMock)
 {
-    public async Task AcceptsOrganisation(string id)
+    public async Task AcceptsOrganisation(string id, TimeSpan? delay = null)
     {
         var mappingBuilder = wireMock.WireMockAdminApi.GetMappingBuilder();
         mappingBuilder.Given(builder =>
             builder
                 .WithRequest(request => request.UsingPut().WithPath($"/organisations/{id}/"))
-                .WithResponse(response => response.WithStatusCode(HttpStatusCode.Accepted))
+                .WithResponse(response =>
+                {
+                    response.WithStatusCode(HttpStatusCode.Accepted);
+                    
+                    if (delay is not null)
+                        response.WithDelay((int)delay.Value.TotalMilliseconds);
+                })
         );
         var status = await mappingBuilder.BuildAndPostAsync();
         Assert.NotNull(status.Guid);
