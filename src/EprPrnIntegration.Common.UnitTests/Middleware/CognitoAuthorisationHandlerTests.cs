@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
+#pragma warning disable xUnit1031 // Moq Callback does not support async delegates; blocking calls on buffered content are safe here
+
 namespace EprPrnIntegration.Common.UnitTests.Middleware;
 
 [SuppressMessage(
@@ -121,8 +123,13 @@ public class CognitoAuthorisationHandlerTests : IDisposable
     public async Task TokenRequest_ShouldSendFormDataWithGrantTypeOnly()
     {
         // Arrange
-        HttpRequestMessage? capturedTokenRequest = null;
-        SetupCognitoResponse(callback: (req, _) => capturedTokenRequest = req);
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
         SetupHttpStubResponse();
 
         var handler = new CognitoAuthorisationHandler(
@@ -144,13 +151,10 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         );
 
         // Assert
-        capturedTokenRequest.Should().NotBeNull();
-        capturedTokenRequest!.Content.Should().BeOfType<FormUrlEncodedContent>();
-
-        var formContent = await capturedTokenRequest.Content!.ReadAsStringAsync();
-        formContent.Should().Contain("grant_type=client_credentials");
-        formContent.Should().NotContain("client_id=");
-        formContent.Should().NotContain("client_secret=");
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().Contain("grant_type=client_credentials");
+        capturedFormContent.Should().NotContain("client_id=");
+        capturedFormContent.Should().NotContain("client_secret=");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -160,8 +164,13 @@ public class CognitoAuthorisationHandlerTests : IDisposable
     {
         // Arrange
         _config.Scope = "my-api/read";
-        HttpRequestMessage? capturedTokenRequest = null;
-        SetupCognitoResponse(callback: (req, _) => capturedTokenRequest = req);
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
         SetupHttpStubResponse();
 
         var handler = new CognitoAuthorisationHandler(
@@ -183,18 +192,22 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         );
 
         // Assert
-        capturedTokenRequest.Should().NotBeNull();
-        var formContent = await capturedTokenRequest!.Content!.ReadAsStringAsync();
-        formContent.Should().Contain("grant_type=client_credentials");
-        formContent.Should().Contain("scope=my-api%2Fread");
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().Contain("grant_type=client_credentials");
+        capturedFormContent.Should().Contain("scope=my-api%2Fread");
     }
 
     [Fact]
     public async Task TokenRequest_WhenScopeNotConfigured_ShouldNotIncludeScopeInFormData()
     {
         // Arrange
-        HttpRequestMessage? capturedTokenRequest = null;
-        SetupCognitoResponse(callback: (req, _) => capturedTokenRequest = req);
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
         SetupHttpStubResponse();
 
         var handler = new CognitoAuthorisationHandler(
@@ -216,9 +229,8 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         );
 
         // Assert
-        capturedTokenRequest.Should().NotBeNull();
-        var formContent = await capturedTokenRequest!.Content!.ReadAsStringAsync();
-        formContent.Should().NotContain("scope=");
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().NotContain("scope=");
     }
 
     [Fact]
@@ -406,9 +418,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            client.SendAsync(
-                new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
-            )
+            client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
 
         exception.Message.Should().Be("Cognito ClientId and ClientSecret must be configured");

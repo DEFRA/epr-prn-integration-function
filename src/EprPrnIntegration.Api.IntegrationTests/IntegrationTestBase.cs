@@ -17,7 +17,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected WasteOrganisationsApi WasteOrganisationsApiStub = null!;
     protected CognitoApi CognitoApiStub = null!;
     protected RrepwApi RrepwApiStub = null!;
-    
+
     private WireMockContext _wireMockContext = null!;
 
     public async Task InitializeAsync()
@@ -51,7 +51,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         var after = await FunctionContext.GetLastUpdate(functionName) ?? DateTime.MinValue;
         after.Should().NotBeAfter(before);
     }
-    
+
     protected async Task SetupOrganisations(List<PackagingRecyclingNote> prns)
     {
         await CognitoApiStub.SetupOAuthToken();

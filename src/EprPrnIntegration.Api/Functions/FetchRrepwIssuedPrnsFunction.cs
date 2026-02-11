@@ -164,7 +164,12 @@ public class FetchRrepwIssuedPrnsFunction(
             async (ct) => await prnService.SavePrn(request, ct),
             logger,
             $"Saving PRN {request.PrnNumber}",
-            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
+            shouldNotContinueOn:
+            [
+                HttpStatusCode.Unauthorized,
+                HttpStatusCode.Forbidden,
+                HttpStatusCode.NotFound,
+            ],
             cancellationToken
         );
     }

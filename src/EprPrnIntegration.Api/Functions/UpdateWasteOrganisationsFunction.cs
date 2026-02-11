@@ -11,7 +11,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-
 namespace EprPrnIntegration.Api.Functions;
 
 public class UpdateWasteOrganisationsFunction(
@@ -95,12 +94,17 @@ public class UpdateWasteOrganisationsFunction(
             },
             logger,
             $"Saving Organisation {producer.PEPRID}",
-            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
+            shouldNotContinueOn:
+            [
+                HttpStatusCode.Unauthorized,
+                HttpStatusCode.Forbidden,
+                HttpStatusCode.NotFound,
+            ],
             CancellationToken.None
         );
     }
 
-     private void LogCustomEvents(UpdatedProducersResponseV2 producer)
+    private void LogCustomEvents(UpdatedProducersResponseV2 producer)
     {
         {
             Dictionary<string, string> eventData = new()

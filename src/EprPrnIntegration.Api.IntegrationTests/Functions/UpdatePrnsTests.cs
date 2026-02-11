@@ -18,7 +18,7 @@ public class UpdatePrnsListTests : IntegrationTestBase
             PrnApiStub.AcceptsSyncStatus(),
             NpwdApiStub.AcceptsPrnPatch()
         );
-        
+
         await FunctionContext.Invoke(FunctionName.UpdatePrnsList);
 
         await AsyncWaiter.WaitForAsync(async () =>

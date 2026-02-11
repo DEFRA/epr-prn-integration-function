@@ -6,7 +6,11 @@ public static class AsyncWaiter
 {
     private static readonly TimeSpan s_defaultDelay = TimeSpan.FromSeconds(1);
 
-    public static async Task WaitForAsync(Func<Task> assertion, double? timeout = null, TimeSpan? delay = null)
+    public static async Task WaitForAsync(
+        Func<Task> assertion,
+        double? timeout = null,
+        TimeSpan? delay = null
+    )
     {
         var timer = Stopwatch.StartNew();
         var timeoutTimespan = TimeSpan.FromSeconds(timeout ?? 30);

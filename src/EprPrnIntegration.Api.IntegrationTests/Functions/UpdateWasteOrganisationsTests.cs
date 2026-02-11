@@ -54,8 +54,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         var ids = await CommonDataApiStub.HasV2UpdateFor();
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0]);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -72,8 +74,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         );
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -100,8 +104,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         );
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(id);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -129,7 +135,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -157,7 +165,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -187,8 +197,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             HttpStatusCode.ServiceUnavailable
         );
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -217,8 +229,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.WithOrganisationsEndpointWIthNonTransientFailure(ids[0]);
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -241,7 +255,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.NotFound)]
-    public async Task WhenWasteOrganisationsApiHasStatusThatShouldNotContinue_FailAndNotContinue(HttpStatusCode statusCode)
+    public async Task WhenWasteOrganisationsApiHasStatusThatShouldNotContinue_FailAndNotContinue(
+        HttpStatusCode statusCode
+    )
     {
         var ids = await CommonDataApiStub.HasV2UpdateFor(2);
         await CognitoApiStub.SetupOAuthToken();
@@ -251,8 +267,10 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             statusCode
         );
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[1]);
-        
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {
@@ -261,9 +279,7 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
             entries.Count.Should().Be(1);
             var mostRecentUpdate = entries.Last();
             mostRecentUpdate.Request.Body!.Should().Contain(ids[0] + "_name");
-            mostRecentUpdate
-                .Response.StatusCode.Should()
-                .Be((int)statusCode);
+            mostRecentUpdate.Response.StatusCode.Should().Be((int)statusCode);
 
             await LastUpdateShouldNotHaveChanged(before, FunctionName.UpdateWasteOrganisations);
 
@@ -279,7 +295,9 @@ public class UpdateWasteOrganisationsTests : IntegrationTestBase
         await CognitoApiStub.SetupOAuthToken();
         await WasteOrganisationsApiStub.AcceptsOrganisation(ids[0], delay: TimeSpan.FromSeconds(6)); // Timeout is 5 seconds, configured in compose.yml
 
-        var before = await FunctionContext.GetLastUpdateAndInvoke(FunctionName.UpdateWasteOrganisations);
+        var before = await FunctionContext.GetLastUpdateAndInvoke(
+            FunctionName.UpdateWasteOrganisations
+        );
 
         await AsyncWaiter.WaitForAsync(async () =>
         {

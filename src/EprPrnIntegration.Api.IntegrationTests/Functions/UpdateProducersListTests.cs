@@ -10,7 +10,7 @@ public class UpdateProducersListTests : IntegrationTestBase
     {
         await CommonDataApiStub.HasUpdateFor("Acme Manufacturing Ltd");
         await NpwdApiStub.AcceptsProducerPatch();
-        
+
         await FunctionContext.Invoke(FunctionName.UpdateProducersList);
 
         await AsyncWaiter.WaitForAsync(async () =>
