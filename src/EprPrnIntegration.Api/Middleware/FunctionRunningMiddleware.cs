@@ -8,8 +8,9 @@ namespace EprPrnIntegration.Api.Middleware;
 
 [ExcludeFromCodeCoverage]
 public class FunctionRunningMiddleware(
-    IBlobStorage blobStorage, 
-    ILogger<FunctionRunningMiddleware> logger) : IFunctionsWorkerMiddleware
+    IBlobStorage blobStorage,
+    ILogger<FunctionRunningMiddleware> logger
+) : IFunctionsWorkerMiddleware
 {
     public const string ContainerName = "running-store";
 
@@ -17,13 +18,19 @@ public class FunctionRunningMiddleware(
     {
         try
         {
-            logger.LogInformation("Before function execution: {Name}", context.FunctionDefinition.Name);
+            logger.LogInformation(
+                "Before function execution: {Name}",
+                context.FunctionDefinition.Name
+            );
 
             await next(context);
         }
         finally
         {
-            logger.LogInformation("After function execution: {Name}", context.FunctionDefinition.Name);
+            logger.LogInformation(
+                "After function execution: {Name}",
+                context.FunctionDefinition.Name
+            );
 
             await SetLastRun(context.FunctionDefinition.Name);
         }

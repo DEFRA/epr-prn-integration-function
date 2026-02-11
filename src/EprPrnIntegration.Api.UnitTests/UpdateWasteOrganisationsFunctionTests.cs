@@ -74,8 +74,15 @@ public class UpdateWasteOrganisationsFunctionTests
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
-        
-        _mockUtilities.Verify(x => x.AddCustomEvent("UpdateWasteOrganisation", It.IsAny<IDictionary<string, string>>()), Times.Exactly(3));
+
+        _mockUtilities.Verify(
+            x =>
+                x.AddCustomEvent(
+                    "UpdateWasteOrganisation",
+                    It.IsAny<IDictionary<string, string>>()
+                ),
+            Times.Exactly(3)
+        );
     }
 
     private void SetupProducers(IEnumerable<UpdatedProducersResponseV2> producers)
@@ -218,8 +225,15 @@ public class UpdateWasteOrganisationsFunctionTests
             x => x.SetLastUpdate(It.IsAny<string>(), It.IsAny<DateTime>()),
             Times.Once
         );
-        
-        _mockUtilities.Verify(x => x.AddCustomEvent("UpdateWasteOrganisation", It.IsAny<IDictionary<string, string>>()), Times.Exactly(2));
+
+        _mockUtilities.Verify(
+            x =>
+                x.AddCustomEvent(
+                    "UpdateWasteOrganisation",
+                    It.IsAny<IDictionary<string, string>>()
+                ),
+            Times.Exactly(2)
+        );
     }
 
     [Theory]
@@ -324,10 +338,7 @@ public class UpdateWasteOrganisationsFunctionTests
     [Fact]
     public async Task WhenTaskCanceledExceptionOccurs_ForWasteOrganisationApi_DoesNotUpdateLastUpdatedTime()
     {
-        var producers = new List<UpdatedProducersResponseV2>
-        {
-            CreateProducer("producer-1")
-        };
+        var producers = new List<UpdatedProducersResponseV2> { CreateProducer("producer-1") };
         _lastUpdateServiceMock
             .Setup(x => x.GetLastUpdate(It.IsAny<string>()))
             .ReturnsAsync(DateTime.MinValue);

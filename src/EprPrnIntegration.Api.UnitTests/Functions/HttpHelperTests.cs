@@ -212,7 +212,13 @@ public class HttpHelperTests
         var message = "Test operation";
 
         // Act
-        await HttpHelper.HandleTransientErrors(action, _loggerMock.Object, message, shouldNotContinueOn: [], cts.Token);
+        await HttpHelper.HandleTransientErrors(
+            action,
+            _loggerMock.Object,
+            message,
+            shouldNotContinueOn: [],
+            cts.Token
+        );
 
         // Assert
         Assert.NotNull(capturedToken);
@@ -226,8 +232,14 @@ public class HttpHelperTests
         var message = "Test operation";
 
         await Assert.ThrowsAsync<TaskCanceledException>(() =>
-            HttpHelper.HandleTransientErrors(action, _loggerMock.Object, message, shouldNotContinueOn: [],
-                CancellationToken.None));
+            HttpHelper.HandleTransientErrors(
+                action,
+                _loggerMock.Object,
+                message,
+                shouldNotContinueOn: [],
+                CancellationToken.None
+            )
+        );
     }
 
     #endregion

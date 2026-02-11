@@ -347,9 +347,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            client.SendAsync(
-                new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
-            )
+            client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
 
         exception.Message.Should().Be("Cognito ClientId and ClientSecret must be configured");

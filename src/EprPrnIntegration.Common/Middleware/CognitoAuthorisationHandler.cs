@@ -60,9 +60,7 @@ public class CognitoAuthorisationHandler(
         return token;
     }
 
-    private async Task<TokenResponse> FetchCognitoTokenAsync(
-        CancellationToken cancellationToken
-    )
+    private async Task<TokenResponse> FetchCognitoTokenAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("Fetching Cognito access token");
 
@@ -89,9 +87,7 @@ public class CognitoAuthorisationHandler(
 
         if (string.IsNullOrEmpty(response.AccessToken))
         {
-            throw new InvalidOperationException(
-                "Failed to retrieve access token from Cognito"
-            );
+            throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
         logger.LogInformation("Successfully obtained Cognito access token");

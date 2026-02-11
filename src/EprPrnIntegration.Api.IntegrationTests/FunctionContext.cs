@@ -18,14 +18,15 @@ public static class FunctionContext
     {
         HttpClient = new HttpClient { BaseAddress = new Uri($"{BaseUri}/admin/functions/") };
         HttpClient.DefaultRequestHeaders.Add("x-functions-key", "this-is-a-dummy-value");
-        
+
         // This connection string is the well-known default credential for the Azurite storage emulator.
         // It is NOT a sensitive secret - it's a hardcoded value built into Azurite for local development.
         // See: https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite#well-known-storage-account-and-key
-        const string connectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;";
-        
+        const string connectionString =
+            "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;QueueEndpoint=http://localhost:10001/devstoreaccount1;TableEndpoint=http://localhost:10002/devstoreaccount1;";
+
         var blobServiceClient = new BlobServiceClient(connectionString);
-        
+
         BlobStorage = new BlobStorage(blobServiceClient);
         LastUpdateService = new LastUpdateService(BlobStorage);
     }
@@ -47,31 +48,37 @@ public static class FunctionContext
         // See FunctionRunningMiddleware that sets the last run date time
         // for a specific function. This will block until the function
         // has finished, or if the maximum WaitForAsync time is reached.
-        await AsyncWaiter.WaitForAsync(async () =>
+        await AsyncWaiter.WaitForAsync(
+            async () =>
             {
                 var lastRun = await GetLastRun(functionName);
                 lastRun.Should().BeAfter(utcNow);
             },
-            delay: TimeSpan.FromMilliseconds(10));
+            delay: TimeSpan.FromMilliseconds(10)
+        );
     }
 
     public static async Task<DateTime> GetLastUpdateAndInvoke(string functionName)
     {
         var lastUpdate = await GetLastUpdate(functionName) ?? DateTime.MinValue;
-        
+
         await Invoke(functionName);
-        
+
         return lastUpdate;
     }
 
     public static async Task<HttpResponseMessage> Get(string requestUri) =>
         await HttpClient.GetAsync(requestUri);
 
-    public static Task<DateTime?> GetLastUpdate(string functionName) => LastUpdateService.GetLastUpdate(functionName);
+    public static Task<DateTime?> GetLastUpdate(string functionName) =>
+        LastUpdateService.GetLastUpdate(functionName);
 
     private static async Task<DateTime> GetLastRun(string functionName)
     {
-        var content = await BlobStorage.ReadTextFromBlob(FunctionRunningMiddleware.ContainerName, $"{functionName}.txt");
+        var content = await BlobStorage.ReadTextFromBlob(
+            FunctionRunningMiddleware.ContainerName,
+            $"{functionName}.txt"
+        );
 
         return string.IsNullOrEmpty(content)
             ? DateTime.MinValue

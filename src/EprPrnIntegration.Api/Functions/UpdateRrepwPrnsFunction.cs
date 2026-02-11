@@ -39,7 +39,8 @@ public class UpdateRrepwPrnsFunction(
         if (updatedEprPrns == null)
             return;
 
-        foreach (var prn in updatedEprPrns) {
+        foreach (var prn in updatedEprPrns)
+        {
             await UpdatePrn(prn, fromDate, toDate);
             LogCustomEvents(prn);
         }
@@ -56,7 +57,12 @@ public class UpdateRrepwPrnsFunction(
             async (ct) => await rrepwService.UpdatePrn(prn),
             logger,
             $"Updating Prn {prn.PrnNumber} in RREPW for time period {fromDate} to {toDate}.",
-            shouldNotContinueOn: [HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound],
+            shouldNotContinueOn:
+            [
+                HttpStatusCode.Unauthorized,
+                HttpStatusCode.Forbidden,
+                HttpStatusCode.NotFound,
+            ],
             CancellationToken.None
         );
     }
@@ -104,7 +110,6 @@ public class UpdateRrepwPrnsFunction(
 
     private void LogCustomEvents(PrnUpdateStatus prn)
     {
-
         Dictionary<string, string> eventData = new()
         {
             { "EvidenceNo", prn.PrnNumber },
@@ -114,5 +119,4 @@ public class UpdateRrepwPrnsFunction(
 
         utilities.AddCustomEvent(CustomEvents.UpdatePrnRrepw, eventData);
     }
-
 }
