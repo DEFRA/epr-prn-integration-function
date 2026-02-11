@@ -1,8 +1,6 @@
 using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using EprPrnIntegration.Common.Configuration;
+using IdentityModel.Client;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -79,55 +77,42 @@ public class CognitoAuthorisationHandler(
         }
     }
 
-    private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(
+    private async Task<TokenResponse> FetchCognitoTokenAsync(
         CancellationToken cancellationToken
     )
     {
         logger.LogInformation("Fetching Cognito access token");
-        var clientCredentials = $"{config.ClientId}:{config.ClientSecret}";
-        var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
         var httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.CognitoToken);
 
-        using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, config.AccessTokenUrl);
-        tokenRequest.Headers.Authorization = new AuthenticationHeaderValue(
-            "Basic",
-            encodedCredentials
+        var response = await httpClient.RequestClientCredentialsTokenAsync(
+            new ClientCredentialsTokenRequest
+            {
+                Address = config.AccessTokenUrl,
+                ClientId = config.ClientId,
+                ClientSecret = config.ClientSecret,
+                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader,
+                Scope = config.Scope,
+            },
+            cancellationToken
         );
 
-        var formData = new Dictionary<string, string> { { "grant_type", "client_credentials" } };
-
-        if (!string.IsNullOrEmpty(config.Scope))
+        if (response.IsError)
         {
-            formData.Add("scope", config.Scope);
+            throw response.Exception
+                ?? new InvalidOperationException(
+                    $"Failed to retrieve access token from Cognito: {response.Error}"
+                );
         }
 
-        tokenRequest.Content = new FormUrlEncodedContent(formData);
-
-        var response = await httpClient.SendAsync(tokenRequest, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-        var tokenResponse = JsonSerializer.Deserialize<CognitoTokenResponse>(responseContent);
-
-        if (tokenResponse?.AccessToken == null)
+        if (string.IsNullOrEmpty(response.AccessToken))
         {
-            throw new InvalidOperationException("Failed to retrieve access token from Cognito");
+            throw new InvalidOperationException(
+                "Failed to retrieve access token from Cognito"
+            );
         }
 
         logger.LogInformation("Successfully obtained Cognito access token");
-        return tokenResponse;
-    }
-
-    private sealed class CognitoTokenResponse
-    {
-        [JsonPropertyName("access_token")]
-        public string? AccessToken { get; set; }
-
-        [JsonPropertyName("expires_in")]
-        public int ExpiresIn { get; set; }
-
-        [JsonPropertyName("token_type")]
-        public string? TokenType { get; set; }
+        return response;
     }
 }

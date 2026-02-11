@@ -238,7 +238,6 @@ public class CognitoAuthorisationHandlerTests : IDisposable
     {
         // Arrange
         string? capturedClientName = null;
-        SetupCognitoResponse();
         SetupHttpStubResponse();
 
         _httpClientFactoryMock
@@ -265,7 +264,9 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                                         token_type = "Bearer",
                                         expires_in = 3600,
                                     }
-                                )
+                                ),
+                                Encoding.UTF8,
+                                "application/json"
                             ),
                         }
                     );
@@ -357,15 +358,15 @@ public class CognitoAuthorisationHandlerTests : IDisposable
             client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
 
-        exception.Message.Should().Be("Failed to retrieve access token from Cognito");
+        exception.Message.Should().Contain("Failed to retrieve access token from Cognito");
     }
 
     [Fact]
-    public async Task WhenTokenEndpointReturnsError_ShouldThrowHttpRequestException()
+    public async Task WhenTokenEndpointReturnsError_ShouldThrowInvalidOperationException()
     {
         // Arrange
         SetupCognitoResponse(
-            errorContent: "Invalid credentials",
+            errorContent: "{\"error\":\"invalid_client\"}",
             statusCode: HttpStatusCode.Unauthorized
         );
 
@@ -383,9 +384,11 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         var client = new HttpClient(handler);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
+
+        exception.Message.Should().Contain("Failed to retrieve access token from Cognito");
     }
 
     [Theory]
@@ -418,7 +421,9 @@ public class CognitoAuthorisationHandlerTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
+            client.SendAsync(
+                new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+            )
         );
 
         exception.Message.Should().Be("Cognito ClientId and ClientSecret must be configured");
@@ -535,7 +540,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(content),
+                    Content = new StringContent(content, Encoding.UTF8, "application/json"),
                 };
             });
 
@@ -585,7 +590,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                     new HttpResponseMessage
                     {
                         StatusCode = statusCode,
-                        Content = new StringContent(content),
+                        Content = new StringContent(content, Encoding.UTF8, "application/json"),
                     }
                 );
         }
@@ -595,7 +600,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                 new HttpResponseMessage
                 {
                     StatusCode = statusCode,
-                    Content = new StringContent(content),
+                    Content = new StringContent(content, Encoding.UTF8, "application/json"),
                 }
             );
         }
