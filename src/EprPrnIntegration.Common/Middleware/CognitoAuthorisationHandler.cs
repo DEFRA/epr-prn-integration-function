@@ -14,8 +14,6 @@ public class CognitoAuthorisationHandler(
     string tokenCacheKey
 ) : DelegatingHandler
 {
-    private readonly SemaphoreSlim _tokenSemaphore = new(1, 1);
-
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken
@@ -45,36 +43,21 @@ public class CognitoAuthorisationHandler(
             return cachedToken;
         }
 
-        await _tokenSemaphore.WaitAsync(cancellationToken);
-        try
-        {
-            // Double-check after acquiring the semaphore
-            cachedToken = memoryCache.Get<string>(tokenCacheKey);
-            if (cachedToken != null)
-            {
-                return cachedToken;
-            }
+        logger.LogInformation(
+            "Obtaining fresh Cognito access token for cache key: {CacheKey}",
+            tokenCacheKey
+        );
+        var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
+        var token = tokenResponse.AccessToken!;
 
-            logger.LogInformation(
-                "Obtaining fresh Cognito access token for cache key: {CacheKey}",
-                tokenCacheKey
-            );
-            var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
-            var token = tokenResponse.AccessToken!;
+        // Cache the token with expiration
+        // Use 90% of token lifetime to ensure we refresh before actual expiration
+        var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
+        var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
 
-            // Cache the token with expiration
-            // Use 90% of token lifetime to ensure we refresh before actual expiration
-            var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
-            var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
+        memoryCache.Set(tokenCacheKey, token, cacheExpiration);
 
-            memoryCache.Set(tokenCacheKey, token, cacheExpiration);
-
-            return token;
-        }
-        finally
-        {
-            _tokenSemaphore.Release();
-        }
+        return token;
     }
 
     private async Task<TokenResponse> FetchCognitoTokenAsync(
