@@ -90,7 +90,7 @@ public class CognitoAuthorisationHandler(
             throw new InvalidOperationException("Failed to retrieve access token from Cognito");
         }
 
-        logger.LogInformation("Successfully obtained Cognito access token");
+        logger.LogInformation("Successfully obtained Cognito access token using Identity model");
         return response;
     }
 }
