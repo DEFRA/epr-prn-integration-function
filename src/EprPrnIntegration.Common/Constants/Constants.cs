@@ -21,6 +21,7 @@
         public const string CommonData = "CommonDataClient";
         public const string WasteOrganisations = "WasteOrganisations";
         public const string Rrepw = "Rrepw";
+        public const string CognitoToken = "CognitoToken";
     }
 
     public static class HttpHeaderNames

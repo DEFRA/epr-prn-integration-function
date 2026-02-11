@@ -16,6 +16,8 @@ public class CognitoAuthorisationHandler(
     string tokenCacheKey
 ) : DelegatingHandler
 {
+    private readonly SemaphoreSlim _tokenSemaphore = new(1, 1);
+
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken
@@ -23,7 +25,9 @@ public class CognitoAuthorisationHandler(
     {
         if (string.IsNullOrEmpty(config.ClientId) || string.IsNullOrEmpty(config.ClientSecret))
         {
-            return await base.SendAsync(request, cancellationToken);
+            throw new InvalidOperationException(
+                "Cognito ClientId and ClientSecret must be configured"
+            );
         }
 
         var token = await GetCognitoTokenAsync(cancellationToken);
@@ -37,27 +41,42 @@ public class CognitoAuthorisationHandler(
 
     private async Task<string> GetCognitoTokenAsync(CancellationToken cancellationToken)
     {
-        return await memoryCache.GetOrCreateAsync(
-                tokenCacheKey,
-                async entry =>
-                {
-                    logger.LogInformation(
-                        "Obtaining fresh Cognito access token for cache key: {CacheKey}",
-                        tokenCacheKey
-                    );
-                    var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
-                    var token = tokenResponse.AccessToken!;
+        var cachedToken = memoryCache.Get<string>(tokenCacheKey);
+        if (cachedToken != null)
+        {
+            return cachedToken;
+        }
 
-                    // Cache the token with expiration
-                    // Use 90% of token lifetime to ensure we refresh before actual expiration
-                    var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
-                    var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
+        await _tokenSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            // Double-check after acquiring the semaphore
+            cachedToken = memoryCache.Get<string>(tokenCacheKey);
+            if (cachedToken != null)
+            {
+                return cachedToken;
+            }
 
-                    entry.AbsoluteExpirationRelativeToNow = cacheExpiration;
+            logger.LogInformation(
+                "Obtaining fresh Cognito access token for cache key: {CacheKey}",
+                tokenCacheKey
+            );
+            var tokenResponse = await FetchCognitoTokenAsync(cancellationToken);
+            var token = tokenResponse.AccessToken!;
 
-                    return token;
-                }
-            ) ?? throw new InvalidOperationException("Failed to retrieve access token from cache");
+            // Cache the token with expiration
+            // Use 90% of token lifetime to ensure we refresh before actual expiration
+            var fullExpiration = TimeSpan.FromSeconds(tokenResponse.ExpiresIn);
+            var cacheExpiration = TimeSpan.FromSeconds(fullExpiration.TotalSeconds * 0.9);
+
+            memoryCache.Set(tokenCacheKey, token, cacheExpiration);
+
+            return token;
+        }
+        finally
+        {
+            _tokenSemaphore.Release();
+        }
     }
 
     private async Task<CognitoTokenResponse> FetchCognitoTokenAsync(
@@ -68,20 +87,20 @@ public class CognitoAuthorisationHandler(
         var clientCredentials = $"{config.ClientId}:{config.ClientSecret}";
         var encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(clientCredentials));
 
-        var httpClient = httpClientFactory.CreateClient();
+        var httpClient = httpClientFactory.CreateClient(Constants.HttpClientNames.CognitoToken);
 
-        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, config.AccessTokenUrl);
+        using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, config.AccessTokenUrl);
         tokenRequest.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic",
             encodedCredentials
         );
 
-        var formData = new Dictionary<string, string>
+        var formData = new Dictionary<string, string> { { "grant_type", "client_credentials" } };
+
+        if (!string.IsNullOrEmpty(config.Scope))
         {
-            { "grant_type", "client_credentials" },
-            { "client_id", config.ClientId },
-            { "client_secret", config.ClientSecret },
-        };
+            formData.Add("scope", config.Scope);
+        }
 
         tokenRequest.Content = new FormUrlEncodedContent(formData);
 
