@@ -223,6 +223,7 @@ public static class HostBuilderConfiguration
                         AccessTokenUrl = config.AccessTokenUrl,
                         ClientId = config.ClientId,
                         ClientSecret = config.ClientSecret,
+                        Scope = config.Scope,
                     },
                     sp.GetRequiredService<IHttpClientFactory>(),
                     sp.GetRequiredService<ILogger<CognitoAuthorisationHandler>>(),
@@ -253,6 +254,7 @@ public static class HostBuilderConfiguration
                         AccessTokenUrl = config.AccessTokenUrl,
                         ClientId = config.ClientId,
                         ClientSecret = config.ClientSecret,
+                        Scope = config.Scope,
                     },
                     sp.GetRequiredService<IHttpClientFactory>(),
                     sp.GetRequiredService<ILogger<CognitoAuthorisationHandler>>(),
@@ -267,6 +269,18 @@ public static class HostBuilderConfiguration
                         rrepwApiConfig.RetryAttempts,
                         rrepwApiConfig.RetryDelaySeconds,
                         Common.Constants.HttpClientNames.Rrepw
+                    )
+            );
+
+        services
+            .AddHttpClient(Common.Constants.HttpClientNames.CognitoToken)
+            .AddPolicyHandler(
+                (services, request) =>
+                    GetRetryPolicy(
+                        services.GetService<ILogger<CognitoAuthorisationHandler>>()!,
+                        apiCallsRetryConfig?.MaxAttempts ?? 3,
+                        apiCallsRetryConfig?.WaitTimeBetweenRetryInSecs ?? 30,
+                        Common.Constants.HttpClientNames.CognitoToken
                     )
             );
 

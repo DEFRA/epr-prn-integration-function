@@ -3,12 +3,15 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
+using EprPrnIntegration.Common.Constants;
 using EprPrnIntegration.Common.Middleware;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
+
+#pragma warning disable xUnit1031 // Moq Callback does not support async delegates; blocking calls on buffered content are safe here
 
 namespace EprPrnIntegration.Common.UnitTests.Middleware;
 
@@ -117,11 +120,16 @@ public class CognitoAuthorisationHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task TokenRequest_ShouldSendFormDataWithCorrectFields()
+    public async Task TokenRequest_ShouldSendFormDataWithGrantTypeOnly()
     {
         // Arrange
-        HttpRequestMessage? capturedTokenRequest = null;
-        SetupCognitoResponse(callback: (req, _) => capturedTokenRequest = req);
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
         SetupHttpStubResponse();
 
         var handler = new CognitoAuthorisationHandler(
@@ -143,15 +151,148 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         );
 
         // Assert
-        capturedTokenRequest.Should().NotBeNull();
-        capturedTokenRequest!.Content.Should().BeOfType<FormUrlEncodedContent>();
-
-        var formContent = await capturedTokenRequest.Content!.ReadAsStringAsync();
-        formContent.Should().Contain("grant_type=client_credentials");
-        formContent.Should().Contain($"client_id={_config.ClientId}");
-        formContent.Should().Contain($"client_secret={_config.ClientSecret}");
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().Contain("grant_type=client_credentials");
+        capturedFormContent.Should().NotContain("client_id=");
+        capturedFormContent.Should().NotContain("client_secret=");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task TokenRequest_WhenScopeConfigured_ShouldIncludeScopeInFormData()
+    {
+        // Arrange
+        _config.Scope = "my-api/read";
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
+        SetupHttpStubResponse();
+
+        var handler = new CognitoAuthorisationHandler(
+            _config,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            _memoryCache,
+            TestTokenCacheKey
+        )
+        {
+            InnerHandler = _innerHandlerMock.Object,
+        };
+
+        var client = new HttpClient(handler);
+
+        // Act
+        await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+        );
+
+        // Assert
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().Contain("grant_type=client_credentials");
+        capturedFormContent.Should().Contain("scope=my-api%2Fread");
+    }
+
+    [Fact]
+    public async Task TokenRequest_WhenScopeNotConfigured_ShouldNotIncludeScopeInFormData()
+    {
+        // Arrange
+        string? capturedFormContent = null;
+        SetupCognitoResponse(
+            callback: (req, _) =>
+            {
+                capturedFormContent = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        );
+        SetupHttpStubResponse();
+
+        var handler = new CognitoAuthorisationHandler(
+            _config,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            _memoryCache,
+            TestTokenCacheKey
+        )
+        {
+            InnerHandler = _innerHandlerMock.Object,
+        };
+
+        var client = new HttpClient(handler);
+
+        // Act
+        await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+        );
+
+        // Assert
+        capturedFormContent.Should().NotBeNull();
+        capturedFormContent.Should().NotContain("scope=");
+    }
+
+    [Fact]
+    public async Task TokenRequest_ShouldUseNamedCognitoTokenHttpClient()
+    {
+        // Arrange
+        string? capturedClientName = null;
+        SetupHttpStubResponse();
+
+        _httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Callback<string>(name => capturedClientName = name)
+            .Returns(() =>
+            {
+                var cognitoHandlerMock = new Mock<HttpMessageHandler>();
+                cognitoHandlerMock
+                    .Protected()
+                    .Setup<Task<HttpResponseMessage>>(
+                        "SendAsync",
+                        ItExpr.IsAny<HttpRequestMessage>(),
+                        ItExpr.IsAny<CancellationToken>()
+                    )
+                    .ReturnsAsync(
+                        new HttpResponseMessage(HttpStatusCode.OK)
+                        {
+                            Content = new StringContent(
+                                JsonSerializer.Serialize(
+                                    new
+                                    {
+                                        access_token = "test-token",
+                                        token_type = "Bearer",
+                                        expires_in = 3600,
+                                    }
+                                ),
+                                Encoding.UTF8,
+                                "application/json"
+                            ),
+                        }
+                    );
+                return new HttpClient(cognitoHandlerMock.Object);
+            });
+
+        var handler = new CognitoAuthorisationHandler(
+            _config,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            _memoryCache,
+            TestTokenCacheKey
+        )
+        {
+            InnerHandler = _innerHandlerMock.Object,
+        };
+
+        var client = new HttpClient(handler);
+
+        // Act
+        await client.SendAsync(
+            new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+        );
+
+        // Assert
+        capturedClientName.Should().Be(HttpClientNames.CognitoToken);
     }
 
     [Fact]
@@ -217,15 +358,15 @@ public class CognitoAuthorisationHandlerTests : IDisposable
             client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
 
-        exception.Message.Should().Be("Failed to retrieve access token from Cognito");
+        exception.Message.Should().Contain("Failed to retrieve access token from Cognito");
     }
 
     [Fact]
-    public async Task WhenTokenEndpointReturnsError_ShouldThrowHttpRequestException()
+    public async Task WhenTokenEndpointReturnsError_ShouldThrowInvalidOperationException()
     {
         // Arrange
         SetupCognitoResponse(
-            errorContent: "Invalid credentials",
+            errorContent: "{\"error\":\"invalid_client\"}",
             statusCode: HttpStatusCode.Unauthorized
         );
 
@@ -243,9 +384,11 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         var client = new HttpClient(handler);
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             client.SendAsync(new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test"))
         );
+
+        exception.Message.Should().Contain("Failed to retrieve access token from Cognito");
     }
 
     [Theory]
@@ -253,7 +396,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
     [InlineData("", "test-client-secret")]
     [InlineData("test-client-id", null)]
     [InlineData("test-client-id", "")]
-    public async Task WhenCredentialsAreMissing_ShouldSkipAuthAndCallBaseHandler(
+    public async Task WhenCredentialsAreMissing_ShouldThrowInvalidOperationException(
         string? clientId,
         string? clientSecret
     )
@@ -275,14 +418,15 @@ public class CognitoAuthorisationHandlerTests : IDisposable
         };
 
         var client = new HttpClient(handler);
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test");
 
-        // Act
-        var response = await client.SendAsync(request);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.SendAsync(
+                new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test")
+            )
+        );
 
-        // Assert
-        request.Headers.Authorization.Should().BeNull();
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        exception.Message.Should().Be("Cognito ClientId and ClientSecret must be configured");
     }
 
     private void SetupHttpStubResponse()
@@ -396,7 +540,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                 return new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(content),
+                    Content = new StringContent(content, Encoding.UTF8, "application/json"),
                 };
             });
 
@@ -446,7 +590,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                     new HttpResponseMessage
                     {
                         StatusCode = statusCode,
-                        Content = new StringContent(content),
+                        Content = new StringContent(content, Encoding.UTF8, "application/json"),
                     }
                 );
         }
@@ -456,7 +600,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
                 new HttpResponseMessage
                 {
                     StatusCode = statusCode,
-                    Content = new StringContent(content),
+                    Content = new StringContent(content, Encoding.UTF8, "application/json"),
                 }
             );
         }
