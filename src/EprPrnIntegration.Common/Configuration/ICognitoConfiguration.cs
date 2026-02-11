@@ -5,5 +5,4 @@ public interface ICognitoConfiguration
     string AccessTokenUrl { get; }
     string ClientId { get; }
     string ClientSecret { get; }
-    string? Scope { get; }
 }

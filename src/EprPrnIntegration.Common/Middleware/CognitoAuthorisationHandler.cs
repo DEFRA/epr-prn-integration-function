@@ -92,7 +92,6 @@ public class CognitoAuthorisationHandler(
                 ClientId = config.ClientId,
                 ClientSecret = config.ClientSecret,
                 ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader,
-                Scope = config.Scope,
             },
             cancellationToken
         );
