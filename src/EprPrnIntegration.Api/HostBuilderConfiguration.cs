@@ -7,6 +7,7 @@ using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Client;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Middleware;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
@@ -91,9 +92,9 @@ public static class HostBuilderConfiguration
         services.AddScoped<IUtilities, Utilities>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAppInsightsService, AppInsightsService>();
-
         services.AddScoped<IBlobStorage, BlobStorage>();
         services.AddScoped<ILastUpdateService, LastUpdateService>();
+        services.AddTransient<OrganisationNameResolver>();
 
         // Add the Notification Client
         services.AddSingleton<INotificationClient>(provider =>

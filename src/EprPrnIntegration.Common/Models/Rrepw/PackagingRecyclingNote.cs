@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.Models.Rrepw;
 
@@ -35,4 +36,7 @@ public class PackagingRecyclingNote
 
     [JsonPropertyName("issuerNotes")]
     public string? IssuerNotes { get; set; }
+
+    // Used for mapping only
+    public WoApiOrganisation? Organisation { get; set; }
 }

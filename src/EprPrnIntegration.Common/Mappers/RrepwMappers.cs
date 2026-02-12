@@ -26,7 +26,7 @@ public class RrepwMappers : Profile
             .ForMember(spdr => spdr.OrganisationId, o => o.MapFrom(src => GetOrganisationId(src)))
             .ForMember(
                 spdr => spdr.OrganisationName,
-                o => o.MapFrom(src => GetOrganisationName(src))
+                o => o.MapFrom<OrganisationNameResolver>()
             )
             .ForMember(
                 spdr => spdr.AccreditationNumber,
@@ -106,13 +106,6 @@ public class RrepwMappers : Profile
         return src.Accreditation?.AccreditationNumber;
     }
 
-    private static string? GetOrganisationName(PackagingRecyclingNote src)
-    {
-        return string.IsNullOrWhiteSpace(src.IssuedToOrganisation?.TradingName)
-            ? src.IssuedToOrganisation?.Name
-            : src.IssuedToOrganisation.TradingName;
-    }
-
     private static Guid? GetOrganisationId(PackagingRecyclingNote src)
     {
         return string.IsNullOrEmpty(src.IssuedToOrganisation?.Id)
@@ -135,9 +128,13 @@ public class RrepwMappers : Profile
         return src.Status?.AuthorisedBy?.FullName;
     }
 
-    public static IMapper CreateMapper()
+    public static IMapper CreateMapper(IServiceProvider serviceProvider)
     {
-        return new MapperConfiguration(cfg => cfg.AddProfile<RrepwMappers>()).CreateMapper();
+        return new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<RrepwMappers>();
+            cfg.ConstructServicesUsing(serviceProvider.GetService);
+        }).CreateMapper();
     }
 
     private static EprnStatus? ConvertStatusToEprnStatus(PackagingRecyclingNote prn)
