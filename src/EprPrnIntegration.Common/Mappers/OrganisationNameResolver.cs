@@ -22,9 +22,7 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
 
         var registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.ComplianceScheme);
         if (registration is not null)
-            return string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
-                ? source.IssuedToOrganisation?.Name
-                : source.IssuedToOrganisation?.TradingName;
+            return UseTradingNameIfPresent(source);;
 
         registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.LargeProducer);
         if (registration is not null)
@@ -32,8 +30,11 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
         
         logger.LogWarning("Fallback trading name or name mapping for organisation {Id}", source.Organisation?.Id);
         
-        return string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
+        return UseTradingNameIfPresent(source);
+    }
+
+    private static string? UseTradingNameIfPresent(PackagingRecyclingNote source) =>
+        string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
             ? source.IssuedToOrganisation?.Name
             : source.IssuedToOrganisation?.TradingName;
-    }
 }
