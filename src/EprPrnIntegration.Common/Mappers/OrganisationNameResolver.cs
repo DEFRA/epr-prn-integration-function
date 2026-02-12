@@ -14,15 +14,21 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
         string? destMember,
         ResolutionContext context)
     {
-        var registration = source.Organisation?.Registrations.FirstOrDefault(x =>
-            x.Status == WoApiOrganisationStatus.Registered &&
-            x.RegistrationYear == source.Accreditation?.AccreditationYear);
+        var registrations = source.Organisation?.Registrations
+            .Where(x =>
+                x.Status == WoApiOrganisationStatus.Registered &&
+                x.RegistrationYear == source.Accreditation?.AccreditationYear)
+            .ToList() ?? [];
 
-        if (registration is not null && registration.Type == WoApiOrganisationType.LargeProducer)
+        var registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.LargeProducer);
+        if (registration is not null)
             return source.IssuedToOrganisation?.Name;
 
-        if (registration is not null && registration.Type == WoApiOrganisationType.ComplianceScheme)
-            return source.IssuedToOrganisation?.TradingName;
+        registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.ComplianceScheme);
+        if (registration is not null)
+            return string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
+                ? source.IssuedToOrganisation?.Name
+                : source.IssuedToOrganisation?.TradingName;
         
         logger.LogWarning("Fallback trading name mapping for organisation {Id}", source.Organisation?.Id);
         

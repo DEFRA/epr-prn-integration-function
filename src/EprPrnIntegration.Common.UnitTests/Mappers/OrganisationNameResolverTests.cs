@@ -87,10 +87,12 @@ public class OrganisationNameResolverTests
         result.Should().Be("name");
     }
 
-    [Fact]
-    public void WhenComplianceScheme_ShouldUseName()
+    [Theory]
+    [InlineData(null, "trading name", "trading name")]
+    [InlineData("name", null, "name")]
+    public void WhenComplianceScheme_ShouldBeExpected(string? name, string? tradingName, string expected)
     {
-        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        var source = CreateSource(name: name, tradingName: tradingName, year: 2026, registrations:
         [
             new WoApiRegistration
             {
@@ -102,7 +104,7 @@ public class OrganisationNameResolverTests
         
         var result = Map(source);
         
-        result.Should().Be("trading name");
+        result.Should().Be(expected);
     }
     
     [Fact]
@@ -121,6 +123,24 @@ public class OrganisationNameResolverTests
         var result = Map(source);
         
         result.Should().Be("trading name");
+    }
+    
+    [Fact]
+    public void WhenNoMatchingRegistrationsForYear_ShouldFallback()
+    {
+        var source = CreateSource(name: "name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Cancelled,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2027
+            }
+        ]);
+        
+        var result = Map(source);
+        
+        result.Should().Be("name");
     }
 
     private static PackagingRecyclingNote CreateSource(
