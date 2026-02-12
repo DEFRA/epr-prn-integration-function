@@ -20,6 +20,9 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
 
         if (registration is not null && registration.Type == WoApiOrganisationType.LargeProducer)
             return source.IssuedToOrganisation?.Name;
+
+        if (registration is not null && registration.Type == WoApiOrganisationType.ComplianceScheme)
+            return source.IssuedToOrganisation?.TradingName;
         
         logger.LogWarning("Fallback trading name mapping for organisation {Id}", source.Organisation?.Id);
         

@@ -87,6 +87,42 @@ public class OrganisationNameResolverTests
         result.Should().Be("name");
     }
 
+    [Fact]
+    public void WhenComplianceScheme_ShouldUseName()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = Map(source);
+        
+        result.Should().Be("trading name");
+    }
+    
+    [Fact]
+    public void WhenComplianceScheme_ButCancelled_ShouldFallback()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Cancelled,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = Map(source);
+        
+        result.Should().Be("trading name");
+    }
+
     private static PackagingRecyclingNote CreateSource(
         Guid? id = null, 
         string? name = null, 
