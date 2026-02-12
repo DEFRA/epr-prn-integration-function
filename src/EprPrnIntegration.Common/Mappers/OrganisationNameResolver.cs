@@ -30,7 +30,7 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
         if (registration is not null)
             return source.IssuedToOrganisation?.Name;
         
-        logger.LogWarning("Fallback trading name mapping for organisation {Id}", source.Organisation?.Id);
+        logger.LogWarning("Fallback trading name or name mapping for organisation {Id}", source.Organisation?.Id);
         
         return string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
             ? source.IssuedToOrganisation?.Name

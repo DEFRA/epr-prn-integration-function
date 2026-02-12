@@ -31,7 +31,7 @@ public class OrganisationNameResolverTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains($"Fallback trading name mapping for organisation {id}")),
+                It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains($"Fallback trading name or name mapping for organisation {id}")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
