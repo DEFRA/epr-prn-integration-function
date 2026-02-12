@@ -72,7 +72,7 @@ public class OrganisationNameResolverTests
     [Fact]
     public void WhenLargeProducer_ButCancelled_ShouldFallback()
     {
-        var source = CreateSource(name: "name", year: 2026, registrations:
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
         [
             new WoApiRegistration
             {
@@ -84,7 +84,7 @@ public class OrganisationNameResolverTests
         
         var result = Map(source);
         
-        result.Should().Be("name");
+        result.Should().Be("trading name");
     }
 
     [Theory]
@@ -159,6 +159,36 @@ public class OrganisationNameResolverTests
                 Status = WoApiOrganisationStatus.Registered,
                 Type = WoApiOrganisationType.LargeProducer,
                 RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = Map(source);
+        
+        result.Should().Be("trading name");
+    }
+    
+    [Fact]
+    public void WhenRegistrationForMultipleYears_ShouldUseComplianceScheme()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2025
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2027
             }
         ]);
         
