@@ -142,6 +142,30 @@ public class OrganisationNameResolverTests
         
         result.Should().Be("name");
     }
+    
+    [Fact]
+    public void WhenComplianceSchemeAndLargeProducerInSameYear_ShouldUseComplianceScheme()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = Map(source);
+        
+        result.Should().Be("trading name");
+    }
 
     private static PackagingRecyclingNote CreateSource(
         Guid? id = null, 

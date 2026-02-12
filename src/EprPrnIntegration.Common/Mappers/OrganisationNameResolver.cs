@@ -20,15 +20,15 @@ public class OrganisationNameResolver(ILogger<OrganisationNameResolver> logger) 
                 x.RegistrationYear == source.Accreditation?.AccreditationYear)
             .ToList() ?? [];
 
-        var registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.LargeProducer);
-        if (registration is not null)
-            return source.IssuedToOrganisation?.Name;
-
-        registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.ComplianceScheme);
+        var registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.ComplianceScheme);
         if (registration is not null)
             return string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
                 ? source.IssuedToOrganisation?.Name
                 : source.IssuedToOrganisation?.TradingName;
+
+        registration = registrations.FirstOrDefault(x => x.Type == WoApiOrganisationType.LargeProducer);
+        if (registration is not null)
+            return source.IssuedToOrganisation?.Name;
         
         logger.LogWarning("Fallback trading name mapping for organisation {Id}", source.Organisation?.Id);
         
