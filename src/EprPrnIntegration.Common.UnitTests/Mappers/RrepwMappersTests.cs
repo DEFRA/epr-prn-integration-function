@@ -256,7 +256,7 @@ public class RrepwMappersTests
     [InlineData(" ")]
     [InlineData(null)]
     [InlineData("something")]
-    public void ShouldUseNameForOrganisationNameWhenTradingNameEmtpy(string? tradingName)
+    public void ShouldUseNameForOrganisationNameWhenTradingNameEmpty(string? tradingName)
     {
         var prn = CreatePackagingRecyclingNote();
         prn.IssuedToOrganisation!.TradingName = tradingName;
