@@ -8,6 +8,7 @@ using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
+using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -18,6 +19,7 @@ using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -36,7 +38,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
     private readonly Mock<IWasteOrganisationsService> _woService = new();
     private readonly Mock<IProducerEmailService> _producerEmailServiceMock = new();
     private readonly Mock<IUtilities> _mockUtilities = new();
-
+    
     private readonly IOptions<FetchRrepwIssuedPrnsConfiguration> _config = Options.Create(
         new FetchRrepwIssuedPrnsConfiguration { DefaultStartDate = "2024-01-01" }
     );
@@ -47,7 +49,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
 
     public FetchRrepwIssuedPrnsFunctionTests()
     {
-        _function = new(
+        _function = new FetchRrepwIssuedPrnsFunction(
             _lastUpdateServiceMock.Object,
             _loggerMock.Object,
             _rrepwServiceMock.Object,
@@ -55,7 +57,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _woService.Object,
             _producerEmailServiceMock.Object,
-            _mockUtilities.Object
+            _mockUtilities.Object,
+            CreateServiceProvider()
         );
         SetupGetOrganisation(_organisationId, _organisationTypeCode);
     }
@@ -377,7 +380,8 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _woService.Object,
             _producerEmailServiceMock.Object,
-            _mockUtilities.Object
+            _mockUtilities.Object,
+            CreateServiceProvider()
         );
 
         await function.Run(new TimerInfo());
@@ -903,4 +907,13 @@ public class FetchRrepwIssuedPrnsFunctionTests
     }
 
     #endregion
+    
+    private static IServiceProvider CreateServiceProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<OrganisationNameResolver>();
+        services.AddLogging();
+        
+        return services.BuildServiceProvider();
+    }
 }

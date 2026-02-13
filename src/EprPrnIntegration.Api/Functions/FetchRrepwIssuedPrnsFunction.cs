@@ -33,10 +33,11 @@ public class FetchRrepwIssuedPrnsFunction(
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
     IWasteOrganisationsService woService,
     IProducerEmailService producerEmailService,
-    IUtilities utilities
+    IUtilities utilities,
+    IServiceProvider serviceProvider
 )
 {
-    private readonly IMapper _mapper = RrepwMappers.CreateMapper();
+    private readonly IMapper _mapper = RrepwMappers.CreateMapper(serviceProvider);
 
     [Function(FunctionName.FetchRrepwIssuedPrns)]
     public async Task Run(
@@ -123,6 +124,7 @@ public class FetchRrepwIssuedPrnsFunction(
             var org = await GetWoApiOrganisation(prn.IssuedToOrganisation?.Id!, cancellationToken);
             if (org == null)
                 continue;
+            prn.Organisation = org;
             var request = _mapper.Map<SavePrnDetailsRequest>(prn);
             MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))

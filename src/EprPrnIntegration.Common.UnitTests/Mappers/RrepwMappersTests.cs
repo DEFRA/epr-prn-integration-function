@@ -6,13 +6,14 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers;
 
 public class RrepwMappersTests
 {
     private readonly Fixture _fixture = new();
-    private readonly IMapper _mapper = RrepwMappers.CreateMapper();
+    private readonly IMapper _mapper;
 
     public RrepwMappersTests()
     {
@@ -44,6 +45,7 @@ public class RrepwMappersTests
                 .With(o => o.Postcode, "TE5 7ST")
                 .Create()
         );
+        _mapper = RrepwMappers.CreateMapper(CreateServiceProvider());
     }
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
@@ -254,7 +256,7 @@ public class RrepwMappersTests
     [InlineData(" ")]
     [InlineData(null)]
     [InlineData("something")]
-    public void ShouldUseNameForOrganisationNameWhenTradingNameEmtpy(string? tradingName)
+    public void ShouldUseNameForOrganisationNameWhenTradingNameEmpty(string? tradingName)
     {
         var prn = CreatePackagingRecyclingNote();
         prn.IssuedToOrganisation!.TradingName = tradingName;
@@ -430,5 +432,14 @@ public class RrepwMappersTests
         prn.Accreditation = null;
         var site = RrepwMappers.GetReprocessingSite(prn);
         site.Should().Be(null);
+    }
+    
+    private static IServiceProvider CreateServiceProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<OrganisationNameResolver>();
+        services.AddLogging();
+        
+        return services.BuildServiceProvider();
     }
 }
