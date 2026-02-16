@@ -4,7 +4,7 @@
         "applicationInsights": {
             "samplingSettings": {
                 "isEnabled": true,
-                "excludedTypes": "Request,Event,Trace"
+                "excludedTypes": "Request;Event;Trace"
             },
             "enableLiveMetricsFilters": true
         }
