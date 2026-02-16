@@ -84,7 +84,6 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         300,
                         IncludeIssuedByTradingName: false,
                         TradingName: $"Stubbed Recipient Trading 05",
-                        OrgName: "Stubbed Recipient Organisation test-stub-org-id",
                         IssuerNotes: "Stubbed rejected PRN-05 - should NOT be persisted (AC2)"
                     ),
                     CreateRejectedStatus(dateFrom.AddMinutes(1)),
@@ -344,6 +343,23 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                     CreateAccreditation(
                         "23",
                         RrepwMaterialName.Plastic,
+                        new AccreditationOptions(IncludeFullAddress: true)
+                    )
+                ),
+                CreatePrn(
+                    new PrnScenario(
+                        "24", 
+                        hourlyPrnSuffix, 
+                        stubOrgId, 
+                        350, 
+                        OrgName: "ABC Scheme Operator Ltd", 
+                        TradingName: "ABC Packaging Scheme",
+                        IssuerNotes: "Stubbed PRN-24 with OrgName and TradingName - Use Name for OrganisationName"
+                    ),
+                    CreateAwaitingAcceptanceStatus("24", dateFrom.AddMinutes(1)),
+                    CreateAccreditation(
+                        "24",
+                        RrepwMaterialName.Paper,
                         new AccreditationOptions(IncludeFullAddress: true)
                     )
                 ),
