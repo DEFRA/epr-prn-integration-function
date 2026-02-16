@@ -84,6 +84,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         300,
                         IncludeIssuedByTradingName: false,
                         TradingName: $"Stubbed Recipient Trading 05",
+                        OrgName: "Stubbed Trading 05 - Org Name",
                         IssuerNotes: "Stubbed rejected PRN-05 - should NOT be persisted (AC2)"
                     ),
                     CreateRejectedStatus(dateFrom.AddMinutes(1)),
