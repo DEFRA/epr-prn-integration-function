@@ -45,7 +45,7 @@ public class StubbedRrepwServiceTests
 
         var result = await _service.ListPackagingRecyclingNotes(dateFrom, dateTo);
 
-        result.Should().HaveCount(23);
+        result.Should().HaveCount(24);
     }
 
     [Fact]
