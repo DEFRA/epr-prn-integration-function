@@ -112,7 +112,7 @@ public class StubbedRrepwServiceTests
             )
             .ToList();
 
-        standardPrns.Should().HaveCount(14);
+        standardPrns.Should().HaveCount(15);
         standardPrns
             .Should()
             .AllSatisfy(prn =>

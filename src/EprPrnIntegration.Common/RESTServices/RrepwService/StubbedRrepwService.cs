@@ -351,8 +351,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                         "24", 
                         hourlyPrnSuffix, 
                         stubOrgId, 
-                        350, 
-                        OrgName: "ABC Scheme Operator Ltd", 
+                        350,
                         TradingName: "ABC Packaging Scheme",
                         IssuerNotes: "Stubbed PRN-24 with OrgName and TradingName - Use Name for OrganisationName"
                     ),
