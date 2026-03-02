@@ -111,7 +111,7 @@ public class EmailServiceTests
                         (state, type) =>
                             ContainsString(
                                 state,
-                                "Email sent to John Doe with email address producer1@example.com and the responseid is responseId"
+                                "Email sent, responseid is responseId"
                             )
                     ),
                     It.IsAny<Exception>(),
@@ -307,7 +307,7 @@ public class EmailServiceTests
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>(
                         (state, type) =>
-                            ContainsString(state, "Email sent to NPWD with email address")
+                            ContainsString(state, "Email sent to NPWD")
                     ),
                     It.IsAny<Exception>(),
                     It.Is<Func<It.IsAnyType, Exception?, string>>((state, ex) => true)
@@ -410,7 +410,7 @@ public class EmailServiceTests
                         (state, type) =>
                             ContainsString(
                                 state,
-                                "Validation Error email sent to NPWD with email address"
+                                "Validation Error email sent to NPWD"
                             )
                     ),
                     It.IsAny<Exception>(),
@@ -855,7 +855,7 @@ public class EmailServiceTests
                         (state, _) =>
                             ContainsString(
                                 state,
-                                "Email sent to email address producer1@example.com and the responseid is responseId"
+                                "Email sent, responseid is responseId"
                             )
                     ),
                     It.IsAny<Exception>(),

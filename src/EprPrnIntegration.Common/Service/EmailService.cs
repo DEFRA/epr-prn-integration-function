@@ -43,13 +43,7 @@ public class EmailService(
                     templateId,
                     parameters
                 );
-                logger.LogInformation(
-                    "Email sent to {FirstName} {LastName} with email address {EmailAddress} and the responseid is {ResponseId}.",
-                    producer.FirstName,
-                    producer.LastName,
-                    producer.EmailAddress,
-                    response.id
-                );
+                logger.LogInformation("Email sent, responseid is {ResponseId}.", response.id);
             }
             catch (Exception ex)
             {
@@ -80,11 +74,7 @@ public class EmailService(
         try
         {
             var response = notificationClient.SendEmail(npwdEmailAddress, templateId, parameters);
-            logger.LogInformation(
-                "Email sent to NPWD with email address {NpwdEmailAddress} and the responseid is {ResponseId}.",
-                npwdEmailAddress,
-                response.id
-            );
+            logger.LogInformation("Email sent to NPWD, responseid is {ResponseId}.", response.id);
         }
         catch (Exception ex)
         {
@@ -115,11 +105,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            logger.LogInformation(
-                "Validation Error email sent to NPWD with email address {EmailAddress} and the response ID is {ResponseId}.",
-                emailAddress,
-                responseId
-            );
+            logger.LogInformation("Validation Error email sent to NPWD, response ID is {ResponseId}.", responseId);
         }
     }
 
@@ -149,11 +135,7 @@ public class EmailService(
                     templateId,
                     parameters
                 );
-                logger.LogInformation(
-                    "Email sent to email address {EmailAddress} and the responseid is {ResponseId}.",
-                    producer.EmailAddress,
-                    response.id
-                );
+                logger.LogInformation("Email sent, responseid is {ResponseId}.", response.id);
             }
             catch (Exception ex)
             {
@@ -195,11 +177,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            logger.LogInformation(
-                "Reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.",
-                emailAddress,
-                responseId
-            );
+            logger.LogInformation("Reconciliation email sent to NPWD, response id is {ResponseId}.", responseId);
         }
     }
 
@@ -231,11 +209,7 @@ public class EmailService(
 
         if (!string.IsNullOrWhiteSpace(responseId))
         {
-            logger.LogInformation(
-                "Reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.",
-                emailAddress,
-                responseId
-            );
+            logger.LogInformation("Reconciliation email sent to NPWD, response id is {ResponseId}.", responseId);
         }
     }
 
@@ -269,8 +243,7 @@ public class EmailService(
         if (!string.IsNullOrWhiteSpace(responseId))
         {
             logger.LogInformation(
-                "Updated organisations reconciliation email sent to NPWD with email address {EmailAddress} and the response id is {ResponseId}.",
-                emailAddress,
+                "Updated organisations reconciliation email sent to NPWD, response id is {ResponseId}.",
                 responseId
             );
         }
