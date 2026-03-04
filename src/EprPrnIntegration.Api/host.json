@@ -2,7 +2,9 @@
     "version": "2.0",
     "logging": {
         "logLevel": {
-            "Azure.Identity": "Error"
+            "Azure.Identity": "Error",
+            "Microsoft.AspNetCore.Hosting.Diagnostics": "Error",
+            "Host.Controllers.Host": "Error"
         },
         "applicationInsights": {
             "samplingSettings": {
