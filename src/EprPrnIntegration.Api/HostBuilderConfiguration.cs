@@ -55,6 +55,10 @@ public static class HostBuilderConfiguration
                 (hostingContext, services) =>
                     ConfigureServices(hostingContext.Configuration, services)
             )
+            .ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddJsonFile("host.json", optional: false);
+            })
             .Build();
     }
 
@@ -429,16 +433,6 @@ public static class HostBuilderConfiguration
             {
                 options.Rules.Remove(defaultRule);
             }
-
-            // Add a new rule to log Information level and above for all categories
-            options.Rules.Add(
-                new LoggerFilterRule(
-                    providerName: aiProvider,
-                    categoryName: null,
-                    logLevel: LogLevel.Warning,
-                    filter: null
-                )
-            );
         });
 
         return services;
