@@ -1,14 +1,12 @@
 {
     "version": "2.0",
     "logging": {
+        "logLevel": {
+            "Azure.Identity": "Error"
+        },
         "applicationInsights": {
             "samplingSettings": {
-              "isEnabled": true,
-              "excludedTypes": "Request;Event;Dependency;Exception",
-              "includedTypes": "Trace",
-              "initialSamplingPercentage" : 0,
-              "minSamplingPercentage" : 0,
-              "maxSamplingPercentage" : 0
+                "isEnabled": false
             },
             "enableLiveMetricsFilters": true
         }
