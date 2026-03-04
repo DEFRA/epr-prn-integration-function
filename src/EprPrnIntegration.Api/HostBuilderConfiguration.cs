@@ -429,16 +429,6 @@ public static class HostBuilderConfiguration
             {
                 options.Rules.Remove(defaultRule);
             }
-
-            // Add a new rule to log Information level and above for all categories
-            options.Rules.Add(
-                new LoggerFilterRule(
-                    providerName: aiProvider,
-                    categoryName: null,
-                    logLevel: LogLevel.Information,
-                    filter: null
-                )
-            );
         });
 
         return services;
