@@ -1,14 +1,14 @@
 {
     "version": "2.0",
     "logging": {
-        "logLevel": {
-          "Function": "Information",
-          "Host.Results": "Information",
-          "Host.Aggregator": "Information"
-        },
         "applicationInsights": {
             "samplingSettings": {
-                "isEnabled": false
+              "isEnabled": true,
+              "excludedTypes": "Request;Event;Dependency;Exception",
+              "includedTypes": "Trace",
+              "initialSamplingPercentage" : 0,
+              "minSamplingPercentage" : 0,
+              "maxSamplingPercentage" : 0
             },
             "enableLiveMetricsFilters": true
         }
