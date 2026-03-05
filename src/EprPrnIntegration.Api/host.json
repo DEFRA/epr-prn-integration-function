@@ -1,10 +1,15 @@
 {
     "version": "2.0",
     "logging": {
+        "logLevel": {
+            "default": "Information",
+            "Azure.Identity": "Warning",
+            "Azure.Core": "Warning",
+            "Function.HealthCheck": "Warning"
+        },
         "applicationInsights": {
             "samplingSettings": {
-                "isEnabled": true,
-                "excludedTypes": "Request;Event;Trace"
+                "isEnabled": false
             },
             "enableLiveMetricsFilters": true
         }
