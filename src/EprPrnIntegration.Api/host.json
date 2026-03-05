@@ -3,7 +3,9 @@
     "logging": {
         "logLevel": {
             "default": "Information",
-            "Azure.Identity": "Error"
+            "Azure.Identity": "Warning",
+            "Azure.Core": "Warning",
+            "Function.HealthCheck": "Warning"
         },
         "applicationInsights": {
             "samplingSettings": {

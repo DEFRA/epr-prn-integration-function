@@ -55,19 +55,44 @@ public static class HostBuilderConfiguration
                 (hostingContext, services) =>
                     ConfigureServices(hostingContext.Configuration, services)
             )
-            .ConfigureAppConfiguration((_, config) =>
+            .ConfigureLogging(logging =>
             {
-                config.AddJsonFile("host.json", optional: false);
+                logging.Services.Configure<LoggerFilterOptions>(options =>
+                {
+                    /*
+                     * By default, logs with LogLevel.Warning or higher are sent to Application Insights.
+                     * To change this, remove the default rule so other log levels are sent to Application Insights.
+                     * See for more information: https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide?tabs=hostbuilder%2Cwindows#managing-log-levels
+                     * The default log level for Azure Functions is Information. So by removing the default rule, Information and above will be sent to Application Insights.
+                     */
+                    var defaultRule = options.Rules.FirstOrDefault(rule =>
+                        rule.ProviderName ==
+                        "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider");
+
+                    if (defaultRule is not null)
+                    {
+                        options.Rules.Remove(defaultRule);
+                    }
+                });
+            })
+            .ConfigureAppConfiguration((hostContext, config) =>
+            {
+                var hostRoot = "";
+                if (hostContext.HostingEnvironment.IsProduction())
+                    hostRoot = "/home/site/wwwroot/";
+                
+                config.AddJsonFile($"{hostRoot}host.json", optional: false);
+            })
+            .ConfigureLogging((hostingContext, logging) =>
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
             })
             .Build();
     }
 
     private static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
     {
-        // Add Application Insights
         services.AddCustomApplicationInsights();
-
-        // Add memory cache for token caching
         services.AddMemoryCache();
 
         // Register services
@@ -408,9 +433,8 @@ public static class HostBuilderConfiguration
             );
     }
 
-    public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
+    private static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
     {
-        // Add AI worker service with custom options
         services.AddApplicationInsightsTelemetryWorkerService(options =>
         {
             options.ConnectionString = Environment.GetEnvironmentVariable(
@@ -418,22 +442,7 @@ public static class HostBuilderConfiguration
             );
         });
 
-        // Configure Functions-specific AI settings
         services.ConfigureFunctionsApplicationInsights();
-
-        // Customize logging rules for Application Insights
-        services.Configure<LoggerFilterOptions>(options =>
-        {
-            const string aiProvider =
-                "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
-
-            // Remove existing default rule for AI provider, if any
-            var defaultRule = options.Rules.FirstOrDefault(r => r.ProviderName == aiProvider);
-            if (defaultRule != null)
-            {
-                options.Rules.Remove(defaultRule);
-            }
-        });
 
         return services;
     }

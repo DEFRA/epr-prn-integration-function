@@ -841,7 +841,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()
                 ),
-            Times.Exactly(2)
+            Times.Once
         );
     }
 
