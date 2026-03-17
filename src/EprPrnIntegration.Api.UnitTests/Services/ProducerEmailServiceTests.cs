@@ -269,15 +269,18 @@ public class ProducerEmailServiceTests
         );
     }
 
-    [Fact]
-    public async Task SendEmailToProducersAsync_MapsProducerEmailFieldsCorrectly()
+    [Theory]
+    [InlineData("Plastic", "Plastic")]
+    [InlineData("Paper/board", "Paper and board")]
+    [InlineData("Fibre", "Fibre-based composite material")]
+    public async Task SendEmailToProducersAsync_MapsProducerEmailFieldsCorrectly(string material, string expectedMaterial)
     {
         // Arrange
         var request = CreateRequest();
         request.IssuedByOrg = "Exporter Org";
         request.OrganisationName = "Producer Org";
         request.PrnNumber = "PRN-123";
-        request.MaterialName = "Plastic";
+        request.MaterialName = material;
         request.TonnageValue = 100;
         request.IsExport = true;
 
@@ -325,7 +328,7 @@ public class ProducerEmailServiceTests
         capturedProducerEmail.NameOfExporterReprocessor.Should().Be("Exporter Org");
         capturedProducerEmail.NameOfProducerComplianceScheme.Should().Be("Producer Org");
         capturedProducerEmail.PrnNumber.Should().Be("PRN-123");
-        capturedProducerEmail.Material.Should().Be("Plastic");
+        capturedProducerEmail.Material.Should().Be(expectedMaterial);
         capturedProducerEmail.Tonnage.Should().Be(100);
         capturedProducerEmail.IsExporter.Should().BeTrue();
     }
