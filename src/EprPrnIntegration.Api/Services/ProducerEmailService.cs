@@ -2,6 +2,7 @@ using EprPrnIntegration.Api.Models;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Extensions;
 using EprPrnIntegration.Common.Models;
+using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
@@ -111,9 +112,17 @@ public class ProducerEmailService(
             NameOfExporterReprocessor = request.IssuedByOrg ?? "",
             NameOfProducerComplianceScheme = request.OrganisationName ?? "",
             PrnNumber = request.PrnNumber ?? "",
-            Material = request.MaterialName!,
+            Material = MapMaterialName(request),
             Tonnage = request.TonnageValue ?? 0,
             IsExporter = request.IsExport ?? false,
         };
     }
+
+    private static string MapMaterialName(SavePrnDetailsRequest request) =>
+        request.MaterialName! switch
+        {
+            RpdMaterialName.PaperBoard => "Paper and board",
+            RpdMaterialName.Fibre => "Fibre-based composite material",
+            _ => request.MaterialName!
+        };
 }
