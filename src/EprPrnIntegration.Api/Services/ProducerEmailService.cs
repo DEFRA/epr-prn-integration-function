@@ -121,7 +121,7 @@ public class ProducerEmailService(
     private static string MapMaterialName(SavePrnDetailsRequest request) =>
         request.MaterialName! switch
         {
-            RpdMaterialName.PaperBoard => "Paper and board",
+            RpdMaterialName.PaperBoard => "Paper or board",
             RpdMaterialName.Fibre => "Fibre-based composite material",
             _ => request.MaterialName!
         };
