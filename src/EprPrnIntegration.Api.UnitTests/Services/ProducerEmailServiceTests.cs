@@ -271,7 +271,7 @@ public class ProducerEmailServiceTests
 
     [Theory]
     [InlineData("Plastic", "Plastic")]
-    [InlineData("Paper/board", "Paper and board")]
+    [InlineData("Paper/board", "Paper or board")]
     [InlineData("Fibre", "Fibre-based composite material")]
     public async Task SendEmailToProducersAsync_MapsProducerEmailFieldsCorrectly(string material, string expectedMaterial)
     {
