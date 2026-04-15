@@ -1,67 +1,64 @@
-using AutoMapper;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 
 namespace EprPrnIntegration.Common.Mappers;
 
-public class RrepwMappers : Profile
+public static class RrepwMappers
 {
-    public RrepwMappers()
+    public static SavePrnDetailsRequest Map(PackagingRecyclingNote source, Action<string> logWarning)
     {
-        // all fields required here have been validated as not null prior to this mapping
-        CreateMap<PackagingRecyclingNote, SavePrnDetailsRequest>()
-            .ForMember(spdr => spdr.SourceSystemId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(
-                spdr => spdr.PrnStatusId,
-                o => o.MapFrom(src => ConvertStatusToEprnStatus(src))
-            )
-            .ForMember(spdr => spdr.PrnSignatory, o => o.MapFrom(src => GetPrnSignatory(src)))
-            .ForMember(
-                spdr => spdr.PrnSignatoryPosition,
-                o => o.MapFrom(src => GetPrnSignatoryPosition(src))
-            )
-            .ForMember(spdr => spdr.IssuedByOrg, o => o.MapFrom(src => GetIssuedByOrg(src)))
-            .ForMember(spdr => spdr.OrganisationId, o => o.MapFrom(src => GetOrganisationId(src)))
-            .ForMember(
-                spdr => spdr.OrganisationName,
-                o => o.MapFrom<OrganisationNameResolver>()
-            )
-            .ForMember(
-                spdr => spdr.AccreditationNumber,
-                o => o.MapFrom(src => GetAccreditationNumber(src))
-            )
-            .ForMember(
-                spdr => spdr.AccreditationYear,
-                o => o.MapFrom(src => GetAccreditationYear(src))
-            )
-            .ForMember(
-                spdr => spdr.ReprocessorExporterAgency,
-                o => o.MapFrom(src => ConvertRegulator(src))
-            )
-            .ForMember(
-                spdr => spdr.ReprocessingSite,
-                o => o.MapFrom(src => GetReprocessingSite(src))
-            )
-            .ForMember(spdr => spdr.DecemberWaste, o => o.MapFrom(src => src.IsDecemberWaste))
-            .ForMember(
-                spdr => spdr.ProcessToBeUsed,
-                o => o.MapFrom(src => ConvertMaterialToProcessToBeUsed(src))
-            )
-            .ForMember(spdr => spdr.ObligationYear, o => o.MapFrom(src => "2026"))
-            .ForMember(
-                spdr => spdr.MaterialName,
-                o => o.MapFrom(src => ConvertMaterialToEprnMaterial(src))
-            )
-            .ForMember(spdr => spdr.IssueDate, o => o.MapFrom(src => GetAuthorizedAt(src)))
-            .AfterMap(
-                (prn, spdr) =>
-                {
-                    spdr.StatusUpdatedOn = GetStatusUpdatedOn(prn);
-                }
-            );
+        return new SavePrnDetailsRequest
+        {
+            SourceSystemId = source.Id,
+            PrnStatusId = ConvertStatusToEprnStatus(source),
+            PrnSignatory = GetPrnSignatory(source),
+            PrnSignatoryPosition = GetPrnSignatoryPosition(source),
+            IssuedByOrg = GetIssuedByOrg(source),
+            OrganisationId = GetOrganisationId(source),
+            OrganisationName = GetOrganisationName(source, logWarning),
+            AccreditationNumber = GetAccreditationNumber(source),
+            AccreditationYear = GetAccreditationYear(source),
+            ReprocessorExporterAgency = ConvertRegulator(source),
+            ReprocessingSite = GetReprocessingSite(source),
+            DecemberWaste = source.IsDecemberWaste,
+            ProcessToBeUsed = ConvertMaterialToProcessToBeUsed(source),
+            ObligationYear = "2026",
+            MaterialName = ConvertMaterialToEprnMaterial(source),
+            IssueDate = GetAuthorizedAt(source),
+            StatusUpdatedOn = GetStatusUpdatedOn(source),
+            PrnNumber = source.PrnNumber,
+            IsExport = source.IsExport,
+            TonnageValue = source.TonnageValue,
+            IssuerNotes = source.IssuerNotes
+        };
     }
+
+    private static string? GetOrganisationName(PackagingRecyclingNote prn, Action<string> logWarning)
+    {
+        var registrations = prn.Organisation?.Registrations
+            .Where(x =>
+                x.Status == WoApiOrganisationStatus.Registered &&
+                x.RegistrationYear == prn.Accreditation?.AccreditationYear)
+            .ToList() ?? [];
+
+        if (registrations.Any(x => x.Type == WoApiOrganisationType.ComplianceScheme))
+            return UseTradingNameIfPresent(prn);;
+
+        if (registrations.Any(x => x.Type == WoApiOrganisationType.LargeProducer))
+            return prn.IssuedToOrganisation?.Name;
+        
+        logWarning($"Fallback trading name or name mapping for organisation {prn.Organisation?.Id}");
+        
+        return UseTradingNameIfPresent(prn);
+    }
+
+    private static string? UseTradingNameIfPresent(PackagingRecyclingNote source) =>
+        string.IsNullOrWhiteSpace(source.IssuedToOrganisation?.TradingName)
+            ? source.IssuedToOrganisation?.Name
+            : source.IssuedToOrganisation?.TradingName;
 
     private static DateTime? GetAuthorizedAt(PackagingRecyclingNote prn)
     {
@@ -78,7 +75,7 @@ public class RrepwMappers : Profile
         };
     }
 
-    public static string? GetReprocessingSite(PackagingRecyclingNote src)
+    internal static string? GetReprocessingSite(PackagingRecyclingNote src)
     {
         if (src.Accreditation?.SiteAddress == null)
             return null;
@@ -128,22 +125,13 @@ public class RrepwMappers : Profile
         return src.Status?.AuthorisedBy?.FullName;
     }
 
-    public static IMapper CreateMapper(IServiceProvider serviceProvider)
-    {
-        return new MapperConfiguration(cfg =>
-        {
-            cfg.AddProfile<RrepwMappers>();
-            cfg.ConstructServicesUsing(serviceProvider.GetService);
-        }).CreateMapper();
-    }
-
-    private static EprnStatus? ConvertStatusToEprnStatus(PackagingRecyclingNote prn)
+    private static int? ConvertStatusToEprnStatus(PackagingRecyclingNote prn)
     {
         return prn.Status?.CurrentStatus switch
         {
             // only interested in these two, anything else should have been filtered out earlier and so is an error here
-            RrepwStatus.AwaitingAcceptance => EprnStatus.AWAITINGACCEPTANCE,
-            RrepwStatus.Cancelled => EprnStatus.CANCELLED,
+            RrepwStatus.AwaitingAcceptance => (int)EprnStatus.AWAITINGACCEPTANCE,
+            RrepwStatus.Cancelled => (int)EprnStatus.CANCELLED,
             _ => null,
         };
     }

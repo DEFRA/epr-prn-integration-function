@@ -8,7 +8,6 @@ using EprPrnIntegration.Api.UnitTests.Helpers;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Exceptions;
 using EprPrnIntegration.Common.Helpers;
-using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
@@ -19,7 +18,6 @@ using EprPrnIntegration.Common.RESTServices.RrepwService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.WasteOrganisationsService.Interfaces;
 using EprPrnIntegration.Common.Service;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -57,8 +55,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _woService.Object,
             _producerEmailServiceMock.Object,
-            _mockUtilities.Object,
-            CreateServiceProvider()
+            _mockUtilities.Object
         );
         SetupGetOrganisation(_organisationId, _organisationTypeCode);
     }
@@ -380,8 +377,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             _config,
             _woService.Object,
             _producerEmailServiceMock.Object,
-            _mockUtilities.Object,
-            CreateServiceProvider()
+            _mockUtilities.Object
         );
 
         await function.Run(new TimerInfo());
@@ -907,13 +903,4 @@ public class FetchRrepwIssuedPrnsFunctionTests
     }
 
     #endregion
-    
-    private static IServiceProvider CreateServiceProvider()
-    {
-        var services = new ServiceCollection();
-        services.AddTransient<OrganisationNameResolver>();
-        services.AddLogging();
-        
-        return services.BuildServiceProvider();
-    }
 }
