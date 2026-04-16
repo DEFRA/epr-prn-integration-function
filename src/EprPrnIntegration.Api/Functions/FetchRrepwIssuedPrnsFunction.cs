@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using AutoMapper;
 using EprPrnIntegration.Api.Services;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Constants;
@@ -33,12 +32,9 @@ public class FetchRrepwIssuedPrnsFunction(
     IOptions<FetchRrepwIssuedPrnsConfiguration> config,
     IWasteOrganisationsService woService,
     IProducerEmailService producerEmailService,
-    IUtilities utilities,
-    IServiceProvider serviceProvider
+    IUtilities utilities
 )
 {
-    private readonly IMapper _mapper = RrepwMappers.CreateMapper(serviceProvider);
-
     [Function(FunctionName.FetchRrepwIssuedPrns)]
     public async Task Run(
         [TimerTrigger($"%{FunctionName.FetchRrepwIssuedPrns}:Trigger%")] TimerInfo _
@@ -125,7 +121,7 @@ public class FetchRrepwIssuedPrnsFunction(
             if (org == null)
                 continue;
             prn.Organisation = org;
-            var request = _mapper.Map<SavePrnDetailsRequest>(prn);
+            var request = RrepwMappers.Map(prn, x => logger.LogWarning("{Warning}", x));
             MapProducerFields(request, org);
             if (await ProcessPrn(request, cancellationToken))
             {

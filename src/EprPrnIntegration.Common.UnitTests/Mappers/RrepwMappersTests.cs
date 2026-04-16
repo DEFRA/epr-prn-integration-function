@@ -1,19 +1,17 @@
 using AutoFixture;
-using AutoMapper;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rpd;
 using EprPrnIntegration.Common.Models.Rrepw;
+using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EprPrnIntegration.Common.UnitTests.Mappers;
 
 public class RrepwMappersTests
 {
     private readonly Fixture _fixture = new();
-    private readonly IMapper _mapper;
 
     public RrepwMappersTests()
     {
@@ -45,7 +43,6 @@ public class RrepwMappersTests
                 .With(o => o.Postcode, "TE5 7ST")
                 .Create()
         );
-        _mapper = RrepwMappers.CreateMapper(CreateServiceProvider());
     }
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
@@ -63,7 +60,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.PrnStatusId.Should().Be((int)expected);
     }
 
@@ -71,7 +68,7 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_WithNulls()
     {
         var prn = new PackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest
             .Should()
             .BeEquivalentTo(new SavePrnDetailsRequest { ObligationYear = "2026" });
@@ -86,10 +83,8 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Status!.CurrentStatus = status;
-        _mapper
-            .Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn)
-            .PrnStatusId.Should()
-            .BeNull();
+        
+        RrepwMappers.Map(prn, _ => { }).PrnStatusId.Should().BeNull();
     }
 
     [Theory]
@@ -118,7 +113,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
         prn.Accreditation.GlassRecyclingProcess = glassRecyclingProcess;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.MaterialName.Should().Be(expectedMaterialName);
     }
 
@@ -127,7 +122,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -137,7 +132,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = RrepwMaterialName.Glass;
         prn.Accreditation.GlassRecyclingProcess = "invalidProcess";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.MaterialName.Should().BeNull();
     }
 
@@ -156,7 +151,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = materialName;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.ProcessToBeUsed.Should().Be(expectedProcessToBeUsed);
     }
 
@@ -165,7 +160,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.Material = "invalidMaterialName";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.ProcessToBeUsed.Should().BeNull();
     }
 
@@ -193,7 +188,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = sourceStr;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().Be(expectedStr);
     }
 
@@ -202,7 +197,7 @@ public class RrepwMappersTests
     {
         var prn = CreatePackagingRecyclingNote();
         prn.Accreditation!.SubmittedToRegulator = "invalidRegulator";
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.ReprocessorExporterAgency.Should().BeNull();
     }
 
@@ -217,7 +212,7 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.IssueDate.Should().Be(adt);
         switch (status)
         {
@@ -247,7 +242,7 @@ public class RrepwMappersTests
         prn.Status!.CurrentStatus = status;
         prn.Status.AuthorisedAt = adt;
         prn.Status.CancelledAt = cdt;
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.StatusUpdatedOn.Should().BeNull();
     }
 
@@ -261,7 +256,7 @@ public class RrepwMappersTests
         var prn = CreatePackagingRecyclingNote();
         prn.IssuedToOrganisation!.TradingName = tradingName;
         prn.IssuedToOrganisation!.Name = _fixture.Create<string>();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         if (!string.IsNullOrWhiteSpace(tradingName))
             savePrnDetailsRequest
                 .OrganisationName.Should()
@@ -274,7 +269,7 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_TheRest()
     {
         var prn = CreatePackagingRecyclingNote();
-        var savePrnDetailsRequest = _mapper.Map<PackagingRecyclingNote, SavePrnDetailsRequest>(prn);
+        var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
         savePrnDetailsRequest.SourceSystemId.Should().Be(prn.Id);
         savePrnDetailsRequest.PrnNumber.Should().Be(prn.PrnNumber);
         savePrnDetailsRequest.PrnSignatory.Should().Be(prn.Status!.AuthorisedBy!.FullName);
@@ -434,12 +429,209 @@ public class RrepwMappersTests
         site.Should().Be(null);
     }
     
-    private static IServiceProvider CreateServiceProvider()
+    [Fact]
+    public void OrganisationName_FallbackMapping_ShouldLogWarning()
     {
-        var services = new ServiceCollection();
-        services.AddTransient<OrganisationNameResolver>();
-        services.AddLogging();
+        var id = Guid.NewGuid();
+        var source = CreateSource(id);
+        string? warning = null;
+
+        MapOrganisationName(source, x => warning = x);
+
+        warning?.Should().Be($"Fallback trading name or name mapping for organisation {id}");
+    }
+
+    [Theory]
+    [InlineData("name", "", "name")]
+    [InlineData("name", " ", "name")]
+    [InlineData("name", null, "name")]
+    [InlineData("name", "trading name", "trading name")]
+    public void OrganisationName_FallbackMapping_ShouldBeAsExpected(string? name, string? tradingName, string? expected)
+    {
+        var source = CreateSource(name: name, tradingName: tradingName);
         
-        return services.BuildServiceProvider();
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void OrganisationName_WhenLargeProducer_ShouldUseName()
+    {
+        var source = CreateSource(name: "name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("name");
+    }
+    
+    [Fact]
+    public void OrganisationName_WhenLargeProducer_ButCancelled_ShouldFallback()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Cancelled,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("trading name");
+    }
+
+    [Theory]
+    [InlineData(null, "trading name", "trading name")]
+    [InlineData("name", null, "name")]
+    public void OrganisationName_WhenComplianceScheme_ShouldBeExpected(string? name, string? tradingName, string expected)
+    {
+        var source = CreateSource(name: name, tradingName: tradingName, year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be(expected);
+    }
+    
+    [Fact]
+    public void OrganisationName_WhenComplianceScheme_ButCancelled_ShouldFallback()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Cancelled,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("trading name");
+    }
+    
+    [Fact]
+    public void OrganisationName_WhenNoMatchingRegistrationsForYear_ShouldFallback()
+    {
+        var source = CreateSource(name: "name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Cancelled,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2027
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("name");
+    }
+    
+    [Fact]
+    public void OrganisationName_WhenComplianceSchemeAndLargeProducerInSameYear_ShouldUseComplianceScheme()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2026
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("trading name");
+    }
+    
+    [Fact]
+    public void OrganisationName_WhenRegistrationForMultipleYears_ShouldUseComplianceScheme()
+    {
+        var source = CreateSource(tradingName: "trading name", year: 2026, registrations:
+        [
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2025
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.ComplianceScheme,
+                RegistrationYear = 2026
+            },
+            new WoApiRegistration
+            {
+                Status = WoApiOrganisationStatus.Registered,
+                Type = WoApiOrganisationType.LargeProducer,
+                RegistrationYear = 2027
+            }
+        ]);
+        
+        var result = MapOrganisationName(source);
+        
+        result.Should().Be("trading name");
+    }
+
+    private static PackagingRecyclingNote CreateSource(
+        Guid? id = null, 
+        string? name = null, 
+        string? tradingName = null, 
+        int? year = null,
+        List<WoApiRegistration>? registrations = null)
+    {
+        return new PackagingRecyclingNote
+        {
+            Accreditation = new Accreditation
+            {
+                AccreditationYear = year
+            },
+            Organisation = new WoApiOrganisation
+            {
+                Id = id ?? Guid.NewGuid(),
+                Address = null!,
+                Registrations = registrations ?? []
+            },
+            IssuedToOrganisation = new Organisation
+            {
+                Name = name,
+                TradingName = tradingName
+            }
+        };
+    }
+
+    private static string? MapOrganisationName(PackagingRecyclingNote source, Action<string>? logWarning = null)
+    {
+        logWarning ??= x => { };
+        
+        return RrepwMappers.Map(source, logWarning).OrganisationName;
     }
 }
