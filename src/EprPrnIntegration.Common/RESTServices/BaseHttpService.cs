@@ -125,7 +125,7 @@ public abstract class BaseHttpService
     internal string BuildUrl(string path)
     {
         // Use Uri to properly join base URL with path
-        var baseUri = new Uri(_baseUrl.TrimEnd('/') + "/");
+        var baseUri = new Uri(_baseUrl.TrimEnd('/'));
 
         if (string.IsNullOrWhiteSpace(path))
             return baseUri.ToString();

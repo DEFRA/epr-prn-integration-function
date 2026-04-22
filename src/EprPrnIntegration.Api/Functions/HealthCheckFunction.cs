@@ -6,10 +6,10 @@ using Microsoft.Azure.Functions.Worker.Http;
 namespace EprPrnIntegration.Api.Functions;
 
 [ExcludeFromCodeCoverage(Justification = "Covered in integration tests")]
-public class HealthCheckFunction
+public static class HealthCheckFunction
 {
     [Function("HealthCheck")]
-    public async Task<HttpResponseData> Run(
+    public static async Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequestData req
     )
     {

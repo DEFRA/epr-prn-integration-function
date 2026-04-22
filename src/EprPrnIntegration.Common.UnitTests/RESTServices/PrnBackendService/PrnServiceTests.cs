@@ -17,6 +17,11 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
         private readonly Mock<IOptions<Configuration.Service>> _mockConfig;
         private readonly Mock<ILogger<PrnService>> _loggerMock;
 
+        readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+        };
+
         public PrnServiceTests()
         {
             _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
@@ -52,7 +57,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             Assert.NotNull(mockHandler.LastRequestContent);
             var sentRequest = JsonSerializer.Deserialize<SavePrnDetailsRequest>(
                 mockHandler.LastRequestContent,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                _jsonSerializerOptions
             );
 
             sentRequest.Should().BeEquivalentTo(request);
@@ -113,7 +118,7 @@ namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
             return (service, mockHandler);
         }
 
-        private SavePrnDetailsRequest CreateSavePrnDetailsRequest(
+        private static SavePrnDetailsRequest CreateSavePrnDetailsRequest(
             Guid? organisationId = null,
             DateTime? statusUpdatedOn = null
         )

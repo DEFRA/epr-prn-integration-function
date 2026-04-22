@@ -19,7 +19,7 @@ public static class WoApiOrganisationExtensions
         ILogger logger
     )
     {
-        if (organisation.Registrations == null || !organisation.Registrations.Any())
+        if (organisation.Registrations == null || organisation.Registrations.Count == 0)
         {
             logger.LogError(
                 "No registrations found for organisation {OrganisationId} in {Year}",
@@ -35,10 +35,10 @@ public static class WoApiOrganisationExtensions
             )
             .ToList();
 
-        var isComplianceScheme = registeredThisYear.Any(r =>
+        var isComplianceScheme = registeredThisYear.Exists(r =>
             r.Type == WoApiOrganisationType.ComplianceScheme
         );
-        var isLargeProducer = registeredThisYear.Any(r =>
+        var isLargeProducer = registeredThisYear.Exists(r =>
             r.Type == WoApiOrganisationType.LargeProducer
         );
 
