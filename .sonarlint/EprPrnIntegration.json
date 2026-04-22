@@ -1,0 +1,4 @@
+{
+    "sonarQubeUri": "https://vss-sonarqube.azure.defra.cloud",
+    "projectKey": "epr-prn-integration-function"
+}

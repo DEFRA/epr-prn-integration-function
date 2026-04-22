@@ -415,3 +415,6 @@ FodyWeavers.xsd
 **/appSettings.Development.json
 /src/EprPrnIntegration.Api/local.settings.json
 src/EprPrnIntegration.Api/local.settings.example
+
+# SonarScanner folder
+**/.sonarqube/*
