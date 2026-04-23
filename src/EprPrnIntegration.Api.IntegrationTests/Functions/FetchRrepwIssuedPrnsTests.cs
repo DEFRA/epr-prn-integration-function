@@ -83,13 +83,13 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
                 .OrderBy(prn => prn)
                 .ToList();
 
-            var expectedPrnNumbers = new[]
-            {
+            string[] expectedPrnNumbers =
+            [
                 "PRN-PAGE1-001",
                 "PRN-PAGE1-002",
                 "PRN-PAGE2-001",
                 "PRN-PAGE2-002",
-            };
+            ];
 
             receivedPrnNumbers.Should().BeEquivalentTo(expectedPrnNumbers.OrderBy(prn => prn));
         });
@@ -178,7 +178,9 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             entries.Count.Should().Be(2);
             for (int i = 0; i < entries.Count - 1; i++)
                 entries[i].Response.StatusCode.Should().Be((int)HttpStatusCode.ServiceUnavailable);
-            entries.Last().Response.StatusCode.Should().Be((int)HttpStatusCode.Accepted);
+            entries[entries.Count - 1]
+                .Response.StatusCode.Should()
+                .Be((int)HttpStatusCode.Accepted);
             await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
     }
@@ -350,7 +352,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             var entries = await RrepwApiStub.GetPrnRequests();
 
             entries.Count.Should().BeGreaterOrEqualTo(1);
-            var lastEntry = entries.Last();
+            var lastEntry = entries[entries.Count - 1];
             lastEntry.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 
             // Verify NO new PRNs were sent to Common API from this test (function terminated)

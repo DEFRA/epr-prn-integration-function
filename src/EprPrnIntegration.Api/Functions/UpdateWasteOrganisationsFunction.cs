@@ -42,7 +42,7 @@ public class UpdateWasteOrganisationsFunction(
             CancellationToken.None
         );
 
-        if (!producers.Any())
+        if (producers.Count == 0)
         {
             logger.LogInformation("No freshly updated producers were found; terminating.");
             return;
@@ -100,14 +100,12 @@ public class UpdateWasteOrganisationsFunction(
         );
     }
 
-     private void LogCustomEvents(UpdatedProducersResponseV2 producer)
+    private void LogCustomEvents(UpdatedProducersResponseV2 producer)
     {
+        Dictionary<string, string> eventData = new()
         {
-            Dictionary<string, string> eventData = new()
-            {
-                { CustomEventFields.OrganisationName, producer.OrganisationName ?? string.Empty },
-            };
-            utilities.AddCustomEvent(CustomEvents.UpdateWasteOrganisation, eventData);
-        }
+            { CustomEventFields.OrganisationName, producer.OrganisationName ?? string.Empty },
+        };
+        utilities.AddCustomEvent(CustomEvents.UpdateWasteOrganisation, eventData);
     }
 }

@@ -51,7 +51,7 @@ public class FetchRrepwIssuedPrnsFunction(
 
         var prns = await rrepwService.ListPackagingRecyclingNotes(lastUpdate, utcNow);
 
-        if (!prns.Any())
+        if (prns.Count == 0)
         {
             logger.LogInformation("No PRNs found from RREPW service; terminating.");
             return;

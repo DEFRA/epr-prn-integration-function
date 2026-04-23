@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -12,18 +11,13 @@ using Moq.Protected;
 
 namespace EprPrnIntegration.Common.UnitTests.Middleware;
 
-[SuppressMessage(
-    "Design",
-    "CA1816:Dispose methods should call SuppressFinalize",
-    Justification = "Test class has no finalizer; SuppressFinalize is unnecessary"
-)]
-public class CognitoAuthorisationHandlerTests : IDisposable
+public sealed class CognitoAuthorisationHandlerTests : IDisposable
 {
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<ILogger> _loggerMock;
     private readonly Mock<HttpMessageHandler> _innerHandlerMock;
     private readonly CognitoConfig _config;
-    private readonly IMemoryCache _memoryCache;
+    private readonly MemoryCache _memoryCache;
     private const string TestTokenCacheKey = "Test_AccessToken";
 
     public CognitoAuthorisationHandlerTests()
@@ -43,7 +37,7 @@ public class CognitoAuthorisationHandlerTests : IDisposable
 
     public void Dispose()
     {
-        _memoryCache?.Dispose();
+        _memoryCache.Dispose();
     }
 
     [Fact]

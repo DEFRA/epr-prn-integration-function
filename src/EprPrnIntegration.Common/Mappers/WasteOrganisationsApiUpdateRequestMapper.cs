@@ -87,7 +87,7 @@ public static class WasteOrganisationsApiUpdateRequestMapper
     }
 }
 
-public class OrganisationType
+public static class OrganisationType
 {
     public const string ComplianceScheme_CS = "CS";
 
@@ -99,13 +99,13 @@ public class OrganisationType
     public const string LargeProducer_DR = "DR";
 }
 
-public class OrganisationStatus
+public static class OrganisationStatus
 {
     public const string Registered = "registered";
     public const string Deleted = "deleted";
 }
 
-public class BusinessCountry
+public static class BusinessCountry
 {
     public const string England = "England";
     public const string NorthernIreland = "Northern Ireland";

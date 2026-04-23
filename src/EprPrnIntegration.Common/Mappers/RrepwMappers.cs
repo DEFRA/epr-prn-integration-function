@@ -44,10 +44,10 @@ public static class RrepwMappers
                 x.RegistrationYear == prn.Accreditation?.AccreditationYear)
             .ToList() ?? [];
 
-        if (registrations.Any(x => x.Type == WoApiOrganisationType.ComplianceScheme))
-            return UseTradingNameIfPresent(prn);;
+        if (registrations.Exists(x => x.Type == WoApiOrganisationType.ComplianceScheme))
+            return UseTradingNameIfPresent(prn);
 
-        if (registrations.Any(x => x.Type == WoApiOrganisationType.LargeProducer))
+        if (registrations.Exists(x => x.Type == WoApiOrganisationType.LargeProducer))
             return prn.IssuedToOrganisation?.Name;
         
         logWarning($"Fallback trading name or name mapping for organisation {prn.Organisation?.Id}");
