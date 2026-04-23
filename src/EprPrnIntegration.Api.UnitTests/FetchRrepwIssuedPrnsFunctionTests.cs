@@ -475,7 +475,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
         prns[0].Status!.CurrentStatus = RrepwStatus.Cancelled;
         prns[1].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
         prns[2].Status!.CurrentStatus = RrepwStatus.AwaitingAcceptance;
-        var emails = _fixture.CreateMany<List<PersonEmail>>().ToList();
+
         var orgTypes = new List<string>
         {
             WoApiOrganisationType.LargeProducer,
