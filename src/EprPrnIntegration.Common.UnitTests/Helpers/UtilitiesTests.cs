@@ -2,7 +2,7 @@
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.Service;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;

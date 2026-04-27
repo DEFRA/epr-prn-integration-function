@@ -12,7 +12,7 @@ using EprPrnIntegration.Common.Models.Queues;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.RESTServices.PrnBackendService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using FluentAssertions;
+using AwesomeAssertions;
 using FluentValidation;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;

@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;

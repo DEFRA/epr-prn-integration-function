@@ -1,6 +1,6 @@
 ﻿using AutoFixture;
 using EprPrnIntegration.Common.Models;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.Models
 {

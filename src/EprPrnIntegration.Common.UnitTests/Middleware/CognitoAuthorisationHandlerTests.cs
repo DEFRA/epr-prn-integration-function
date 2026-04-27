@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Middleware;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;

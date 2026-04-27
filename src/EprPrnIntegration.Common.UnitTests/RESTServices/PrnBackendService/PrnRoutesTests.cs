@@ -1,5 +1,5 @@
 using EprPrnIntegration.Common.RESTServices.PrnBackendService;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace EprPrnIntegration.Common.UnitTests.RESTServices.PrnBackendService
 {

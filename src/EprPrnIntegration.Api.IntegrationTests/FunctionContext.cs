@@ -4,7 +4,7 @@ using Azure.Storage.Blobs;
 using EprPrnIntegration.Api.Middleware;
 using EprPrnIntegration.Common.Helpers;
 using EprPrnIntegration.Common.Service;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace EprPrnIntegration.Api.IntegrationTests;
 
