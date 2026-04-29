@@ -1,7 +1,7 @@
 using EprPrnIntegration.Common.Extensions;
 using EprPrnIntegration.Common.Mappers;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 

@@ -5,7 +5,7 @@ using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
 using EprPrnIntegration.Common.RESTServices.BackendAccountService.Interfaces;
 using EprPrnIntegration.Common.Service;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;

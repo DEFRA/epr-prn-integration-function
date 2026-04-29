@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using EprPrnIntegration.Common.Configuration;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
@@ -116,7 +116,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().BeGreaterOrEqualTo(2);
+            entries.Count.Should().BeGreaterThanOrEqualTo(2);
             var relevantEntries = entries.TakeLast(2).ToList();
             relevantEntries[0]
                 .Response.StatusCode.Should()
@@ -148,7 +148,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().BeGreaterOrEqualTo(4);
+            entries.Count.Should().BeGreaterThanOrEqualTo(4);
             var relevantEntries = entries.TakeLast(4).ToList();
             foreach (var entry in relevantEntries)
             {
@@ -283,7 +283,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().BeGreaterOrEqualTo(2);
+            entries.Count.Should().BeGreaterThanOrEqualTo(2);
             var relevantEntries = entries.TakeLast(2).ToList();
             relevantEntries[0]
                 .Response.StatusCode.Should()
@@ -292,7 +292,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
 
             // Verify PRN was sent to Common API
             var prnEntries = await PrnApiStub.GetPrnDetailsUpdateV2();
-            prnEntries.Count.Should().BeGreaterOrEqualTo(1);
+            prnEntries.Count.Should().BeGreaterThanOrEqualTo(1);
 
             await LastUpdateShouldHaveChanged(before, FunctionName.FetchRrepwIssuedPrns);
         });
@@ -318,7 +318,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().BeGreaterOrEqualTo(4);
+            entries.Count.Should().BeGreaterThanOrEqualTo(4);
             var relevantEntries = entries.TakeLast(4).ToList();
             foreach (var entry in relevantEntries)
             {
@@ -351,7 +351,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
         {
             var entries = await RrepwApiStub.GetPrnRequests();
 
-            entries.Count.Should().BeGreaterOrEqualTo(1);
+            entries.Count.Should().BeGreaterThanOrEqualTo(1);
             var lastEntry = entries[entries.Count - 1];
             lastEntry.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
 

@@ -1,7 +1,7 @@
 using EprPrnIntegration.Api.IntegrationTests.Stubs;
 using EprPrnIntegration.Common.Models.Rrepw;
 using EprPrnIntegration.Common.Models.WasteOrganisationsApi;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests;

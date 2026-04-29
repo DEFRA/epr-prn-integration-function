@@ -2,7 +2,7 @@ using System.Net;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Models;
 using EprPrnIntegration.Common.Models.Rrepw;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -328,7 +328,7 @@ public class StubbedRrepwServiceTests
         var tonnageValues = result.Select(p => p.TonnageValue).ToList();
         // STUB 14-17 have the same tonnage of 800, and STUB 13 has variable tonnage based on minute
         var distinctTonnageCount = tonnageValues.Distinct().Count();
-        distinctTonnageCount.Should().BeGreaterOrEqualTo(13);
+        distinctTonnageCount.Should().BeGreaterThanOrEqualTo(13);
     }
 
     [Fact]

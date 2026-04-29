@@ -4,7 +4,7 @@ using AutoFixture;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.Enums;
 using EprPrnIntegration.Common.Models;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EprPrnIntegration.Api.IntegrationTests.Functions;
@@ -255,7 +255,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         {
             var entries = await PrnApiStub.FindModifiedPrnsRequest();
 
-            entries.Count.Should().BeGreaterOrEqualTo(2);
+            entries.Count.Should().BeGreaterThanOrEqualTo(2);
             var relevantEntries = entries.TakeLast(2).ToList();
             relevantEntries[0]
                 .Response.StatusCode.Should()
@@ -264,7 +264,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
 
             // Verify PRN was sent to RREPW
             var rrepwEntries = await RrepwApiStub.GetUpdatePrnRequests(EprnStatus.ACCEPTED);
-            rrepwEntries.Count.Should().BeGreaterOrEqualTo(1);
+            rrepwEntries.Count.Should().BeGreaterThanOrEqualTo(1);
 
             await LastUpdateShouldHaveChanged(before, FunctionName.UpdateRrepwPrns);
         });

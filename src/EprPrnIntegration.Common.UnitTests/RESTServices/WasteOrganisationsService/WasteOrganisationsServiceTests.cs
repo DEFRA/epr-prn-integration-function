@@ -1,7 +1,7 @@
 using System.Net;
 using EprPrnIntegration.Common.Configuration;
 using EprPrnIntegration.Common.UnitTests.Helpers;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
