@@ -17,6 +17,8 @@ updates:
         versions: [">=1.18.0"]
       - dependency-name: "Azure.Security.KeyVault.Secrets"
         versions: [">=4.9.0"]
+      - dependency-name: "Azure.Storage.Blobs"
+        versions: [">=12.27.0"]
       - dependency-name: "coverlet.*"
         versions: [">=8.0.0"]
       - dependency-name: "Microsoft.ApplicationInsights*"

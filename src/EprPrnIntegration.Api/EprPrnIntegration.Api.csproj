@@ -15,7 +15,7 @@
     <PackageReference Include="Azure.Identity" Version="1.17.2" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.7.1" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.24.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
