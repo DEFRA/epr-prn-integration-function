@@ -1,6 +1,0 @@
-variables:
-  azureSubscription: 'AZD-RWD-DEV10'
-  docker.imageName: 'eprintegrationfunction'
-  acr.azureContainerRegistryName: 'devrwdinfac1401'
-  acr.repositoryName: 'eprintegrationfunctionrepository'
-  serviceName: 'DEVRWDWEBFAA412'
