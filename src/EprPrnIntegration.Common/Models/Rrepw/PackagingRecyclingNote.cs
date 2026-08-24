@@ -31,6 +31,9 @@ public class PackagingRecyclingNote
     [JsonPropertyName("isExport")]
     public bool? IsExport { get; set; }
 
+    [JsonPropertyName("obligationYear")]
+    public int? ObligationYear { get; set; }
+
     [JsonPropertyName("tonnageValue")]
     public int? TonnageValue { get; set; }
 

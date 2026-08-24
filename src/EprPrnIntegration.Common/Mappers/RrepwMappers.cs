@@ -25,7 +25,7 @@ public static class RrepwMappers
             ReprocessingSite = GetReprocessingSite(source),
             DecemberWaste = source.IsDecemberWaste,
             ProcessToBeUsed = ConvertMaterialToProcessToBeUsed(source),
-            ObligationYear = "2026",
+            ObligationYear = source.ObligationYear?.ToString(),
             MaterialName = ConvertMaterialToEprnMaterial(source),
             IssueDate = GetAuthorizedAt(source),
             StatusUpdatedOn = GetStatusUpdatedOn(source),
