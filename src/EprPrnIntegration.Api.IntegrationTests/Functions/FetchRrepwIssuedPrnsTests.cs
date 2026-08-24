@@ -28,6 +28,7 @@ public class FetchRrepwIssuedPrnsTests : IntegrationTestBase
             var jsonDocument = JsonDocument.Parse(entry.Request.Body!);
 
             jsonDocument.RootElement.GetProperty("prnNumber").GetString().Should().Be(prnNumber);
+            jsonDocument.RootElement.GetProperty("obligationYear").GetString().Should().Be("2025");
 
             entry.Response.StatusCode.Should().Be(202);
         });

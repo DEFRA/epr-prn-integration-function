@@ -47,7 +47,7 @@ public class RrepwMappersTests
 
     private PackagingRecyclingNote CreatePackagingRecyclingNote()
     {
-        return _fixture.Build<PackagingRecyclingNote>().Create();
+        return _fixture.Build<PackagingRecyclingNote>().With(x => x.ObligationYear, 2026).Create();
     }
 
     [Theory]
@@ -68,10 +68,10 @@ public class RrepwMappersTests
     public void ShouldMapPackagingRecyclingNoteToPrn_WithNulls()
     {
         var prn = new PackagingRecyclingNote();
+
         var savePrnDetailsRequest = RrepwMappers.Map(prn, _ => { });
-        savePrnDetailsRequest
-            .Should()
-            .BeEquivalentTo(new SavePrnDetailsRequest { ObligationYear = "2026" });
+
+        savePrnDetailsRequest.ObligationYear.Should().BeNull();
     }
 
     [Theory]
@@ -292,7 +292,9 @@ public class RrepwMappersTests
         savePrnDetailsRequest.IsExport.Should().Be(prn.IsExport);
         savePrnDetailsRequest.TonnageValue.Should().Be(prn.TonnageValue);
         savePrnDetailsRequest.IssuerNotes.Should().Be(prn.IssuerNotes);
-        savePrnDetailsRequest.ObligationYear.Should().Be("2026");
+        savePrnDetailsRequest
+            .ObligationYear.Should()
+            .Be(prn.ObligationYear!.Value.ToString());
     }
 
     [Fact]
@@ -610,6 +612,7 @@ public class RrepwMappersTests
     {
         return new PackagingRecyclingNote
         {
+            ObligationYear = 2026,
             Accreditation = new Accreditation
             {
                 AccreditationYear = year
