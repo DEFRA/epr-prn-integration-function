@@ -61,6 +61,7 @@ public class RrepwServiceTests
             PrnStatusId = (int)EprnStatus.ACCEPTED,
             SourceSystemId = "something",
             StatusDate = DateTime.Now,
+            ObligationYear = "2027",
         };
         await _service.UpdatePrn(prn);
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
@@ -71,6 +72,7 @@ public class RrepwServiceTests
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("acceptedAt").GetDateTime();
         value.Should().Be(prn.StatusDate);
+        doc.RootElement.GetProperty("obligationYear").GetInt32().Should().Be(2027);
     }
 
     [Fact]
@@ -83,6 +85,7 @@ public class RrepwServiceTests
             PrnStatusId = (int)EprnStatus.REJECTED,
             SourceSystemId = "something",
             StatusDate = DateTime.Now,
+            ObligationYear = "2027",
         };
         await _service.UpdatePrn(prn);
         _mockHandler.Request!.Method.Should().Be(HttpMethod.Post);
@@ -93,6 +96,46 @@ public class RrepwServiceTests
         using var doc = JsonDocument.Parse(content);
         var value = doc.RootElement.GetProperty("rejectedAt").GetDateTime();
         value.Should().Be(prn.StatusDate);
+        doc.RootElement.TryGetProperty("obligationYear", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ShouldUpdatePrns_AcceptedWithNullObligationYear_DoesNotIncludeObligationYear()
+    {
+        var prn = new PrnUpdateStatus
+        {
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = (int)EprnStatus.ACCEPTED,
+            SourceSystemId = "something",
+            StatusDate = DateTime.Now,
+            ObligationYear = null,
+        };
+
+        await _service.UpdatePrn(prn);
+
+        var content = await _mockHandler.Request!.Content!.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(content);
+        doc.RootElement.TryGetProperty("obligationYear", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ShouldUpdatePrns_AcceptedWithInvalidObligationYear_ThrowsFormatException()
+    {
+        var prn = new PrnUpdateStatus
+        {
+            AccreditationYear = "2024",
+            PrnNumber = "123",
+            PrnStatusId = (int)EprnStatus.ACCEPTED,
+            SourceSystemId = "something",
+            StatusDate = DateTime.Now,
+            ObligationYear = "invalid",
+        };
+
+        Func<Task> act = () => _service.UpdatePrn(prn);
+
+        await act.Should().ThrowAsync<FormatException>();
+        _mockHandler.Request.Should().BeNull();
     }
 
     [Theory]
