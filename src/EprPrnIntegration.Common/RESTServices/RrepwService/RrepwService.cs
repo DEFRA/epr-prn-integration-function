@@ -137,7 +137,13 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 );
                 return await PostAsync(
                     RrepwRoutes.AcceptPrnRoute(prn.PrnNumber),
-                    new { acceptedAt = prn.StatusDate }
+                    new AcceptPackagingRecyclingNoteRequest
+                    {
+                        AcceptedAt = prn.StatusDate,
+                        ObligationYear = prn.ObligationYear is null
+                            ? null
+                            : int.Parse(prn.ObligationYear),
+                    }
                 );
             }
             else if (prn.PrnStatusId == (int)EprnStatus.REJECTED)
