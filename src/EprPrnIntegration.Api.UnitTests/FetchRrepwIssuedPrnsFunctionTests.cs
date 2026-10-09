@@ -455,6 +455,7 @@ public class FetchRrepwIssuedPrnsFunctionTests
             },
             IsDecemberWaste = false,
             IsExport = false,
+            ObligationYear = accreditationYear,
             TonnageValue = tonnes,
             IssuerNotes = "Test PRN",
         };

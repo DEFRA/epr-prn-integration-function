@@ -136,6 +136,7 @@ public class RrepwApi(WireMockContext wiremock)
                 },
                 IsDecemberWaste = false,
                 IsExport = false,
+                ObligationYear = 2025,
                 TonnageValue = 100,
                 IssuerNotes = "Test notes",
             })

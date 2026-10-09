@@ -419,6 +419,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 Accreditation = accreditation,
                 IsDecemberWaste = scenario.IsDecemberWaste,
                 IsExport = scenario.IsExport,
+                ObligationYear = accreditation.AccreditationYear,
                 TonnageValue = scenario.TonnageValue,
                 IssuerNotes =
                     scenario.IssuerNotes ?? $"Stubbed PRN-{scenario.ScenarioId} for AC testing",
@@ -442,6 +443,7 @@ namespace EprPrnIntegration.Common.RESTServices.RrepwService
                 Accreditation = CreateAccreditation("13", RrepwMaterialName.Plastic),
                 IsDecemberWaste = false,
                 IsExport = false,
+                ObligationYear = 2026,
                 TonnageValue = tonnageValue,
                 IssuerNotes = $"Stubbed PRN-13 for AC3 update testing - tonnage: {tonnageValue}",
             };
