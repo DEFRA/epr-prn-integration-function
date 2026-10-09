@@ -18,6 +18,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
         return _fixture
             .Build<PrnUpdateStatus>()
             .With(p => p.PrnStatusId, (int)eprnStatus)
+            .With(p => p.ObligationYear, "2027")
             .CreateMany(count)
             .ToList();
     }
@@ -25,7 +26,7 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
     [Theory]
     [InlineData(EprnStatus.ACCEPTED)]
     [InlineData(EprnStatus.REJECTED)]
-    public async Task WhenAzureFunctionIsInvoked_SendsAcceptedPrnToRrepw(EprnStatus eprnStatus)
+    public async Task WhenAzureFunctionIsInvoked_SendsPrnStatusToRrepw(EprnStatus eprnStatus)
     {
         var payload = CreatePrns(eprnStatus);
         await PrnApiStub.HasModifiedPrns(payload);
@@ -53,6 +54,15 @@ public class UpdateRrepwPrnsTests : IntegrationTestBase
                     .GetDateTime()
                     .Should()
                     .Be(prnUpdate.StatusDate);
+
+                if (eprnStatus == EprnStatus.ACCEPTED)
+                {
+                    jsonDocument.RootElement.GetProperty("obligationYear").GetInt32().Should().Be(2027);
+                }
+                else
+                {
+                    jsonDocument.RootElement.TryGetProperty("obligationYear", out _).Should().BeFalse();
+                }
 
                 request.Response.StatusCode.Should().Be(200);
             }

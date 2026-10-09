@@ -20,4 +20,7 @@ public class PrnUpdateStatus
 
     [JsonPropertyName("sourceSystemId")]
     public required string SourceSystemId { get; set; }
+
+    [JsonPropertyName("obligationYear")]
+    public string? ObligationYear { get; set; }
 }
