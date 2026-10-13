@@ -40,14 +40,14 @@
       },
       "WireMock.Net.RestClient": {
         "type": "Direct",
-        "requested": "[2.6.0, )",
-        "resolved": "2.6.0",
-        "contentHash": "A4tIwgV/BZgc9cuNgQxaWKPnPn7vK4Bc6Mgg/1AFA/JS5+DTsDdviyogqPhpUFYbByP2UxSIli3QKwfFbO0knQ==",
+        "requested": "[2.14.0, )",
+        "resolved": "2.14.0",
+        "contentHash": "88JUONLceTMr8RMczEwk/nIchFNAwE34Ejmvx10hizi0v3EZwAKXKnePSXc5yKckCz6K+RLjzwHEClyhMxSEKw==",
         "dependencies": {
-          "JsonConverter.Newtonsoft.Json": "0.9.0",
+          "JsonConverter.Newtonsoft.Json": "0.13.0",
           "RestEase": "1.6.4",
-          "Stef.Validation": "0.2.0",
-          "WireMock.Net.Abstractions": "2.6.0"
+          "Stef.Validation": "0.3.0",
+          "WireMock.Net.Abstractions": "2.14.0"
         }
       },
       "xunit": {
@@ -216,15 +216,15 @@
       },
       "JsonConverter.Abstractions": {
         "type": "Transitive",
-        "resolved": "0.9.0",
-        "contentHash": "wSAp272h08bU/A18eBm9ZnSdzblRrqtvicorAoIRIZyP3MEyhtnrwgd6TM5lng/YVOTQ4cJxPZQY/t9Ofxql5A=="
+        "resolved": "0.13.0",
+        "contentHash": "Ci3nuKx3GgMDfW9JA4dJpU+hJV5G1ve72mploQP8ivSDpOmo2QbfVAQkxsVzb3UQJCgwxxM6rdE/fPXwM0yj0g=="
       },
       "JsonConverter.Newtonsoft.Json": {
         "type": "Transitive",
-        "resolved": "0.9.0",
-        "contentHash": "Ma2BZI++dEi26u2Q2GBOAyCxZUVMMxrEG0OqzMIj3bO3+79Fqc3EyrF4w8XhXRJLalGZyjnTaPbRGdiXGVPGzg==",
+        "resolved": "0.13.0",
+        "contentHash": "K6doeW12emLiJV4laUf58y3kkjng6/IARRtC7+20qIOBrP1pBxGRsjz2IfxCgSBkTML3q6FWe7O+/UE374lsaA==",
         "dependencies": {
-          "JsonConverter.Abstractions": "0.9.0",
+          "JsonConverter.Abstractions": "0.13.0",
           "Newtonsoft.Json": "13.0.4",
           "Stef.Validation": "0.1.1"
         }
@@ -1052,8 +1052,8 @@
       },
       "Stef.Validation": {
         "type": "Transitive",
-        "resolved": "0.2.0",
-        "contentHash": "X43dtF+Vbqjg1apJ3yzzceznLyW6ziBB2ZvjsB0jtJfpZZOejwXPCS5NNWmwu+NXaD09pJJ3+rCk4Bdd7zWA8w=="
+        "resolved": "0.3.0",
+        "contentHash": "OfzmxQMK4eBzmobph43p1NsLTgVAC3XGTcvQS0odhsdL6uS7UsFzBMK6S9mAfIijZdLW4q98aZ3dtTOeTaQo6Q=="
       },
       "System.AppContext": {
         "type": "Transitive",
@@ -1926,8 +1926,8 @@
       },
       "WireMock.Net.Abstractions": {
         "type": "Transitive",
-        "resolved": "2.6.0",
-        "contentHash": "2Y4ubyog7+cvqs2GTiZFLrgQQ8biNH6zqyJw6ejGqxYkCv4iWaJp95LF7JkGJ1QLG+BVp91ap5qu9wB2JcovSQ=="
+        "resolved": "2.14.0",
+        "contentHash": "PnMbLgzfF1Cql8g4LKFzlmclrJxjiumqZrRjdAwdfZTD8TD+z5nCZxAixgel19xXLUQRsVwmgvYRYOefmtjWLQ=="
       },
       "xunit.abstractions": {
         "type": "Transitive",
