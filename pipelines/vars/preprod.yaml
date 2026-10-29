@@ -1,6 +1,12 @@
 variables:
-  azureSubscription: 'AZR-RWD-PRE1'
-  docker.imageName: 'eprintegrationfunction'
-  acr.azureContainerRegistryName: 'prerwdinfac1401'
-  acr.repositoryName: 'eprintegrationfunctionrepository'
-  serviceName: 'PRERWDWEBFA1412'
+- group: ServiceConnections
+- name: azureSubscription
+  value: $(ServiceConnectionPRE1)
+- name: docker.imageName
+  value: 'eprintegrationfunction'
+- name: acr.azureContainerRegistryName
+  value: 'prerwdinfac1401'
+- name: acr.repositoryName
+  value: 'eprintegrationfunctionrepository'
+- name: serviceName
+  value: 'PRERWDWEBFA1412'
